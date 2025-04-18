@@ -44,7 +44,11 @@ public://functions
         
         for(;; s++)
         {
-            if(*s == '\'')
+            if(*s == '\0')
+            {
+                break;
+            }
+            else if(*s == '\'')
             {
                 if(!escaped && !doubleQuote)
                 {

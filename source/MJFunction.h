@@ -39,21 +39,20 @@ public://functions
 
 class MJFunction : public MJRef {
 public: //members
-    MJTable* state;
     
     std::vector<std::string> argNames;
     std::vector<MJStatement*> statements;
     
     MJDebugInfo debugInfo;
-    uint32_t functionLineNumber; //save a copy so we can change it in debugInfo, save a string copy
+    uint32_t functionLineNumber; //save a copy so we can change it in debugInfo, which will save a string copy
 
 public://functions
-    MJFunction(MJTable* parent);
+    MJFunction();
     virtual ~MJFunction();
     
     virtual MJFunction* copy()
     {
-        return new MJFunction(state);
+        return new MJFunction();
     }
     
     static MJFunction* initWithHumanReadableString(const char* str, char** endptr, MJTable* parent, MJDebugInfo* debugInfo);

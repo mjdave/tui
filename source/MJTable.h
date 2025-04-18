@@ -159,6 +159,51 @@ public://functions
         return nullptr;
     }
     
+    bool recursivelySetVariable(MJString* variableName, MJRef* value)
+    {
+        if(variableName->varNames.size() > 0 && objectsByStringKey.count(variableName->varNames[0]) != 0)
+        {
+            if(variableName->varNames.size() > 1)
+            {
+                MJRef* subtableRef = objectsByStringKey[variableName->varNames[0]];
+                if(subtableRef->type() != MJREF_TYPE_TABLE)
+                {
+                    MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                    return false;
+                }
+                
+                for(int i = 1; i < variableName->varNames.size(); i++)
+                {
+                    if(i == variableName->varNames.size() - 1)
+                    {
+                        ((MJTable*)subtableRef)->set(variableName->varNames[i], value);
+                        return true;
+                    }
+                    
+                    if(((MJTable*)subtableRef)->objectsByStringKey.count(variableName->varNames[i]) != 0)
+                    {
+                        subtableRef = objectsByStringKey[variableName->varNames[i]];
+                        if(subtableRef->type() != MJREF_TYPE_TABLE)
+                        {
+                            MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                            return false;
+                        }
+                    }
+                }
+            }
+            
+            set(variableName->varNames[0], value);
+            return true;
+        }
+        
+        if(parentTable)
+        {
+            return parentTable->recursivelySetVariable(variableName, value);
+        }
+        
+        return false;
+    }
+    
     
     
     
@@ -200,7 +245,12 @@ public://functions
                 objectsByNumberKey[(uint32_t)keyValue] = valueRef;
                 
                 
-                if(*s == ',' || *s == '\n')
+                if(*s == '\0')
+                {
+                    *endptr = (char*)s;
+                    return false;
+                }
+                else if(*s == ',' || *s == '\n')
                 {
                     if(*s == '\n')
                     {
@@ -408,7 +458,7 @@ public://functions
         return initWithHumanReadableString(cString, &endPtr, parent, &debugInfo);
     }
     
-    static MJTable* initWithHumanReadableFilePath(const std::string& filename, MJTable* parent) {
+    static MJTable* initWithHumanReadableFilePath(const std::string& filename, MJTable* parent = nullptr) {
         std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
         MJDebugInfo debugInfo;
         debugInfo.fileName = filename;
@@ -431,7 +481,7 @@ public://functions
         return nullptr;
     }
     
-    static MJRef* runScriptFile(const std::string& filename, MJTable* parent)
+    static MJRef* runScriptFile(const std::string& filename, MJTable* parent = nullptr)
     {
         std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
         MJDebugInfo debugInfo;

@@ -48,7 +48,11 @@ inline const char* skipToNextChar(const char* str, MJDebugInfo* debugInfo, bool 
     bool comment = false;
     for(;; s++)
     {
-        if(*s == '#')
+        if(*s == '\0')
+        {
+            break;
+        }
+        else if(*s == '#' || (*s == '/' && *(s+1) == '/'))
         {
             comment = true;
         }
@@ -78,9 +82,14 @@ class MJTable;
 class MJString;
 class MJRef;
 
-MJRef* loadVariableIfAvailable(MJString* stringValueRef,
+MJRef* loadVariableIfAvailable(MJString* variableName,
                                const char* str,
                                char** endptr,
+                               MJTable* parentTable,
+                               MJDebugInfo* debugInfo);
+
+bool setVariable(MJString* variableName,
+                            MJRef* value,
                                MJTable* parentTable,
                                MJDebugInfo* debugInfo);
 

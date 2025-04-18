@@ -1,16 +1,32 @@
 # mjscript
 
-mjscript is a scripting and serialization library for c++.
+mjscript is an open source scripting and serialization library for c++.
 
-Designed by a game developer for practicality and performance, mjscript combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
+Designed by a solo game developer to be simple to understand, use and modify, mjscript combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
 
-With no virtual machine, and no bindings required in C++, all of the data and script state is stored in a std::map or std::vector under the hood. Scripts and tables are parsed in the same way and are treated the same. Each character is simply parsed one by one in a single phase, with data loaded into a data tree immediately, and functions stored and called as required.
+mjscript is dynamically typed, fast, flexibile, and small. You can add the files to your c++ project, run a script, and access the output easily.
+```c++
+#include "MJScript.h"
 
-This means you can use it as a scripting language, that just happens to also have built in serialization support for both binary and human readable (JSON-like) formats.
+int main()
+{
+    MJTable* table = MJTable::initWithHumanReadableFilePath("config.mjh"); // load a JSON-like config file
+    std::string playerName = table->getString("playerName"); //get a string
+    double playDuration = table->getDouble("playDuration"); //get a number
+    table->setDouble("playDuration", playDuration + 1.0); //set a number
+    table->saveToFile("config.mjh"); //save in a human readable JSON-like format
+    
+    MJRef* scriptRunResult = MJTable::runScriptFile("script.mjh"); //run a script file
+    scriptRunResult->debugLog(); //print the result
+}
 
-Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other ways of storing and sharing data, this is a new option that reads JSON out of the box, but adds a whole bunch of new features.
+```
 
-For example:
+With no virtual machine, and no bindings required in C++, all of the data and script state is stored in a public std::map or std::vector under the hood. Scripts and tables are parsed together and are treated the same. Each character is simply parsed one by one in a single phase, with data loaded into a data tree immediately, and functions stored and called as required.
+
+This means you can use it as a scripting language, that just happens to also have built in serialization support for both binary and human readable data formats.
+
+Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other ways of storing and sharing data, mjscript reads JSON out of the box, while adding a bunch of new features:
 
 # Variables & Expressions
 Any previously assigned value can be accessed by the key name. This can be used to define constants to do math for later values.
@@ -23,7 +39,7 @@ Any previously assigned value can be accessed by the key name. This can be used 
 ```
 # Functions
 Functions are still a work in progress, but we have value assignment and basic expressions so far.
-```
+```javascript
 {
     addTariff = function(base)
     {
@@ -31,13 +47,13 @@ Functions are still a work in progress, but we have value assignment and basic e
         return (base * (1.0 + tariff))
     }
     
-    costOfTV = addTariff(500),          #1225
-    costOfPlaystation = addTariff(400)  #980
+    costOfTV = addTariff(500),          //1225
+    costOfPlaystation = addTariff(400)  //980
 }
 ```
 # Vectors
 The only dependency of mjscript is glm, which currently exposes vec2, vec3, vec4, and mat3 types, as well as a number of builtin math functions
-```
+```javascript
 {
     size = vec2(400,200),
     color = vec4(0.0,1.0,0.0,1.0),
@@ -45,7 +61,7 @@ The only dependency of mjscript is glm, which currently exposes vec2, vec3, vec4
 }
 ```
 # Commas and quotes optional, arrays can use '{'
-```
+```javascript
 array = {
     ThisIsTheFirstObjectWithIndexZero
     "This is the second object with spaces needs quotes"
@@ -56,25 +72,26 @@ array = {
 
 # Scope
 All variables are limited in scope to the block they are declared in and all child blocks. So variables declared at the top level are effectively globals. You can access children with the '.' sytax.
-```
+```javascript
 {
     varA = 10
 
     tableA = {
-        varB = varA     # we can access varA directly, so varB is now 10
-        varA = 20       # a new local varA is now 20
-        varB = varA     # varB is now the value of the local varA:20
+        varB = varA     // we can access varA directly, so varB is now 10
+        varA = 20       // a new local varA is now 20. The parent varA is now inaccessible
+        varB = varA     // varB is now the value of the local varA:20
     }
 
-    varC = varA         # varC is now 10
-    varC = tableA.varA  # varC is now 20
+    varC = varA         // varC is now 10
+    varC = tableA.varA  // varC is now 20
+    tableA.varA = 30    // we can also set child variables this way
 }
 ```
 
 
 # Memory 
-Memory is handled with reference counting, there is no garbage collection. You can free objects by setting them to nil.
-```
+Memory is handled with reference counting, there is no garbage collection. You can free objects that you don't need anymore by setting them to nil.
+```javascript
 {
     baseWidth = 400,
     halfWidth = baseWidth * 0.5,
@@ -82,3 +99,10 @@ Memory is handled with reference counting, there is no garbage collection. You c
     baseWidth = nil,
 }
 ```
+
+# What mjscript is not
+mjscript has 'objects', as tables. However there is no concept of 'self/this', and no inheretance so it wouldn't be considered an object orientated language.
+
+mjscript will stay small, and won't add a lot of support for built in system functionality. If this functionality is desired, it can easily be added on the C++ side by registering your own functions.
+
+There are no bindings for languages other than C++ at present.

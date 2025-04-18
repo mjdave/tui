@@ -4,14 +4,19 @@
     #    print(myNumber(i,4))
     #}
 
-    addTariff = function(base)
+    nestedFunc = function(a,b)
     {
-        tariff = 145 / 100
-        return (base * (1.0 + tariff))
+        return a
     }
-    
-    costOfTV = addTariff(500),
-    costOfPlaystation = addTariff(400)
+
+    object = {
+        var = 5
+    }
+
+    increment = function()
+    {
+        object.var = object.var + 5
+    }
 
     max = function(a,b)
     {
@@ -19,14 +24,18 @@
         #{
         #    return a
         #}
-        return b
+        increment()
+        increment()
+        return nestedFunc(a,b)
     }
 
     ten = 10
+
 
     return {
         max_20 = max(10,20)
         max_20b = max(20,ten)
         max_neg10 = max(-10,-20)
+        "obect.var" = object.var
     }
 }

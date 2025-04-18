@@ -3,14 +3,13 @@
 #include "MJTable.h"
 #include "MJRef.h"
 
-MJFunction::MJFunction(MJTable* parent)
+MJFunction::MJFunction()
 {
-    state = new MJTable(parent);
+    //state = new MJTable(parent);
 }
 
 MJFunction::~MJFunction()
 {
-    delete state;
     for(MJStatement* statement : statements)
     {
         delete statement;
@@ -77,7 +76,7 @@ void serializeExpression(const char* str, char** endptr, MJStatement* statement,
         {
             statement->expression += *s;
         }
-        else if(*s == '\n')
+        else if(*s == '\n' || *s == '\0')
         {
             if(bracketDepth <= 0)
             {
@@ -97,6 +96,7 @@ void serializeExpression(const char* str, char** endptr, MJStatement* statement,
                 bracketDepth--;
                 if(bracketDepth <= 0)
                 {
+                    statement->expression += *s;
                     s++;
                     break;
                 }
@@ -189,12 +189,6 @@ bool loadFunctionBody(const char* str, char** endptr, MJTable* parent, MJDebugIn
             }
         }
         
-        /*MJFunction* functionRef = MJFunction::initWithHumanReadableString(s, endptr, parent, debugInfo);
-        if(functionRef)
-        {
-            MJError("unimplemented")
-        }*/
-        
         MJString* varNameRef = MJString::initWithHumanReadableString(s, endptr, debugInfo);
         s = skipToNextChar(*endptr, debugInfo);
         
@@ -202,17 +196,17 @@ bool loadFunctionBody(const char* str, char** endptr, MJTable* parent, MJDebugIn
         {
             if(varNameRef->isValidFunctionString)
             {
-                /*MJTable* argsArrayTable = MJTable::initWithHumanReadableString(s, endptr, parentTable, debugInfo);
+                MJStatement* statement = new MJStatement(MJSTATEMENT_TYPE_FUNCTION_CALL);
+                statement->lineNumber = debugInfo->lineNumber;
+                statement->expression = varNameRef->value;
+                
+                serializeExpression(s, endptr, statement, debugInfo); //concats functionName with serialized args (*), stores the lot in statement->expression
+                
                 s = skipToNextChar(*endptr, debugInfo, true);
                 
-                MJRef* result = ((MJFunction*)newValueRef)->call(argsArrayTable, parentTable);
-                
-                *endptr = (char*)s;
-                delete valueRef;
-                return result;*/
+                statements->push_back(statement);
             }
-            
-            if(varNameRef->allowAsVariableName)
+            else if(varNameRef->allowAsVariableName)
             {
                 if(*s == '=')
                 {
@@ -236,8 +230,6 @@ bool loadFunctionBody(const char* str, char** endptr, MJTable* parent, MJDebugIn
             }
             delete varNameRef;
         }
-        
-        //MJSWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "valueRef:%s", valueRef->getDebugString().c_str())
     }
     
     s = skipToNextChar(s, debugInfo, true);
@@ -265,14 +257,14 @@ MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endp
         
         s = skipToNextChar(s, debugInfo);
         
-        MJFunction* mjFunction = new MJFunction(parent);
+        MJFunction* mjFunction = new MJFunction();
         mjFunction->debugInfo.fileName = debugInfo->fileName;
         
         std::string currentVarName = "";
         
         for(;; s++)
         {
-            if(*s == ')')
+            if(*s == ')' || *s == '\0')
             {
                 if(!currentVarName.empty())
                 {
@@ -368,29 +360,53 @@ MJRef* MJFunction::call(MJTable* args, MJTable* state)
                 break;
             case MJSTATEMENT_TYPE_VAR_ASSIGN:
             {
-                const char* cString = statement->expression.c_str();
+                const char* expressionCString = statement->expression.c_str();
                 char* endPtr;
                 
                 debugInfo.lineNumber = statement->lineNumber;
                 
                 
                 
-                MJRef* result = recursivelyLoadValue(cString,
+                MJRef* result = recursivelyLoadValue(expressionCString,
                                                      &endPtr,
                                                      nullptr,
                                                      functionState,
                                                      &debugInfo,
                                                      true);
                 
-                if(result && result->type() != MJREF_TYPE_NIL)
+                const char* varNameCString = statement->varName.c_str();
+                MJString* variableNameString = MJString::initWithHumanReadableString(varNameCString, &endPtr, &debugInfo);
+                
+                setVariable(variableNameString,
+                            result,
+                            functionState,
+                            &debugInfo);
+                
+                
+                /*if(result && result->type() != MJREF_TYPE_NIL)
                 {
                     functionState->objectsByStringKey[statement->varName] = result;
                 }
                 else
                 {
                     functionState->objectsByStringKey.erase(statement->varName);
-                }
+                }*/
                 
+            }
+                break;
+            case MJSTATEMENT_TYPE_FUNCTION_CALL:
+            {
+                const char* cString = statement->expression.c_str();
+                char* endPtr;
+                
+                debugInfo.lineNumber = statement->lineNumber;
+                
+                recursivelyLoadValue(cString,
+                                        &endPtr,
+                                            nullptr,
+                                     functionState,
+                                                     &debugInfo,
+                                     true);
             }
                 break;
             default:

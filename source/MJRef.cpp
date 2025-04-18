@@ -4,22 +4,22 @@
 #include "MJTable.h"
 #include "MJNumber.h"
 
-MJRef* loadVariableIfAvailable(MJString* stringValueRef, const char* str, char** endptr, MJTable* parentTable, MJDebugInfo* debugInfo)
+MJRef* loadVariableIfAvailable(MJString* variableName, const char* str, char** endptr, MJTable* parentTable, MJDebugInfo* debugInfo)
 {
-    if(stringValueRef->allowAsVariableName && parentTable)
+    if(variableName->allowAsVariableName && parentTable)
     {
-        MJRef* newValueRef = parentTable->recursivelyFindVariable(stringValueRef);
+        MJRef* newValueRef = parentTable->recursivelyFindVariable(variableName);
         if(newValueRef)
         {
             if(newValueRef->type() == MJREF_TYPE_TABLE)
             {
-                delete stringValueRef;
+                delete variableName;
                 newValueRef->retain();
                 return newValueRef;
             }
             else if(newValueRef->type() == MJREF_TYPE_FUNCTION)
             {
-                if(stringValueRef->isValidFunctionString)
+                if(variableName->isValidFunctionString)
                 {
                     const char* s = str;
                     MJTable* argsArrayTable = MJTable::initWithHumanReadableString(s, endptr, parentTable, debugInfo);
@@ -28,25 +28,38 @@ MJRef* loadVariableIfAvailable(MJString* stringValueRef, const char* str, char**
                     MJRef* result = ((MJFunction*)newValueRef)->call(argsArrayTable, parentTable);
                     
                     *endptr = (char*)s;
-                    delete stringValueRef;
+                    delete variableName;
                     return result;
                 }
                 else
                 {
-                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid call to function:%s", stringValueRef->value.c_str());
-                    delete stringValueRef;
+                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid call to function:%s", variableName->value.c_str());
+                    delete variableName;
                     return nullptr;
                 }
             }
             else
             {
-                delete stringValueRef;
+                delete variableName;
                 newValueRef = newValueRef->copy();
                 return newValueRef;
             }
         }
     }
-    return stringValueRef;
+    return variableName;
+}
+
+
+bool setVariable(MJString* variableName,
+                            MJRef* value,
+                               MJTable* parentTable,
+                               MJDebugInfo* debugInfo)
+{
+    if(variableName->allowAsVariableName && parentTable)
+    {
+        return parentTable->recursivelySetVariable(variableName, value);
+    }
+    return false;
 }
 
 MJRef* loadValue(const char* str, char** endptr, MJTable* parentTable, MJDebugInfo* debugInfo)
