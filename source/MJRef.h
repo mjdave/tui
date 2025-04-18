@@ -1,10 +1,3 @@
-//
-//  Database.h
-//  Ambience
-//
-//  Created by David Frampton on 31/10/17.
-//Copyright © 2017 Majic Jungle. All rights reserved.
-//
 
 #ifndef MJRef_h
 #define MJRef_h
@@ -15,8 +8,8 @@
 
 #include "glm.hpp"
 #include "MJLog.h"
-#include "FileUtils.h"
-#include "StringUtils.h"
+#include "MJFileUtils.h"
+#include "MJStringUtils.h"
 
 #define MJSError(__fileName__, __lineNumber__, fmt__, ...) MJLog("error %s:%d:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
 #define MJSWarn(__fileName__, __lineNumber__, fmt__, ...) MJLog("warning %s:%d:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
@@ -81,6 +74,22 @@ inline const char* skipToNextChar(const char* str, MJDebugInfo* debugInfo, bool 
 }
 
 
+class MJTable;
+class MJString;
+class MJRef;
+
+MJRef* loadVariableIfAvailable(MJString* stringValueRef,
+                               const char* str,
+                               char** endptr,
+                               MJTable* parentTable,
+                               MJDebugInfo* debugInfo);
+
+MJRef* recursivelyLoadValue(const char* str,
+                            char** endptr,
+                            MJRef* leftValue,
+                            MJTable* parentTable,
+                            MJDebugInfo* debugInfo,
+                            bool runLowOperators);
 
 class MJRef {
 public: //members
@@ -163,25 +172,6 @@ private:
     
 private:
 };
-/*
-class MJFunction : public MJRef {
-public: //members
-    void* value;
-
-public://functions
-    MJFunction(void* value_) {value = value_;}
-    virtual ~MJFunction() {};
-    
-    virtual uint8_t type() { return MJREF_TYPE_FUNCTION; }
-    virtual std::string getTypeName() {return "function";}
-    virtual std::string getStringValue() {
-        return "function";
-    }
-
-private:
-    
-private:
-};*/
 
 
-#endif /* MJRef_h */
+#endif

@@ -283,4 +283,4 @@ private:
 private:
 };
 
-#endif /* MJNumber_h */
+#endif

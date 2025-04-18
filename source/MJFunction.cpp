@@ -1,7 +1,7 @@
 #include "MJFunction.h"
 
 #include "MJTable.h"
-#include "MJExpression.h"
+#include "MJRef.h"
 
 MJFunction::MJFunction(MJTable* parent)
 {
@@ -166,24 +166,6 @@ MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endp
                     
                     s = skipToNextChar(*endptr, debugInfo, true);
                     
-                    /*for(;; s++)
-                    {
-                        if(*s == '}')
-                        {
-                            s++;
-                            break;
-                        }
-                        else if(!(isspace(*s) || *s == '\n'))
-                        {
-                            statement->expression += *s;
-                        }
-                        if(*s == '\n')
-                        {
-                            debugInfo->lineNumber++;
-                        }
-                    }
-                    statement->expression += '\n'; //bit of a hack, expression string parsing needs a comma or newline to mark the end of the string*/
-                    
                     mjFunction->statements.push_back(statement);
                 }
             }
@@ -264,9 +246,6 @@ MJRef* MJFunction::call(MJTable* args, MJTable* state)
         functionState->objectsByStringKey[argNames[i]] = arg;
         i++;
     }
-    
-    MJLog("function state:");
-    functionState->debugLog();
     
     for(MJStatement* statement : statements)
     {

@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <string>
 #include "glm.hpp"
-//#include "MurmurHash3.h"
 #include "MJLog.h"
 
 #include "MJRef.h"
@@ -163,4 +162,4 @@ private:
 private:
 };
 
-#endif /* MJString_h */
+#endif

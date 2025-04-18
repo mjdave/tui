@@ -1,12 +1,5 @@
-//
-//  StringUtils.cpp
-//  WorldServer
-//
-//  Created by David Frampton on 5/12/14.
-//  Copyright (c) 2014 Majic Jungle. All rights reserved.
-//
 
-#include "StringUtils.h"
+#include "MJStringUtils.h"
 #include <stdio.h>
 #include <string>
 #include <cstring>

@@ -14,8 +14,6 @@
 #include "MJString.h"
 #include "MJFunction.h"
 
-#include "MJExpression.h"
-
 class MJTable : public MJRef {
 public:
     std::vector<MJRef*> arrayObjects; // these members are public for ease/speed of iteration, but it's often best to use the get/set methods instead
@@ -752,34 +750,10 @@ public://functions
         ref->release();
     }
     
-    /*void setFunction()
-    {
-        MJUserData* ref = new MJUserData(value);
-        set(key, ref);
-        ref->release();
-    }*/
-    
-    /*void insert(MJRef* key, MJRef* value) {
-        if(!key || key->type() == MJREF_TYPE_NIL)
-        {
-            MJError("Key is nil in table insert.")
-            exit(1);
-        }
-        
-        if(!value || value->type() == MJREF_TYPE_NIL)
-        {
-            objects.erase(key);
-        }
-        else
-        {
-            objects[key] = value;
-        }
-    }*/
-    
 
 private:
     
 private:
 };
 
-#endif /* MJTable_h */
+#endif 

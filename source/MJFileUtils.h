@@ -1,13 +1,6 @@
-//
-//  FileUtils.h
-//  World
-//
-//  Created by David Frampton on 1/12/14.
-//  Copyright (c) 2014 Majic Jungle. All rights reserved.
-//
 
-#ifndef __World__FileUtils__
-#define __World__FileUtils__
+#ifndef __MJFileUtils__
+#define __MJFileUtils__
 
 #include <stdio.h>
 #include <stdint.h>
@@ -15,16 +8,11 @@
 #include <string>
 #include "MJLog.h"
 
-#define SOURCE_FILE_NAME_WITHOUT_PATH fileNameFromPath(__FILE__).c_str()
-
 std::string getFileContents(const std::string& filename);
 void writeToFile(const std::string& filename, const std::string& data);
 
-void setFileSaveBasePath(const std::string& newBasePath);
 std::string getResourcePath(const std::string &appendPath = "");
-std::string getWorldSavePath(const std::string& playerID, const std::string& worldID, const std::string& appendPath = "");
 std::string getSavePath(const std::string &appendPath = "");
-std::string getScriptPath(const std::string &appendPath = "");
 
 std::vector<std::string> getDirectoryContents(const std::string& dirName);
 std::string fileNameFromPath(const std::string& path);
@@ -48,15 +36,8 @@ bool removeFile(const std::string& removePath);
 bool removeEmptyDirectory(const std::string& removePath);
 bool removeDirectory(const std::string& removePath);
 
-
 bool copyFileOrDir(const std::string& sourcePath, const std::string& destinationPath);
-
-
-bool zipDirectory(const std::string& dirPath, const std::string& archivePath);
-bool unzipArchive(const std::string& archivePath, const std::string& dirPath);
 
 void openFile(std::string filePath);
 
-bool copyDatabase(std::string srcPath, std::string dstPath, bool compactOnCopy = false);
-
-#endif /* defined(__World__FileUtils__) */
+#endif

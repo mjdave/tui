@@ -1,5 +1,5 @@
-#include "FileUtils.h"
-#include "StringUtils.h"
+#include "MJFileUtils.h"
+#include "MJStringUtils.h"
 
 #include <fstream>
 
@@ -103,28 +103,6 @@ bool removeDirectory(const std::string& removePath)
 std::string getResourcePath(const std::string &appendPath)
 {
     return appendPath;
-    /*
-    static std::string basePath;
-    if(basePath.empty())
-    {
-        char *basePathCString = SDL_GetBasePath();
-        if (basePathCString){
-            basePath = basePathCString;
-            basePath = basePath + "resources/";
-            SDL_free(basePathCString);
-        }
-        else {
-            std::cerr << "Error getting resource path: " << SDL_GetError() << std::endl;
-            return "";
-        }
-    }
-
-    if(appendPath.empty())
-    {
-        return basePath;
-    }
-
-    return basePath + appendPath;*/
 }
 
 std::vector<std::string> getDirectoryContents(const std::string& dirName)
@@ -446,88 +424,9 @@ bool fileExistsAtPath(const std::string& path)
     return false;
 }
 
-static std::string basePath;
-
-void setFileSaveBasePath(const std::string& newBasePath)
-{
-    if(newBasePath.empty())
-    {
-        return;
-    }
-    
-    basePath = newBasePath;
-    if(basePath[basePath.length() - 1] != '/')
-    {
-        basePath = basePath + "/";
-    }
-    
-    if(!(fileExistsAtPath(basePath)))
-    {
-        std::cerr << "Error, the specified game save directory does not exist. Please create it first:" << basePath << std::endl;
-        exit(0);
-    }
-    else
-    {
-        basePath = basePath + "ambience/";
-        if(!(fileExistsAtPath(basePath)))
-        {
-            createDirectoriesIfNeededForDirPath(basePath);
-        }
-    }
-}
-
 std::string getSavePath(const std::string& appendPath)
 {
     return appendPath;
-    /*
-    if(basePath.empty())
-    {
-        char *basePathCString = SDL_GetPrefPath("majicjungle", "ambience");
-        if (basePathCString){
-            basePath = basePathCString;
-            SDL_free(basePathCString);
-        }
-        else {
-            std::cerr << "Error getting save path: " << SDL_GetError() << std::endl;
-            return "";
-        }
-    }
-
-    if(appendPath.empty())
-    {
-        return basePath;
-    }
-
-    return basePath + appendPath;*/
-}
-
-
-std::string getWorldSavePath(const std::string& playerID, const std::string& worldID, const std::string& appendPath)
-{
-    std::string worldsDir = getSavePath("players/" + playerID + "/worlds/" + worldID);
-    
-    if(appendPath.empty())
-    {
-        return worldsDir;
-    }
-    
-    return worldsDir + "/" + appendPath;
-}
-
-std::string getScriptPath(const std::string &appendPath)
-{
-//#if (DEBUG || HOTLOAD_DEVELOPMENT)
-//    std::string basePath = DEV_RESOURCES_DIR;
-//    basePath = pathByAppendingPathComponent(basePath, "scripts/");
-//#else
-    std::string basePath = getResourcePath("scripts/");
-//#endif
-    if(appendPath.empty())
-    {
-        return basePath;
-    }
-
-    return pathByAppendingPathComponent(basePath, appendPath);
 }
 
 void createDirectoriesIfNeededForDirPath(const std::string& path)
@@ -541,7 +440,6 @@ void createDirectoriesIfNeededForDirPath(const std::string& path)
             thisPath = thisPath + "/" + filePathComponents[i];
             if(!fileExistsAtPath(thisPath))
             {
-                MJLog("mkdir:%s", thisPath.c_str());
                 int error = 0;
 #ifdef WIN32
                 error = _wmkdir(convertUtf8ToWide(thisPath).c_str());
@@ -564,26 +462,8 @@ void createDirectoriesIfNeededForFilePath(const std::string& path)
     createDirectoriesIfNeededForDirPath(dirPath);
 }
 
-/*
-bool copyFile (const string &src, const string &dest, bool remove_src) {
-	ifstream ifs(src, ios::in|ios::binary);
-	ofstream ofs(dest, ios::out|ios::binary);
-	if (ifs && ofs) {
-		ofs << ifs.rdbuf();
-		if (!ifs.fail() && !ofs.fail() && remove_src) {
-			ofs.close();
-			ifs.close();
-			return remove(src);
-		}
-		else
-			return !remove_src;
-	}
-	return false;
-}*/
-
 bool copyFile(const std::string& sourcePath, const std::string& destinationPath)
 {
-	//MJLog("copyFile:%s -> %s", sourcePath.c_str(), destinationPath.c_str());
 	std::ifstream ifs((sourcePath).c_str(), std::ios::in|std::ios::binary);
 	std::ofstream ofs((destinationPath).c_str(), std::ios::out|std::ios::binary);
 	if(ifs && ofs)
@@ -627,8 +507,6 @@ bool copyDirectory(const std::string& sourcePath, const std::string& destination
 
 bool copyFileOrDir(const std::string& sourcePath, const std::string& destinationPath)
 {
-	//MJLog("copyFileOrDir:%s -> %s", sourcePath.c_str(), destinationPath.c_str());
-
 	if(fileExistsAtPath(sourcePath))
 	{
 		if(isDirectoryAtPath(sourcePath) && !isSymLinkAtPath(sourcePath))
@@ -647,158 +525,6 @@ bool copyFileOrDir(const std::string& sourcePath, const std::string& destination
 	}
 	return true;
 }
-/*
-bool addFilesRecursively(const std::string& startPath, const std::string& thisPath, zip_t *zipper)
-{
-	std::vector<std::string> contents = getDirectoryContents(thisPath);
-	for(const std::string& subFile : contents)
-	{
-		std::string fullPath = pathByAppendingPathComponent(thisPath, subFile); 
-		if(!isSymLinkAtPath(fullPath))
-		{
-			if(isDirectoryAtPath(fullPath))
-			{
-				if(zip_dir_add(zipper, fullPath.substr(startPath.length() + 1).c_str(), ZIP_FL_ENC_UTF_8 ) == -1)
-				{
-					MJLog("ERROR: Failed to add dir to zip archive:%s", fullPath.c_str());
-					return false;
-				}
-				if(!addFilesRecursively(startPath, fullPath, zipper))
-				{
-					return false;
-				}
-			}
-			else
-			{
-				zip_source_t *source = zip_source_file(zipper, fullPath.c_str(), 0, 0);
-				if(!source)
-				{
-					MJLog("ERROR: Failed to compress file:%s", fullPath.c_str());
-					return false;
-				}
-				else
-				{
-					if(zip_file_add(zipper, fullPath.substr(startPath.length() + 1).c_str(), source, ZIP_FL_ENC_UTF_8) == -1)
-					{
-						MJLog("ERROR: Failed to add file to zip archive:%s", fullPath.c_str());
-						//maybe should free, safer to maybe leak assuming this doesn't happen often
-						return false;
-					}
-				}
-			}
-		}
-	}
-	return true;
-}
-
-bool zipDirectory(const std::string& dirPath, const std::string& archivePath)
-{
-	//MJLog("zipDirectory:%s->%s", dirPath, archivePath);
-
-	if(fileExistsAtPath(dirPath))
-	{
-		if(isDirectoryAtPath(dirPath))
-		{
-			int errorp;
-			zip_t *zipper = zip_open(archivePath.c_str(), ZIP_CREATE | ZIP_TRUNCATE, &errorp);
-
-			if(zipper)
-			{
-				bool success = addFilesRecursively(dirPath, dirPath, zipper);
-				zip_close(zipper);
-				return success;
-			}
-		}
-	}
-
-	return false;
-}
-
-
-#define ZIP_BUFFER_UNARCHIVE_SZIE 1024
-
-bool unzipArchive(const std::string& archivePath, const std::string& dirPath)
-{
-	//MJLog("unzipArchive:%s->%s", archivePath, dirPath);
-	static char buffer[ZIP_BUFFER_UNARCHIVE_SZIE];
-
-	if(fileExistsAtPath(archivePath))
-	{
-		int errorp;
-		zip_t *zipper = zip_open(archivePath.c_str(), ZIP_RDONLY, &errorp);
-
-		if(zipper)
-		{
-			int numEntries = zip_get_num_entries(zipper, 0);
-
-			struct zip_stat stat;
-			for(int i = 0; i < numEntries; i++)
-			{
-				if (zip_stat_index(zipper, i, 0, &stat) == 0)
-				{
-					MJLog("found in zip file:%s", stat.name);
-					size_t nameLength = strlen(stat.name);
-					if(nameLength > 0)
-					{
-						std::string outputPath = pathByAppendingPathComponent(dirPath, stat.name);
-
-						if(stat.name[nameLength - 1] == '/')
-						{
-							createDirectoriesIfNeededForDirPath(outputPath);
-						}
-						else
-						{
-							createDirectoriesIfNeededForFilePath(outputPath);
-
-							struct zip_file *zipFile = zip_fopen_index(zipper, i, 0);
-							if(!zipFile)
-							{
-								MJLog("ERROR:Failed to extract file:%s from zip archive:%s", stat.name, archivePath.c_str());
-								zip_close(zipper);
-								return false;
-							}
-
-							std::ofstream ofs(convertUtf8ToWide(outputPath), std::ios::binary | std::ios::out | std::ios::trunc);
-
-							if(!ofs.is_open())
-							{
-								MJLog("Failed to unzip file, file save location not found:%s", outputPath);
-								zip_fclose(zipFile);
-								zip_close(zipper);
-								return false;
-							}
-
-							int sum = 0;
-							while (sum != stat.size) {
-								size_t foundLength = zip_fread(zipFile, buffer, ZIP_BUFFER_UNARCHIVE_SZIE);
-								if (foundLength < 0) 
-								{
-									MJLog("Failed to unzip file, file save location not found:%s", outputPath);
-									ofs.close();
-									zip_fclose(zipFile);
-									zip_close(zipper);
-								}
-
-								ofs.write((const char*)buffer, foundLength);
-
-								sum += foundLength;
-							}
-
-							zip_fclose(zipFile);
-							ofs.close();
-						}
-					}
-				}
-			}
-
-			zip_close(zipper);
-			return true;
-		}
-	}
-
-
-	return false;
-}*/
 
 
 void openFile(std::string filePath)

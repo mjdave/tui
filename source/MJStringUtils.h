@@ -1,13 +1,7 @@
-//
-//  StringUtils.h
-//  WorldServer
-//
-//  Created by David Frampton on 5/12/14.
-//  Copyright (c) 2014 Majic Jungle. All rights reserved.
-//
 
-#ifndef WorldServer_StringUtils_h
-#define WorldServer_StringUtils_h
+
+#ifndef MJStringUtils_h
+#define MJStringUtils_h
 
 #include <stdarg.h>  // for va_start, etc
 #include <memory>    // for std::unique_ptr
@@ -20,7 +14,7 @@
 #include <ctype.h>
 #include <iomanip>
 #include <limits>
-#include "sha1.h"
+#include "MJSha1.h"
 //#include <fmt/printf.h>
 
 #include <stdexcept>
@@ -73,7 +67,6 @@ inline std::string convertWideToUtf8(const std::wstring& wstr)
 }
 #else
 
-//#ifndef __APPLE__
 inline std::string convertUtf8ToWide(const std::string& str)
 {
     return str;
@@ -83,27 +76,6 @@ inline std::string convertWideToUtf8(const std::string& wstr)
 {
     return wstr;
 }
-
-/*#else
-#include <locale>
-#include <codecvt>
-#include <string>
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-inline std::wstring convertUtf8ToWide(const std::string& str)
-{
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    return converter.from_bytes(str);
-}
-
-inline std::string convertWideToUtf8(const std::wstring& wstr)
-{
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
-    return converter.to_bytes(wstr);
-}
-#pragma GCC diagnostic pop
-#endif*/
 #endif
 
 

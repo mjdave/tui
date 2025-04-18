@@ -65,4 +65,4 @@ private:
 private:
 };
 
-#endif /* MJExpression_h */
+#endif
