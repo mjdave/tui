@@ -2,9 +2,9 @@
 
 mjscript is an open source scripting and serialization library for c++.
 
-Designed by a solo game developer to be simple to understand, use and modify, mjscript combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
+Designed by a solo game developer to be fast, and simple to understand, use and modify, mjscript combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
 
-mjscript is dynamically typed, fast, flexibile, and small. You can add the files to your c++ project, run a script, and access the output easily.
+mjscript is dynamically typed, fast, flexible, and small. You can add the files to your c++ project, run a script, and access the output easily.
 ```c++
 #include "MJScript.h"
 
@@ -15,9 +15,11 @@ int main()
     double playDuration = table->getDouble("playDuration"); //get a number
     table->setDouble("playDuration", playDuration + 1.0); //set a number
     table->saveToFile("config.mjh"); //save in a human readable JSON-like format
+    table->release(); //cleanup
     
     MJRef* scriptRunResult = MJTable::runScriptFile("script.mjh"); //run a script file
     scriptRunResult->debugLog(); //print the result
+    scriptRunResult->release(); //cleanup
 }
 
 ```
@@ -30,7 +32,7 @@ Or you can use it as a data format and serialization library. Where you might ha
 
 # Variables & Expressions
 Any previously assigned value can be accessed by the key name. This can be used to define constants to do math for later values.
-```
+```javascript
 {
     baseWidth = 400,
     halfWidth = baseWidth * 0.5,
@@ -71,7 +73,7 @@ array = {
 ```
 
 # Scope
-All variables are limited in scope to the block they are declared in and all child blocks. So variables declared at the top level are effectively globals. You can access children with the '.' sytax.
+All variables are limited in scope to the block they are declared in and all child blocks. So variables declared at the top level are effectively globals. You can access children with the '.' syntax.
 ```javascript
 {
     varA = 10
@@ -101,8 +103,10 @@ Memory is handled with reference counting, there is no garbage collection. You c
 ```
 
 # What mjscript is not
-mjscript has 'objects', as tables. However there is no concept of 'self/this', and no inheretance so it wouldn't be considered an object orientated language.
+mjscript has 'objects', as tables. However there is no concept of 'self/this', and no inheritance so it wouldn't be considered an object orientated language.
 
 mjscript will stay small, and won't add a lot of support for built in system functionality. If this functionality is desired, it can easily be added on the C++ side by registering your own functions.
 
 There are no bindings for languages other than C++ at present.
+
+mjscript is under active development, binary formats are not yet supported, functions have limited functionality for now.
