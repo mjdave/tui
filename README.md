@@ -21,6 +21,20 @@ Any previously assigned value can be accessed by the key name. This can be used 
     doubleWidth = baseWidth * 2.0,
 }
 ```
+# Functions
+Functions are still a work in progress, but we have value assignment and basic expressions so far.
+```
+{
+    addTariff = function(base)
+    {
+        tariff = 145 / 100
+        return (base * (1.0 + tariff))
+    }
+    
+    costOfTV = addTariff(500),          #1225
+    costOfPlaystation = addTariff(400)  #980
+}
+```
 # Vectors
 The only dependency of mjscript is glm, which currently exposes vec2, vec3, vec4, and mat3 types, as well as a number of builtin math functions
 ```

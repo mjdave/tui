@@ -4,6 +4,15 @@
     #    print(myNumber(i,4))
     #}
 
+    addTariff = function(base)
+    {
+        tariff = 145 / 100
+        return (base * (1.0 + tariff))
+    }
+    
+    costOfTV = addTariff(500),
+    costOfPlaystation = addTariff(400)
+
     max = function(a,b)
     {
         #if a > b #todo!

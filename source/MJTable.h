@@ -448,6 +448,8 @@ public://functions
             char* endPtr;
             MJRef* resultRef = nullptr;
             MJTable* table = initWithHumanReadableString(cString, &endPtr, parent, &debugInfo, &resultRef);
+            //todo if debug logging
+            table->debugLog();
             return resultRef;
         }
         else
