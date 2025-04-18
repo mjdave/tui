@@ -23,10 +23,8 @@ int main(int argc, const char * argv[]) {
         return 0;
     }
     
-    
-    new Interpreter(args);
-    
-    MJLog("hi");
+    Interpreter* interpreter = new Interpreter(args);
+    delete interpreter;
     
     return 0;
 }

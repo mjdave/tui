@@ -6,7 +6,7 @@
 
 MJRef* loadVariableIfAvailable(MJString* stringValueRef, const char* str, char** endptr, MJTable* parentTable, MJDebugInfo* debugInfo)
 {
-    if(stringValueRef->allowAsVariableName)
+    if(stringValueRef->allowAsVariableName && parentTable)
     {
         MJRef* newValueRef = parentTable->recursivelyFindVariable(stringValueRef);
         if(newValueRef)

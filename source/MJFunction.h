@@ -16,6 +16,7 @@ enum {
     MJSTATEMENT_TYPE_RETURN_EXPRESSION,
     MJSTATEMENT_TYPE_VAR_ASSIGN,
     MJSTATEMENT_TYPE_FUNCTION_CALL,
+    MJSTATEMENT_TYPE_IF,
 };
 
 class MJStatement {
@@ -30,6 +31,11 @@ public://functions
     virtual ~MJStatement() {}
 };
 
+class MJIfStatement : public MJStatement {
+public://functions
+    std::vector<MJStatement*> statements;
+    MJIfStatement(uint8_t type_) : MJStatement(type_) {}
+};
 
 class MJFunction : public MJRef {
 public: //members

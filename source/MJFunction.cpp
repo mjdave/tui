@@ -22,9 +22,62 @@ void serializeExpression(const char* str, char** endptr, MJStatement* statement,
     const char* s = str;
     int bracketDepth = 0;
     
+    bool singleQuote = false;
+    bool doubleQuote = false;
+    bool escaped = false;
+    
     for(;; s++)
     {
-        if(*s == '\n')
+        if(*s == '\'')
+        {
+            statement->expression += *s;
+            if(!escaped && !doubleQuote)
+            {
+                if(singleQuote)
+                {
+                    singleQuote = false;
+                    s++;
+                    break;
+                }
+                else
+                {
+                    singleQuote = true;
+                    continue;
+                }
+            }
+        }
+        else if(*s == '"')
+        {
+            statement->expression += *s;
+            if(!escaped && !singleQuote)
+            {
+                if(doubleQuote)
+                {
+                    doubleQuote = false;
+                    s++;
+                    break;
+                }
+                else
+                {
+                    doubleQuote = true;
+                    continue;
+                }
+            }
+        }
+        else if(*s == '\\')
+        {
+            statement->expression += *s;
+            if(!escaped)
+            {
+                escaped = true;
+                continue;
+            }
+        }
+        else if(escaped || singleQuote || doubleQuote)
+        {
+            statement->expression += *s;
+        }
+        else if(*s == '\n')
         {
             if(bracketDepth <= 0)
             {
@@ -59,15 +112,142 @@ void serializeExpression(const char* str, char** endptr, MJStatement* statement,
             
             statement->expression += *s;
         }
+        
+        escaped = false;
     }
     statement->expression += '\n'; //bit of a hack, expression string parsing needs a comma or newline to mark the end of the string
     
     *endptr = (char*)s;
 }
 
+bool loadFunctionBody(const char* str, char** endptr, MJTable* parent, MJDebugInfo* debugInfo, std::vector<MJStatement*>* statements)
+{
+    const char* s = str;
+    if(*s != '{')
+    {
+        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Function expected opening brace");
+        return false;
+    }
+    s++;
+    s = skipToNextChar(s, debugInfo);
+    
+    while(1)
+    {
+        if(*s == '}')
+        {
+            s++;
+            break;
+        }
+        
+        if(*s == 'i' && *(s + 1) == 'f' && (*(s + 2) == '(' || isspace(*(s + 2))))
+        {
+            s+=2;
+            s = skipToNextChar(s, debugInfo);
+            
+            MJIfStatement* statement = new MJIfStatement(MJSTATEMENT_TYPE_RETURN_EXPRESSION);
+            statement->lineNumber = debugInfo->lineNumber;
+            
+            serializeExpression(s, endptr, statement, debugInfo);
+            
+            s = skipToNextChar(*endptr, debugInfo, true);
+            
+            bool success = loadFunctionBody(s, endptr, parent, debugInfo, &statement->statements);
+            if(!success)
+            {
+                return false;
+            }
+            
+            statements->push_back(statement);
+        }
+        else if(*s == 'r'
+           && *(s + 1) == 'e'
+           && *(s + 2) == 't'
+           && *(s + 3) == 'u'
+           && *(s + 4) == 'r'
+           && *(s + 5) == 'n')
+        {
+            s+=6;
+            s = skipToNextChar(s, debugInfo);
+            if(*s == '}')
+            {
+                MJStatement* statement = new MJStatement(MJSTATEMENT_TYPE_RETURN);
+                statements->push_back(statement);
+                s++;
+                s = skipToNextChar(s, debugInfo, true);
+                break;
+            }
+            else
+            {
+                MJStatement* statement = new MJStatement(MJSTATEMENT_TYPE_RETURN_EXPRESSION);
+                statement->lineNumber = debugInfo->lineNumber;
+                
+                serializeExpression(s, endptr, statement, debugInfo);
+                
+                s = skipToNextChar(*endptr, debugInfo, true);
+                
+                statements->push_back(statement);
+            }
+        }
+        
+        /*MJFunction* functionRef = MJFunction::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        if(functionRef)
+        {
+            MJError("unimplemented")
+        }*/
+        
+        MJString* varNameRef = MJString::initWithHumanReadableString(s, endptr, debugInfo);
+        s = skipToNextChar(*endptr, debugInfo);
+        
+        if(varNameRef)
+        {
+            if(varNameRef->isValidFunctionString)
+            {
+                /*MJTable* argsArrayTable = MJTable::initWithHumanReadableString(s, endptr, parentTable, debugInfo);
+                s = skipToNextChar(*endptr, debugInfo, true);
+                
+                MJRef* result = ((MJFunction*)newValueRef)->call(argsArrayTable, parentTable);
+                
+                *endptr = (char*)s;
+                delete valueRef;
+                return result;*/
+            }
+            
+            if(varNameRef->allowAsVariableName)
+            {
+                if(*s == '=')
+                {
+                    s++;
+                    
+                    MJStatement* statement = new MJStatement(MJSTATEMENT_TYPE_VAR_ASSIGN);
+                    statement->lineNumber = debugInfo->lineNumber;
+                    statement->varName = varNameRef->value;
+                    
+                    serializeExpression(s, endptr, statement, debugInfo);
+                    
+                    s = skipToNextChar(*endptr, debugInfo, true);
+                    
+                    statements->push_back(statement);
+                }
+                else
+                {
+                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
+                    return false;
+                }
+            }
+            delete varNameRef;
+        }
+        
+        //MJSWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "valueRef:%s", valueRef->getDebugString().c_str())
+    }
+    
+    s = skipToNextChar(s, debugInfo, true);
+    *endptr = (char*)s;
+    
+    return true;
+}
+
 MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endptr, MJTable* parent, MJDebugInfo* debugInfo) //assumes that '(' is currently in str
 {
-    
     const char* s = str;
     if(*s == 'f'
         && *(s + 1) == 'u'
@@ -124,103 +304,14 @@ MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endp
         
         s = skipToNextChar(s, debugInfo);
         
-        if(*s != '{')
+        bool success = loadFunctionBody(s, endptr, parent, debugInfo, &mjFunction->statements);
+        if(!success)
         {
-            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Function expected opening brace");
             delete mjFunction;
             return nullptr;
         }
-        s++;
-        s = skipToNextChar(s, debugInfo);
         
-        while(1)
-        {
-            if(*s == '}')
-            {
-                s++;
-                break;
-            }
-            if(*s == 'r'
-               && *(s + 1) == 'e'
-               && *(s + 2) == 't'
-               && *(s + 3) == 'u'
-               && *(s + 4) == 'r'
-               && *(s + 5) == 'n')
-            {
-                s+=6;
-                s = skipToNextChar(s, debugInfo);
-                if(*s == '}')
-                {
-                    MJStatement* statement = new MJStatement(MJSTATEMENT_TYPE_RETURN);
-                    mjFunction->statements.push_back(statement);
-                    s++;
-                    s = skipToNextChar(s, debugInfo, true);
-                    break;
-                }
-                else
-                {
-                    MJStatement* statement = new MJStatement(MJSTATEMENT_TYPE_RETURN_EXPRESSION);
-                    statement->lineNumber = debugInfo->lineNumber;
-                    
-                    serializeExpression(s, endptr, statement, debugInfo);
-                    
-                    s = skipToNextChar(*endptr, debugInfo, true);
-                    
-                    mjFunction->statements.push_back(statement);
-                }
-            }
-            
-            /*MJFunction* functionRef = MJFunction::initWithHumanReadableString(s, endptr, parent, debugInfo);
-            if(functionRef)
-            {
-                MJError("unimplemented")
-            }*/
-            
-            MJString* varNameRef = MJString::initWithHumanReadableString(s, endptr, debugInfo);
-            s = skipToNextChar(*endptr, debugInfo);
-            
-            if(varNameRef)
-            {
-                if(varNameRef->isValidFunctionString)
-                {
-                    /*MJTable* argsArrayTable = MJTable::initWithHumanReadableString(s, endptr, parentTable, debugInfo);
-                    s = skipToNextChar(*endptr, debugInfo, true);
-                    
-                    MJRef* result = ((MJFunction*)newValueRef)->call(argsArrayTable, parentTable);
-                    
-                    *endptr = (char*)s;
-                    delete valueRef;
-                    return result;*/
-                }
-                
-                if(varNameRef->allowAsVariableName)
-                {
-                    if(*s == '=')
-                    {
-                        s++;
-                        
-                        MJStatement* statement = new MJStatement(MJSTATEMENT_TYPE_VAR_ASSIGN);
-                        statement->lineNumber = debugInfo->lineNumber;
-                        statement->varName = varNameRef->value;
-                        
-                        serializeExpression(s, endptr, statement, debugInfo);
-                        
-                        s = skipToNextChar(*endptr, debugInfo, true);
-                        
-                        mjFunction->statements.push_back(statement);
-                    }
-                    else
-                    {
-                        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
-                    }
-                }
-                delete varNameRef;
-            }
-            
-            //MJSWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "valueRef:%s", valueRef->getDebugString().c_str())
-        }
-        
-        s = skipToNextChar(s, debugInfo, true);
+        s = skipToNextChar(*endptr, debugInfo, true);
         *endptr = (char*)s;
         return mjFunction;
         
@@ -236,7 +327,7 @@ MJRef* MJFunction::call(MJTable* args, MJTable* state)
     MJTable* functionState = new MJTable(state);
     
     int i = 0;
-    int maxArgs = argNames.size();
+    int maxArgs = (int)argNames.size();
     for(MJRef* arg : args->arrayObjects)
     {
         if(i >= maxArgs)

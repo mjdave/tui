@@ -1,0 +1,18 @@
+{
+    addNumbers = function(a,b)
+    {
+        return a + b
+    }
+    
+    sayHelloWorldInAConvolutedWay = function()
+    {
+        return "Hello World!"
+    }
+    
+    ten = 10
+
+    return {
+        helloWorld = sayHelloWorldInAConvolutedWay()
+        addResult = addNumbers(ten, 10)
+    }
+}

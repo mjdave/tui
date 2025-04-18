@@ -1,0 +1,23 @@
+{
+    #for(i=1,<100,+1)
+    #{
+    #    print(myNumber(i,4))
+    #}
+
+    max = function(a,b)
+    {
+        #if a > b #todo!
+        #{
+        #    return a
+        #}
+        return b
+    }
+
+    ten = 10
+
+    return {
+        max_20 = max(10,20)
+        max_20b = max(20,ten)
+        max_neg10 = max(-10,-20)
+    }
+}

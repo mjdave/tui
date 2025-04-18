@@ -162,7 +162,7 @@ public://functions
     
     
     
-    bool addHumanReadableKeyValuePair(const char* str, char** endptr, MJDebugInfo* debugInfo) {
+    bool addHumanReadableKeyValuePair(const char* str, char** endptr, MJDebugInfo* debugInfo, MJRef** resultRef = nullptr) {
         const char* s = skipToNextChar(str, debugInfo);
         
         if(isdigit(*s))
@@ -229,6 +229,47 @@ public://functions
         }
         else
         {
+            if(resultRef && *s == 'r'
+               && *(s + 1) == 'e'
+               && *(s + 2) == 't'
+               && *(s + 3) == 'u'
+               && *(s + 4) == 'r'
+               && *(s + 5) == 'n')
+            {
+                s+=6;
+                s = skipToNextChar(s, debugInfo);
+                if(*s == '}')
+                {
+                    *resultRef = new MJRef();
+                    s++;
+                    s = skipToNextChar(s, debugInfo, true);
+                    *endptr = (char*)s;
+                    return false;
+                }
+                else
+                {
+                    *resultRef = recursivelyLoadValue(s,
+                                                         endptr,
+                                                         nullptr,
+                                                         this,
+                                                         debugInfo,
+                                                         true);
+                    s = skipToNextChar(*endptr, debugInfo, true);
+                    *endptr = (char*)s;
+                    return false;
+                    
+                    /*MJStatement* statement = new MJStatement(MJSTATEMENT_TYPE_RETURN_EXPRESSION);
+                    statement->lineNumber = debugInfo->lineNumber;
+                    
+                    serializeExpression(s, endptr, statement, debugInfo);
+                    
+                    s = skipToNextChar(*endptr, debugInfo, true);
+                    
+                    mjFunction->statements.push_back(statement);*/
+                }
+            }
+            
+            
             MJRef* keyRef = initUnknownTypeRefWithHumanReadableString(s, endptr, this, debugInfo);
             
             s = skipToNextChar(*endptr, debugInfo, true);
@@ -324,7 +365,7 @@ public://functions
     }
     
     
-    static MJTable* initWithHumanReadableString(const char* str, char** endptr, MJTable* parent, MJDebugInfo* debugInfo) {
+    static MJTable* initWithHumanReadableString(const char* str, char** endptr, MJTable* parent, MJDebugInfo* debugInfo, MJRef** resultRef = nullptr) {
         MJTable* table = new MJTable(parent);
         
         const char* s = skipToNextChar(str, debugInfo);
@@ -346,7 +387,7 @@ public://functions
                     break;
                 }
                 
-                if(!table->addHumanReadableKeyValuePair(s, endptr, debugInfo))
+                if(!table->addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
                 {
                     break;
                 }
@@ -388,6 +429,33 @@ public://functions
             MJError("File not found in MJTable::initWithHumanReadableFilePath at:%s", filename.c_str());
         }
         return nullptr;
+    }
+    
+    static MJRef* runScriptFile(const std::string& filename, MJTable* parent)
+    {
+        std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
+        MJDebugInfo debugInfo;
+        debugInfo.fileName = filename;
+        if(in)
+        {
+            std::string contents;
+            in.seekg(0, std::ios::end);
+            contents.resize(in.tellg());
+            in.seekg(0, std::ios::beg);
+            in.read(&contents[0], contents.size());
+            in.close();
+            const char* cString = contents.c_str();
+            char* endPtr;
+            MJRef* resultRef = nullptr;
+            MJTable* table = initWithHumanReadableString(cString, &endPtr, parent, &debugInfo, &resultRef);
+            return resultRef;
+        }
+        else
+        {
+            MJError("File not found in MJTable::initWithHumanReadableFilePath at:%s", filename.c_str());
+        }
+        return nullptr;
+        //MJRef** resultRef
     }
     
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) {
