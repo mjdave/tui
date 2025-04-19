@@ -239,7 +239,7 @@ public://functions
                 s++;
                 s = skipToNextChar(s, debugInfo);
                 
-                MJRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, this, debugInfo, true);
+                MJRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, this, debugInfo, true, true);
                 s = skipToNextChar(*endptr, debugInfo, true);
                 
                 objectsByNumberKey[(uint32_t)keyValue] = valueRef;
@@ -303,7 +303,8 @@ public://functions
                                                          nullptr,
                                                          this,
                                                          debugInfo,
-                                                         true);
+                                                         true,
+                                                      true);
                     s = skipToNextChar(*endptr, debugInfo, true);
                     *endptr = (char*)s;
                     return false;
@@ -333,7 +334,12 @@ public://functions
                 
                 if(keyRef->type() == MJREF_TYPE_STRING)
                 {
-                    keyRef = loadVariableIfAvailable((MJString*)keyRef, s, endptr, parentTable, debugInfo);
+                    MJRef* newKeyRef = loadVariableIfAvailable((MJString*)keyRef, s, endptr, parentTable, debugInfo);
+                    if(newKeyRef)
+                    {
+                        keyRef->release();
+                        keyRef = newKeyRef;
+                    }
                     s = skipToNextChar(*endptr, debugInfo, true);
                 }
                 
@@ -361,7 +367,7 @@ public://functions
                     return false;
                 }
                 
-                MJRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, this, debugInfo, true);
+                MJRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, this, debugInfo, true, true);
                 s = skipToNextChar(*endptr, debugInfo, true);
                 objectsByStringKey[((MJString*)keyRef)->value] = valueRef;
                 

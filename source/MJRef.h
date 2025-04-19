@@ -101,7 +101,8 @@ MJRef* recursivelyLoadValue(const char* str,
                             MJRef* leftValue,
                             MJTable* parentTable,
                             MJDebugInfo* debugInfo,
-                            bool runLowOperators);
+                            bool runLowOperators,
+                            bool allowNonVarStrings);
 
 class MJRef {
 public: //members

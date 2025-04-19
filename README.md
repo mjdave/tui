@@ -110,3 +110,16 @@ mjscript will stay small, and won't add a lot of support for built in system fun
 There are no bindings for languages other than C++ at present.
 
 mjscript is under active development, binary formats are not yet supported, functions have limited functionality for now.
+
+# More about the motivations and ideologies behind mjscript
+This is a one-man project (to start with), and my name is Dave Frampton, I made the games Sapiens (C++/Lua) and The Blockheads (Objective C) with my own custom engines.
+
+mjscript was initially created to serialize and share data in C++ for my games, so it started life as a quick little JSON parser. Very soon though, after being used to the power of lua, I started adding variables and functions.
+
+During this process, I have taken a performance-centric approach, while trying to strip everything back to be simple and clear. It parses and immediately runs hand written script code in a single pass, and in many cases where a script is just read, or a config file loaded, it should perform faster than the alternatives. Where mjscript might not be as fast is in repetitive function calls, but we'll see how it goes.
+
+I feel this could be useful for a lot of people, and I don't desire to keep it only for myself or to profit from it, so I'm making it open source. 
+
+Hopefully it is useful, and if you find a bug or have a feature request please feel free to open an issue
+
+-- Dave

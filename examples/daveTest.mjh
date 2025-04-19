@@ -1,9 +1,18 @@
 {
+    #boolValue = true
     max = function(a,b)
     {
         if(a > b)
         {
             return a
+        }
+        else if(a == b)
+        {
+            return 999
+        }
+        else if(boolValue)
+        {
+            return 567
         }
         return b
     }
@@ -19,13 +28,18 @@
 
     ten = 10
 
+    #if(ten == 10) #todo - if statements at the top level
+    #{
+    #    tenIsEqualToTen = true
+    #}
 
     return {
         max_20 = max(10,20)
         max_20b = max(20,ten)
         max_neg10 = max(-10,-20)
+        max_999 = max(5,5)
         
-        min_neg10 = min(-10,-20)
+        min_neg20 = min(-10,-20)
         minmax15 = min(20,max(15,ten))
     }
 }

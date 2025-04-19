@@ -146,7 +146,7 @@ bool loadFunctionBody(const char* str, char** endptr, MJTable* parent, MJDebugIn
             s+=2;
             s = skipToNextChar(s, debugInfo);
             
-            MJIfStatement* statement = new MJIfStatement(MJSTATEMENT_TYPE_IF);
+            MJIfStatement* statement = new MJIfStatement();
             statement->lineNumber = debugInfo->lineNumber;
             
             serializeExpression(s, endptr, statement, debugInfo);
@@ -159,9 +159,60 @@ bool loadFunctionBody(const char* str, char** endptr, MJTable* parent, MJDebugIn
                 return false;
             }
             
-            s = skipToNextChar(*endptr, debugInfo, true);
+            s = skipToNextChar(*endptr, debugInfo);
+            
+            while(1)
+            {
+                if(*s == 'e' && *(s + 1) == 'l' && *(s + 2) == 's' && *(s + 3) == 'e')
+                {
+                    s+=4;
+                    s = skipToNextChar(s, debugInfo);
+                    if(*s == '{')
+                    {
+                        statement->elseIfStatement = new MJIfStatement();
+                        statement->elseIfStatement->lineNumber = debugInfo->lineNumber;
+                        
+                        bool success = loadFunctionBody(s, endptr, parent, debugInfo, &statement->elseIfStatement->statements);
+                        if(!success)
+                        {
+                            return false;
+                        }
+                        s = skipToNextChar(*endptr, debugInfo);
+                    }
+                    else if(*s == 'i' && *(s + 1) == 'f')
+                    {
+                        s+=2;
+                        s = skipToNextChar(s, debugInfo);
+                        
+                        statement->elseIfStatement = new MJIfStatement();
+                        statement->elseIfStatement->lineNumber = debugInfo->lineNumber;
+                        
+                        serializeExpression(s, endptr, statement->elseIfStatement, debugInfo);
+                        
+                        s = skipToNextChar(*endptr, debugInfo);
+                        
+                        bool success = loadFunctionBody(s, endptr, parent, debugInfo, &statement->elseIfStatement->statements);
+                        if(!success)
+                        {
+                            return false;
+                        }
+                        s = skipToNextChar(*endptr, debugInfo);
+                    }
+                    else
+                    {
+                        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else statement expected 'if' or '{'");
+                        return false;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+            
             
             statements->push_back(statement);
+            continue;
         }
         else if(*s == 'r'
            && *(s + 1) == 'e'
@@ -317,6 +368,51 @@ MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endp
     return nullptr;
 }
 
+MJRef* MJFunction::recursivelyRunIfElseStatement(MJIfStatement* elseIfStatement, MJTable* functionState)
+{
+    if(elseIfStatement)
+    {
+        bool elseIfExpressionPass = true;
+        if(!elseIfStatement->expression.empty()) //an 'else' statement is passed through here with no expression, which is a pass
+        {
+            const char* expressionCString = elseIfStatement->expression.c_str();
+            char* endPtr;
+            
+            debugInfo.lineNumber = elseIfStatement->lineNumber;
+            
+            MJRef* expressionResult = recursivelyLoadValue(expressionCString,
+                                                           &endPtr,
+                                                           nullptr,
+                                                           functionState,
+                                                           &debugInfo,
+                                                           true,
+                                                           false);
+            if(expressionResult)
+            {
+                elseIfExpressionPass = expressionResult->boolValue();
+                expressionResult->release();
+            }
+            else
+            {
+                elseIfExpressionPass = false;
+            }
+        }
+        
+        if(elseIfExpressionPass)
+        {
+            MJTable* scopedState = new MJTable(functionState);
+            MJRef* result = runStatementArray(elseIfStatement->statements, scopedState);
+            scopedState->release();
+            
+            if(result)
+            {
+                return result;
+            }
+        }
+    }
+    return  nullptr;
+}
+
 
 MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJTable* functionState)
 {
@@ -341,7 +437,8 @@ MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJT
                                             nullptr,
                                      functionState,
                                                      &debugInfo,
-                                     true);
+                                     true,
+                                                     true);
                 
                 if(!result)
                 {
@@ -364,6 +461,7 @@ MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJT
                                                      nullptr,
                                                      functionState,
                                                      &debugInfo,
+                                                     true,
                                                      true);
                 
                 const char* varNameCString = statement->varName.c_str();
@@ -391,25 +489,40 @@ MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJT
                                             nullptr,
                                      functionState,
                                                      &debugInfo,
-                                     true);
+                                     true,
+                                                     true);
                 result->release();
             }
                 break;
             case MJSTATEMENT_TYPE_IF:
             {
-                const char* expressionCString = statement->expression.c_str();
-                char* endPtr;
-                
-                debugInfo.lineNumber = statement->lineNumber;
-                
-                MJRef* expressionResult = recursivelyLoadValue(expressionCString,
-                                                     &endPtr,
-                                                     nullptr,
-                                                     functionState,
-                                                     &debugInfo,
-                                                     true);
-                
-                if(expressionResult->boolValue())
+                bool expressionPass = true;
+                if(!statement->expression.empty()) //an 'else' statement is passed through here with no expression, which is a pass
+                {
+                    const char* expressionCString = statement->expression.c_str();
+                    char* endPtr;
+                    
+                    debugInfo.lineNumber = statement->lineNumber;
+                    
+                    MJRef* expressionResult = recursivelyLoadValue(expressionCString,
+                                                                   &endPtr,
+                                                                   nullptr,
+                                                                   functionState,
+                                                                   &debugInfo,
+                                                                   true,
+                                                                   false);
+                    
+                    if(expressionResult)
+                    {
+                        expressionPass = expressionResult->boolValue();
+                        expressionResult->release();
+                    }
+                    else
+                    {
+                        expressionPass = false;
+                    }
+                }
+                if(expressionPass)
                 {
                     MJTable* scopedState = new MJTable(functionState);
                     MJRef* result = runStatementArray(((MJIfStatement*)statement)->statements, scopedState);
@@ -417,13 +530,17 @@ MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJT
                     
                     if(result)
                     {
-                        expressionResult->release();
                         return result;
                     }
-                    
                 }
-                expressionResult->release();
-                
+                else
+                {
+                    MJRef* result = recursivelyRunIfElseStatement(((MJIfStatement*)statement)->elseIfStatement, functionState);
+                    if(result)
+                    {
+                        return result;
+                    }
+                }
             }
                 break;
             default:

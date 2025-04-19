@@ -34,7 +34,8 @@ public://functions
 class MJIfStatement : public MJStatement {
 public://functions
     std::vector<MJStatement*> statements;
-    MJIfStatement(uint8_t type_) : MJStatement(type_) {}
+    MJIfStatement* elseIfStatement = nullptr;
+    MJIfStatement() : MJStatement(MJSTATEMENT_TYPE_IF) {}
 };
 
 class MJFunction : public MJRef {
@@ -70,6 +71,8 @@ public://functions
    
 
 private:
+    
+    MJRef* recursivelyRunIfElseStatement(MJIfStatement* elseIfStatement, MJTable* functionState);
     
 private:
 };

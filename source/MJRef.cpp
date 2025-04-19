@@ -13,7 +13,6 @@ MJRef* loadVariableIfAvailable(MJString* variableName, const char* str, char** e
         {
             if(newValueRef->type() == MJREF_TYPE_TABLE)
             {
-                delete variableName;
                 newValueRef->retain();
                 return newValueRef;
             }
@@ -28,25 +27,22 @@ MJRef* loadVariableIfAvailable(MJString* variableName, const char* str, char** e
                     MJRef* result = ((MJFunction*)newValueRef)->call(argsArrayTable, parentTable);
                     
                     *endptr = (char*)s;
-                    delete variableName;
                     return result;
                 }
                 else
                 {
                     MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid call to function:%s", variableName->value.c_str());
-                    delete variableName;
                     return nullptr;
                 }
             }
             else
             {
-                delete variableName;
                 newValueRef = newValueRef->copy();
                 return newValueRef;
             }
         }
     }
-    return variableName;
+    return nullptr;
 }
 
 
@@ -62,7 +58,7 @@ bool setVariable(MJString* variableName,
     return false;
 }
 
-MJRef* loadValue(const char* str, char** endptr, MJTable* parentTable, MJDebugInfo* debugInfo)
+MJRef* loadValue(const char* str, char** endptr, MJTable* parentTable, MJDebugInfo* debugInfo, bool allowNonVarStrings)
 {
     const char* s = str;
     
@@ -71,8 +67,21 @@ MJRef* loadValue(const char* str, char** endptr, MJTable* parentTable, MJDebugIn
     
     if(valueRef->type() == MJREF_TYPE_STRING)
     {
-        valueRef = loadVariableIfAvailable((MJString*)valueRef, s, endptr, parentTable, debugInfo);
+        MJString* originalString = (MJString*)valueRef;
+        MJRef* newValueRef = loadVariableIfAvailable(originalString, s, endptr, parentTable, debugInfo);
+        if(newValueRef)
+        {
+            originalString->release();
+            valueRef = newValueRef;
+        }
+        else if(!allowNonVarStrings)
+        {
+            MJSWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Uninitialized variable:%s", originalString->value.c_str());
+            originalString->release();
+            return nullptr;
+        }
         s = skipToNextChar(*endptr, debugInfo, true);
+        
     }
     
     *endptr = (char*)s;
@@ -84,7 +93,8 @@ MJRef* recursivelyLoadValue(const char* str,
                             MJRef* leftValue,
                             MJTable* parentTable,
                             MJDebugInfo* debugInfo,
-                            bool runLowOperators)
+                            bool runLowOperators,
+                            bool allowNonVarStrings)
 {
     const char* s = str;
     
@@ -94,11 +104,11 @@ MJRef* recursivelyLoadValue(const char* str,
         {
             s++;
             s = skipToNextChar(s, debugInfo, true);
-            leftValue = recursivelyLoadValue(s, endptr, nullptr, parentTable, debugInfo, true);
+            leftValue = recursivelyLoadValue(s, endptr, nullptr, parentTable, debugInfo, true, allowNonVarStrings);
         }
         else
         {
-            leftValue = loadValue(s, endptr, parentTable, debugInfo);
+            leftValue = loadValue(s, endptr, parentTable, debugInfo, allowNonVarStrings);
         }
         
         
@@ -124,9 +134,15 @@ MJRef* recursivelyLoadValue(const char* str,
     }
     
     s++;
+    
+    if(secondOperatorChar == '=' && (operatorChar == '=' || operatorChar == '>' || operatorChar == '<') )
+    {
+        s++;
+    }
+    
     s = skipToNextChar(s, debugInfo, true);
     
-    MJRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, parentTable, debugInfo, false);
+    MJRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, parentTable, debugInfo, false, false);
     s = skipToNextChar(*endptr, debugInfo, true);
     
     if(rightValue->type() == MJREF_TYPE_STRING)
@@ -408,7 +424,7 @@ MJRef* recursivelyLoadValue(const char* str,
         {
             if(runLowOperators || *s == '*' || *s == '/')
             {
-                result = recursivelyLoadValue(s, endptr, result, parentTable, debugInfo, runLowOperators);
+                result = recursivelyLoadValue(s, endptr, result, parentTable, debugInfo, runLowOperators, allowNonVarStrings);
                 s = skipToNextChar(*endptr, debugInfo, true);
             }
         }
