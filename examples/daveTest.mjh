@@ -1,32 +1,20 @@
 {
-    #for(i=1,<100,+1)
-    #{
-    #    print(myNumber(i,4))
-    #}
-
-    nestedFunc = function(a,b)
-    {
-        return a
-    }
-
-    object = {
-        var = 5
-    }
-
-    increment = function()
-    {
-        object.var = object.var + 5
-    }
-
     max = function(a,b)
     {
-        #if a > b #todo!
-        #{
-        #    return a
-        #}
-        increment()
-        increment()
-        return nestedFunc(a,b)
+        if(a > b)
+        {
+            return a
+        }
+        return b
+    }
+    
+    min = function(a,b)
+    {
+        if(a < b)
+        {
+            return a
+        }
+        return b
     }
 
     ten = 10
@@ -36,6 +24,8 @@
         max_20 = max(10,20)
         max_20b = max(20,ten)
         max_neg10 = max(-10,-20)
-        "obect.var" = object.var
+        
+        min_neg10 = min(-10,-20)
+        minmax15 = min(20,max(15,ten))
     }
 }

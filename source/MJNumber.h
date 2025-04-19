@@ -46,7 +46,7 @@ public://functions
         }
         return string_format("%s", doubleToString(value).c_str());
     }
-    virtual bool allowExpressions() {return true;}
+    virtual bool boolValue() {return value != 0;}
 
 private:
     
@@ -90,7 +90,7 @@ public://functions
     virtual std::string getStringValue() {
         return (value ? "true" : "false");
     }
-    virtual bool allowExpressions() {return true;}
+    virtual bool boolValue() {return value;}
 
 private:
     
@@ -152,7 +152,7 @@ public://functions
     virtual std::string getStringValue() {
         return string_format("vec2(%s,%s)", doubleToString(value.x).c_str(), doubleToString(value.y).c_str());
     }
-    virtual bool allowExpressions() {return true;}
+    virtual bool boolValue() {return true;}
 
 private:
     
@@ -214,7 +214,7 @@ public://functions
     virtual std::string getStringValue() {
         return string_format("vec3(%s,%s,%s)", doubleToString(value.x).c_str(), doubleToString(value.y).c_str(), doubleToString(value.z).c_str());
     }
-    virtual bool allowExpressions() {return true;}
+    virtual bool boolValue() {return true;}
 
 private:
     
@@ -276,7 +276,7 @@ public://functions
     virtual std::string getStringValue() {
         return string_format("vec4(%s,%s,%s,%s)", doubleToString(value.x).c_str(), doubleToString(value.y).c_str(), doubleToString(value.z).c_str(), doubleToString(value.w).c_str());
     }
-    virtual bool allowExpressions() {return true;}
+    virtual bool boolValue() {return true;}
 
 private:
     

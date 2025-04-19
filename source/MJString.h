@@ -21,7 +21,7 @@ public://functions
     virtual uint8_t type() { return MJREF_TYPE_STRING; }
     virtual std::string getTypeName() {return "string";}
     virtual std::string getStringValue() {return "\"" + value + "\"";}
-    virtual bool allowExpressions() {return false;}
+    virtual bool boolValue() {return !value.empty();}
     
     MJString(const std::string& value_) {value = value_;}
     virtual ~MJString() {};

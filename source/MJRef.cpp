@@ -106,6 +106,7 @@ MJRef* recursivelyLoadValue(const char* str,
     }
     
     char operatorChar = *s;
+    char secondOperatorChar = *(s + 1);
     
     if(operatorChar == ')')
     {
@@ -115,7 +116,7 @@ MJRef* recursivelyLoadValue(const char* str,
         return leftValue;
     }
     
-    if(MJExpressionOperatorsSet.count(operatorChar) == 0 || (!runLowOperators && (operatorChar == '+' || operatorChar == '-')))
+    if(MJExpressionOperatorsSet.count(operatorChar) == 0 || (operatorChar == '=' && secondOperatorChar != '=') || (!runLowOperators && (operatorChar == '+' || operatorChar == '-')))
     {
         s = skipToNextChar(s, debugInfo, true);
         *endptr = (char*)s;
@@ -145,12 +146,6 @@ MJRef* recursivelyLoadValue(const char* str,
         }
     }
     
-    if(!rightValue->allowExpressions())
-    {
-        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Found invalid right value type when running expression");
-        return nullptr;
-    }
-    
     MJRef* result = nullptr;
     
     if(leftValue->type() == MJREF_TYPE_NUMBER)
@@ -177,6 +172,35 @@ MJRef* recursivelyLoadValue(const char* str,
                 case '/':
                 {
                     result = new MJNumber(((MJNumber*)leftValue)->value / ((MJNumber*)rightValue)->value);
+                }
+                break;
+                case '>':
+                {
+                    if(secondOperatorChar == '=')
+                    {
+                        result = new MJBool(((MJNumber*)leftValue)->value >= ((MJNumber*)rightValue)->value);
+                    }
+                    else
+                    {
+                        result = new MJBool(((MJNumber*)leftValue)->value > ((MJNumber*)rightValue)->value);
+                    }
+                }
+                break;
+                case '<':
+                {
+                    if(secondOperatorChar == '=')
+                    {
+                        result = new MJBool(((MJNumber*)leftValue)->value <= ((MJNumber*)rightValue)->value);
+                    }
+                    else
+                    {
+                        result = new MJBool(((MJNumber*)leftValue)->value < ((MJNumber*)rightValue)->value);
+                    }
+                }
+                break;
+                case '=':
+                {
+                    result = new MJBool(((MJNumber*)leftValue)->value == ((MJNumber*)rightValue)->value);
                 }
                 break;
             }

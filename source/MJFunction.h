@@ -61,6 +61,10 @@ public://functions
     virtual std::string getTypeName() {return "function";}
     virtual std::string getStringValue() {return "function";}
     
+    virtual bool boolValue() {return true;}
+    
+    MJRef* runStatementArray(std::vector<MJStatement*>& statements, MJTable* functionState);
+    
     MJRef* call(MJTable* args, MJTable* state);
     //void call(MJTable* args, std::function<void(MJRef*)> callback);
    

@@ -1,6 +1,6 @@
 # mjscript
 
-mjscript is an open source scripting and serialization library for c++.
+mjscript is an open source scripting and serialization library for C++.
 
 Designed by a solo game developer to be fast, and simple to understand, use and modify, mjscript combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
 
@@ -26,7 +26,7 @@ int main()
 
 With no virtual machine, and no bindings required in C++, all of the data and script state is stored in a public std::map or std::vector under the hood. Scripts and tables are parsed together and are treated the same. Each character is simply parsed one by one in a single phase, with data loaded into a data tree immediately, and functions stored and called as required.
 
-This means you can use it as a scripting language, that just happens to also have built in serialization support for both binary and human readable data formats.
+This means mjscript can solve two problems. You can use it as a fast and small scripting language, that also happens to have built in serialization support for both binary and human readable data formats.
 
 Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other ways of storing and sharing data, mjscript reads JSON out of the box, while adding a bunch of new features:
 
@@ -103,7 +103,7 @@ Memory is handled with reference counting, there is no garbage collection. You c
 ```
 
 # What mjscript is not
-mjscript has 'objects', as tables. However there is no concept of 'self/this', and no inheritance so it wouldn't be considered an object orientated language.
+mjscript has 'objects', as tables. However there is no concept of 'self/this', and no direct support for inheritance or classes in general.
 
 mjscript will stay small, and won't add a lot of support for built in system functionality. If this functionality is desired, it can easily be added on the C++ side by registering your own functions.
 

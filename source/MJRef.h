@@ -40,6 +40,9 @@ static std::set<char> MJExpressionOperatorsSet = {
     '/',
     '+',
     '-',
+    '>',
+    '<',
+    '=',
 };
 
 inline const char* skipToNextChar(const char* str, MJDebugInfo* debugInfo, bool stopAtNewLine = false)
@@ -123,7 +126,8 @@ public://functions
     //virtual size_t size();
     virtual uint8_t type() { return MJREF_TYPE_NIL; }
     virtual std::string getTypeName() {return "nil";}
-    virtual bool allowExpressions() {return false;}
+    
+    virtual bool boolValue() {return false;}
     
     std::string getDebugString() {
         std::string debugString;

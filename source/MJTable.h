@@ -30,7 +30,7 @@ public://functions
     virtual uint8_t type() { return MJREF_TYPE_TABLE; }
     virtual std::string getTypeName() {return "table";}
     virtual std::string getStringValue() {return "table";}
-    virtual bool allowExpressions() {return false;}
+    virtual bool boolValue() {return true;}
     
     MJTable(MJTable* parent) {parentTable = parent;};
     virtual ~MJTable() {

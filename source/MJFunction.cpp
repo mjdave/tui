@@ -27,6 +27,7 @@ void serializeExpression(const char* str, char** endptr, MJStatement* statement,
     
     for(;; s++)
     {
+        s = skipToNextChar(s, debugInfo, true);
         if(*s == '\'')
         {
             statement->expression += *s;
@@ -117,6 +118,7 @@ void serializeExpression(const char* str, char** endptr, MJStatement* statement,
     }
     statement->expression += '\n'; //bit of a hack, expression string parsing needs a comma or newline to mark the end of the string
     
+    s = skipToNextChar(s, debugInfo, true);
     *endptr = (char*)s;
 }
 
@@ -144,18 +146,20 @@ bool loadFunctionBody(const char* str, char** endptr, MJTable* parent, MJDebugIn
             s+=2;
             s = skipToNextChar(s, debugInfo);
             
-            MJIfStatement* statement = new MJIfStatement(MJSTATEMENT_TYPE_RETURN_EXPRESSION);
+            MJIfStatement* statement = new MJIfStatement(MJSTATEMENT_TYPE_IF);
             statement->lineNumber = debugInfo->lineNumber;
             
             serializeExpression(s, endptr, statement, debugInfo);
             
-            s = skipToNextChar(*endptr, debugInfo, true);
+            s = skipToNextChar(*endptr, debugInfo);
             
             bool success = loadFunctionBody(s, endptr, parent, debugInfo, &statement->statements);
             if(!success)
             {
                 return false;
             }
+            
+            s = skipToNextChar(*endptr, debugInfo, true);
             
             statements->push_back(statement);
         }
@@ -264,6 +268,7 @@ MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endp
         
         for(;; s++)
         {
+            s = skipToNextChar(s, debugInfo, true);
             if(*s == ')' || *s == '\0')
             {
                 if(!currentVarName.empty())
@@ -313,31 +318,15 @@ MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endp
 }
 
 
-
-MJRef* MJFunction::call(MJTable* args, MJTable* state)
+MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJTable* functionState)
 {
-    MJTable* functionState = new MJTable(state);
-    
-    int i = 0;
-    int maxArgs = (int)argNames.size();
-    for(MJRef* arg : args->arrayObjects)
-    {
-        if(i >= maxArgs)
-        {
-            MJSError(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function");
-        }
-        functionState->objectsByStringKey[argNames[i]] = arg;
-        i++;
-    }
-    
-    for(MJStatement* statement : statements)
+    for(MJStatement* statement : statements_)
     {
         switch(statement->type)
         {
             case MJSTATEMENT_TYPE_RETURN:
             {
-                functionState->release();
-                return nullptr;
+                return new MJRef();
             }
                 break;
             case MJSTATEMENT_TYPE_RETURN_EXPRESSION:
@@ -354,7 +343,10 @@ MJRef* MJFunction::call(MJTable* args, MJTable* state)
                                                      &debugInfo,
                                      true);
                 
-                functionState->release();
+                if(!result)
+                {
+                    result = new MJRef();
+                }
                 return result;
             }
                 break;
@@ -382,15 +374,8 @@ MJRef* MJFunction::call(MJTable* args, MJTable* state)
                             functionState,
                             &debugInfo);
                 
-                
-                /*if(result && result->type() != MJREF_TYPE_NIL)
-                {
-                    functionState->objectsByStringKey[statement->varName] = result;
-                }
-                else
-                {
-                    functionState->objectsByStringKey.erase(statement->varName);
-                }*/
+                variableNameString->release();
+                result->release();
                 
             }
                 break;
@@ -401,12 +386,44 @@ MJRef* MJFunction::call(MJTable* args, MJTable* state)
                 
                 debugInfo.lineNumber = statement->lineNumber;
                 
-                recursivelyLoadValue(cString,
+                MJRef* result = recursivelyLoadValue(cString,
                                         &endPtr,
                                             nullptr,
                                      functionState,
                                                      &debugInfo,
                                      true);
+                result->release();
+            }
+                break;
+            case MJSTATEMENT_TYPE_IF:
+            {
+                const char* expressionCString = statement->expression.c_str();
+                char* endPtr;
+                
+                debugInfo.lineNumber = statement->lineNumber;
+                
+                MJRef* expressionResult = recursivelyLoadValue(expressionCString,
+                                                     &endPtr,
+                                                     nullptr,
+                                                     functionState,
+                                                     &debugInfo,
+                                                     true);
+                
+                if(expressionResult->boolValue())
+                {
+                    MJTable* scopedState = new MJTable(functionState);
+                    MJRef* result = runStatementArray(((MJIfStatement*)statement)->statements, scopedState);
+                    scopedState->release();
+                    
+                    if(result)
+                    {
+                        expressionResult->release();
+                        return result;
+                    }
+                    
+                }
+                expressionResult->release();
+                
             }
                 break;
             default:
@@ -414,7 +431,30 @@ MJRef* MJFunction::call(MJTable* args, MJTable* state)
         }
     }
     
+    return nullptr;
+}
+
+
+MJRef* MJFunction::call(MJTable* args, MJTable* state)
+{
+    MJTable* functionState = new MJTable(state);
+    
+    int i = 0;
+    int maxArgs = (int)argNames.size();
+    for(MJRef* arg : args->arrayObjects)
+    {
+        if(i >= maxArgs)
+        {
+            MJSError(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function");
+        }
+        functionState->objectsByStringKey[argNames[i]] = arg;
+        i++;
+    }
+    
+    
+    MJRef* result = runStatementArray(statements, functionState);
     
     functionState->release();
-    return nullptr;
+    
+    return result;
 }
