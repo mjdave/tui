@@ -6,14 +6,6 @@
         {
             return a
         }
-        else if(a == b)
-        {
-            return 999
-        }
-        else if(boolValue)
-        {
-            return 567
-        }
         return b
     }
     
@@ -33,11 +25,24 @@
     #    tenIsEqualToTen = true
     #}
 
+    #width = 400,
+    #height = 200,
+    #halfWidth = width * 0.5,
+    #doubleWidth = width * 2.0,
+#
+    #if(width > 300)
+    #{
+    #    height = height * 2.0
+    #}
+    #else
+    #{
+    #    height = height * 0.5
+    #}
+
     return {
         max_20 = max(10,20)
         max_20b = max(20,ten)
         max_neg10 = max(-10,-20)
-        max_999 = max(5,5)
         
         min_neg20 = min(-10,-20)
         minmax15 = min(20,max(15,ten))

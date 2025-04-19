@@ -400,9 +400,7 @@ MJRef* MJFunction::recursivelyRunIfElseStatement(MJIfStatement* elseIfStatement,
         
         if(elseIfExpressionPass)
         {
-            MJTable* scopedState = new MJTable(functionState);
-            MJRef* result = runStatementArray(elseIfStatement->statements, scopedState);
-            scopedState->release();
+            MJRef* result = runStatementArray(elseIfStatement->statements, functionState);
             
             if(result)
             {
@@ -524,9 +522,7 @@ MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJT
                 }
                 if(expressionPass)
                 {
-                    MJTable* scopedState = new MJTable(functionState);
-                    MJRef* result = runStatementArray(((MJIfStatement*)statement)->statements, scopedState);
-                    scopedState->release();
+                    MJRef* result = runStatementArray(((MJIfStatement*)statement)->statements, functionState);
                     
                     if(result)
                     {

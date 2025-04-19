@@ -30,13 +30,23 @@ This means mjscript can solve two problems. You can use it as a fast and small s
 
 Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other ways of storing and sharing data, mjscript reads JSON out of the box, while adding a bunch of new features:
 
-# Variables & Expressions
+# Variables, if statements & Expressions
 Any previously assigned value can be accessed by the key name. This can be used to define constants to do math for later values.
 ```javascript
 {
-    baseWidth = 400,
-    halfWidth = baseWidth * 0.5,
-    doubleWidth = baseWidth * 2.0,
+    width = 400,
+    height = 200,
+    halfWidth = width * 0.5,
+    doubleWidth = width * 2.0,
+
+    if(width > 300)
+    {
+        height = height * 2.0
+    }
+    else
+    {
+        height = height * 0.5
+    }
 }
 ```
 # Functions
@@ -73,7 +83,7 @@ array = {
 ```
 
 # Scope
-All variables are limited in scope to the block they are declared in and all child blocks. So variables declared at the top level are effectively globals. You can access children with the '.' syntax.
+All table member variables and function-local variable assignments are limited in scope to the table/function they are declared in and all child tables/functions. So variables declared at the top level are effectively globals. You can access children with the '.' syntax.
 ```javascript
 {
     varA = 10
@@ -112,11 +122,11 @@ There are no bindings for languages other than C++ at present.
 mjscript is under active development, binary formats are not yet supported, functions have limited functionality for now.
 
 # More about the motivations and ideologies behind mjscript
-This is a one-man project (to start with), and my name is Dave Frampton, I made the games Sapiens (C++/Lua) and The Blockheads (Objective C) with my own custom engines.
+This is a one-man project (to start with), my name is Dave Frampton, I made the games Sapiens (C++/Lua) and The Blockheads (Objective C) with my own custom engines.
 
 mjscript was initially created to serialize and share data in C++ for my games, so it started life as a quick little JSON parser. Very soon though, after being used to the power of lua, I started adding variables and functions.
 
-During this process, I have taken a performance-centric approach, while trying to strip everything back to be simple and clear. It parses and immediately runs hand written script code in a single pass, and in many cases where a script is just read, or a config file loaded, it should perform faster than the alternatives. Where mjscript might not be as fast is in repetitive function calls, but we'll see how it goes.
+During this process, I have taken a performance-centric approach, while trying to strip everything back to be simple and clear. As it parses and immediately runs hand written script code in a single pass, in many cases where a script is just read, or a config file loaded, it should perform faster than the alternatives. Where mjscript might not be as fast is in repetitive function calls, but we'll see how it goes.
 
 I feel this could be useful for a lot of people, and I don't desire to keep it only for myself or to profit from it, so I'm making it open source. 
 
