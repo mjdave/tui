@@ -19,32 +19,24 @@
     }
 
     ten = 10
-
-    #if(ten == 10) #todo - if statements at the top level
-    #{
-    #    tenIsEqualToTen = true
-    #}
-
-    #width = 400,
-    #height = 200,
-    #halfWidth = width * 0.5,
-    #doubleWidth = width * 2.0,
 #
-    #if(width > 300)
-    #{
-    #    height = height * 2.0
-    #}
-    #else
-    #{
-    #    height = height * 0.5
-    #}
+    if(ten > 11) {
+        ten = ten * 2.0
+    }
+    else if ten < 9 {
+        ten = ten * 4.0
+    }
+    else
+    {
+        ten = 420
+    }
 
     return {
         max_20 = max(10,20)
-        max_20b = max(20,ten)
+        max_40 = max(20,ten)
         max_neg10 = max(-10,-20)
         
         min_neg20 = min(-10,-20)
-        minmax15 = min(20,max(15,ten))
+        minmax20 = min(20,max(15,ten))
     }
 }

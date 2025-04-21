@@ -53,7 +53,7 @@ inline const char* skipToNextChar(const char* str, MJDebugInfo* debugInfo, bool 
     {
         if(*s == '\0')
         {
-            break;
+            return s;
         }
         else if(*s == '#' || (*s == '/' && *(s+1) == '/'))
         {
@@ -64,7 +64,7 @@ inline const char* skipToNextChar(const char* str, MJDebugInfo* debugInfo, bool 
             comment = false;
             if(stopAtNewLine)
             {
-                break;
+                return s;
             }
             else
             {
@@ -73,11 +73,35 @@ inline const char* skipToNextChar(const char* str, MJDebugInfo* debugInfo, bool 
         }
         else if(!comment && !isspace(*s))
         {
-            break;
+            return s;
         }
     }
-    
-    return s;
+}
+
+inline const char* skipToNextMatchingChar(const char* str, MJDebugInfo* debugInfo, char matchChar)
+{
+    const char* s = str;
+    bool comment = false;
+    for(;; s++)
+    {
+        if(*s == matchChar)
+        {
+            return s;
+        }
+        else if(*s == '\0')
+        {
+            return s;
+        }
+        else if(*s == '#' || (*s == '/' && *(s+1) == '/'))
+        {
+            comment = true;
+        }
+        else if(*s == '\n')
+        {
+            comment = false;
+            debugInfo->lineNumber++;
+        }
+    }
 }
 
 
