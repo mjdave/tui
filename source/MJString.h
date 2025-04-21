@@ -64,7 +64,6 @@ public://functions
                         {
                             singleQuote = true;
                             mjString->allowAsVariableName = false;
-                            continue;
                         }
                     }
                 }
@@ -85,7 +84,6 @@ public://functions
                         {
                             doubleQuote = true;
                             mjString->allowAsVariableName = false;
-                            continue;
                         }
                     }
                 }
@@ -95,17 +93,30 @@ public://functions
                 if(!escaped)
                 {
                     escaped = true;
-                    continue;
                 }
             }
             else if(*s == '.')
             {
                 if(mjString->allowAsVariableName && !escaped && !singleQuote && !doubleQuote)
                 {
-                    mjString->varNames.push_back(currentVarName);
-                    currentVarName = "";
-                    mjString->value += *s;
-                    continue;
+                    if(*(s+1) == '.')
+                    {
+                        s++;
+                        mjString->varNames.push_back(".");
+                        mjString->value += "..";
+                        while(*(s+1) == '.')
+                        {
+                            s++;
+                            mjString->varNames.push_back(".");
+                            mjString->value += ".";
+                        }
+                    }
+                    else
+                    {
+                        mjString->varNames.push_back(currentVarName);
+                        currentVarName = "";
+                        mjString->value += *s;
+                    }
                 }
             }
             else if(*s == '(')
@@ -125,13 +136,16 @@ public://functions
                 }
                 break;
             }
-            
-            mjString->value += *s;
-            if(mjString->allowAsVariableName)
+            else
             {
-                currentVarName += *s;
+                mjString->value += *s;
+                if(mjString->allowAsVariableName)
+                {
+                    currentVarName += *s;
+                }
+                escaped = false;
             }
-            escaped = false;
+            
         }
         
         if(mjString->allowAsVariableName)
@@ -140,7 +154,7 @@ public://functions
             {
                 mjString->allowAsVariableName = false;
             }
-            else
+            else if(!currentVarName.empty())
             {
                 mjString->varNames.push_back(currentVarName);
             }

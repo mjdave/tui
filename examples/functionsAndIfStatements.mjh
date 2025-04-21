@@ -1,0 +1,41 @@
+{
+    max = function(a,b)
+    {
+        if(a > b)
+        {
+            return a
+        }
+        return b
+    }
+    
+    min = function(a,b)
+    {
+        if(a < b)
+        {
+            return a
+        }
+        return b
+    }
+
+    ten = 10
+#
+    if(ten > 11) {
+        ten = ten * 2.0
+    }
+    else if ten < 9 {
+        ten = ten * 4.0
+    }
+    else
+    {
+        ten = 420
+    }
+
+    return {
+        max_20 = max(10,20)
+        max_40 = max(20,ten)
+        max_neg10 = max(-10,-20)
+        
+        min_neg20 = min(-10,-20)
+        minmax20 = min(20,max(15,ten))
+    }
+}

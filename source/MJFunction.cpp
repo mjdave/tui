@@ -325,7 +325,6 @@ MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endp
                 if(!currentVarName.empty())
                 {
                     mjFunction->argNames.push_back(currentVarName);
-                    //MJLog("found argVarName:%s", currentVarName.c_str());
                     currentVarName = "";
                 }
                 s++;
@@ -340,7 +339,6 @@ MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endp
                 if(!currentVarName.empty())
                 {
                     mjFunction->argNames.push_back(currentVarName);
-                    //MJLog("found argVarName:%s", currentVarName.c_str());
                     currentVarName = "";
                 }
             }

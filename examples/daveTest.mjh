@@ -1,42 +1,15 @@
-{
-    #boolValue = true
-    max = function(a,b)
-    {
-        if(a > b)
-        {
-            return a
-        }
-        return b
-    }
-    
-    min = function(a,b)
-    {
-        if(a < b)
-        {
-            return a
-        }
-        return b
-    }
-
-    ten = 10
-#
-    if(ten > 11) {
-        ten = ten * 2.0
-    }
-    else if ten < 9 {
-        ten = ten * 4.0
-    }
-    else
-    {
-        ten = 420
-    }
-
-    return {
-        max_20 = max(10,20)
-        max_40 = max(20,ten)
-        max_neg10 = max(-10,-20)
+value = 10
+table = {
+    subValue = 20
+    subTable = {
+        subValue = 30 // creates a new local table.subTable.subValue with the value 30
         
-        min_neg20 = min(-10,-20)
-        minmax20 = min(20,max(15,ten))
+        ..subValue = value // this assigns 10 to the parent subValue (previously 20)
+        
+        enclosingTable = .. // we can store the parent table '..' in a local variable
+        enclosingTable.subValue = value // achieves the same as '..subValue = value'.
+        enclosingTable = nil // otherwise we create a circular loop and will hang if we try to log or iterate this table!
+        
+        ...value = 20 // we can go up multiple levels by adding dots, this modifies the variable created at the top level on the first line
     }
 }

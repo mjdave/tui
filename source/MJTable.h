@@ -109,46 +109,74 @@ public://functions
     }
     
     
-    MJRef* recursivelyFindVariable(MJString* variableName)
+    MJRef* recursivelyFindVariable(MJString* variableName, int varStartIndex = 0)
     {
         //const std::string variableNameString = variableName->value;
         
+        std::vector<std::string>& varNames = variableName->varNames;
         
-        if(variableName->varNames.size() > 0 && objectsByStringKey.count(variableName->varNames[0]) != 0)
+        if(varNames.size() > varStartIndex)
         {
-            if(variableName->varNames.size() > 1)
+            if(varNames[varStartIndex][0] == '.')
             {
-                MJRef* subtableRef = objectsByStringKey[variableName->varNames[0]];
-                if(subtableRef->type() != MJREF_TYPE_TABLE)
-                {
-                    MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
-                    return nullptr;
-                }
+                MJTable* table = parentTable;
                 
-                for(int i = 1; i < variableName->varNames.size(); i++)
+                for(int i = varStartIndex + 1; i < variableName->varNames.size(); i++)
                 {
-                    if(i == variableName->varNames.size() - 1)
+                    if(varNames[i][0] == '.')
                     {
-                        if(((MJTable*)subtableRef)->objectsByStringKey.count(variableName->varNames[i]) != 0)
+                        table = table->parentTable;
+                        if(!table)
                         {
-                            return ((MJTable*)subtableRef)->objectsByStringKey[variableName->varNames[i]];
-                        }
-                        return nullptr;
-                    }
-                    
-                    if(((MJTable*)subtableRef)->objectsByStringKey.count(variableName->varNames[i]) != 0)
-                    {
-                        subtableRef = objectsByStringKey[variableName->varNames[i]];
-                        if(subtableRef->type() != MJREF_TYPE_TABLE)
-                        {
-                            MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                            MJError("No parent found at level:%d for:%s", i, variableName->value.c_str());
                             return nullptr;
                         }
                     }
+                    else
+                    {
+                        return table->recursivelyFindVariable(variableName, i);
+                    }
                 }
+                
+                return table;
             }
             
-            return objectsByStringKey[variableName->varNames[0]];
+            if(objectsByStringKey.count(varNames[varStartIndex]) != 0)
+            {
+                if(varNames.size() > varStartIndex + 1)
+                {
+                    MJRef* subtableRef = objectsByStringKey[varNames[varStartIndex]];
+                    if(subtableRef->type() != MJREF_TYPE_TABLE)
+                    {
+                        MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                        return nullptr;
+                    }
+                    
+                    for(int i = varStartIndex + 1; i < variableName->varNames.size(); i++)
+                    {
+                        if(i == variableName->varNames.size() - 1)
+                        {
+                            if(((MJTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
+                            {
+                                return ((MJTable*)subtableRef)->objectsByStringKey[varNames[i]];
+                            }
+                            return nullptr;
+                        }
+                        
+                        if(((MJTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
+                        {
+                            subtableRef = objectsByStringKey[varNames[i]];
+                            if(subtableRef->type() != MJREF_TYPE_TABLE)
+                            {
+                                MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                                return nullptr;
+                            }
+                        }
+                    }
+                }
+                
+                return objectsByStringKey[variableName->varNames[varStartIndex]];
+            }
         }
         
         if(parentTable)
@@ -159,40 +187,69 @@ public://functions
         return nullptr;
     }
     
-    bool recursivelySetVariable(MJString* variableName, MJRef* value)
+    bool recursivelySetVariable(MJString* variableName, MJRef* value, int varStartIndex = 0)
     {
-        if(variableName->varNames.size() > 0 && objectsByStringKey.count(variableName->varNames[0]) != 0)
+        std::vector<std::string>& varNames = variableName->varNames;
+        
+        if(varNames.size() > varStartIndex)
         {
-            if(variableName->varNames.size() > 1)
+            if(varNames[varStartIndex][0] == '.')
             {
-                MJRef* subtableRef = objectsByStringKey[variableName->varNames[0]];
-                if(subtableRef->type() != MJREF_TYPE_TABLE)
+                MJTable* table = parentTable;
+                
+                for(int i = varStartIndex + 1; i < variableName->varNames.size(); i++)
                 {
-                    MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
-                    return false;
+                    if(varNames[i][0] == '.')
+                    {
+                        table = table->parentTable;
+                        if(!table)
+                        {
+                            MJError("No parent found at level:%d for:%s", i, variableName->value.c_str());
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        return table->recursivelySetVariable(variableName, value, i);
+                    }
                 }
                 
-                for(int i = 1; i < variableName->varNames.size(); i++)
+                return table;
+            }
+            
+            if(objectsByStringKey.count(varNames[varStartIndex]) != 0)
+            {
+                if(varNames.size() > varStartIndex + 1)
                 {
-                    if(i == variableName->varNames.size() - 1)
+                    MJRef* subtableRef = objectsByStringKey[varNames[varStartIndex]];
+                    if(subtableRef->type() != MJREF_TYPE_TABLE)
                     {
-                        ((MJTable*)subtableRef)->set(variableName->varNames[i], value);
-                        return true;
+                        MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                        return false;
                     }
                     
-                    if(((MJTable*)subtableRef)->objectsByStringKey.count(variableName->varNames[i]) != 0)
+                    for(int i = varStartIndex + 1; i < variableName->varNames.size(); i++)
                     {
-                        subtableRef = objectsByStringKey[variableName->varNames[i]];
-                        if(subtableRef->type() != MJREF_TYPE_TABLE)
+                        if(i == variableName->varNames.size() - 1)
                         {
-                            MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
-                            return false;
+                            ((MJTable*)subtableRef)->set(variableName->varNames[i], value);
+                            return true;
+                        }
+                        
+                        if(((MJTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
+                        {
+                            subtableRef = objectsByStringKey[varNames[i]];
+                            if(subtableRef->type() != MJREF_TYPE_TABLE)
+                            {
+                                MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                                return false;
+                            }
                         }
                     }
                 }
             }
             
-            set(variableName->varNames[0], value);
+            set(variableName->varNames[varStartIndex], value);
             return true;
         }
         
@@ -547,10 +604,16 @@ public://functions
                 
                 MJRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, this, debugInfo, true, true);
                 s = skipToNextChar(*endptr, debugInfo, true);
-                objectsByStringKey[((MJString*)keyRef)->value] = valueRef;
+                
+                //if(keyRef->)
+                    
+                recursivelySetVariable(((MJString*)keyRef), valueRef);
+                    
+                //objectsByStringKey[((MJString*)keyRef)->value] = valueRef;
                 
                 
                 bool success = true;
+                
                 
                 if(*s == ',' || *s == '\n')
                 {
@@ -567,7 +630,7 @@ public://functions
                     *endptr = (char*)s;
                     success = false;
                 }
-                else
+                else if(*s != '\0')
                 {
                     if(valueRef->type() == MJREF_TYPE_STRING && *s == '(')
                     {
@@ -586,7 +649,7 @@ public://functions
                 return success;
                 
             }
-            else
+            else if(*s != '\0')
             {
                 MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
                 delete keyRef;
@@ -606,28 +669,35 @@ public://functions
         
         //uint32_t integerIndex = 0;
         
+        bool foundOpeningBracket = false;
+        
         if(*s == '{' || *s == '[' || *s == '(') // is added here to allow function arg lists when this method is called directly, but '(' is restricted in initUnknownTypeRefWithHumanReadableString.
         {
+            foundOpeningBracket = true;
             s++;
+        }
             
-            while(1)
+        while(1)
+        {
+            s = skipToNextChar(s, debugInfo);
+            
+            if(*s == '\0')
             {
-                s = skipToNextChar(s, debugInfo);
-                
-                if(*s == '}' || *s == ']' || *s == ')')
-                {
-                    s++;
-                    *endptr = (char*)s;
-                    break;
-                }
-                
-                if(!table->addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
-                {
-                    break;
-                }
-                s = *endptr;
+                break;
             }
             
+            if(foundOpeningBracket && (*s == '}' || *s == ']' || *s == ')'))
+            {
+                s++;
+                *endptr = (char*)s;
+                break;
+            }
+            
+            if(!table->addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
+            {
+                break;
+            }
+            s = *endptr;
         }
         
         return table;

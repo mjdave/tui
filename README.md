@@ -48,16 +48,20 @@ else // 'else if' and 'elseif' are both valid too
 }
 ```
 # Functions
-Functions are still a work in progress, but we have value assignment and basic expressions so far.
+Functions are still a work in progress, but we have value assignments, if/else statements, and basic expressions so far.
 ```javascript
 addTariff = function(base)
 {
     tariff = 145 / 100
+    if(random(2) > 0)
+    {
+        tariff = 245 / 100
+    }
     return (base * (1.0 + tariff))
 }
 
-costOfTV = addTariff(500)           //1225
-costOfPlaystation = addTariff(400)  //980
+costOfTV = addTariff(500)
+costOfPlaystation = addTariff(400)
 ```
 # Vectors
 The only dependency of mjscript is glm, which currently exposes vec2, vec3, vec4, and mat3 types, as well as a number of builtin math functions
@@ -93,32 +97,44 @@ This is also valid file that will give us an MJTable with array elements:
 # Scope
 Every table and every function has its own scope for variable creation/assignment.
 
-All table/function variable assignments are locals. They are limited in scope to the table/function they are declared in and all child tables/functions.
+All variable assignments create new local within the enclosing function or table. They are limited in scope to the table/function they are declared in, and readable for all child tables/functions, and also read/writable via the `'.'` syntax to access children and `'..'` to access parents.
 
-You can freely read any variable declared in any enclosing(parent) scope. You can access children with the '.' syntax. However unlike some other languages, assignments create new variables with local scope. To assign to a variable that was created in the enclosing scope, you can use the '..' syntax. 
 ```javascript
-a = 10
+value = 10
+table = {
+    subValue = 20
+    subTable = {
+        subValue = 30 // creates a new local table.subTable.subValue with the value 30
+        
+        ..subValue = value // this assigns 10 to the parent subValue (previously 20)
+        
+        #enclosingTable = .. // we can store the parent table '..' in a local variable
+        #enclosingTable.subValue = value // achieves the same as '..subValue = value'.
+        #enclosingTable = nil // otherwise we create a circular loop and will hang if we try to log or iterate this table!
+        
+        ...value = 20 // we can go up multiple levels by adding dots, this modifies the variable created at the top level on the first line
 
-tableTest = {
-    b = a     // we can access 'a' directly, so a new local 'b' is now 10
-    a = 20    // All assignments like this create locals! A new local 'a' is now 20, 'a' no longer refers to the parent
-    c = a     // c is now 20
-    d = ..a   // We can use the '..' syntax to explicitly get or set a parent value. 'd' is now 10
+        testFunction = function() { // the same rules apply for functions
+            testValue = value // 100, remember we can always read the variable directly
+            ....value = 100 // 4 dots this time to modify
+            testValue = subValue // 30
+        }
+
+        testFunction()
+    }
 }
-
-c = a         // c is now 10
-c = tableTest.a  // c is now 20
-tableTest.a = 30 // we can also set child variables like this
 ```
 
 if/else and for statements do not create new scopes, but share the parent scope. Inside if/else/for blocks, you may freely access parent values, and all assigned variables belong to the enclosing table/function.
 
 ```javascript
 a = 10
+
 if(a == 10)
 {
     a = 5 //this is assigning to the a variable created above
 }
+
 b = a // b is now 5
 ```
 
@@ -143,12 +159,12 @@ There are no bindings for languages other than C++ at present.
 # More about the motivations and ideologies behind mjscript
 This is a one-man project (to start with), my name is Dave Frampton, I made the games Sapiens (C++/Lua) and The Blockheads (Objective C) using my own custom engines.
 
-mjscript was initially created to serialize and share data in C++ for my games, so it started life as a quick little JSON parser. Very soon though, after being used to the power of lua, I started adding variables and functions.
+mjscript was initially created to serialize and share data in C++ for my games, so it started life as a quick little JSON parser. Very soon though, missing the power of lua, I started adding variables and functions.
 
-During this process, I have taken a performance-centric approach, while trying to strip everything back to be simple and clear. As it parses and immediately runs hand written script code in a single pass, in many cases where a script is just read, or a config file loaded, it should perform faster than the alternatives. Where mjscript might not be as fast is in repetitive function calls, but we'll see how it goes.
+During this process, I have taken a performance-centric approach, while trying to keep it simple and clear. As it parses and immediately runs hand written script code in a single pass, in many cases where a script is just read, or a config file loaded, it should perform faster than the alternatives. Where mjscript might not be as fast is in repetitive function calls, but we'll see how it goes.
 
 I feel this could be useful for a lot of people, and I don't desire to keep it only for myself or to profit from it, so I'm making it open source. 
 
-Hopefully it is useful, and if you find a bug or have a feature request please feel free to open an issue
+Hopefully it is useful, and if you find a bug or have a feature request please feel free to open an issue, but please do fork this and send it in new directions too!
 
 -- Dave
