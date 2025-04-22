@@ -48,15 +48,16 @@ public: //members
     uint32_t functionLineNumber; //save a copy so we can change it in debugInfo, which will save a string copy
 
 public://functions
-    MJFunction();
+    MJFunction(MJRef* parent_);
+    MJFunction(std::function<MJRef*(MJTable* args)>, MJRef* parent_);
     virtual ~MJFunction();
     
     virtual MJFunction* copy()
     {
-        return new MJFunction();
+        return new MJFunction(parent);
     }
     
-    static MJFunction* initWithHumanReadableString(const char* str, char** endptr, MJTable* parent, MJDebugInfo* debugInfo);
+    static MJFunction* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo);
     
     virtual uint8_t type() { return MJREF_TYPE_FUNCTION; }
     virtual std::string getTypeName() {return "function";}
@@ -68,9 +69,11 @@ public://functions
     
     MJRef* call(MJTable* args, MJTable* state);
     //void call(MJTable* args, std::function<void(MJRef*)> callback);
-   
+    
+    virtual MJRef* recursivelyFindVariable(MJString* variableName, MJDebugInfo* debugInfo, int varStartIndex = 0);
+    virtual bool recursivelySetVariable(MJString* variableName, MJRef* value, MJDebugInfo* debugInfo, int varStartIndex = 0);
 
-private:
+protected:
     
     MJRef* recursivelyRunIfElseStatement(MJIfStatement* elseIfStatement, MJTable* functionState);
     

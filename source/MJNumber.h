@@ -15,15 +15,15 @@ public: //members
     double value;
 
 public://functions
-    MJNumber(double value_) {value = value_;}
+    MJNumber(double value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
     virtual ~MJNumber() {};
     
     virtual MJNumber* copy()
     {
-        return new MJNumber(value);
+        return new MJNumber(value, parent);
     }
     
-    static MJNumber* initWithHumanReadableString(const char* str, char** endptr, MJDebugInfo* debugInfo) {
+    static MJNumber* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = str;
         
         double value = strtod(s, endptr);
@@ -31,7 +31,7 @@ public://functions
         s = skipToNextChar(*endptr, debugInfo, true);
         *endptr = (char*)s;
         
-        MJNumber* number = new MJNumber(value);
+        MJNumber* number = new MJNumber(value, parent);
         return number;
     }
     
@@ -58,27 +58,27 @@ public: //members
     bool value;
 
 public://functions
-    MJBool(bool value_) {value = value_;}
+    MJBool(bool value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
     virtual ~MJBool() {};
     
     virtual MJNumber* copy()
     {
-        return new MJNumber(value);
+        return new MJNumber(value, parent);
     }
     
-    static MJBool* initWithHumanReadableString(const char* str, char** endptr, MJDebugInfo* debugInfo) {
+    static MJBool* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
         
         if(*s == 't' && *(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e' )
         {
             *endptr = (char*)(s + 4);
-            MJBool* number = new MJBool(true);
+            MJBool* number = new MJBool(true, parent);
             return number;
         }
         if(*s == 'f' && *(s + 1) == 'a' && *(s + 2) == 'l' && *(s + 3) == 's' && *(s + 4) == 'e' )
         {
             *endptr = (char*)(s + 5);
-            MJBool* number = new MJBool(false);
+            MJBool* number = new MJBool(false, parent);
             return number;
         }
         
@@ -103,14 +103,14 @@ public: //members
     dvec2 value;
 
 public://functions
-    MJVec2(dvec2 value_) {value = value_;}
+    MJVec2(dvec2 value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
     virtual ~MJVec2() {};
     virtual MJVec2* copy()
     {
-        return new MJVec2(value);
+        return new MJVec2(value, parent);
     }
     
-    static MJVec2* initWithHumanReadableString(const char* str, char** endptr, MJDebugInfo* debugInfo) {
+    static MJVec2* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '2' && *(s + 4) == '(')
@@ -141,7 +141,7 @@ public://functions
             s = skipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
-            return new MJVec2(dvec2(values[0], values[1]));
+            return new MJVec2(dvec2(values[0], values[1]), parent);
         }
         
         return nullptr;
@@ -165,14 +165,14 @@ public: //members
     dvec3 value;
 
 public://functions
-    MJVec3(dvec3 value_) {value = value_;}
+    MJVec3(dvec3 value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
     virtual ~MJVec3() {};
     virtual MJVec3* copy()
     {
-        return new MJVec3(value);
+        return new MJVec3(value, parent);
     }
     
-    static MJVec3* initWithHumanReadableString(const char* str, char** endptr, MJDebugInfo* debugInfo) {
+    static MJVec3* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '3' && *(s + 4) == '(')
@@ -203,7 +203,7 @@ public://functions
             s = skipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
-            return new MJVec3(dvec3(values[0], values[1], values[2]));
+            return new MJVec3(dvec3(values[0], values[1], values[2]), parent);
         }
         
         return nullptr;
@@ -227,14 +227,14 @@ public: //members
     dvec4 value;
 
 public://functions
-    MJVec4(dvec4 value_) {value = value_;}
+    MJVec4(dvec4 value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
     virtual ~MJVec4() {};
     virtual MJVec4* copy()
     {
-        return new MJVec4(value);
+        return new MJVec4(value, parent);
     }
     
-    static MJVec4* initWithHumanReadableString(const char* str, char** endptr, MJDebugInfo* debugInfo) {
+    static MJVec4* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '4' && *(s + 4) == '(')
@@ -265,7 +265,7 @@ public://functions
             s = skipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
-            return new MJVec4(dvec4(values[0], values[1], values[2],  values[3]));
+            return new MJVec4(dvec4(values[0], values[1], values[2],  values[3]), parent);
         }
         
         return nullptr;

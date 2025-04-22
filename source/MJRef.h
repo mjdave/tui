@@ -130,22 +130,23 @@ MJRef* recursivelyLoadValue(const char* str,
 
 class MJRef {
 public: //members
+    MJRef* parent = nullptr; //this is only stored by tables and functions, variables don't use it currently.
     uint8_t refCount = 1;
 
 public://functions
-    MJRef() {}
+    MJRef(MJRef* parent_) {parent = parent_;}
     
     virtual ~MJRef() {}
     
     
     void release() {refCount--; if(refCount == 0) { delete this;}}
     void retain() {refCount++;}
-    virtual MJRef* copy() {return new MJRef();};
+    virtual MJRef* copy() {return new MJRef(parent);};
     
     
     //static MJRef* initWithBinaryData(void* data);
     //static MJRef* initWithBinaryFile(const std::string& filePath);
-    static MJRef* initWithHumanReadableString(const std::string& stringData) {return new MJRef();}
+    static MJRef* initWithHumanReadableString(const std::string& stringData, MJRef* parent) {return new MJRef(parent);}
     //static MJRef* initWithHumanReadableFile(const std::string& filePath);
     
     //virtual size_t size();
@@ -179,6 +180,9 @@ public://functions
         writeToFile(filePath, exportString);
     };
     
+    virtual MJRef* recursivelyFindVariable(MJString* variableName, MJDebugInfo* debugInfo, int varStartIndex = 0) {return nullptr;} //valid for tables and functions only
+    virtual bool recursivelySetVariable(MJString* variableName, MJRef* value, MJDebugInfo* debugInfo, int varStartIndex = 0) {return false;};
+    
    // std::string serialize();
     //bool serializeToPath();
     
@@ -187,7 +191,8 @@ public://functions
     
 private: //members
     
-private: //functions
+protected: //functions
+    
 
 };
 
@@ -196,9 +201,9 @@ public: //members
     void* value;
 
 public://functions
-    MJUserData(void* value_) {value = value_;}
+    MJUserData(void* value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
     virtual ~MJUserData() {};
-    virtual MJUserData* copy() {return new MJUserData(value);};
+    virtual MJUserData* copy() {return new MJUserData(value, parent);};
     
     virtual uint8_t type() { return MJREF_TYPE_USERDATA; }
     virtual std::string getTypeName() {return "userData";}

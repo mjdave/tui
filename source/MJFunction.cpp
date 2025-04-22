@@ -3,9 +3,9 @@
 #include "MJTable.h"
 #include "MJRef.h"
 
-MJFunction::MJFunction()
+MJFunction::MJFunction(MJRef* parent_)
+:MJRef(parent_)
 {
-    //state = new MJTable(parent);
 }
 
 MJFunction::~MJFunction()
@@ -122,7 +122,7 @@ void serializeExpression(const char* str, char** endptr, MJStatement* statement,
     *endptr = (char*)s;
 }
 
-bool loadFunctionBody(const char* str, char** endptr, MJTable* parent, MJDebugInfo* debugInfo, std::vector<MJStatement*>* statements)
+bool loadFunctionBody(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo, std::vector<MJStatement*>* statements)
 {
     const char* s = str;
     if(*s != '{')
@@ -244,7 +244,7 @@ bool loadFunctionBody(const char* str, char** endptr, MJTable* parent, MJDebugIn
             }
         }
         
-        MJString* varNameRef = MJString::initWithHumanReadableString(s, endptr, debugInfo);
+        MJString* varNameRef = MJString::initWithHumanReadableString(s, endptr, parent, debugInfo);
         s = skipToNextChar(*endptr, debugInfo);
         
         if(varNameRef)
@@ -293,7 +293,7 @@ bool loadFunctionBody(const char* str, char** endptr, MJTable* parent, MJDebugIn
     return true;
 }
 
-MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endptr, MJTable* parent, MJDebugInfo* debugInfo) //assumes that '(' is currently in str
+MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) //assumes that '(' is currently in str
 {
     const char* s = str;
     if(*s == 'f'
@@ -312,7 +312,7 @@ MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endp
         
         s = skipToNextChar(s, debugInfo);
         
-        MJFunction* mjFunction = new MJFunction();
+        MJFunction* mjFunction = new MJFunction(parent);
         mjFunction->debugInfo.fileName = debugInfo->fileName;
         
         std::string currentVarName = "";
@@ -418,7 +418,7 @@ MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJT
         {
             case MJSTATEMENT_TYPE_RETURN:
             {
-                return new MJRef();
+                return new MJRef(parent);
             }
                 break;
             case MJSTATEMENT_TYPE_RETURN_EXPRESSION:
@@ -438,7 +438,7 @@ MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJT
                 
                 if(!result)
                 {
-                    result = new MJRef();
+                    result = new MJRef(parent);
                 }
                 return result;
             }
@@ -461,7 +461,7 @@ MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJT
                                                      true);
                 
                 const char* varNameCString = statement->varName.c_str();
-                MJString* variableNameString = MJString::initWithHumanReadableString(varNameCString, &endPtr, &debugInfo);
+                MJString* variableNameString = MJString::initWithHumanReadableString(varNameCString, &endPtr, parent, &debugInfo);
                 
                 setVariable(variableNameString,
                             result,
@@ -546,9 +546,9 @@ MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJT
 }
 
 
-MJRef* MJFunction::call(MJTable* args, MJTable* state)
+MJRef* MJFunction::call(MJTable* args, MJTable* callLocationState)
 {
-    MJTable* functionState = new MJTable(state);
+    MJTable* currentCallState = new MJTable(parent);
     
     int i = 0;
     int maxArgs = (int)argNames.size();
@@ -558,14 +558,31 @@ MJRef* MJFunction::call(MJTable* args, MJTable* state)
         {
             MJSError(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function");
         }
-        functionState->objectsByStringKey[argNames[i]] = arg;
+        currentCallState->objectsByStringKey[argNames[i]] = arg;
         i++;
     }
     
     
-    MJRef* result = runStatementArray(statements, functionState);
+    MJRef* result = runStatementArray(statements, currentCallState);
     
-    functionState->release();
+    currentCallState->release();
+    currentCallState = nullptr;
     
     return result;
+}
+
+
+MJRef* MJFunction::recursivelyFindVariable(MJString* variableName, MJDebugInfo* debugInfo, int varStartIndex)
+{
+    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to get a variable from within a child function");
+    return nullptr;
+    //return currentCallState->recursivelyFindVariable(variableName, debugInfo, varStartIndex);
+}
+
+
+bool MJFunction::recursivelySetVariable(MJString* variableName, MJRef* value, MJDebugInfo* debugInfo, int varStartIndex)
+{
+    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to set variable within a child function");
+    return false;
+   // return currentCallState->recursivelySetVariable(variableName, value, debugInfo, varStartIndex);
 }

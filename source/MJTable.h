@@ -20,8 +20,6 @@ public:
     std::map<uint32_t, MJRef*> objectsByNumberKey;
     std::map<std::string, MJRef*> objectsByStringKey;
     
-    MJTable* parentTable = nullptr;
-    
 private: //members
 
 public://functions
@@ -32,7 +30,7 @@ public://functions
     virtual std::string getStringValue() {return "table";}
     virtual bool boolValue() {return true;}
     
-    MJTable(MJTable* parent) {parentTable = parent;};
+    MJTable(MJRef* parent_) : MJRef(parent_) {};
     virtual ~MJTable() {
         for(MJRef* ref : arrayObjects)
         {
@@ -54,39 +52,39 @@ public://functions
         return this;
     }
     
-    static MJRef* initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, MJTable* state, MJDebugInfo* debugInfo) {
+    static MJRef* initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
         
         if(isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(*(s + 1))))
         {
-            return MJNumber::initWithHumanReadableString(s, endptr, debugInfo);
+            return MJNumber::initWithHumanReadableString(s, endptr, parent, debugInfo);
         }
         
-        MJFunction* functionRef = MJFunction::initWithHumanReadableString(str, endptr, state, debugInfo);
+        MJFunction* functionRef = MJFunction::initWithHumanReadableString(str, endptr, parent, debugInfo);
         if(functionRef)
         {
             return functionRef;
         }
         
-        MJBool* boolRef = MJBool::initWithHumanReadableString(str, endptr, debugInfo);
+        MJBool* boolRef = MJBool::initWithHumanReadableString(str, endptr, parent, debugInfo);
         if(boolRef)
         {
             return boolRef;
         }
         
-        MJVec2* vec2Ref = MJVec2::initWithHumanReadableString(str, endptr, debugInfo);
+        MJVec2* vec2Ref = MJVec2::initWithHumanReadableString(str, endptr, parent, debugInfo);
         if(vec2Ref)
         {
             return vec2Ref;
         }
         
-        MJVec3* vec3Ref = MJVec3::initWithHumanReadableString(str, endptr, debugInfo);
+        MJVec3* vec3Ref = MJVec3::initWithHumanReadableString(str, endptr, parent, debugInfo);
         if(vec3Ref)
         {
             return vec3Ref;
         }
         
-        MJVec4* vec4Ref = MJVec4::initWithHumanReadableString(str, endptr, debugInfo);
+        MJVec4* vec4Ref = MJVec4::initWithHumanReadableString(str, endptr, parent, debugInfo);
         if(vec4Ref)
         {
             return vec4Ref;
@@ -98,18 +96,18 @@ public://functions
         {
             s+=3;
             *endptr = (char*)s;
-            return new MJRef();
+            return new MJRef(parent);
         }
         else if(*s == '{' || *s == '[')
         {
-            return MJTable::initWithHumanReadableString(s, endptr, state, debugInfo);
+            return MJTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
         }
         
-        return MJString::initWithHumanReadableString(s, endptr, debugInfo);
+        return MJString::initWithHumanReadableString(s, endptr, parent, debugInfo);
     }
     
     
-    MJRef* recursivelyFindVariable(MJString* variableName, int varStartIndex = 0)
+    virtual MJRef* recursivelyFindVariable(MJString* variableName, MJDebugInfo* debugInfo, int varStartIndex = 0)
     {
         //const std::string variableNameString = variableName->value;
         
@@ -119,26 +117,26 @@ public://functions
         {
             if(varNames[varStartIndex][0] == '.')
             {
-                MJTable* table = parentTable;
+                MJRef* tableOrFunction = parent;
                 
                 for(int i = varStartIndex + 1; i < variableName->varNames.size(); i++)
                 {
                     if(varNames[i][0] == '.')
                     {
-                        table = table->parentTable;
-                        if(!table)
+                        tableOrFunction = tableOrFunction->parent;
+                        if(!tableOrFunction)
                         {
-                            MJError("No parent found at level:%d for:%s", i, variableName->value.c_str());
+                            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found at level:%d for:%s", i + 1, variableName->value.c_str());
                             return nullptr;
                         }
                     }
                     else
                     {
-                        return table->recursivelyFindVariable(variableName, i);
+                        return tableOrFunction->recursivelyFindVariable(variableName, debugInfo, i);
                     }
                 }
                 
-                return table;
+                return tableOrFunction;
             }
             
             if(objectsByStringKey.count(varNames[varStartIndex]) != 0)
@@ -148,7 +146,7 @@ public://functions
                     MJRef* subtableRef = objectsByStringKey[varNames[varStartIndex]];
                     if(subtableRef->type() != MJREF_TYPE_TABLE)
                     {
-                        MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                         return nullptr;
                     }
                     
@@ -168,7 +166,7 @@ public://functions
                             subtableRef = objectsByStringKey[varNames[i]];
                             if(subtableRef->type() != MJREF_TYPE_TABLE)
                             {
-                                MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                                 return nullptr;
                             }
                         }
@@ -179,15 +177,15 @@ public://functions
             }
         }
         
-        if(parentTable)
+        if(parent)
         {
-            return parentTable->recursivelyFindVariable(variableName);
+            return parent->recursivelyFindVariable(variableName, debugInfo);
         }
         
         return nullptr;
     }
     
-    bool recursivelySetVariable(MJString* variableName, MJRef* value, int varStartIndex = 0)
+    virtual bool recursivelySetVariable(MJString* variableName, MJRef* value, MJDebugInfo* debugInfo, int varStartIndex = 0)
     {
         std::vector<std::string>& varNames = variableName->varNames;
         
@@ -195,26 +193,27 @@ public://functions
         {
             if(varNames[varStartIndex][0] == '.')
             {
-                MJTable* table = parentTable;
+                MJRef* tableOrFunction = parent;
                 
                 for(int i = varStartIndex + 1; i < variableName->varNames.size(); i++)
                 {
                     if(varNames[i][0] == '.')
                     {
-                        table = table->parentTable;
-                        if(!table)
+                        tableOrFunction = tableOrFunction->parent;
+                        if(!tableOrFunction)
                         {
-                            MJError("No parent found at level:%d for:%s", i, variableName->value.c_str());
+                            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found at level:%d for:%s", (i + 1), variableName->value.c_str());
                             return false;
                         }
                     }
                     else
                     {
-                        return table->recursivelySetVariable(variableName, value, i);
+                        return tableOrFunction->recursivelySetVariable(variableName, value, debugInfo, i);
                     }
                 }
                 
-                return table;
+                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Bad variable name:%s", variableName->value.c_str());
+                return false;
             }
             
             if(objectsByStringKey.count(varNames[varStartIndex]) != 0)
@@ -224,7 +223,7 @@ public://functions
                     MJRef* subtableRef = objectsByStringKey[varNames[varStartIndex]];
                     if(subtableRef->type() != MJREF_TYPE_TABLE)
                     {
-                        MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                         return false;
                     }
                     
@@ -241,7 +240,7 @@ public://functions
                             subtableRef = objectsByStringKey[varNames[i]];
                             if(subtableRef->type() != MJREF_TYPE_TABLE)
                             {
-                                MJError("Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                                 return false;
                             }
                         }
@@ -253,9 +252,9 @@ public://functions
             return true;
         }
         
-        if(parentTable)
+        if(parent)
         {
-            return parentTable->recursivelySetVariable(variableName, value);
+            return parent->recursivelySetVariable(variableName, value, debugInfo);
         }
         
         return false;
@@ -280,13 +279,13 @@ public://functions
                 {
                     debugInfo->lineNumber++;
                 }
-                arrayObjects.push_back(new MJNumber(keyValue));
+                arrayObjects.push_back(new MJNumber(keyValue, this));
                 s++;
                 *endptr = (char*)s;
             }
             else if(*s == '}' || *s == ']' || *s == ')')
             {
-                arrayObjects.push_back(new MJNumber(keyValue));
+                arrayObjects.push_back(new MJNumber(keyValue, this));
                 s++;
                 *endptr = (char*)s;
                 return false;
@@ -347,7 +346,7 @@ public://functions
                 s = skipToNextChar(s, debugInfo);
                 if(*s == '}')
                 {
-                    *resultRef = new MJRef();
+                    *resultRef = new MJRef(this);
                     s++;
                     s = skipToNextChar(s, debugInfo, true);
                     *endptr = (char*)s;
@@ -567,9 +566,15 @@ public://functions
                     debugInfo->lineNumber++;
                 }
                 
+                bool keyWasFunctionCall = false;
                 if(keyRef->type() == MJREF_TYPE_STRING)
                 {
-                    MJRef* newKeyRef = loadVariableIfAvailable((MJString*)keyRef, s, endptr, parentTable, debugInfo);
+                    if(((MJString*)keyRef)->isValidFunctionString)
+                    {
+                        keyWasFunctionCall = true;
+                    }
+                    
+                    MJRef* newKeyRef = loadVariableIfAvailable((MJString*)keyRef, s, endptr, this, debugInfo);
                     if(newKeyRef)
                     {
                         keyRef->release();
@@ -578,7 +583,10 @@ public://functions
                     s = skipToNextChar(*endptr, debugInfo, true);
                 }
                 
-                arrayObjects.push_back(keyRef);
+                if(!keyWasFunctionCall)
+                {
+                    arrayObjects.push_back(keyRef);
+                }
                 
                 if(*s == '}' || *s == ']' || *s == ')') // ')' is added here to terminate function arg lists, but '(' is not valid generally.
                 {
@@ -607,7 +615,7 @@ public://functions
                 
                 //if(keyRef->)
                     
-                recursivelySetVariable(((MJString*)keyRef), valueRef);
+                recursivelySetVariable(((MJString*)keyRef), valueRef, debugInfo);
                     
                 //objectsByStringKey[((MJString*)keyRef)->value] = valueRef;
                 
@@ -662,7 +670,7 @@ public://functions
     }
     
     
-    static MJTable* initWithHumanReadableString(const char* str, char** endptr, MJTable* parent, MJDebugInfo* debugInfo, MJRef** resultRef = nullptr) {
+    static MJTable* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo, MJRef** resultRef = nullptr) {
         MJTable* table = new MJTable(parent);
         
         const char* s = skipToNextChar(str, debugInfo);

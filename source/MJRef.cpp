@@ -8,7 +8,7 @@ MJRef* loadVariableIfAvailable(MJString* variableName, const char* str, char** e
 {
     if(variableName->allowAsVariableName && parentTable)
     {
-        MJRef* newValueRef = parentTable->recursivelyFindVariable(variableName);
+        MJRef* newValueRef = parentTable->recursivelyFindVariable(variableName, debugInfo);
         if(newValueRef)
         {
             if(newValueRef->type() == MJREF_TYPE_TABLE)
@@ -29,11 +29,8 @@ MJRef* loadVariableIfAvailable(MJString* variableName, const char* str, char** e
                     *endptr = (char*)s;
                     return result;
                 }
-                else
-                {
-                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid call to function:%s", variableName->value.c_str());
-                    return nullptr;
-                }
+                newValueRef->retain();
+                return newValueRef;
             }
             else
             {
@@ -41,6 +38,22 @@ MJRef* loadVariableIfAvailable(MJString* variableName, const char* str, char** e
                 return newValueRef;
             }
         }
+    }
+    if(variableName->isValidFunctionString)
+    {
+        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to call missing function: %s()", variableName->value.c_str());
+        const char* s = skipToNextChar(*endptr, debugInfo, true);
+        if(*s == '(')
+        {
+            s++;
+            s = skipToNextChar(s, debugInfo);
+            if(*s == ')')
+            {
+                s++;
+                s = skipToNextChar(s, debugInfo, true);
+            }
+        }
+        *endptr = (char*)s;
     }
     return nullptr;
 }
@@ -53,7 +66,7 @@ bool setVariable(MJString* variableName,
 {
     if(variableName->allowAsVariableName && parentTable)
     {
-        return parentTable->recursivelySetVariable(variableName, value);
+        return parentTable->recursivelySetVariable(variableName, value, debugInfo);
     }
     return false;
 }
@@ -149,7 +162,7 @@ MJRef* recursivelyLoadValue(const char* str,
     {
         if(((MJString*)rightValue)->allowAsVariableName)
         {
-            MJRef* newValueRef = parentTable->recursivelyFindVariable((MJString*)rightValue);
+            MJRef* newValueRef = parentTable->recursivelyFindVariable((MJString*)rightValue, debugInfo);
             if(newValueRef)
             {
                 delete rightValue;

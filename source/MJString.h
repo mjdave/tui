@@ -23,18 +23,18 @@ public://functions
     virtual std::string getStringValue() {return "\"" + value + "\"";}
     virtual bool boolValue() {return !value.empty();}
     
-    MJString(const std::string& value_) {value = value_;}
+    MJString(const std::string& value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
     virtual ~MJString() {};
     
     virtual MJString* copy()
     {
-        return new MJString(value);
+        return new MJString(value, parent);
     }
     
-    static MJString* initWithHumanReadableString(const char* str, char** endptr, MJDebugInfo* debugInfo) {
+    static MJString* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = str;
         
-        MJString* mjString = new MJString("");
+        MJString* mjString = new MJString("", parent);
         
         bool singleQuote = false;
         bool doubleQuote = false;
