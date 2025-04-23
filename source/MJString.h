@@ -20,7 +20,7 @@ public://functions
     
     virtual uint8_t type() { return MJREF_TYPE_STRING; }
     virtual std::string getTypeName() {return "string";}
-    virtual std::string getStringValue() {return "\"" + value + "\"";}
+    virtual std::string getStringValue() {return value;}
     virtual bool boolValue() {return !value.empty();}
     
     MJString(const std::string& value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
@@ -63,6 +63,7 @@ public://functions
                         if(mjString->value.empty())
                         {
                             singleQuote = true;
+                            mjString->allowAsVariableName = false;
                         }
                     }
                 }
@@ -82,6 +83,7 @@ public://functions
                         if(mjString->value.empty())
                         {
                             doubleQuote = true;
+                            mjString->allowAsVariableName = false;
                         }
                     }
                 }

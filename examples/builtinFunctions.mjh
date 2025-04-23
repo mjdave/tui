@@ -1,0 +1,23 @@
+
+numA = random(8)
+print("numA:", numA)
+print("random(8):", random(8))
+print("random(8):", random(8))
+print("random(8):", random(8))
+print("random(8):", random(8))
+
+random(8)
+random(8)
+random(8)
+
+
+random(8.5)
+random(8.5)
+random(8.5)
+
+random()
+random()
+random()
+
+
+print("Hello World!")

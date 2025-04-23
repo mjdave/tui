@@ -11,6 +11,10 @@
 #include "MJFileUtils.h"
 #include "MJStringUtils.h"
 
+class MJTable;
+class MJString;
+class MJRef;
+
 #define MJSError(__fileName__, __lineNumber__, fmt__, ...) MJLog("error %s:%d:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
 #define MJSWarn(__fileName__, __lineNumber__, fmt__, ...) MJLog("warning %s:%d:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
 
@@ -105,10 +109,6 @@ inline const char* skipToNextMatchingChar(const char* str, MJDebugInfo* debugInf
 }
 
 
-class MJTable;
-class MJString;
-class MJRef;
-
 MJRef* loadVariableIfAvailable(MJString* variableName,
                                const char* str,
                                char** endptr,
@@ -134,7 +134,7 @@ public: //members
     uint8_t refCount = 1;
 
 public://functions
-    MJRef(MJRef* parent_) {parent = parent_;}
+    MJRef(MJRef* parent_ = nullptr) {parent = parent_;}
     
     virtual ~MJRef() {}
     
@@ -144,12 +144,20 @@ public://functions
     virtual MJRef* copy() {return new MJRef(parent);};
     
     
-    //static MJRef* initWithBinaryData(void* data);
-    //static MJRef* initWithBinaryFile(const std::string& filePath);
-    static MJRef* initWithHumanReadableString(const std::string& stringData, MJRef* parent) {return new MJRef(parent);}
+    static MJTable* createRootTable();
+    
+    static MJRef* load(const std::string& filename, MJTable* parent = createRootTable()); //public method to read from human readable file/string data
+    static MJRef* runScriptFile(const std::string& filename, MJTable* parent = createRootTable());  //public method
+    
+    static MJRef* load(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo, MJRef** resultRef = nullptr); //public method
+    static MJRef* load(const std::string& inputString, const std::string& debugName, MJTable* parent); //public method
+    
+    //static MJRef* initWithBinaryData(void* data); //todo
+    //static MJRef* initWithBinaryFile(const std::string& filePath);  //todo
+    static MJRef* initWithHumanReadableString(const std::string& stringData, MJRef* parent) {return new MJRef(parent);} //internal, loads a single value/expression
     //static MJRef* initWithHumanReadableFile(const std::string& filePath);
     
-    //virtual size_t size();
+    
     virtual uint8_t type() { return MJREF_TYPE_NIL; }
     virtual std::string getTypeName() {return "nil";}
     
@@ -166,13 +174,10 @@ public://functions
     }
     
     virtual std::string getStringValue() {return "nil";}
-    //virtual uint64_t generateHash() {return 0;}
-    
     
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) {
         debugString += getStringValue();
     }
-    
     
     void saveToFile(const std::string& filePath) {
         std::string exportString;
@@ -183,24 +188,14 @@ public://functions
     virtual MJRef* recursivelyFindVariable(MJString* variableName, MJDebugInfo* debugInfo, int varStartIndex = 0) {return nullptr;} //valid for tables and functions only
     virtual bool recursivelySetVariable(MJString* variableName, MJRef* value, MJDebugInfo* debugInfo, int varStartIndex = 0) {return false;};
     
-   // std::string serialize();
-    //bool serializeToPath();
-    
-    //bool initWithData(const std::string& serialized);
-    //bool initWithFile(const std::string& serialized);
-    
-private: //members
-    
-protected: //functions
-    
 
 };
 
 class MJUserData : public MJRef {
-public: //members
+public:
     void* value;
 
-public://functions
+public:
     MJUserData(void* value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
     virtual ~MJUserData() {};
     virtual MJUserData* copy() {return new MJUserData(value, parent);};
@@ -215,6 +210,5 @@ private:
     
 private:
 };
-
 
 #endif

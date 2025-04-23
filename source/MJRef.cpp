@@ -4,6 +4,176 @@
 #include "MJTable.h"
 #include "MJNumber.h"
 
+
+MJTable* MJRef::createRootTable()
+{
+    MJTable* root = new MJTable(nullptr);
+    srand((unsigned)time(nullptr));
+    
+    MJFunction* randomFunction = new MJFunction([root](MJTable* args, MJTable* state) {
+        if(args->arrayObjects.size() > 0)
+        {
+            MJRef* arg = args->arrayObjects[0];
+            if(arg->type() == MJREF_TYPE_NUMBER)
+            {
+                const double& numValue = ((MJNumber*)(arg))->value;
+                if(numValue == floor(numValue))
+                {
+                    return new MJNumber(floor(((double)rand() / RAND_MAX) * numValue));
+                }
+                return new MJNumber(((double)rand() / RAND_MAX) * numValue);
+            }
+        }
+        return new MJNumber(((double)rand() / RAND_MAX));
+    }, root);
+    
+    root->set("random", randomFunction);
+    randomFunction->release();
+    
+    MJFunction* printFunction = new MJFunction([root](MJTable* args, MJTable* state) {
+        if(args->arrayObjects.size() > 0)
+        {
+            std::string printString = "";
+            for(MJRef* arg : args->arrayObjects)
+            {
+                printString += arg->getStringValue();
+            }
+            MJLog("%s", printString.c_str());
+        }
+        return nullptr;
+    }, root);
+    
+    root->set("print", printFunction);
+    printFunction->release();
+    
+    
+    return root;
+}
+
+MJRef* MJRef::load(const std::string& inputString, const std::string& debugName, MJTable* parent) {
+    MJDebugInfo debugInfo;
+    debugInfo.fileName = debugName;
+    const char* cString = inputString.c_str();
+    char* endPtr;
+    
+    return MJRef::load(cString, &endPtr, parent, &debugInfo);
+}
+
+MJRef* MJRef::load(const std::string& filename, MJTable* parent) {
+    
+    std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
+    MJDebugInfo debugInfo;
+    debugInfo.fileName = filename;
+    if(in)
+    {
+        std::string contents;
+        in.seekg(0, std::ios::end);
+        contents.resize(in.tellg());
+        in.seekg(0, std::ios::beg);
+        in.read(&contents[0], contents.size());
+        in.close();
+        const char* cString = contents.c_str();
+        char* endPtr;
+        return MJRef::load(cString, &endPtr, parent, &debugInfo);
+    }
+    else
+    {
+        MJError("File not found in MJTable::initWithHumanReadableFilePath at:%s", filename.c_str());
+    }
+    return nullptr;
+}
+
+MJRef* MJRef::runScriptFile(const std::string& filename, MJTable* parent)
+{
+    std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
+    MJDebugInfo debugInfo;
+    debugInfo.fileName = filename;
+    if(in)
+    {
+        std::string contents;
+        in.seekg(0, std::ios::end);
+        contents.resize(in.tellg());
+        in.seekg(0, std::ios::beg);
+        in.read(&contents[0], contents.size());
+        in.close();
+        const char* cString = contents.c_str();
+        char* endPtr;
+        MJRef* resultRef = nullptr;
+        MJRef* table = MJRef::load(cString, &endPtr, parent, &debugInfo, &resultRef);
+        //todo if debug logging
+        table->debugLog();
+        return resultRef;
+    }
+    else
+    {
+        MJError("File not found in MJTable::initWithHumanReadableFilePath at:%s", filename.c_str());
+    }
+    return nullptr;
+    //MJRef** resultRef
+}
+
+MJRef* MJRef::load(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo, MJRef** resultRef) {
+    
+    MJTable* table = new MJTable(parent);
+    
+    const char* s = skipToNextChar(str, debugInfo);
+    
+    //uint32_t integerIndex = 0;
+    
+    bool foundOpeningBracket = false;
+    
+    if(*s == '{' || *s == '[')
+    {
+        foundOpeningBracket = true;
+        s++;
+    }
+        
+    while(1)
+    {
+        s = skipToNextChar(s, debugInfo);
+        
+        if(*s == '\0')
+        {
+            break;
+        }
+        
+        if(foundOpeningBracket && (*s == '}' || *s == ']'))
+        {
+            s++;
+            *endptr = (char*)s;
+            break;
+        }
+        
+        if(!table->addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
+        {
+            break;
+        }
+        s = *endptr;
+    }
+    
+    if(!foundOpeningBracket)
+    {
+        if(table->objectsByStringKey.empty() && table->objectsByNumberKey.empty())
+        {
+            int arrayObjectCount = (int)table->arrayObjects.size();
+            if(arrayObjectCount == 1)
+            {
+                MJRef* object = table->arrayObjects[0];
+                object->retain();
+                table->release();
+                return object;
+            }
+            else if(arrayObjectCount == 0)
+            {
+                table->release();
+                return nullptr;
+            }
+        }
+    }
+    
+    return table;
+}
+
 MJRef* loadVariableIfAvailable(MJString* variableName, const char* str, char** endptr, MJTable* parentTable, MJDebugInfo* debugInfo)
 {
     if(variableName->allowAsVariableName && parentTable)

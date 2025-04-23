@@ -52,33 +52,6 @@ public://functions
         return this;
     }
     
-    static MJTable* createRootTable()
-    {
-        MJTable* root = new MJTable(nullptr);
-        srand((unsigned)time(nullptr));
-        
-        MJFunction* randomFunction = new MJFunction([root](MJTable* args, MJTable* state) {
-            if(args->arrayObjects.size() > 0)
-            {
-                MJRef* arg = args->arrayObjects[0];
-                if(arg->type() == MJREF_TYPE_NUMBER)
-                {
-                    const double& numValue = ((MJNumber*)(arg))->value;
-                    if(numValue == floor(numValue))
-                    {
-                        return new MJNumber(floor(((double)rand() / RAND_MAX) * numValue));
-                    }
-                    return new MJNumber(((double)rand() / RAND_MAX) * numValue);
-                }
-            }
-            return new MJNumber(((double)rand() / RAND_MAX));
-        }, root);
-        
-        root->set("random", randomFunction);
-        randomFunction->release();
-        
-        return root;
-    }
     
     static MJRef* initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
@@ -294,75 +267,6 @@ public://functions
     bool addHumanReadableKeyValuePair(const char* str, char** endptr, MJDebugInfo* debugInfo, MJRef** resultRef = nullptr) {
         const char* s = skipToNextChar(str, debugInfo);
         
-        /*if(isdigit(*s))
-        {
-            double keyValue = strtod(str, endptr);
-            
-            s = skipToNextChar(*endptr, debugInfo, true);
-            *endptr = (char*)s;
-            
-            if(*s == ',' || *s == '\n')
-            {
-                if(*s == '\n')
-                {
-                    debugInfo->lineNumber++;
-                }
-                arrayObjects.push_back(new MJNumber(keyValue, this));
-                s++;
-                *endptr = (char*)s;
-            }
-            else if(*s == '}' || *s == ']' || *s == ')')
-            {
-                arrayObjects.push_back(new MJNumber(keyValue, this));
-                s++;
-                *endptr = (char*)s;
-                return false;
-            }
-            else if(*s == '=' || *s == ':')
-            {
-                s++;
-                s = skipToNextChar(s, debugInfo);
-                
-                MJRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, this, debugInfo, true, true);
-                s = skipToNextChar(*endptr, debugInfo, true);
-                
-                objectsByNumberKey[(uint32_t)keyValue] = valueRef;
-                
-                
-                if(*s == '\0')
-                {
-                    *endptr = (char*)s;
-                    return false;
-                }
-                else if(*s == ',' || *s == '\n')
-                {
-                    if(*s == '\n')
-                    {
-                        debugInfo->lineNumber++;
-                    }
-                    s++;
-                    *endptr = (char*)s;
-                }
-                else if(*s == '}' || *s == ']')
-                {
-                    s++;
-                    *endptr = (char*)s;
-                    return false;
-                }
-                else
-                {
-                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ',' or newline after '=' or ':' assignment. unexpected character loading table:%c", *s);
-                    return false;
-                }
-            }
-            else
-            {
-                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
-                return false;
-            }
-        }
-        else*/
-        //{
         if(resultRef && *s == 'r'
            && *(s + 1) == 'e'
            && *(s + 2) == 't'
@@ -582,15 +486,7 @@ public://functions
             return true; //return now, we are done
         }
         
-        
-        /*MJRef* keyRef = recursivelyLoadValue(s,
-                                                         endptr,
-                                                         nullptr,
-                                                         this,
-                                                         debugInfo,
-                                                         true,
-                                                      true);*/
-        const char* keyStartS = s; //regrettably rewinding to here if we find an array
+        const char* keyStartS = s; // rewind to here if we find an array object
         int keyStartLineNumber = debugInfo->lineNumber;
         MJRef* keyRef = initUnknownTypeRefWithHumanReadableString(s, endptr, this, debugInfo);
         
@@ -663,16 +559,16 @@ public://functions
                 MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Table keys must be a string or number only. Found:%s", keyRef->getDebugString().c_str());
                 return false;
             }
+            else if(!((MJString*)keyRef)->allowAsVariableName)
+            {
+                ((MJString*)keyRef)->allowAsVariableName = true; //required hack to support json with "x": quoted keys
+                ((MJString*)keyRef)->varNames.push_back(((MJString*)keyRef)->value);
+            }
             
             MJRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, this, debugInfo, true, true);
             s = skipToNextChar(*endptr, debugInfo, true);
-            
-            //if(keyRef->)
                 
             recursivelySetVariable(((MJString*)keyRef), valueRef, debugInfo);
-                
-            //objectsByStringKey[((MJString*)keyRef)->value] = valueRef;
-            
             
             bool success = true;
             
@@ -730,14 +626,15 @@ public://functions
         
         const char* s = skipToNextChar(str, debugInfo);
         
-        //uint32_t integerIndex = 0;
-        
-        bool foundOpeningBracket = false;
-        
         if(*s == '{' || *s == '[' || *s == '(') // is added here to allow function arg lists when this method is called directly, but '(' is restricted in initUnknownTypeRefWithHumanReadableString.
         {
-            foundOpeningBracket = true;
             s++;
+        }
+        else
+        {
+            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
+            delete table;
+            return nullptr;
         }
             
         while(1)
@@ -749,7 +646,7 @@ public://functions
                 break;
             }
             
-            if(foundOpeningBracket && (*s == '}' || *s == ']' || *s == ')'))
+            if(*s == '}' || *s == ']' || *s == ')')
             {
                 s++;
                 *endptr = (char*)s;
@@ -763,71 +660,11 @@ public://functions
             s = *endptr;
         }
         
+        
         return table;
     }
     
     
-    static MJTable* initWithHumanReadableString(const std::string& inputString, const std::string& debugName, MJTable* parent) {
-        MJDebugInfo debugInfo;
-        debugInfo.fileName = debugName;
-        const char* cString = inputString.c_str();
-        char* endPtr;
-        
-        return initWithHumanReadableString(cString, &endPtr, parent, &debugInfo);
-    }
-    
-    static MJTable* initWithHumanReadableFilePath(const std::string& filename, MJTable* parent = createRootTable()) {
-        
-        std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
-        MJDebugInfo debugInfo;
-        debugInfo.fileName = filename;
-        if(in)
-        {
-            std::string contents;
-            in.seekg(0, std::ios::end);
-            contents.resize(in.tellg());
-            in.seekg(0, std::ios::beg);
-            in.read(&contents[0], contents.size());
-            in.close();
-            const char* cString = contents.c_str();
-            char* endPtr;
-            return initWithHumanReadableString(cString, &endPtr, parent, &debugInfo);
-        }
-        else
-        {
-            MJError("File not found in MJTable::initWithHumanReadableFilePath at:%s", filename.c_str());
-        }
-        return nullptr;
-    }
-    
-    static MJRef* runScriptFile(const std::string& filename, MJTable* parent = createRootTable())
-    {
-        std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
-        MJDebugInfo debugInfo;
-        debugInfo.fileName = filename;
-        if(in)
-        {
-            std::string contents;
-            in.seekg(0, std::ios::end);
-            contents.resize(in.tellg());
-            in.seekg(0, std::ios::beg);
-            in.read(&contents[0], contents.size());
-            in.close();
-            const char* cString = contents.c_str();
-            char* endPtr;
-            MJRef* resultRef = nullptr;
-            MJTable* table = initWithHumanReadableString(cString, &endPtr, parent, &debugInfo, &resultRef);
-            //todo if debug logging
-            table->debugLog();
-            return resultRef;
-        }
-        else
-        {
-            MJError("File not found in MJTable::initWithHumanReadableFilePath at:%s", filename.c_str());
-        }
-        return nullptr;
-        //MJRef** resultRef
-    }
     
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) {
         debugString += "{\n";
