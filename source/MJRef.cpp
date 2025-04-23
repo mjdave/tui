@@ -82,18 +82,27 @@ MJRef* loadValue(const char* str, char** endptr, MJTable* parentTable, MJDebugIn
     {
         MJString* originalString = (MJString*)valueRef;
         MJRef* newValueRef = loadVariableIfAvailable(originalString, s, endptr, parentTable, debugInfo);
+        
+        s = skipToNextChar(*endptr, debugInfo, true);
+        
         if(newValueRef)
         {
             originalString->release();
             valueRef = newValueRef;
         }
+        else if(originalString->isValidFunctionString)
+        {
+            originalString->release();
+            *endptr = (char*)s;
+            return nullptr;
+        }
         else if(!allowNonVarStrings)
         {
             MJSWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Uninitialized variable:%s", originalString->value.c_str());
             originalString->release();
+            *endptr = (char*)s;
             return nullptr;
         }
-        s = skipToNextChar(*endptr, debugInfo, true);
         
     }
     

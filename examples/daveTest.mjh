@@ -1,28 +1,18 @@
-value = 10
-table = {
-    subValue = 20
-    subTable = {
-        subValue = 30 // creates a new local table.subTable.subValue with the value 30
-        
-        ..subValue = value // this assigns 10 to the parent subValue (previously 20)
-        
-        enclosingTable = .. // we can store the parent table '..' in a local variable
-        enclosingTable.subValue = value // achieves the same as '..subValue = value'.
-        enclosingTable = nil // otherwise we create a circular loop and will hang if we try to log or iterate this table!
-        
-        ...value = 20 // we can go up multiple levels by adding dots, this modifies the variable created at the top level on the first line
-        
-        testValue = 1
-        
-        testFunction = function(valueToSet) { // the same rules apply for functions
-            ..testValue = value + 1 // 21, remember we can always *read* the higher level variables directly
-            ....value = valueToSet // 4 dots this time to modify
-        }
 
-        testFunction(100)
-    }
-    
-    outsideFunc = subTable.testFunction // we can grab a reference to that subTable's function and call it directly here
-    outsideFunc(200) // ..value is now 200. '....value' still works, because we find variables relative to where the function was defined, not where it is called
-    thisFuncDoesntExist() // error examples/scope.mjh:27:attempt to call missing function: thisFuncDoesntExist()
-}
+1
+2
+3 + 4
+random(8)
+random(8)
+random(8)
+random(8)
+random(8)
+
+
+random(8.5)
+random(8.5)
+random(8.5)
+
+random()
+random()
+random()

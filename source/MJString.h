@@ -63,7 +63,6 @@ public://functions
                         if(mjString->value.empty())
                         {
                             singleQuote = true;
-                            mjString->allowAsVariableName = false;
                         }
                     }
                 }
@@ -83,7 +82,6 @@ public://functions
                         if(mjString->value.empty())
                         {
                             doubleQuote = true;
-                            mjString->allowAsVariableName = false;
                         }
                     }
                 }
@@ -97,7 +95,7 @@ public://functions
             }
             else if(*s == '.')
             {
-                if(mjString->allowAsVariableName && !escaped && !singleQuote && !doubleQuote)
+                if(mjString->allowAsVariableName && !escaped)
                 {
                     if(*(s+1) == '.')
                     {

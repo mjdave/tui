@@ -3,16 +3,25 @@
 
 Interpreter::Interpreter(std::vector<std::string>& args)
 {
-    //MJTable* debugTable = MJTable::initWithHumanReadableFilePath(getResourcePath("examples/mathsAndExpressions.mjh"), nullptr);
-   // debugTable->debugLog();
+    //MJRef* debugRef = MJTable::initWithHumanReadableFilePath(getResourcePath("examples/mathsAndExpressions.mjh"), nullptr);
+    //debugRef->debugLog();
     
-    for(auto& arg : args)
+    /*for(auto& arg : args)
     {
-        MJRef* scriptRunResult = MJTable::runScriptFile(getResourcePath(arg), nullptr);
+        MJRef* scriptRunResult = MJTable::runScriptFile(getResourcePath(arg));
         if(scriptRunResult)
         {
             scriptRunResult->debugLog();
         }
+    }*/
+    
+    
+    //MJRef* scriptRunResult = MJTable::runScriptFile("examples/daveTest.mjh");
+    //MJRef* scriptRunResult = MJTable::runScriptFile("examples/scope.mjh");
+    MJRef* scriptRunResult = MJTable::runScriptFile("examples/functionsAndIfStatements.mjh");
+    if(scriptRunResult)
+    {
+        scriptRunResult->debugLog();
     }
 }
 

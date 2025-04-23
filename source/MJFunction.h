@@ -43,13 +43,14 @@ public: //members
     
     std::vector<std::string> argNames;
     std::vector<MJStatement*> statements;
+    std::function<MJRef*(MJTable* args, MJTable* state)> func;
     
     MJDebugInfo debugInfo;
     uint32_t functionLineNumber; //save a copy so we can change it in debugInfo, which will save a string copy
 
 public://functions
     MJFunction(MJRef* parent_);
-    MJFunction(std::function<MJRef*(MJTable* args)>, MJRef* parent_);
+    MJFunction(std::function<MJRef*(MJTable* args, MJTable* state)> func_, MJRef* parent_);
     virtual ~MJFunction();
     
     virtual MJFunction* copy()

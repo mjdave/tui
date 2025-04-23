@@ -52,6 +52,34 @@ public://functions
         return this;
     }
     
+    static MJTable* createRootTable()
+    {
+        MJTable* root = new MJTable(nullptr);
+        srand((unsigned)time(nullptr));
+        
+        MJFunction* randomFunction = new MJFunction([root](MJTable* args, MJTable* state) {
+            if(args->arrayObjects.size() > 0)
+            {
+                MJRef* arg = args->arrayObjects[0];
+                if(arg->type() == MJREF_TYPE_NUMBER)
+                {
+                    const double& numValue = ((MJNumber*)(arg))->value;
+                    if(numValue == floor(numValue))
+                    {
+                        return new MJNumber(floor(((double)rand() / RAND_MAX) * numValue));
+                    }
+                    return new MJNumber(((double)rand() / RAND_MAX) * numValue);
+                }
+            }
+            return new MJNumber(((double)rand() / RAND_MAX));
+        }, root);
+        
+        root->set("random", randomFunction);
+        randomFunction->release();
+        
+        return root;
+    }
+    
     static MJRef* initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
         
@@ -266,7 +294,7 @@ public://functions
     bool addHumanReadableKeyValuePair(const char* str, char** endptr, MJDebugInfo* debugInfo, MJRef** resultRef = nullptr) {
         const char* s = skipToNextChar(str, debugInfo);
         
-        if(isdigit(*s))
+        /*if(isdigit(*s))
         {
             double keyValue = strtod(str, endptr);
             
@@ -333,344 +361,371 @@ public://functions
                 return false;
             }
         }
-        else
+        else*/
+        //{
+        if(resultRef && *s == 'r'
+           && *(s + 1) == 'e'
+           && *(s + 2) == 't'
+           && *(s + 3) == 'u'
+           && *(s + 4) == 'r'
+           && *(s + 5) == 'n')
         {
-            if(resultRef && *s == 'r'
-               && *(s + 1) == 'e'
-               && *(s + 2) == 't'
-               && *(s + 3) == 'u'
-               && *(s + 4) == 'r'
-               && *(s + 5) == 'n')
+            s+=6;
+            s = skipToNextChar(s, debugInfo);
+            if(*s == '}')
             {
-                s+=6;
-                s = skipToNextChar(s, debugInfo);
-                if(*s == '}')
-                {
-                    *resultRef = new MJRef(this);
-                    s++;
-                    s = skipToNextChar(s, debugInfo, true);
-                    *endptr = (char*)s;
-                    return false;
-                }
-                else
-                {
-                    *resultRef = recursivelyLoadValue(s,
-                                                         endptr,
-                                                         nullptr,
-                                                         this,
-                                                         debugInfo,
-                                                         true,
-                                                      true);
-                    s = skipToNextChar(*endptr, debugInfo, true);
-                    *endptr = (char*)s;
-                    return false;
-                }
+                *resultRef = new MJRef(this);
+                s++;
+                s = skipToNextChar(s, debugInfo, true);
+                *endptr = (char*)s;
+                return false;
             }
-            
-            if(*s == 'i' && *(s + 1) == 'f' && (*(s + 2) == '(' || isspace(*(s + 2))))
+            else
             {
-                s+=2;
-                s = skipToNextChar(s, debugInfo);
-                
-                bool expressionPass = true;
-                MJRef* expressionResult = recursivelyLoadValue(s,
+                *resultRef = recursivelyLoadValue(s,
                                                      endptr,
                                                      nullptr,
                                                      this,
                                                      debugInfo,
                                                      true,
                                                   true);
-                s = skipToNextChar(*endptr, debugInfo);
-                if(expressionResult)
+                s = skipToNextChar(*endptr, debugInfo, true);
+                *endptr = (char*)s;
+                return false;
+            }
+        }
+        
+        if(*s == 'i' && *(s + 1) == 'f' && (*(s + 2) == '(' || isspace(*(s + 2))))
+        {
+            s+=2;
+            s = skipToNextChar(s, debugInfo);
+            
+            bool expressionPass = true;
+            MJRef* expressionResult = recursivelyLoadValue(s,
+                                                 endptr,
+                                                 nullptr,
+                                                 this,
+                                                 debugInfo,
+                                                 true,
+                                              true);
+            s = skipToNextChar(*endptr, debugInfo);
+            if(expressionResult)
+            {
+                expressionPass = expressionResult->boolValue();
+                expressionResult->release();
+            }
+            else
+            {
+                expressionPass = false;
+            }
+            
+            bool ifStatementComplete = false;
+            
+            if(expressionPass)
+            {
+                s = skipToNextChar(s, debugInfo);
+                if(*s == '{')
                 {
-                    expressionPass = expressionResult->boolValue();
-                    expressionResult->release();
+                    s++;
+                    ifStatementComplete = true;
+                    
+                    while(1)
+                    {
+                        s = skipToNextChar(s, debugInfo);
+                        
+                        if(*s == '}' || *s == ']' || *s == ')')
+                        {
+                            s = skipToNextChar(s + 1, debugInfo);
+                            *endptr = (char*)s;
+                            break;
+                        }
+                        
+                        if(!addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
+                        {
+                            //s = *endptr;
+                           // break;
+                            return false;
+                        }
+                        s = *endptr;
+                    }
                 }
                 else
                 {
-                    expressionPass = false;
+                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "if statement expected '{'");
+                    return false;
                 }
-                
-                bool ifStatementComplete = false;
-                
-                if(expressionPass)
+            }
+            else
+            {
+                s = skipToNextMatchingChar(s, debugInfo, '}');
+                s = skipToNextChar(s + 1, debugInfo);
+            }
+            
+            
+            while(1)
+            {
+                if(*s == 'e' && *(s + 1) == 'l' && *(s + 2) == 's' && *(s + 3) == 'e')
                 {
-                    s = skipToNextChar(s, debugInfo);
-                    if(*s == '{')
+                    if(ifStatementComplete)
                     {
-                        s++;
-                        ifStatementComplete = true;
-                        
-                        while(1)
-                        {
-                            s = skipToNextChar(s, debugInfo);
-                            
-                            if(*s == '}' || *s == ']' || *s == ')')
-                            {
-                                s = skipToNextChar(s + 1, debugInfo);
-                                *endptr = (char*)s;
-                                break;
-                            }
-                            
-                            if(!addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
-                            {
-                                //s = *endptr;
-                               // break;
-                                return false;
-                            }
-                            s = *endptr;
-                        }
+                        s = skipToNextMatchingChar(s, debugInfo, '}');
+                        s = skipToNextChar(s + 1, debugInfo);
                     }
                     else
                     {
-                        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "if statement expected '{'");
-                        return false;
-                    }
-                }
-                else
-                {
-                    s = skipToNextMatchingChar(s, debugInfo, '}');
-                    s = skipToNextChar(s + 1, debugInfo);
-                }
-                
-                
-                while(1)
-                {
-                    if(*s == 'e' && *(s + 1) == 'l' && *(s + 2) == 's' && *(s + 3) == 'e')
-                    {
-                        if(ifStatementComplete)
+                        s+=4;
+                        s = skipToNextChar(s, debugInfo);
+                        if(*s == '{')
                         {
-                            s = skipToNextMatchingChar(s, debugInfo, '}');
-                            s = skipToNextChar(s + 1, debugInfo);
-                        }
-                        else
-                        {
-                            s+=4;
-                            s = skipToNextChar(s, debugInfo);
-                            if(*s == '{')
+                            s++;
+                            ifStatementComplete = true;
+                            
+                            while(1)
                             {
-                                s++;
-                                ifStatementComplete = true;
-                                
-                                while(1)
-                                {
-                                    s = skipToNextChar(s, debugInfo);
-                                    
-                                    if(*s == '}' || *s == ']' || *s == ')')
-                                    {
-                                        s = skipToNextChar(s + 1, debugInfo);
-                                        *endptr = (char*)s;
-                                        break;
-                                    }
-                                    
-                                    if(!addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
-                                    {
-                                        return false;
-                                    }
-                                    s = *endptr;
-                                }
-                                
-                                s = skipToNextChar(*endptr, debugInfo);
-                                break;
-                            }
-                            else if(*s == 'i' && *(s + 1) == 'f')
-                            {
-                                s+=2;
                                 s = skipToNextChar(s, debugInfo);
                                 
-                                bool expressionPass = true;
-                                MJRef* expressionResult = recursivelyLoadValue(s,
-                                                                               endptr,
-                                                                               nullptr,
-                                                                               this,
-                                                                               debugInfo,
-                                                                               true,
-                                                                               true);
-                                s = skipToNextChar(*endptr, debugInfo);
-                                if(expressionResult)
+                                if(*s == '}' || *s == ']' || *s == ')')
                                 {
-                                    expressionPass = expressionResult->boolValue();
-                                    expressionResult->release();
-                                }
-                                else
-                                {
-                                    expressionPass = false;
+                                    s = skipToNextChar(s + 1, debugInfo);
+                                    *endptr = (char*)s;
+                                    break;
                                 }
                                 
-                                
-                                if(expressionPass)
+                                if(!addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
                                 {
-                                    s = skipToNextChar(s, debugInfo);
-                                    if(*s == '{')
+                                    return false;
+                                }
+                                s = *endptr;
+                            }
+                            
+                            s = skipToNextChar(*endptr, debugInfo);
+                            break;
+                        }
+                        else if(*s == 'i' && *(s + 1) == 'f')
+                        {
+                            s+=2;
+                            s = skipToNextChar(s, debugInfo);
+                            
+                            bool expressionPass = true;
+                            MJRef* expressionResult = recursivelyLoadValue(s,
+                                                                           endptr,
+                                                                           nullptr,
+                                                                           this,
+                                                                           debugInfo,
+                                                                           true,
+                                                                           true);
+                            s = skipToNextChar(*endptr, debugInfo);
+                            if(expressionResult)
+                            {
+                                expressionPass = expressionResult->boolValue();
+                                expressionResult->release();
+                            }
+                            else
+                            {
+                                expressionPass = false;
+                            }
+                            
+                            
+                            if(expressionPass)
+                            {
+                                s = skipToNextChar(s, debugInfo);
+                                if(*s == '{')
+                                {
+                                    s++;
+                                    ifStatementComplete = true;
+                                    
+                                    while(1)
                                     {
-                                        s++;
-                                        ifStatementComplete = true;
+                                        s = skipToNextChar(s, debugInfo);
                                         
-                                        while(1)
+                                        if(*s == '}' || *s == ']' || *s == ')')
                                         {
-                                            s = skipToNextChar(s, debugInfo);
-                                            
-                                            if(*s == '}' || *s == ']' || *s == ')')
-                                            {
-                                                s = skipToNextChar(s + 1, debugInfo);
-                                                *endptr = (char*)s;
-                                                break;
-                                            }
-                                            
-                                            if(!addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
-                                            {
-                                                return false;
-                                            }
-                                            s = *endptr;
+                                            s = skipToNextChar(s + 1, debugInfo);
+                                            *endptr = (char*)s;
+                                            break;
                                         }
                                         
-                                        s = skipToNextChar(*endptr, debugInfo);
+                                        if(!addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
+                                        {
+                                            return false;
+                                        }
+                                        s = *endptr;
                                     }
-                                    else
-                                    {
-                                        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else if statement expected '{'");
-                                        return false;
-                                    }
+                                    
+                                    s = skipToNextChar(*endptr, debugInfo);
                                 }
                                 else
                                 {
-                                    s = skipToNextMatchingChar(s, debugInfo, '}');
-                                    s = skipToNextChar(s + 1, debugInfo);
+                                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else if statement expected '{'");
+                                    return false;
                                 }
                             }
                             else
                             {
-                                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else statement expected 'if' or '{'");
-                                return false;
+                                s = skipToNextMatchingChar(s, debugInfo, '}');
+                                s = skipToNextChar(s + 1, debugInfo);
                             }
                         }
-                    }
-                    else
-                    {
-                        break;
+                        else
+                        {
+                            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else statement expected 'if' or '{'");
+                            return false;
+                        }
                     }
                 }
-                *endptr = (char*)s;
-                return true; //return now, we are done
+                else
+                {
+                    break;
+                }
+            }
+            *endptr = (char*)s;
+            return true; //return now, we are done
+        }
+        
+        
+        /*MJRef* keyRef = recursivelyLoadValue(s,
+                                                         endptr,
+                                                         nullptr,
+                                                         this,
+                                                         debugInfo,
+                                                         true,
+                                                      true);*/
+        const char* keyStartS = s; //regrettably rewinding to here if we find an array
+        int keyStartLineNumber = debugInfo->lineNumber;
+        MJRef* keyRef = initUnknownTypeRefWithHumanReadableString(s, endptr, this, debugInfo);
+        
+        s = skipToNextChar(*endptr, debugInfo, true);
+        
+        if(*s == ',' || *s == '\n' || *s == '}' || *s == ']' || *s == ')' || *s == '(' || (MJExpressionOperatorsSet.count(*s) != 0 && (*s != '=' || *(s + 1) == '=')))
+        {
+            
+            bool keyWasFunctionCall = false;
+            if(keyRef->type() == MJREF_TYPE_STRING)
+            {
+                if(((MJString*)keyRef)->isValidFunctionString)
+                {
+                    keyWasFunctionCall = true;
+                }
+                
+                /*MJRef* newKeyRef = loadVariableIfAvailable((MJString*)keyRef, s, endptr, this, debugInfo);
+                if(newKeyRef)
+                {
+                    keyRef->release();
+                    keyRef = newKeyRef;
+                }
+                s = skipToNextChar(*endptr, debugInfo, true);*/
             }
             
-            
-            MJRef* keyRef = initUnknownTypeRefWithHumanReadableString(s, endptr, this, debugInfo);
-            
+            debugInfo->lineNumber = keyStartLineNumber;
+            MJRef* newKeyRef = recursivelyLoadValue(keyStartS,
+                                                endptr,
+                                                nullptr,
+                                                this,
+                                                debugInfo,
+                                                true,
+                                                true);
+            if(newKeyRef)
+            {
+                keyRef->release();
+                keyRef = newKeyRef;
+            }
             s = skipToNextChar(*endptr, debugInfo, true);
             
-            if(*s == ',' || *s == '\n' || *s == '}' || *s == ']' || *s == ')' || *s == '(')
+            
+            if(*s == '\n')
+            {
+                debugInfo->lineNumber++;
+            }
+            
+            if(!keyWasFunctionCall || (newKeyRef && newKeyRef->type() != MJREF_TYPE_NIL))
+            {
+                arrayObjects.push_back(keyRef);
+            }
+            
+            if(*s == '}' || *s == ']' || *s == ')') // ')' is added here to terminate function arg lists, but '(' is not valid generally.
+            {
+                s++;
+                *endptr = (char*)s;
+                return false;
+            }
+            
+            s++;
+            *endptr = (char*)s;
+            
+        }
+        else if(*s == '=' || *s == ':')
+        {
+            s++;
+            s = skipToNextChar(s, debugInfo);
+            
+            if(keyRef->type() != MJREF_TYPE_STRING)
+            {
+                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Table keys must be a string or number only. Found:%s", keyRef->getDebugString().c_str());
+                return false;
+            }
+            
+            MJRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, this, debugInfo, true, true);
+            s = skipToNextChar(*endptr, debugInfo, true);
+            
+            //if(keyRef->)
+                
+            recursivelySetVariable(((MJString*)keyRef), valueRef, debugInfo);
+                
+            //objectsByStringKey[((MJString*)keyRef)->value] = valueRef;
+            
+            
+            bool success = true;
+            
+            
+            if(*s == ',' || *s == '\n')
             {
                 if(*s == '\n')
                 {
                     debugInfo->lineNumber++;
                 }
-                
-                bool keyWasFunctionCall = false;
-                if(keyRef->type() == MJREF_TYPE_STRING)
-                {
-                    if(((MJString*)keyRef)->isValidFunctionString)
-                    {
-                        keyWasFunctionCall = true;
-                    }
-                    
-                    MJRef* newKeyRef = loadVariableIfAvailable((MJString*)keyRef, s, endptr, this, debugInfo);
-                    if(newKeyRef)
-                    {
-                        keyRef->release();
-                        keyRef = newKeyRef;
-                    }
-                    s = skipToNextChar(*endptr, debugInfo, true);
-                }
-                
-                if(!keyWasFunctionCall)
-                {
-                    arrayObjects.push_back(keyRef);
-                }
-                
-                if(*s == '}' || *s == ']' || *s == ')') // ')' is added here to terminate function arg lists, but '(' is not valid generally.
-                {
-                    s++;
-                    *endptr = (char*)s;
-                    return false;
-                }
-                
                 s++;
                 *endptr = (char*)s;
-                
             }
-            else if(*s == '=' || *s == ':')
+            else if(*s == '}' || *s == ']')
             {
                 s++;
-                s = skipToNextChar(s, debugInfo);
-                
-                if(keyRef->type() != MJREF_TYPE_STRING)
-                {
-                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Table keys must be a string or number only. Found:%s", keyRef->getDebugString().c_str());
-                    return false;
-                }
-                
-                MJRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, this, debugInfo, true, true);
-                s = skipToNextChar(*endptr, debugInfo, true);
-                
-                //if(keyRef->)
-                    
-                recursivelySetVariable(((MJString*)keyRef), valueRef, debugInfo);
-                    
-                //objectsByStringKey[((MJString*)keyRef)->value] = valueRef;
-                
-                
-                bool success = true;
-                
-                
-                if(*s == ',' || *s == '\n')
-                {
-                    if(*s == '\n')
-                    {
-                        debugInfo->lineNumber++;
-                    }
-                    s++;
-                    *endptr = (char*)s;
-                }
-                else if(*s == '}' || *s == ']')
-                {
-                    s++;
-                    *endptr = (char*)s;
-                    success = false;
-                }
-                else if(*s != '\0')
-                {
-                    if(valueRef->type() == MJREF_TYPE_STRING && *s == '(')
-                    {
-                        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call non-existent function:%s", ((MJString*)valueRef)->value.c_str());
-                    }
-                    else
-                    {
-                        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ',' or newline after '=' or ':' assignment. unexpected character loading table:%c", *s);
-                    }
-                    success = false;
-                }
-                
-                delete keyRef;
-                keyRef = nullptr;
-                
-                return success;
-                
+                *endptr = (char*)s;
+                success = false;
             }
             else if(*s != '\0')
             {
-                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
-                delete keyRef;
-                return false;
+                if(valueRef->type() == MJREF_TYPE_STRING && *s == '(')
+                {
+                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call non-existent function:%s", ((MJString*)valueRef)->value.c_str());
+                }
+                else
+                {
+                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ',' or newline after '=' or ':' assignment. unexpected character loading table:%c", *s);
+                }
+                success = false;
             }
             
+            delete keyRef;
+            keyRef = nullptr;
+            
+            return success;
+            
         }
+        else if(*s != '\0')
+        {
+            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
+            delete keyRef;
+            return false;
+        }
+            
+        //}
         
         return true;
     }
     
     
     static MJTable* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo, MJRef** resultRef = nullptr) {
+        
         MJTable* table = new MJTable(parent);
         
         const char* s = skipToNextChar(str, debugInfo);
@@ -717,10 +772,12 @@ public://functions
         debugInfo.fileName = debugName;
         const char* cString = inputString.c_str();
         char* endPtr;
+        
         return initWithHumanReadableString(cString, &endPtr, parent, &debugInfo);
     }
     
-    static MJTable* initWithHumanReadableFilePath(const std::string& filename, MJTable* parent = nullptr) {
+    static MJTable* initWithHumanReadableFilePath(const std::string& filename, MJTable* parent = createRootTable()) {
+        
         std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
         MJDebugInfo debugInfo;
         debugInfo.fileName = filename;
@@ -743,7 +800,7 @@ public://functions
         return nullptr;
     }
     
-    static MJRef* runScriptFile(const std::string& filename, MJTable* parent = nullptr)
+    static MJRef* runScriptFile(const std::string& filename, MJTable* parent = createRootTable())
     {
         std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
         MJDebugInfo debugInfo;

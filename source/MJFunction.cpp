@@ -8,6 +8,13 @@ MJFunction::MJFunction(MJRef* parent_)
 {
 }
 
+
+MJFunction::MJFunction(std::function<MJRef*(MJTable* args, MJTable* state)> func_, MJRef* parent_)
+:MJRef(parent_)
+{
+    func = func_;
+}
+
 MJFunction::~MJFunction()
 {
     for(MJStatement* statement : statements)
@@ -548,27 +555,36 @@ MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJT
 
 MJRef* MJFunction::call(MJTable* args, MJTable* callLocationState)
 {
-    MJTable* currentCallState = new MJTable(parent);
-    
-    int i = 0;
-    int maxArgs = (int)argNames.size();
-    for(MJRef* arg : args->arrayObjects)
+    if(func)
     {
-        if(i >= maxArgs)
-        {
-            MJSError(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function");
-        }
-        currentCallState->objectsByStringKey[argNames[i]] = arg;
-        i++;
+        MJTable* currentCallState = new MJTable(parent);
+        MJRef* result = func(args, currentCallState);
+        currentCallState->release();
+        return result;
     }
-    
-    
-    MJRef* result = runStatementArray(statements, currentCallState);
-    
-    currentCallState->release();
-    currentCallState = nullptr;
-    
-    return result;
+    else
+    {
+        MJTable* currentCallState = new MJTable(parent);
+        
+        int i = 0;
+        int maxArgs = (int)argNames.size();
+        for(MJRef* arg : args->arrayObjects)
+        {
+            if(i >= maxArgs)
+            {
+                MJSError(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function");
+            }
+            currentCallState->objectsByStringKey[argNames[i]] = arg;
+            i++;
+        }
+        
+        
+        MJRef* result = runStatementArray(statements, currentCallState);
+        
+        currentCallState->release();
+        
+        return result;
+    }
 }
 
 

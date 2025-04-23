@@ -17,25 +17,25 @@
         return b
     }
 
-    ten = 10
-#
-    if(ten > 11) {
-        ten = ten * 2.0
+    four_hundred = 10
+
+    if(four_hundred > 11) {
+            four_hundred = four_hundred* 2.0
     }
-    else if ten < 9 {
-        ten = ten * 4.0
+    else if four_hundred < 9 {
+            four_hundred = four_hundred * 4.0
     }
     else
     {
-        ten = 420
+            four_hundred = 400
     }
 
     return {
         max_20 = max(10,20)
-        max_40 = max(20,ten)
+        max_400 = max(20,four_hundred)
         max_neg10 = max(-10,-20)
         
         min_neg20 = min(-10,-20)
-        minmax20 = min(20,max(15,ten))
+        minmax20 = min(20,max(15,four_hundred))
     }
 }

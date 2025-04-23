@@ -1,8 +1,8 @@
-# mjscript
+# This is mjscript
 
 mjscript is a small, cross platform, open source scripting and serialization library for C++.
 
-Created by a solo game developer to be fast, and simple to understand, use and modify, mjscript combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
+Created by a solo game developer to be fast, simple, and easy to use and modify, mjscript combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
 
 mjscript is dynamically typed, fast, flexible, and lightweight. Data is shared in memory between mjscript and the host c++ program, allowing high performance read/writes in both enviornments.
 
@@ -31,21 +31,23 @@ With no virtual machine, and no bindings required in C++, all of the data and sc
 
 This means mjscript can solve two problems. You can use it as a fast and small scripting language, that also happens to have built in serialization support from/to both binary and human readable data formats.
 
-Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other ways of storing and sharing data, mjscript reads JSON out of the box, while adding a bunch of new features:
+Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other ways of storing and sharing data, mjscript reads JSON out of the box, while adding a bunch of new features.
 
-# A single object is valid
+# Features & Usage/Examples
+
+## A single object is valid
 This is a valid mjscript file:
 ```lua
 42
 ```
-If you loaded it, the MJRef* you got would be an MJNumber with the value of 42.
+If you loaded it, the MJRef* you got would be an MJNumber with the value of 42. //todo
 
 This is also valid file that will give us an MJTable with array elements:
 ```lua
 42, coconut, vec3(1,2,3), true, nil, {x=10}
 ```
 
-# Reads JSON
+## Reads JSON
 This is the same data in JSON. mjscript can read this too, as it treats ":" and "=" the same, "{" and "[" the same, and doesn't require commas or quotes, but doesn't mind them either.
 ```json
 [
@@ -78,7 +80,7 @@ Also, quotes and brackets allow us to use newlines",
 #this is also a comment
 ```
 
-# Adds variables, if statements & Expressions
+## Adds variables, if statements & Expressions
 Any previously assigned value can be accessed by the key name. This can be used to define constants to do math for later values.
 ```javascript
 width = 400,
@@ -96,7 +98,7 @@ else // 'else if' and 'elseif' are both valid too
     height = height * 0.5
 }
 ```
-# Functions
+## Functions
 Functions are still a work in progress, but we have value assignments, if/else statements, and basic expressions so far.
 ```javascript
 addTariff = function(base)
@@ -118,7 +120,7 @@ You can supply your own functions in C++ easily
 
 ```
 
-# Vectors
+## Vectors
 The only dependency of mjscript is glm, which currently exposes vec2, vec3, vec4, and mat3 types, as well as a number of builtin math functions
 ```javascript
 size = vec2(400,200)
@@ -126,7 +128,7 @@ color = vec4(0.0,1.0,0.0,1.0)
 halfSize = size * 0.5
 ```
 
-# Scope
+## Scope
 Every table and every function has its own scope for variable creation/assignment.
 
 All variable assignments create new local within the enclosing function or table. They are limited in scope to the table/function they are declared in, and readable for all child tables/functions, and also read/writable via the `'.'` syntax to access children and `'..'` to access parents.
@@ -175,7 +177,7 @@ if(a == 10)
 b = a // b is now 5
 ```
 
-# Memory 
+## Memory 
 Memory is handled with reference counting, there is no garbage collection. You can free objects that you don't need anymore by setting them to nil.
 ```javascript
 baseWidth = 400
@@ -200,9 +202,9 @@ This is a one-man project (to start with), my name is Dave Frampton, I made the 
 
 mjscript was initially created to serialize and share data in C++ for my games, so it started life as a quick little JSON parser. Very soon though, missing the power of lua, I started adding variables and functions.
 
-During this process, I have taken a performance-centric approach, while trying to keep it simple and clear. As it parses and immediately runs hand written script code in a single pass, in many cases where a script is just read, or a config file loaded, it should perform faster than the alternatives. Where mjscript might not be as fast is in repetitive function calls, but we'll see how it goes.
+During this process, I have taken a performance-centric approach, while trying to keep it simple and clear. As it parses and immediately runs hand written script code in a single pass, in many cases where a script is just read, or a config file loaded, it should perform faster than the alternatives. Where mjscript might not be as fast is when you have a lot of function calls with long variable names, but we'll see how it goes.
 
-I feel this could be useful for a lot of people, and I don't desire to keep it only for myself or to profit from it, so I'm making it open source. 
+I feel this could be useful for a lot of people. I don't desire to keep it only for myself or to profit from it, and I wouldn't mind some help, so I'm making it open source. 
 
 Hopefully it is useful, and if you find a bug or have a feature request please feel free to open an issue, but please do fork this and send it in new directions too!
 
