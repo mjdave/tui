@@ -174,6 +174,7 @@ public://functions
     }
     
     virtual std::string getStringValue() {return "nil";}
+    virtual std::string getDebugStringValue() {return getStringValue() ;}
     
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) {
         debugString += getStringValue();

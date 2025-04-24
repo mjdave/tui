@@ -23,7 +23,7 @@ MJFunction::~MJFunction()
     }
 }
 
-void serializeExpression(const char* str, char** endptr, MJStatement* statement, MJDebugInfo* debugInfo)
+void MJFunction::serializeExpression(const char* str, char** endptr, std::string& expression, MJDebugInfo* debugInfo)
 {
     const char* s = str;
     int bracketDepth = 0;
@@ -37,7 +37,7 @@ void serializeExpression(const char* str, char** endptr, MJStatement* statement,
         s = skipToNextChar(s, debugInfo, true);
         if(*s == '\'')
         {
-            statement->expression += *s;
+            expression += *s;
             if(!escaped && !doubleQuote)
             {
                 if(singleQuote)
@@ -55,7 +55,7 @@ void serializeExpression(const char* str, char** endptr, MJStatement* statement,
         }
         else if(*s == '"')
         {
-            statement->expression += *s;
+            expression += *s;
             if(!escaped && !singleQuote)
             {
                 if(doubleQuote)
@@ -73,7 +73,7 @@ void serializeExpression(const char* str, char** endptr, MJStatement* statement,
         }
         else if(*s == '\\')
         {
-            statement->expression += *s;
+            expression += *s;
             if(!escaped)
             {
                 escaped = true;
@@ -82,16 +82,19 @@ void serializeExpression(const char* str, char** endptr, MJStatement* statement,
         }
         else if(escaped || singleQuote || doubleQuote)
         {
-            statement->expression += *s;
+            expression += *s;
         }
-        else if(*s == '\n' || *s == '\0')
+        else if(*s == '\n' || *s == '\0' || *s == ',')
         {
             if(bracketDepth <= 0)
             {
                 break;
             }
             
-            debugInfo->lineNumber++;
+            if(*s == '\n')
+            {
+                debugInfo->lineNumber++;
+            }
         }
         else if(!isspace(*s))
         {
@@ -104,7 +107,10 @@ void serializeExpression(const char* str, char** endptr, MJStatement* statement,
                 bracketDepth--;
                 if(bracketDepth <= 0)
                 {
-                    statement->expression += *s;
+                    if(bracketDepth == 0)
+                    {
+                        expression += *s;
+                    }
                     s++;
                     break;
                 }
@@ -118,18 +124,150 @@ void serializeExpression(const char* str, char** endptr, MJStatement* statement,
                 }
             }
             
-            statement->expression += *s;
+            expression += *s;
         }
         
         escaped = false;
     }
-    statement->expression += '\n'; //bit of a hack, expression string parsing needs a comma or newline to mark the end of the string
+    expression += '\n'; //bit of a hack, expression string parsing needs a comma or newline to mark the end of the string
     
     s = skipToNextChar(s, debugInfo, true);
     *endptr = (char*)s;
 }
 
-bool loadFunctionBody(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo, std::vector<MJStatement*>* statements)
+MJForStatement* MJFunction::loadForStatement(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) //entry point is after 'for'
+{
+    const char* s = str;
+    if(*s == '(')
+    {
+        s++;
+        s = skipToNextChar(s, debugInfo);
+    }
+    
+    
+    MJForStatement* statement = new MJForStatement();
+    statement->lineNumber = debugInfo->lineNumber;
+    
+
+    MJString* varNameRef = MJString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    s = skipToNextChar(*endptr, debugInfo);
+    
+    if(varNameRef && varNameRef->allowAsVariableName)
+    {
+        statement->varName = varNameRef->value;
+        if(*s == '=')
+        {
+            s++;
+            
+            MJFunction::serializeExpression(s, endptr, statement->expression, debugInfo);
+            
+            s = skipToNextChar(*endptr, debugInfo, true);
+        }
+        else
+        {
+            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "for statement expected '=' after:%s", varNameRef->getDebugString().c_str());
+            return nullptr;
+        }
+    }
+    else
+    {
+        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "for statement bad initial var name:%s", (varNameRef ? varNameRef->value.c_str() : "nil"));
+        return nullptr;
+    }
+    
+    varNameRef->release();//todo we will want to reuse this
+        
+    
+    if(*s == ',' || *s == '\n')
+    {
+        s++;
+        s = skipToNextChar(s, debugInfo);
+    }
+    else
+    {
+        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
+        return nullptr;
+    }
+    
+    MJFunction::serializeExpression(s, endptr, statement->continueExpression, debugInfo);
+    s = skipToNextChar(*endptr, debugInfo);
+    
+    if(*s == ',' || *s == '\n')
+    {
+        s++;
+        s = skipToNextChar(s, debugInfo);
+    }
+    else
+    {
+        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
+        return nullptr;
+    }
+    
+    
+    varNameRef = MJString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    s = skipToNextChar(*endptr, debugInfo);
+    
+    if(varNameRef)
+    {
+        if(varNameRef->isValidFunctionString)
+        {
+            MJStatement* incrementStatement = new MJStatement(MJSTATEMENT_TYPE_FUNCTION_CALL);
+            statement->incrementStatement = incrementStatement;
+            incrementStatement->lineNumber = debugInfo->lineNumber;
+            incrementStatement->expression = varNameRef->value;
+            
+            MJFunction::serializeExpression(s, endptr, incrementStatement->expression, debugInfo); //concats functionName with serialized args (*), stores the lot in statement->expression
+            
+            s = skipToNextChar(*endptr, debugInfo, true);
+        }
+        else if(varNameRef->allowAsVariableName)
+        {
+            if(*s == '=')
+            {
+                s++;
+                
+                MJStatement* incrementStatement = new MJStatement(MJSTATEMENT_TYPE_VAR_ASSIGN);
+                statement->incrementStatement = incrementStatement;
+                incrementStatement->lineNumber = debugInfo->lineNumber;
+                incrementStatement->varName = varNameRef->value;
+                
+                MJFunction::serializeExpression(s, endptr, incrementStatement->expression, debugInfo);
+                
+                s = skipToNextChar(*endptr, debugInfo, true);
+            }
+            else
+            {
+                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
+                return nullptr;
+            }
+        }
+        varNameRef->release();
+    }
+    
+    /*MJFunction::serializeExpression(s, endptr, statement->incrementExpression, debugInfo);
+    s = skipToNextChar(*endptr, debugInfo);
+    if(*s == ')')
+    {
+        s++;
+    }
+    else
+    {
+        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ')'");
+        return false;
+    }*/
+    
+    s = skipToNextChar(s, debugInfo, false);
+    
+    bool success = MJFunction::loadFunctionBody(s, endptr, parent, debugInfo, &statement->statements);
+    if(!success)
+    {
+        return nullptr;
+    }
+    
+    return statement;
+}
+
+bool MJFunction::loadFunctionBody(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo, std::vector<MJStatement*>* statements)
 {
     const char* s = str;
     if(*s != '{')
@@ -148,6 +286,21 @@ bool loadFunctionBody(const char* str, char** endptr, MJRef* parent, MJDebugInfo
             break;
         }
         
+        if(*s == 'f' && *(s + 1) == 'o' && *(s + 2) == 'r' && (*(s + 3) == '(' || isspace(*(s + 3))))
+        {
+            s+=3;
+            s = skipToNextChar(s, debugInfo);
+            
+            MJStatement* statement = MJFunction::loadForStatement(s, endptr, parent, debugInfo);
+            if(!statement)
+            {
+                return false;
+            }
+            statements->push_back(statement);
+            s = skipToNextChar(*endptr, debugInfo, false);
+            continue;
+        }
+        
         if(*s == 'i' && *(s + 1) == 'f' && (*(s + 2) == '(' || isspace(*(s + 2))))
         {
             s+=2;
@@ -156,7 +309,7 @@ bool loadFunctionBody(const char* str, char** endptr, MJRef* parent, MJDebugInfo
             MJIfStatement* statement = new MJIfStatement();
             statement->lineNumber = debugInfo->lineNumber;
             
-            serializeExpression(s, endptr, statement, debugInfo);
+            MJFunction::serializeExpression(s, endptr, statement->expression, debugInfo);
             
             s = skipToNextChar(*endptr, debugInfo);
             
@@ -194,7 +347,7 @@ bool loadFunctionBody(const char* str, char** endptr, MJRef* parent, MJDebugInfo
                         statement->elseIfStatement = new MJIfStatement();
                         statement->elseIfStatement->lineNumber = debugInfo->lineNumber;
                         
-                        serializeExpression(s, endptr, statement->elseIfStatement, debugInfo);
+                        MJFunction::serializeExpression(s, endptr, statement->elseIfStatement->expression, debugInfo);
                         
                         s = skipToNextChar(*endptr, debugInfo);
                         
@@ -243,7 +396,7 @@ bool loadFunctionBody(const char* str, char** endptr, MJRef* parent, MJDebugInfo
                 MJStatement* statement = new MJStatement(MJSTATEMENT_TYPE_RETURN_EXPRESSION);
                 statement->lineNumber = debugInfo->lineNumber;
                 
-                serializeExpression(s, endptr, statement, debugInfo);
+                MJFunction::serializeExpression(s, endptr, statement->expression, debugInfo);
                 
                 s = skipToNextChar(*endptr, debugInfo, true);
                 
@@ -262,7 +415,7 @@ bool loadFunctionBody(const char* str, char** endptr, MJRef* parent, MJDebugInfo
                 statement->lineNumber = debugInfo->lineNumber;
                 statement->expression = varNameRef->value;
                 
-                serializeExpression(s, endptr, statement, debugInfo); //concats functionName with serialized args (*), stores the lot in statement->expression
+                MJFunction::serializeExpression(s, endptr, statement->expression, debugInfo); //concats functionName with serialized args (*), stores the lot in statement->expression
                 
                 s = skipToNextChar(*endptr, debugInfo, true);
                 
@@ -278,7 +431,7 @@ bool loadFunctionBody(const char* str, char** endptr, MJRef* parent, MJDebugInfo
                     statement->lineNumber = debugInfo->lineNumber;
                     statement->varName = varNameRef->value;
                     
-                    serializeExpression(s, endptr, statement, debugInfo);
+                    MJFunction::serializeExpression(s, endptr, statement->expression, debugInfo);
                     
                     s = skipToNextChar(*endptr, debugInfo, true);
                     
@@ -290,7 +443,7 @@ bool loadFunctionBody(const char* str, char** endptr, MJRef* parent, MJDebugInfo
                     return false;
                 }
             }
-            delete varNameRef;
+            varNameRef->release();
         }
     }
     
@@ -373,7 +526,7 @@ MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endp
     return nullptr;
 }
 
-MJRef* MJFunction::recursivelyRunIfElseStatement(MJIfStatement* elseIfStatement, MJTable* functionState)
+MJRef* MJFunction::recursivelyRunIfElseStatement(MJIfStatement* elseIfStatement, MJTable* functionState, MJTable* parent, MJDebugInfo* debugInfo)
 {
     if(elseIfStatement)
     {
@@ -383,13 +536,13 @@ MJRef* MJFunction::recursivelyRunIfElseStatement(MJIfStatement* elseIfStatement,
             const char* expressionCString = elseIfStatement->expression.c_str();
             char* endPtr;
             
-            debugInfo.lineNumber = elseIfStatement->lineNumber;
+            debugInfo->lineNumber = elseIfStatement->lineNumber;
             
             MJRef* expressionResult = recursivelyLoadValue(expressionCString,
                                                            &endPtr,
                                                            nullptr,
                                                            functionState,
-                                                           &debugInfo,
+                                                           debugInfo,
                                                            true,
                                                            false);
             if(expressionResult)
@@ -405,7 +558,7 @@ MJRef* MJFunction::recursivelyRunIfElseStatement(MJIfStatement* elseIfStatement,
         
         if(elseIfExpressionPass)
         {
-            MJRef* result = runStatementArray(elseIfStatement->statements, functionState);
+            MJRef* result = runStatementArray(elseIfStatement->statements, functionState, parent, debugInfo);
             
             if(result)
             {
@@ -416,102 +569,131 @@ MJRef* MJFunction::recursivelyRunIfElseStatement(MJIfStatement* elseIfStatement,
     return  nullptr;
 }
 
-
-MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJTable* functionState)
+MJRef* MJFunction::runStatement(MJStatement* statement, MJTable* functionState, MJTable* parent, MJDebugInfo* debugInfo)
 {
-    for(MJStatement* statement : statements_)
+    switch(statement->type)
     {
-        switch(statement->type)
+        case MJSTATEMENT_TYPE_RETURN:
         {
-            case MJSTATEMENT_TYPE_RETURN:
+            return new MJRef(parent);
+        }
+            break;
+        case MJSTATEMENT_TYPE_RETURN_EXPRESSION:
+        {
+            const char* cString = statement->expression.c_str();
+            char* endPtr;
+            
+            debugInfo->lineNumber = statement->lineNumber;
+            
+            MJRef* result = recursivelyLoadValue(cString,
+                                    &endPtr,
+                                        nullptr,
+                                 functionState,
+                                                 debugInfo,
+                                 true,
+                                                 true);
+            
+            if(!result)
             {
-                return new MJRef(parent);
+                result = new MJRef(parent);
             }
-                break;
-            case MJSTATEMENT_TYPE_RETURN_EXPRESSION:
+            return result;
+        }
+            break;
+        case MJSTATEMENT_TYPE_VAR_ASSIGN:
+        {
+            const char* expressionCString = statement->expression.c_str();
+            char* endPtr;
+            
+            debugInfo->lineNumber = statement->lineNumber;
+            
+            
+            
+            MJRef* result = recursivelyLoadValue(expressionCString,
+                                                 &endPtr,
+                                                 nullptr,
+                                                 functionState,
+                                                 debugInfo,
+                                                 true,
+                                                 true);
+            
+            const char* varNameCString = statement->varName.c_str();
+            MJString* variableNameString = MJString::initWithHumanReadableString(varNameCString, &endPtr, parent, debugInfo);
+            
+            setVariable(variableNameString,
+                        result,
+                        functionState,
+                        debugInfo);
+            
+            variableNameString->release();
+            result->release();
+            
+        }
+            break;
+        case MJSTATEMENT_TYPE_FUNCTION_CALL:
+        {
+            const char* cString = statement->expression.c_str();
+            char* endPtr;
+            
+            debugInfo->lineNumber = statement->lineNumber;
+            
+            MJRef* result = recursivelyLoadValue(cString,
+                                    &endPtr,
+                                        nullptr,
+                                 functionState,
+                                                 debugInfo,
+                                 true,
+                                                 true);
+            if(result)
             {
-                const char* cString = statement->expression.c_str();
-                char* endPtr;
-                
-                debugInfo.lineNumber = statement->lineNumber;
-                
-                MJRef* result = recursivelyLoadValue(cString,
-                                        &endPtr,
-                                            nullptr,
-                                     functionState,
-                                                     &debugInfo,
-                                     true,
-                                                     true);
-                
-                if(!result)
-                {
-                    result = new MJRef(parent);
-                }
-                return result;
-            }
-                break;
-            case MJSTATEMENT_TYPE_VAR_ASSIGN:
-            {
-                const char* expressionCString = statement->expression.c_str();
-                char* endPtr;
-                
-                debugInfo.lineNumber = statement->lineNumber;
-                
-                
-                
-                MJRef* result = recursivelyLoadValue(expressionCString,
-                                                     &endPtr,
-                                                     nullptr,
-                                                     functionState,
-                                                     &debugInfo,
-                                                     true,
-                                                     true);
-                
-                const char* varNameCString = statement->varName.c_str();
-                MJString* variableNameString = MJString::initWithHumanReadableString(varNameCString, &endPtr, parent, &debugInfo);
-                
-                setVariable(variableNameString,
-                            result,
-                            functionState,
-                            &debugInfo);
-                
-                variableNameString->release();
                 result->release();
-                
             }
-                break;
-            case MJSTATEMENT_TYPE_FUNCTION_CALL:
+        }
+            break;
+            
+        case MJSTATEMENT_TYPE_FOR:
+        {
+            const char* expressionCString = statement->expression.c_str(); //var assign
+            char* endPtr;
+            
+            debugInfo->lineNumber = statement->lineNumber;
+            
+            MJRef* result = recursivelyLoadValue(expressionCString,
+                                                 &endPtr,
+                                                 nullptr,
+                                                 functionState,
+                                                 debugInfo,
+                                                 true,
+                                                 true);
+            
+            MJNumber* iterator = (MJNumber*)result;
+            
+            MJRef* prevI = nullptr;
+            
+            if(functionState->objectsByStringKey.count(statement->varName) != 0)
             {
-                const char* cString = statement->expression.c_str();
-                char* endPtr;
-                
-                debugInfo.lineNumber = statement->lineNumber;
-                
-                MJRef* result = recursivelyLoadValue(cString,
-                                        &endPtr,
-                                            nullptr,
-                                     functionState,
-                                                     &debugInfo,
-                                     true,
-                                                     true);
-                result->release();
+                prevI = functionState->objectsByStringKey[statement->varName];
             }
-                break;
-            case MJSTATEMENT_TYPE_IF:
+            
+            functionState->objectsByStringKey[statement->varName] = iterator;
+            
+            
+            bool run = true;
+            while(run)
             {
                 bool expressionPass = true;
-                if(!statement->expression.empty()) //an 'else' statement is passed through here with no expression, which is a pass
+                if(!((MJForStatement*)statement)->continueExpression.empty())
                 {
-                    const char* expressionCString = statement->expression.c_str();
+                    const char* expressionCString = ((MJForStatement*)statement)->continueExpression.c_str();
                     char* endPtr;
                     
-                    debugInfo.lineNumber = statement->lineNumber;
+                    debugInfo->lineNumber = statement->lineNumber;
                     
                     MJRef* expressionResult = recursivelyLoadValue(expressionCString,
                                                                    &endPtr,
                                                                    nullptr,
                                                                    functionState,
-                                                                   &debugInfo,
+                                                                   debugInfo,
                                                                    true,
                                                                    false);
                     
@@ -525,27 +707,121 @@ MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJT
                         expressionPass = false;
                     }
                 }
-                if(expressionPass)
+                
+                if(!expressionPass)
                 {
-                    MJRef* result = runStatementArray(((MJIfStatement*)statement)->statements, functionState);
-                    
+                    break;
+                }
+                
+                MJRef* result = runStatementArray(((MJForStatement*)statement)->statements, functionState, parent, debugInfo);
+                
+                if(result)
+                {
+                    if(prevI)
+                    {
+                        functionState->objectsByStringKey[statement->varName] = prevI;
+                    }
+                    else
+                    {
+                        functionState->objectsByStringKey.erase(statement->varName);
+                    }
+                    iterator->release();
+                    return result;
+                }
+                
+                
+                if(((MJForStatement*)statement)->incrementStatement)
+                {
+                    MJRef* result = runStatement(((MJForStatement*)statement)->incrementStatement, functionState, parent, debugInfo);
                     if(result)
                     {
+                        if(prevI)
+                        {
+                            functionState->objectsByStringKey[statement->varName] = prevI;
+                        }
+                        else
+                        {
+                            functionState->objectsByStringKey.erase(statement->varName);
+                        }
+                        iterator->release();
                         return result;
                     }
+                }
+                
+            }
+            
+            if(prevI)
+            {
+                functionState->objectsByStringKey[statement->varName] = prevI;
+            }
+            else
+            {
+                functionState->objectsByStringKey.erase(statement->varName);
+            }
+            iterator->release();
+        }
+            break;
+        case MJSTATEMENT_TYPE_IF:
+        {
+            bool expressionPass = true;
+            if(!statement->expression.empty()) //an 'else' statement is passed through here with no expression, which is a pass
+            {
+                const char* expressionCString = statement->expression.c_str();
+                char* endPtr;
+                
+                debugInfo->lineNumber = statement->lineNumber;
+                
+                MJRef* expressionResult = recursivelyLoadValue(expressionCString,
+                                                               &endPtr,
+                                                               nullptr,
+                                                               functionState,
+                                                               debugInfo,
+                                                               true,
+                                                               false);
+                
+                if(expressionResult)
+                {
+                    expressionPass = expressionResult->boolValue();
+                    expressionResult->release();
                 }
                 else
                 {
-                    MJRef* result = recursivelyRunIfElseStatement(((MJIfStatement*)statement)->elseIfStatement, functionState);
-                    if(result)
-                    {
-                        return result;
-                    }
+                    expressionPass = false;
                 }
             }
-                break;
-            default:
-                break;
+            if(expressionPass)
+            {
+                MJRef* result = runStatementArray(((MJIfStatement*)statement)->statements, functionState, parent, debugInfo);
+                
+                if(result)
+                {
+                    return result;
+                }
+            }
+            else
+            {
+                MJRef* result = recursivelyRunIfElseStatement(((MJIfStatement*)statement)->elseIfStatement, functionState, parent, debugInfo);
+                if(result)
+                {
+                    return result;
+                }
+            }
+        }
+            break;
+        default:
+            break;
+    }
+    return nullptr;
+}
+
+MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_, MJTable* functionState, MJTable* parent, MJDebugInfo* debugInfo) //static
+{
+    for(MJStatement* statement : statements_)
+    {
+        MJRef* result = MJFunction::runStatement(statement, functionState, parent, debugInfo);
+        if(result)
+        {
+            return result;
         }
     }
     
@@ -579,7 +855,7 @@ MJRef* MJFunction::call(MJTable* args, MJTable* callLocationState)
         }
         
         
-        MJRef* result = runStatementArray(statements, currentCallState);
+        MJRef* result = runStatementArray(statements, currentCallState, (MJTable*)parent, &debugInfo);
         
         currentCallState->release();
         

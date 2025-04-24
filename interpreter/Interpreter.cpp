@@ -18,7 +18,7 @@ Interpreter::Interpreter(std::vector<std::string>& args)
     
     //MJRef* scriptRunResult = MJTable::runScriptFile("examples/daveTest.mjh");
     //MJRef* scriptRunResult = MJTable::runScriptFile("examples/scope.mjh");
-    MJRef* scriptRunResult = MJTable::runScriptFile("examples/json.json");
+    MJRef* scriptRunResult = MJTable::runScriptFile("examples/daveTest.mjh");
     if(scriptRunResult)
     {
         scriptRunResult->debugLog();

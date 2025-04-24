@@ -7,10 +7,10 @@
 
 MJTable* MJRef::createRootTable()
 {
-    MJTable* root = new MJTable(nullptr);
+    MJTable* rootTable = new MJTable(nullptr);
     srand((unsigned)time(nullptr));
     
-    MJFunction* randomFunction = new MJFunction([root](MJTable* args, MJTable* state) {
+    MJFunction* randomFunction = new MJFunction([rootTable](MJTable* args, MJTable* state) {
         if(args->arrayObjects.size() > 0)
         {
             MJRef* arg = args->arrayObjects[0];
@@ -25,29 +25,40 @@ MJTable* MJRef::createRootTable()
             }
         }
         return new MJNumber(((double)rand() / RAND_MAX));
-    }, root);
+    }, rootTable);
     
-    root->set("random", randomFunction);
+    rootTable->set("random", randomFunction);
     randomFunction->release();
     
-    MJFunction* printFunction = new MJFunction([root](MJTable* args, MJTable* state) {
+    MJFunction* printFunction = new MJFunction([rootTable](MJTable* args, MJTable* state) {
         if(args->arrayObjects.size() > 0)
         {
             std::string printString = "";
             for(MJRef* arg : args->arrayObjects)
             {
-                printString += arg->getStringValue();
+                printString += arg->getDebugStringValue();
             }
             MJLog("%s", printString.c_str());
         }
         return nullptr;
-    }, root);
+    }, rootTable);
     
-    root->set("print", printFunction);
+    rootTable->set("print", printFunction);
     printFunction->release();
     
+    MJFunction* requireFunction = new MJFunction([rootTable](MJTable* args, MJTable* state) {
+        if(args->arrayObjects.size() > 0)
+        {
+            return MJRef::load(getResourcePath(args->arrayObjects[0]->getStringValue()), state);
+        }
+        return new MJRef();
+    }, rootTable);
     
-    return root;
+    rootTable->set("require", requireFunction);
+    requireFunction->release();
+    
+    
+    return rootTable;
 }
 
 MJRef* MJRef::load(const std::string& inputString, const std::string& debugName, MJTable* parent) {
@@ -101,7 +112,11 @@ MJRef* MJRef::runScriptFile(const std::string& filename, MJTable* parent)
         MJRef* resultRef = nullptr;
         MJRef* table = MJRef::load(cString, &endPtr, parent, &debugInfo, &resultRef);
         //todo if debug logging
-        table->debugLog();
+        if(table)
+        {
+            table->debugLog();
+            table->release();
+        }
         return resultRef;
     }
     else

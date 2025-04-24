@@ -28,6 +28,7 @@ public://functions
     virtual uint8_t type() { return MJREF_TYPE_TABLE; }
     virtual std::string getTypeName() {return "table";}
     virtual std::string getStringValue() {return "table";}
+    virtual std::string getDebugStringValue() {return getDebugString();}
     virtual bool boolValue() {return true;}
     
     MJTable(MJRef* parent_) : MJRef(parent_) {};
@@ -298,6 +299,172 @@ public://functions
                 return false;
             }
         }
+        
+        if(*s == 'f' && *(s + 1) == 'o' && *(s + 2) == 'r' && (*(s + 3) == '(' || isspace(*(s + 3))))
+        {
+            s+=3;
+            s = skipToNextChar(s, debugInfo);
+            
+            MJStatement* statement = MJFunction::loadForStatement(s, endptr, parent, debugInfo);
+            if(!statement)
+            {
+                return false;
+            }
+            s = skipToNextChar(*endptr, debugInfo, false);
+            
+            MJRef* result = MJFunction::runStatement(statement, this, (MJTable*)parent, debugInfo);
+            
+            if(result)
+            {
+                *resultRef = result;
+                *endptr = (char*)s;
+                return false;
+                
+            }
+            *endptr = (char*)s;
+            return true;
+        }
+        
+        /*if(*s == 'f' && *(s + 1) == 'o' && *(s + 2) == 'r' && (*(s + 3) == '(' || isspace(*(s + 3))))
+        {
+            s+=4;
+            s = skipToNextChar(s, debugInfo);
+            
+            if(*s == ',')
+            {
+                s++;
+            }
+            else
+            {
+                if(!addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
+                {
+                    s = skipToNextChar(*endptr, debugInfo, true);
+                    *endptr = (char*)s;
+                    return false;
+                }
+                s = skipToNextChar(*endptr, debugInfo);
+            }
+            s = skipToNextChar(s, debugInfo);
+            
+            std::string continueExpression;
+            if(*s == ',')
+            {
+                s++;
+                s = skipToNextChar(s, debugInfo);
+            }
+            else
+            {
+                MJFunction::serializeExpression(s, endptr, continueExpression, debugInfo);
+                s = skipToNextChar(*endptr, debugInfo);
+                if(*s == ',')
+                {
+                    s++;
+                    s = skipToNextChar(s, debugInfo);
+                }
+            }
+            
+            std::string incrementExpression;
+            if(*s == ')')
+            {
+                s++;
+            }
+            else
+            {
+                MJFunction::serializeExpression(s, endptr, incrementExpression, debugInfo);
+                s = skipToNextChar(*endptr, debugInfo);
+                if(*s == ')')
+                {
+                    s++;
+                }
+            }
+            s = skipToNextChar(s, debugInfo);
+            
+            if(*s == '{')
+            {
+                s++;
+                const char* bodyStartChar = s;
+                
+                bool run = true;
+                while(run)
+                {
+                    //check expression
+                    if(!continueExpression.empty())
+                    {
+                        const char* expressionCString = continueExpression.c_str();
+                        char* endPtr;
+                        
+                        MJRef* expressionResult = recursivelyLoadValue(expressionCString,
+                                                                       &endPtr,
+                                                                       nullptr,
+                                                                       this,
+                                                                       debugInfo,
+                                                                       true,
+                                                                       false);
+                        if(expressionResult)
+                        {
+                            bool expressionPass = expressionResult->boolValue();
+                            expressionResult->release();
+                            if(!expressionPass)
+                            {
+                                //s = skipToNextMatchingChar(s, debugInfo, '}');
+                                //s = skipToNextChar(s + 1, debugInfo);
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            //s = skipToNextMatchingChar(s, debugInfo, '}');
+                            //s = skipToNextChar(s + 1, debugInfo);
+                            break;
+                        }
+                    }
+                    
+                    s = bodyStartChar;
+                    while(1)
+                    {
+                        s = skipToNextChar(s, debugInfo);
+                        
+                        if(*s == '}' || *s == ']' || *s == ')')
+                        {
+                            s = skipToNextChar(s + 1, debugInfo);
+                            *endptr = (char*)s;
+                            break;
+                        }
+                        
+                        if(*s == 'b' && *(s + 1) == 'r' && *(s + 2) == 'e' && *(s + 3) == 'a' && *(s + 4) == 'k') //todo addHumanReadableKeyValuePair needs to return status codes for return/break
+                        {
+                            s = skipToNextMatchingChar(s, debugInfo, '}');
+                            s = skipToNextChar(s + 1, debugInfo);
+                            run = false;
+                            break;
+                        }
+                        
+                        if(!addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
+                        {
+                            //s = *endptr;
+                            // break;
+                            return false;
+                        }
+                        s = *endptr;
+                    }
+                    //run increment
+                    if(!incrementExpression.empty())
+                    {
+                        const char* expressionCString = incrementExpression.c_str();
+                        char* endPtr;
+                        
+                        if(!addHumanReadableKeyValuePair(expressionCString, &endPtr, debugInfo, resultRef))
+                        {
+                            return false;
+                        }
+                        s = skipToNextChar(*endptr, debugInfo);
+                    }
+                }
+            }
+            
+            *endptr = (char*)s;
+            return true; //return now, we are done
+        }*/
         
         if(*s == 'i' && *(s + 1) == 'f' && (*(s + 2) == '(' || isspace(*(s + 2))))
         {

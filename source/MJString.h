@@ -95,28 +95,25 @@ public://functions
                     escaped = true;
                 }
             }
-            else if(*s == '.')
+            else if(*s == '.' && mjString->allowAsVariableName && !escaped)
             {
-                if(mjString->allowAsVariableName && !escaped)
+                if(*(s+1) == '.')
                 {
-                    if(*(s+1) == '.')
+                    s++;
+                    mjString->varNames.push_back(".");
+                    mjString->value += "..";
+                    while(*(s+1) == '.')
                     {
                         s++;
                         mjString->varNames.push_back(".");
-                        mjString->value += "..";
-                        while(*(s+1) == '.')
-                        {
-                            s++;
-                            mjString->varNames.push_back(".");
-                            mjString->value += ".";
-                        }
+                        mjString->value += ".";
                     }
-                    else
-                    {
-                        mjString->varNames.push_back(currentVarName);
-                        currentVarName = "";
-                        mjString->value += *s;
-                    }
+                }
+                else
+                {
+                    mjString->varNames.push_back(currentVarName);
+                    currentVarName = "";
+                    mjString->value += *s;
                 }
             }
             else if(*s == '(')
