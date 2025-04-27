@@ -15,7 +15,7 @@ table = {
         testValue = 1
         
         testFunction = function(valueToSet) { // the same rules apply for functions
-            ..testValue = value + 1 // 21, remember we can always *read* the higher level variables directly
+            ..testValue = value + 1 // 21 the first time, 101 the second, remember we can always *read* the higher level variables directly
             ....value = valueToSet // 4 dots this time to modify
         }
 
@@ -26,3 +26,20 @@ table = {
     outsideFunc(200) // ..value is now 200. '....value' still works, because we find variables relative to where the function was defined, not where it is called
     thisFuncDoesntExist() // error examples/scope.mjh:27:attempt to call missing function: thisFuncDoesntExist()
 }
+
+#result:
+#error examples/scope.mjh:27:attempt to call missing function: thisFuncDoesntExist()
+#{
+#    "table" = {
+#        function,
+#        "outsideFunc" = function,
+#        "subTable" = {
+#            function,
+#            "subValue" = 30,
+#            "testFunction" = function,
+#            "testValue" = 101,
+#        },
+#        "subValue" = 10,
+#    },
+#    "value" = 200,
+#}

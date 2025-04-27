@@ -22,6 +22,9 @@ public://functions
     {
         return new MJNumber(value, parent);
     }
+    virtual void assign(MJRef* other) {
+        value = ((MJNumber*)other)->value;
+    };
     
     static MJNumber* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = str;
@@ -61,10 +64,13 @@ public://functions
     MJBool(bool value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
     virtual ~MJBool() {};
     
-    virtual MJNumber* copy()
+    virtual MJBool* copy()
     {
-        return new MJNumber(value, parent);
+        return new MJBool(value, parent);
     }
+    virtual void assign(MJRef* other) {
+        value = ((MJBool*)other)->value;
+    };
     
     static MJBool* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
@@ -109,6 +115,9 @@ public://functions
     {
         return new MJVec2(value, parent);
     }
+    virtual void assign(MJRef* other) {
+        value = ((MJVec2*)other)->value;
+    };
     
     static MJVec2* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
@@ -171,6 +180,9 @@ public://functions
     {
         return new MJVec3(value, parent);
     }
+    virtual void assign(MJRef* other) {
+        value = ((MJVec3*)other)->value;
+    };
     
     static MJVec3* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
@@ -233,6 +245,9 @@ public://functions
     {
         return new MJVec4(value, parent);
     }
+    virtual void assign(MJRef* other) {
+        value = ((MJVec4*)other)->value;
+    };
     
     static MJVec4* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);

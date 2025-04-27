@@ -1,10 +1,10 @@
-print("for loop test")
 
-a = 0
-for(i=0,i<1000000,i=i+1)
-{
-    a = i + 1
-}
+
+#a = 0
+#for(i=0,i<100000,i=i+1)
+#{
+#    a = i + 1
+#}
 
 #testFunc = function()
 #{
@@ -18,4 +18,46 @@ for(i=0,i<1000000,i=i+1)
 
 #testFunc()
 
-print("loop done")
+#addNumbers = function(a,b)
+#{
+#    return a + b
+#}
+
+#nestedFuncTest = function(c,d)
+#{
+#    e = addNumbers(c,d)
+#    return e
+#}
+
+#nestedFuncTest(1,2)
+
+c = 7
+
+basicTest = function(a)
+{
+    c = 4
+    return a + c
+}
+
+print("DAVE c is:", c)
+
+mathTestAResult8 = basicTest(4)
+    
+print("DAVE c after is:", c)
+    
+
+var = 10
+table = {
+    tableVar = 20
+    subTable = {
+        subTableVar = 30
+
+        func = function()
+        {
+            ..subTableVar = 40
+            ...tableVar = 50
+        }
+
+        func()
+    }
+}

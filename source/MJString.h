@@ -30,6 +30,12 @@ public://functions
     {
         return new MJString(value, parent);
     }
+    virtual void assign(MJString* other) {
+        value = other->value;
+        allowAsVariableName = other->allowAsVariableName;
+        isValidFunctionString = other->isValidFunctionString;
+        varNames = other->varNames;
+    };
     
     static MJString* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
         const char* s = str;

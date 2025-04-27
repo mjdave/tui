@@ -110,6 +110,7 @@ inline const char* skipToNextMatchingChar(const char* str, MJDebugInfo* debugInf
 
 
 MJRef* loadVariableIfAvailable(MJString* variableName,
+                               MJRef* existingValue,
                                const char* str,
                                char** endptr,
                                MJTable* parentTable,
@@ -122,6 +123,7 @@ bool setVariable(MJString* variableName,
 
 MJRef* recursivelyLoadValue(const char* str,
                             char** endptr,
+                            MJRef* existingValue,
                             MJRef* leftValue,
                             MJTable* parentTable,
                             MJDebugInfo* debugInfo,
@@ -142,6 +144,7 @@ public://functions
     void release() {refCount--; if(refCount == 0) { delete this;}}
     void retain() {refCount++;}
     virtual MJRef* copy() {return new MJRef(parent);};
+    virtual void assign(MJRef* other) {};
     
     
     static MJTable* createRootTable();
@@ -186,7 +189,7 @@ public://functions
         writeToFile(filePath, exportString);
     };
     
-    virtual MJRef* recursivelyFindVariable(MJString* variableName, MJDebugInfo* debugInfo, int varStartIndex = 0) {return nullptr;} //valid for tables and functions only
+    virtual MJRef* recursivelyFindVariable(MJString* variableName, MJDebugInfo* debugInfo, bool searchParents, int varStartIndex = 0) {return nullptr;} //valid for tables and functions only
     virtual bool recursivelySetVariable(MJString* variableName, MJRef* value, MJDebugInfo* debugInfo, int varStartIndex = 0) {return false;};
     
 

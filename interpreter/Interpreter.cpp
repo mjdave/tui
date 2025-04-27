@@ -17,8 +17,10 @@ Interpreter::Interpreter(std::vector<std::string>& args)
     
     
     //MJRef* scriptRunResult = MJTable::runScriptFile("examples/daveTest.mjh");
-    //MJRef* scriptRunResult = MJTable::runScriptFile("examples/scope.mjh");
-    MJRef* scriptRunResult = MJTable::runScriptFile("examples/daveTest.mjh");
+    MJRef* scriptRunResult = MJTable::runScriptFile("examples/scope.mjh");
+    //MJRef* scriptRunResult = MJTable::runScriptFile("examples/simpleScript.mjh");
+    //MJRef* scriptRunResult = MJTable::runScriptFile("examples/functionsAndIfStatements.mjh");
+    //MJRef* scriptRunResult = MJTable::runScriptFile("examples/mathsAndExpressions.mjh");
     if(scriptRunResult)
     {
         scriptRunResult->debugLog();

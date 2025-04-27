@@ -189,11 +189,11 @@ MJRef* MJRef::load(const char* str, char** endptr, MJRef* parent, MJDebugInfo* d
     return table;
 }
 
-MJRef* loadVariableIfAvailable(MJString* variableName, const char* str, char** endptr, MJTable* parentTable, MJDebugInfo* debugInfo)
+MJRef* loadVariableIfAvailable(MJString* variableName, MJRef* existingValue, const char* str, char** endptr, MJTable* parentTable, MJDebugInfo* debugInfo)
 {
     if(variableName->allowAsVariableName && parentTable)
     {
-        MJRef* newValueRef = parentTable->recursivelyFindVariable(variableName, debugInfo);
+        MJRef* newValueRef = parentTable->recursivelyFindVariable(variableName, debugInfo, true);
         if(newValueRef)
         {
             if(newValueRef->type() == MJREF_TYPE_TABLE)
@@ -209,10 +209,13 @@ MJRef* loadVariableIfAvailable(MJString* variableName, const char* str, char** e
                     MJTable* argsArrayTable = MJTable::initWithHumanReadableString(s, endptr, parentTable, debugInfo);
                     s = skipToNextChar(*endptr, debugInfo, true);
                     
-                    MJRef* result = ((MJFunction*)newValueRef)->call(argsArrayTable, parentTable);
-                    
+                    MJRef* result = ((MJFunction*)newValueRef)->call(argsArrayTable, parentTable, existingValue);
                     *endptr = (char*)s;
-                    return result;
+                    
+                    if(result)
+                    {
+                        return result;
+                    }
                 }
                 newValueRef->retain();
                 return newValueRef;
@@ -256,7 +259,7 @@ bool setVariable(MJString* variableName,
     return false;
 }
 
-MJRef* loadValue(const char* str, char** endptr, MJTable* parentTable, MJDebugInfo* debugInfo, bool allowNonVarStrings)
+MJRef* loadValue(const char* str, char** endptr, MJRef* existingValue, MJTable* parentTable, MJDebugInfo* debugInfo, bool allowNonVarStrings)
 {
     const char* s = str;
     
@@ -266,7 +269,7 @@ MJRef* loadValue(const char* str, char** endptr, MJTable* parentTable, MJDebugIn
     if(valueRef->type() == MJREF_TYPE_STRING)
     {
         MJString* originalString = (MJString*)valueRef;
-        MJRef* newValueRef = loadVariableIfAvailable(originalString, s, endptr, parentTable, debugInfo);
+        MJRef* newValueRef = loadVariableIfAvailable(originalString, nullptr, s, endptr, parentTable, debugInfo);
         
         s = skipToNextChar(*endptr, debugInfo, true);
         
@@ -297,6 +300,7 @@ MJRef* loadValue(const char* str, char** endptr, MJTable* parentTable, MJDebugIn
 
 MJRef* recursivelyLoadValue(const char* str,
                             char** endptr,
+                            MJRef* existingValue,
                             MJRef* leftValue,
                             MJTable* parentTable,
                             MJDebugInfo* debugInfo,
@@ -311,11 +315,16 @@ MJRef* recursivelyLoadValue(const char* str,
         {
             s++;
             s = skipToNextChar(s, debugInfo, true);
-            leftValue = recursivelyLoadValue(s, endptr, nullptr, parentTable, debugInfo, true, allowNonVarStrings);
+            leftValue = recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, debugInfo, true, allowNonVarStrings);
         }
         else
         {
-            leftValue = loadValue(s, endptr, parentTable, debugInfo, allowNonVarStrings);
+            leftValue = loadValue(s, endptr, existingValue, parentTable, debugInfo, allowNonVarStrings);
+        }
+        
+        if(!leftValue)
+        {
+            leftValue = existingValue;
         }
         
         
@@ -330,6 +339,10 @@ MJRef* recursivelyLoadValue(const char* str,
         //s++;
         s = skipToNextChar(s, debugInfo, true);
         *endptr = (char*)s;
+        if(existingValue)
+        {
+            return nullptr;
+        }
         return leftValue;
     }
     
@@ -337,6 +350,10 @@ MJRef* recursivelyLoadValue(const char* str,
     {
         s = skipToNextChar(s, debugInfo, true);
         *endptr = (char*)s;
+        if(existingValue)
+        {
+            return nullptr;
+        }
         return leftValue;
     }
     
@@ -349,14 +366,14 @@ MJRef* recursivelyLoadValue(const char* str,
     
     s = skipToNextChar(s, debugInfo, true);
     
-    MJRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, parentTable, debugInfo, false, false);
+    MJRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, nullptr, parentTable, debugInfo, false, false);
     s = skipToNextChar(*endptr, debugInfo, true);
     
     if(rightValue->type() == MJREF_TYPE_STRING)
     {
         if(((MJString*)rightValue)->allowAsVariableName)
         {
-            MJRef* newValueRef = parentTable->recursivelyFindVariable((MJString*)rightValue, debugInfo);
+            MJRef* newValueRef = parentTable->recursivelyFindVariable((MJString*)rightValue, debugInfo, true);
             if(newValueRef)
             {
                 delete rightValue;
@@ -631,7 +648,7 @@ MJRef* recursivelyLoadValue(const char* str,
         {
             if(runLowOperators || *s == '*' || *s == '/')
             {
-                result = recursivelyLoadValue(s, endptr, result, parentTable, debugInfo, runLowOperators, allowNonVarStrings);
+                result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, runLowOperators, allowNonVarStrings);
                 s = skipToNextChar(*endptr, debugInfo, true);
             }
         }

@@ -21,8 +21,13 @@
         c = 4
         return a + c
     }
+    
+    print("DAVE c is:", c)
 
-    mathTestAResult12 = basicTest(4)
+    mathTestAResult8 = basicTest(4)
+        
+    print("DAVE c after is:", c)
+    
     #mathTestAResult12c = mathTestA(c, 2)
 
     #mathTestBResult1_2 = mathTestA(vec2(0.5,1), vec2(0.5,1))

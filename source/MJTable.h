@@ -109,7 +109,7 @@ public://functions
     }
     
     
-    virtual MJRef* recursivelyFindVariable(MJString* variableName, MJDebugInfo* debugInfo, int varStartIndex = 0)
+    virtual MJRef* recursivelyFindVariable(MJString* variableName, MJDebugInfo* debugInfo, bool searchParents, int varStartIndex = 0)
     {
         //const std::string variableNameString = variableName->value;
         
@@ -134,7 +134,7 @@ public://functions
                     }
                     else
                     {
-                        return tableOrFunction->recursivelyFindVariable(variableName, debugInfo, i);
+                        return tableOrFunction->recursivelyFindVariable(variableName, debugInfo, searchParents, i);
                     }
                 }
                 
@@ -179,9 +179,9 @@ public://functions
             }
         }
         
-        if(parent)
+        if(searchParents && parent)
         {
-            return parent->recursivelyFindVariable(variableName, debugInfo);
+            return parent->recursivelyFindVariable(variableName, debugInfo, searchParents);
         }
         
         return nullptr;
@@ -289,6 +289,7 @@ public://functions
             {
                 *resultRef = recursivelyLoadValue(s,
                                                      endptr,
+                                                  nullptr,
                                                      nullptr,
                                                      this,
                                                      debugInfo,
@@ -305,166 +306,27 @@ public://functions
             s+=3;
             s = skipToNextChar(s, debugInfo);
             
-            MJStatement* statement = MJFunction::loadForStatement(s, endptr, parent, debugInfo);
+            MJTokenMap tokenMap;
+            
+            MJStatement* statement = MJFunction::serializeForStatement(s, endptr, parent, &tokenMap, debugInfo);
             if(!statement)
             {
                 return false;
             }
             s = skipToNextChar(*endptr, debugInfo, false);
             
-            MJRef* result = MJFunction::runStatement(statement, this, (MJTable*)parent, debugInfo);
+            MJRef* result = nullptr; //TODOD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //MJRef* result = MJFunction::runStatement(statement, this, (MJTable*)parent, &tokenMap, debugInfo);
             
             if(result)
             {
                 *resultRef = result;
                 *endptr = (char*)s;
                 return false;
-                
             }
             *endptr = (char*)s;
             return true;
         }
-        
-        /*if(*s == 'f' && *(s + 1) == 'o' && *(s + 2) == 'r' && (*(s + 3) == '(' || isspace(*(s + 3))))
-        {
-            s+=4;
-            s = skipToNextChar(s, debugInfo);
-            
-            if(*s == ',')
-            {
-                s++;
-            }
-            else
-            {
-                if(!addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
-                {
-                    s = skipToNextChar(*endptr, debugInfo, true);
-                    *endptr = (char*)s;
-                    return false;
-                }
-                s = skipToNextChar(*endptr, debugInfo);
-            }
-            s = skipToNextChar(s, debugInfo);
-            
-            std::string continueExpression;
-            if(*s == ',')
-            {
-                s++;
-                s = skipToNextChar(s, debugInfo);
-            }
-            else
-            {
-                MJFunction::serializeExpression(s, endptr, continueExpression, debugInfo);
-                s = skipToNextChar(*endptr, debugInfo);
-                if(*s == ',')
-                {
-                    s++;
-                    s = skipToNextChar(s, debugInfo);
-                }
-            }
-            
-            std::string incrementExpression;
-            if(*s == ')')
-            {
-                s++;
-            }
-            else
-            {
-                MJFunction::serializeExpression(s, endptr, incrementExpression, debugInfo);
-                s = skipToNextChar(*endptr, debugInfo);
-                if(*s == ')')
-                {
-                    s++;
-                }
-            }
-            s = skipToNextChar(s, debugInfo);
-            
-            if(*s == '{')
-            {
-                s++;
-                const char* bodyStartChar = s;
-                
-                bool run = true;
-                while(run)
-                {
-                    //check expression
-                    if(!continueExpression.empty())
-                    {
-                        const char* expressionCString = continueExpression.c_str();
-                        char* endPtr;
-                        
-                        MJRef* expressionResult = recursivelyLoadValue(expressionCString,
-                                                                       &endPtr,
-                                                                       nullptr,
-                                                                       this,
-                                                                       debugInfo,
-                                                                       true,
-                                                                       false);
-                        if(expressionResult)
-                        {
-                            bool expressionPass = expressionResult->boolValue();
-                            expressionResult->release();
-                            if(!expressionPass)
-                            {
-                                //s = skipToNextMatchingChar(s, debugInfo, '}');
-                                //s = skipToNextChar(s + 1, debugInfo);
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            //s = skipToNextMatchingChar(s, debugInfo, '}');
-                            //s = skipToNextChar(s + 1, debugInfo);
-                            break;
-                        }
-                    }
-                    
-                    s = bodyStartChar;
-                    while(1)
-                    {
-                        s = skipToNextChar(s, debugInfo);
-                        
-                        if(*s == '}' || *s == ']' || *s == ')')
-                        {
-                            s = skipToNextChar(s + 1, debugInfo);
-                            *endptr = (char*)s;
-                            break;
-                        }
-                        
-                        if(*s == 'b' && *(s + 1) == 'r' && *(s + 2) == 'e' && *(s + 3) == 'a' && *(s + 4) == 'k') //todo addHumanReadableKeyValuePair needs to return status codes for return/break
-                        {
-                            s = skipToNextMatchingChar(s, debugInfo, '}');
-                            s = skipToNextChar(s + 1, debugInfo);
-                            run = false;
-                            break;
-                        }
-                        
-                        if(!addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
-                        {
-                            //s = *endptr;
-                            // break;
-                            return false;
-                        }
-                        s = *endptr;
-                    }
-                    //run increment
-                    if(!incrementExpression.empty())
-                    {
-                        const char* expressionCString = incrementExpression.c_str();
-                        char* endPtr;
-                        
-                        if(!addHumanReadableKeyValuePair(expressionCString, &endPtr, debugInfo, resultRef))
-                        {
-                            return false;
-                        }
-                        s = skipToNextChar(*endptr, debugInfo);
-                    }
-                }
-            }
-            
-            *endptr = (char*)s;
-            return true; //return now, we are done
-        }*/
         
         if(*s == 'i' && *(s + 1) == 'f' && (*(s + 2) == '(' || isspace(*(s + 2))))
         {
@@ -474,6 +336,7 @@ public://functions
             bool expressionPass = true;
             MJRef* expressionResult = recursivelyLoadValue(s,
                                                  endptr,
+                                                           nullptr,
                                                  nullptr,
                                                  this,
                                                  debugInfo,
@@ -581,6 +444,7 @@ public://functions
                             MJRef* expressionResult = recursivelyLoadValue(s,
                                                                            endptr,
                                                                            nullptr,
+                                                                           nullptr,
                                                                            this,
                                                                            debugInfo,
                                                                            true,
@@ -682,6 +546,7 @@ public://functions
             debugInfo->lineNumber = keyStartLineNumber;
             MJRef* newKeyRef = recursivelyLoadValue(keyStartS,
                                                 endptr,
+                                                    nullptr,
                                                 nullptr,
                                                 this,
                                                 debugInfo,
@@ -732,7 +597,7 @@ public://functions
                 ((MJString*)keyRef)->varNames.push_back(((MJString*)keyRef)->value);
             }
             
-            MJRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, this, debugInfo, true, true);
+            MJRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, nullptr, this, debugInfo, true, true);
             s = skipToNextChar(*endptr, debugInfo, true);
                 
             recursivelySetVariable(((MJString*)keyRef), valueRef, debugInfo);
