@@ -1,6 +1,6 @@
 # This is tui
 
-tui is a small, cross platform, open source scripting and serialization library for C++.
+tui is a small, cross platform, open source embeddable scripting language and serialization library for C++.
 
 NOTE: tui is very early in development, it is still likely to have crashes and issues, is not fully optimized or tested, and not ready to be used.
 
@@ -221,16 +221,14 @@ int main()
 
 With no virtual machine, and no bindings required in C++, all of the data and script state is stored in a public std::map or std::vector under the hood. Scripts and tables are parsed together and are treated the same. Each character is simply parsed one by one in a single phase, with data loaded immediately. Functions are quickly serialized and called as required.
 
-This means tui can solve two problems. You can use it as a fast and small scripting language, that also happens to have built in serialization support from/to both binary and human readable data formats.
+This means tui can solve two problems. You can use it as a fast and small scripting language, that also happens to have built in serialization support from/to both binary(todo) and human readable data formats.
 
 Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other ways of storing and sharing data, tui reads JSON out of the box, while adding a bunch of new features.
 
 # What tui is not
 tui is not finished!
 
-It should not be used in production environments yet. Binary formats and for statements in particular are not yet implemented.
-
-The interpreter only builds for macos at present, but getting it building on other platforms will happen soon. tui is cross platform, tested on windows, macos and linux.
+It should not be used in production environments yet. Binary formats are not yet implemented, there is a lot of optimization work yet to do, and there are many missing functions, even to do basic things like insert into arrays.
 
 tui has 'objects', as tables. However there is no concept of 'self/this', and no direct support for inheritance or classes in general. Further OOP support is not planned.
 
@@ -243,7 +241,7 @@ This is a one-man project (to start with), my name is Dave Frampton, I made the 
 
 tui was initially created to serialize and share data in C++ for my games, so it started life as a quick little JSON parser. Very soon though, missing the power of lua, I started adding variables and functions.
 
-I feel this could be useful for a lot of people. I don't desire to keep it only for myself or to profit from it, and I wouldn't mind some help, so I'm making it open source. 
+I feel tui could be useful for a lot of people for many different purposes. I don't desire to keep it only for myself or to profit from it, and I wouldn't mind some help, so I'm making it open source. 
 
 Hopefully it is useful, and if you find a bug or have a feature request please feel free to open an issue, but please do fork this and send it in new directions too!
 

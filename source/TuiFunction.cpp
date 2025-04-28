@@ -33,7 +33,7 @@ void TuiFunction::recursivelySerializeExpression(const char* str,
         TuiRef* leftValue = TuiTable::initUnknownTypeRefWithHumanReadableString(s, endptr, parent, debugInfo);
         s = skipToNextChar(*endptr, debugInfo, true);
         
-        if(leftValue->type() == TuiREF_TYPE_STRING)
+        if(leftValue->type() == Tui_ref_type_STRING)
         {
             TuiString* varString = ((TuiString*)leftValue);
             if(varString->allowAsVariableName)
@@ -89,7 +89,7 @@ void TuiFunction::recursivelySerializeExpression(const char* str,
         }
         else
         {
-            if(leftValue->type() != TuiREF_TYPE_NIL)
+            if(leftValue->type() != Tui_ref_type_NIL)
             {
                 uint32_t leftVarToken = tokenMap->tokenIndex++;
                 tokenMap->refsByToken[leftVarToken] = leftValue;
@@ -236,14 +236,14 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
         }
         else
         {
-            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
+            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
             varNameRef->release();
             return nullptr;
         }
     }
     else
     {
-        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected variable assignment in for loop");
+        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected variable assignment in for loop");
         return nullptr;
     }
     
@@ -254,7 +254,7 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
     }
     else
     {
-        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
+        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
         return nullptr;
     }
     
@@ -269,7 +269,7 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
     }
     else
     {
-        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
+        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
         return nullptr;
     }
     
@@ -332,7 +332,7 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
             else
             {
                 varNameRef->release();
-                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
+                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
                 return nullptr;
             }
         }
@@ -360,7 +360,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* 
     const char* s = str;
     if(*s != '{')
     {
-        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Function expected opening brace");
+        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Function expected opening brace");
         return false;
     }
     s++;
@@ -464,7 +464,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* 
                     }
                     else
                     {
-                        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else statement expected 'if' or '{'");
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else statement expected 'if' or '{'");
                         return false;
                     }
                 }
@@ -572,7 +572,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* 
                 }
                 else
                 {
-                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
                     varNameRef->release();
                     return false;
                 }
@@ -734,7 +734,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                 TuiRef* leftResult = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
                 uint32_t leftType = leftResult->type();
                 switch (leftType) {
-                    case TuiREF_TYPE_NUMBER:
+                    case Tui_ref_type_NUMBER:
                     {
                         double left = ((TuiNumber*)leftResult)->value;
                         *tokenIndex = *tokenIndex + 1;
@@ -742,11 +742,11 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                         TuiRef* rightResult = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
                         if(rightResult->type() != leftType)
                         {
-                            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
                             return nullptr;
                         }
                         
-                        if(result && result->type() == TuiREF_TYPE_BOOL)
+                        if(result && result->type() == Tui_ref_type_BOOL)
                         {
                             switch (token) {
                                 case Tui_TOKEN_greaterThan:
@@ -809,7 +809,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                 
                 uint32_t leftType = leftResult->type();
                 switch (leftType) {
-                    case TuiREF_TYPE_NUMBER:
+                    case Tui_ref_type_NUMBER:
                     {
                         double left = ((TuiNumber*)leftResult)->value;
                         *tokenIndex = *tokenIndex + 1;
@@ -820,7 +820,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                         }
                         if(rightResult->type() != leftType)
                         {
-                            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
                             return nullptr;
                         }
                         
@@ -861,6 +861,219 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                         
                     }
                         break;
+                    case Tui_ref_type_VEC2:
+                    {
+                        dvec2 left = ((TuiVec2*)leftResult)->value;
+                        *tokenIndex = *tokenIndex + 1;
+                        TuiRef* rightResult = runExpression(expression, tokenIndex, result, functionState, parent, tokenMap, locals, debugInfo);
+                        if(!rightResult)
+                        {
+                            rightResult = result;
+                        }
+                        
+                        uint32_t resultType = rightResult->type();
+                        
+                        if(result && resultType == leftType)
+                        {
+                            switch (token) {
+                                case Tui_TOKEN_add:
+                                    ((TuiVec2*)result)->value += left;
+                                    break;
+                                case Tui_TOKEN_subtract:
+                                    ((TuiVec2*)result)->value -= left;
+                                    break;
+                                case Tui_TOKEN_multiply:
+                                    ((TuiVec2*)result)->value *= left;
+                                    break;
+                                case Tui_TOKEN_divide:
+                                    ((TuiVec2*)result)->value /= left;
+                                    break;
+                            };
+                        }
+                        else if(resultType == leftType)
+                        {
+                            switch (token) {
+                                case Tui_TOKEN_add:
+                                    return new TuiVec2(left + ((TuiVec2*)rightResult)->value);
+                                    break;
+                                case Tui_TOKEN_subtract:
+                                    return new TuiVec2(left - ((TuiVec2*)rightResult)->value);
+                                    break;
+                                case Tui_TOKEN_multiply:
+                                    return new TuiVec2(left * ((TuiVec2*)rightResult)->value);
+                                    break;
+                                case Tui_TOKEN_divide:
+                                    return new TuiVec2(left / ((TuiVec2*)rightResult)->value);
+                                    break;
+                            };
+                        }
+                        else if(resultType == Tui_ref_type_NUMBER)
+                        {
+                            switch (token) {
+                                case Tui_TOKEN_multiply:
+                                    return new TuiVec2(left * ((TuiNumber*)rightResult)->value);
+                                    break;
+                                case Tui_TOKEN_divide:
+                                    return new TuiVec2(left / ((TuiNumber*)rightResult)->value);
+                                    break;
+                                default:
+                                {
+                                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec2");
+                                    return nullptr;
+                                }
+                                    break;
+                            };
+                        }
+                        else
+                        {
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected vec2 or number");
+                            return nullptr;
+                        }
+                        
+                    }
+                        break;
+                    case Tui_ref_type_VEC3:
+                    {
+                        dvec3 left = ((TuiVec3*)leftResult)->value;
+                        *tokenIndex = *tokenIndex + 1;
+                        TuiRef* rightResult = runExpression(expression, tokenIndex, result, functionState, parent, tokenMap, locals, debugInfo);
+                        if(!rightResult)
+                        {
+                            rightResult = result;
+                        }
+                        
+                        uint32_t resultType = rightResult->type();
+                        
+                        if(result && resultType == leftType)
+                        {
+                            switch (token) {
+                                case Tui_TOKEN_add:
+                                    ((TuiVec3*)result)->value += left;
+                                    break;
+                                case Tui_TOKEN_subtract:
+                                    ((TuiVec3*)result)->value -= left;
+                                    break;
+                                case Tui_TOKEN_multiply:
+                                    ((TuiVec3*)result)->value *= left;
+                                    break;
+                                case Tui_TOKEN_divide:
+                                    ((TuiVec3*)result)->value /= left;
+                                    break;
+                            };
+                        }
+                        else if(resultType == leftType)
+                        {
+                            switch (token) {
+                                case Tui_TOKEN_add:
+                                    return new TuiVec3(left + ((TuiVec3*)rightResult)->value);
+                                    break;
+                                case Tui_TOKEN_subtract:
+                                    return new TuiVec3(left - ((TuiVec3*)rightResult)->value);
+                                    break;
+                                case Tui_TOKEN_multiply:
+                                    return new TuiVec3(left * ((TuiVec3*)rightResult)->value);
+                                    break;
+                                case Tui_TOKEN_divide:
+                                    return new TuiVec3(left / ((TuiVec3*)rightResult)->value);
+                                    break;
+                            };
+                        }
+                        else if(resultType == Tui_ref_type_NUMBER)
+                        {
+                            switch (token) {
+                                case Tui_TOKEN_multiply:
+                                    return new TuiVec3(left * ((TuiNumber*)rightResult)->value);
+                                    break;
+                                case Tui_TOKEN_divide:
+                                    return new TuiVec3(left / ((TuiNumber*)rightResult)->value);
+                                    break;
+                                default:
+                                {
+                                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec3");
+                                    return nullptr;
+                                }
+                                    break;
+                            };
+                        }
+                        else
+                        {
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected vec3 or number");
+                            return nullptr;
+                        }
+                        
+                    }
+                        break;
+                    case Tui_ref_type_VEC4:
+                    {
+                        dvec4 left = ((TuiVec4*)leftResult)->value;
+                        *tokenIndex = *tokenIndex + 1;
+                        TuiRef* rightResult = runExpression(expression, tokenIndex, result, functionState, parent, tokenMap, locals, debugInfo);
+                        if(!rightResult)
+                        {
+                            rightResult = result;
+                        }
+                        
+                        uint32_t resultType = rightResult->type();
+                        
+                        if(result && resultType == leftType)
+                        {
+                            switch (token) {
+                                case Tui_TOKEN_add:
+                                    ((TuiVec4*)result)->value += left;
+                                    break;
+                                case Tui_TOKEN_subtract:
+                                    ((TuiVec4*)result)->value -= left;
+                                    break;
+                                case Tui_TOKEN_multiply:
+                                    ((TuiVec4*)result)->value *= left;
+                                    break;
+                                case Tui_TOKEN_divide:
+                                    ((TuiVec4*)result)->value /= left;
+                                    break;
+                            };
+                        }
+                        else if(resultType == leftType)
+                        {
+                            switch (token) {
+                                case Tui_TOKEN_add:
+                                    return new TuiVec4(left + ((TuiVec4*)rightResult)->value);
+                                    break;
+                                case Tui_TOKEN_subtract:
+                                    return new TuiVec4(left - ((TuiVec4*)rightResult)->value);
+                                    break;
+                                case Tui_TOKEN_multiply:
+                                    return new TuiVec4(left * ((TuiVec4*)rightResult)->value);
+                                    break;
+                                case Tui_TOKEN_divide:
+                                    return new TuiVec4(left / ((TuiVec4*)rightResult)->value);
+                                    break;
+                            };
+                        }
+                        else if(resultType == Tui_ref_type_NUMBER)
+                        {
+                            switch (token) {
+                                case Tui_TOKEN_multiply:
+                                    return new TuiVec4(left * ((TuiNumber*)rightResult)->value);
+                                    break;
+                                case Tui_TOKEN_divide:
+                                    return new TuiVec4(left / ((TuiNumber*)rightResult)->value);
+                                    break;
+                                default:
+                                {
+                                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec4");
+                                    return nullptr;
+                                }
+                                    break;
+                            };
+                        }
+                        else
+                        {
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected vec2 or number");
+                            return nullptr;
+                        }
+                        
+                    }
+                        break;
                         
                     default:
                         break;
@@ -887,7 +1100,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
             foundValue = tokenMap->refsByToken[token];
         }
         
-        if(foundValue && foundValue->type() != TuiREF_TYPE_NIL)
+        if(foundValue && foundValue->type() != Tui_ref_type_NIL)
         {
             if(result && result->type() == foundValue->type())
             {
@@ -909,6 +1122,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
 
 TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo)
 {
+    debugInfo->lineNumber = statement->lineNumber;
     switch(statement->type)
     {
         case TuiSTATEMENT_TYPE_RETURN:
@@ -1167,7 +1381,7 @@ TuiRef* TuiFunction::call(TuiTable* args, TuiTable* callLocationState, TuiRef* e
             const std::string& argName = argNames[i];
             if(i >= maxArgs)
             {
-                TuiSWarn(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function ignoring:%s", argName.c_str());
+                TuiParseWarn(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function ignoring:%s", argName.c_str());
                 continue;
             }
             currentCallState->objectsByStringKey[argName] = arg;
@@ -1192,7 +1406,7 @@ TuiRef* TuiFunction::call(TuiTable* args, TuiTable* callLocationState, TuiRef* e
 
 TuiRef* TuiFunction::recursivelyFindVariable(TuiString* variableName, TuiDebugInfo* debugInfo, bool searchParents, int varStartIndex)
 {
-    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to get a variable from within a child function");
+    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to get a variable from within a child function");
     return nullptr;
     //return currentCallState->recursivelyFindVariable(variableName, debugInfo, varStartIndex);
 }
@@ -1200,7 +1414,7 @@ TuiRef* TuiFunction::recursivelyFindVariable(TuiString* variableName, TuiDebugIn
 
 bool TuiFunction::recursivelySetVariable(TuiString* variableName, TuiRef* value, TuiDebugInfo* debugInfo, int varStartIndex)
 {
-    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to set variable within a child function");
+    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to set variable within a child function");
     return false;
    // return currentCallState->recursivelySetVariable(variableName, value, debugInfo, varStartIndex);
 }

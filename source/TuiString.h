@@ -18,7 +18,7 @@ public: //members
 
 public://functions
     
-    virtual uint8_t type() { return TuiREF_TYPE_STRING; }
+    virtual uint8_t type() { return Tui_ref_type_STRING; }
     virtual std::string getTypeName() {return "string";}
     virtual std::string getStringValue() {return value;}
     virtual bool boolValue() {return !value.empty();}

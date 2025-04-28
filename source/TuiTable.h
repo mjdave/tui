@@ -25,7 +25,7 @@ private: //members
 public://functions
     
     
-    virtual uint8_t type() { return TuiREF_TYPE_TABLE; }
+    virtual uint8_t type() { return Tui_ref_type_TABLE; }
     virtual std::string getTypeName() {return "table";}
     virtual std::string getStringValue() {return "table";}
     virtual std::string getDebugStringValue() {return getDebugString();}
@@ -100,6 +100,15 @@ public://functions
             *endptr = (char*)s;
             return new TuiRef(parent);
         }
+        else if(*s == 'n'
+                && *(s + 1) == 'u'
+                && *(s + 2) == 'l'
+                && *(s + 3) == 'l')
+        {
+            s+=4;
+            *endptr = (char*)s;
+            return new TuiRef(parent);
+        }
         else if(*s == '{' || *s == '[')
         {
             return TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
@@ -128,7 +137,7 @@ public://functions
                         tableOrFunction = tableOrFunction->parent;
                         if(!tableOrFunction)
                         {
-                            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found at level:%d for:%s", i + 1, variableName->value.c_str());
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found at level:%d for:%s", i + 1, variableName->value.c_str());
                             return nullptr;
                         }
                     }
@@ -146,9 +155,9 @@ public://functions
                 if(varNames.size() > varStartIndex + 1)
                 {
                     TuiRef* subtableRef = objectsByStringKey[varNames[varStartIndex]];
-                    if(subtableRef->type() != TuiREF_TYPE_TABLE)
+                    if(subtableRef->type() != Tui_ref_type_TABLE)
                     {
-                        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                         return nullptr;
                     }
                     
@@ -166,9 +175,9 @@ public://functions
                         if(((TuiTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
                         {
                             subtableRef = objectsByStringKey[varNames[i]];
-                            if(subtableRef->type() != TuiREF_TYPE_TABLE)
+                            if(subtableRef->type() != Tui_ref_type_TABLE)
                             {
-                                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                                 return nullptr;
                             }
                         }
@@ -204,7 +213,7 @@ public://functions
                         tableOrFunction = tableOrFunction->parent;
                         if(!tableOrFunction)
                         {
-                            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found at level:%d for:%s", (i + 1), variableName->value.c_str());
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found at level:%d for:%s", (i + 1), variableName->value.c_str());
                             return false;
                         }
                     }
@@ -214,7 +223,7 @@ public://functions
                     }
                 }
                 
-                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Bad variable name:%s", variableName->value.c_str());
+                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Bad variable name:%s", variableName->value.c_str());
                 return false;
             }
             
@@ -223,9 +232,9 @@ public://functions
                 if(varNames.size() > varStartIndex + 1)
                 {
                     TuiRef* subtableRef = objectsByStringKey[varNames[varStartIndex]];
-                    if(subtableRef->type() != TuiREF_TYPE_TABLE)
+                    if(subtableRef->type() != Tui_ref_type_TABLE)
                     {
-                        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                         return false;
                     }
                     
@@ -240,9 +249,9 @@ public://functions
                         if(((TuiTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
                         {
                             subtableRef = objectsByStringKey[varNames[i]];
-                            if(subtableRef->type() != TuiREF_TYPE_TABLE)
+                            if(subtableRef->type() != Tui_ref_type_TABLE)
                             {
-                                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                                 return false;
                             }
                         }
@@ -261,9 +270,6 @@ public://functions
         
         return false;
     }
-    
-    
-    
     
     bool addHumanReadableKeyValuePair(const char* str, char** endptr, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr) {
         const char* s = skipToNextChar(str, debugInfo);
@@ -315,10 +321,6 @@ public://functions
             }
             s = skipToNextChar(*endptr, debugInfo, false);
             
-            //TuiRef* result = nullptr; //TODOD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //TuiRef* result = TuiFunction::runStatement(statement, this, (TuiTable*)parent, &tokenMap, debugInfo);
-            
-            
             std::map<uint32_t, TuiRef*> locals;
             TuiRef* result = TuiFunction::runStatement(statement, nullptr, this, (TuiTable*)parent, &tokenMap, locals, debugInfo);
             
@@ -330,42 +332,6 @@ public://functions
             }
             *endptr = (char*)s;
             return true;
-            
-            /*
-             
-             {
-                 TuiTable* currentCallState = new TuiTable(parent);
-                 std::map<uint32_t, TuiRef*> locals;
-                 
-                 int i = 0;
-                 int maxArgs = (int)argNames.size();
-                 for(TuiRef* arg : args->arrayObjects)
-                 {
-                     const std::string& argName = argNames[i];
-                     if(i >= maxArgs)
-                     {
-                         TuiSWarn(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function ignoring:%s", argName.c_str());
-                         continue;
-                     }
-                     currentCallState->objectsByStringKey[argName] = arg;
-                     arg->retain();
-                     if(tokenMap.tokensByVarNames.count(argName) != 0)
-                     {
-                         locals[tokenMap.tokensByVarNames[argName]] = arg;
-                     }
-                     
-                     i++;
-                 }
-                 
-                 
-                 TuiRef* result = runStatementArray(statements,  existingResult,  currentCallState, (TuiTable*)parent, &tokenMap, locals, &debugInfo);
-                 //TuiRef* result = runStatementArray(statements, currentCallState, (TuiTable*)parent, &debugInfo); //TODO!!
-                 //currentCallState->debugLog();
-                 currentCallState->release();
-                 
-                 return result;
-             
-             */
         }
         
         if(*s == 'i' && *(s + 1) == 'f' && (*(s + 2) == '(' || isspace(*(s + 2))))
@@ -425,7 +391,7 @@ public://functions
                 }
                 else
                 {
-                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "if statement expected '{'");
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "if statement expected '{'");
                     return false;
                 }
             }
@@ -531,7 +497,7 @@ public://functions
                                 }
                                 else
                                 {
-                                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else if statement expected '{'");
+                                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else if statement expected '{'");
                                     return false;
                                 }
                             }
@@ -543,7 +509,7 @@ public://functions
                         }
                         else
                         {
-                            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else statement expected 'if' or '{'");
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else statement expected 'if' or '{'");
                             return false;
                         }
                     }
@@ -567,7 +533,7 @@ public://functions
         {
             
             bool keyWasFunctionCall = false;
-            if(keyRef->type() == TuiREF_TYPE_STRING)
+            if(keyRef->type() == Tui_ref_type_STRING)
             {
                 if(((TuiString*)keyRef)->isValidFunctionString)
                 {
@@ -605,7 +571,7 @@ public://functions
                 debugInfo->lineNumber++;
             }
             
-            if(!keyWasFunctionCall || (newKeyRef && newKeyRef->type() != TuiREF_TYPE_NIL))
+            if(!keyWasFunctionCall || (newKeyRef && newKeyRef->type() != Tui_ref_type_NIL))
             {
                 arrayObjects.push_back(keyRef);
             }
@@ -626,9 +592,9 @@ public://functions
             s++;
             s = skipToNextChar(s, debugInfo);
             
-            if(keyRef->type() != TuiREF_TYPE_STRING)
+            if(keyRef->type() != Tui_ref_type_STRING)
             {
-                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Table keys must be a string or number only. Found:%s", keyRef->getDebugString().c_str());
+                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Table keys must be a string or number only. Found:%s", keyRef->getDebugString().c_str());
                 return false;
             }
             else if(!((TuiString*)keyRef)->allowAsVariableName)
@@ -662,13 +628,13 @@ public://functions
             }
             else if(*s != '\0')
             {
-                if(valueRef->type() == TuiREF_TYPE_STRING && *s == '(')
+                if(valueRef->type() == Tui_ref_type_STRING && *s == '(')
                 {
-                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call non-existent function:%s", ((TuiString*)valueRef)->value.c_str());
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call non-existent function:%s", ((TuiString*)valueRef)->value.c_str());
                 }
                 else
                 {
-                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ',' or newline after '=' or ':' assignment. unexpected character loading table:%c", *s);
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ',' or newline after '=' or ':' assignment. unexpected character loading table:%c", *s);
                 }
                 success = false;
             }
@@ -681,7 +647,7 @@ public://functions
         }
         else if(*s != '\0')
         {
-            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
+            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
             delete keyRef;
             return false;
         }
@@ -704,7 +670,7 @@ public://functions
         }
         else
         {
-            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
+            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
             delete table;
             return nullptr;
         }
@@ -808,13 +774,13 @@ public://functions
             
             oldValue->release();
             
-            if(!value || value->type() == TuiREF_TYPE_NIL)
+            if(!value || value->type() == Tui_ref_type_NIL)
             {
                 objectsByStringKey.erase(key);
             }
         }
         
-        if(value && value->type() != TuiREF_TYPE_NIL)
+        if(value && value->type() != Tui_ref_type_NIL)
         {
             value->retain();
             objectsByStringKey[key] = value;
@@ -833,13 +799,13 @@ public://functions
             
             oldValue->release();
             
-            if(!value || value->type() == TuiREF_TYPE_NIL)
+            if(!value || value->type() == Tui_ref_type_NIL)
             {
                 objectsByNumberKey.erase(key);
             }
         }
         
-        if(value && value->type() != TuiREF_TYPE_NIL)
+        if(value && value->type() != Tui_ref_type_NIL)
         {
             value->retain();
             objectsByNumberKey[key] = value;
@@ -889,7 +855,7 @@ public://functions
         if(index >= 0 && index < arrayObjects.size())
         {
             TuiRef* ref = arrayObjects[index];
-            if(ref->type() == TuiREF_TYPE_TABLE)
+            if(ref->type() == Tui_ref_type_TABLE)
             {
                 return ((TuiTable*)ref);
             }
@@ -907,7 +873,7 @@ public://functions
         if(objectsByStringKey.count(key) != 0)
         {
             TuiRef* ref = objectsByStringKey[key];
-            if(ref->type() == TuiREF_TYPE_TABLE)
+            if(ref->type() == Tui_ref_type_TABLE)
             {
                 return ((TuiTable*)ref);
             }
@@ -930,7 +896,7 @@ public://functions
         if(objectsByStringKey.count(key) != 0)
         {
             TuiRef* ref = objectsByStringKey[key];
-            if(ref->type() == TuiREF_TYPE_STRING)
+            if(ref->type() == Tui_ref_type_STRING)
             {
                 return ((TuiString*)ref)->value;
             }
@@ -955,7 +921,7 @@ public://functions
         if(objectsByStringKey.count(key) != 0)
         {
             TuiRef* ref = objectsByStringKey[key];
-            if(ref->type() == TuiREF_TYPE_VEC2)
+            if(ref->type() == Tui_ref_type_VEC2)
             {
                 return ((TuiVec2*)ref)->value;
             }
@@ -980,7 +946,7 @@ public://functions
         if(objectsByStringKey.count(key) != 0)
         {
             TuiRef* ref = objectsByStringKey[key];
-            if(ref->type() == TuiREF_TYPE_VEC3)
+            if(ref->type() == Tui_ref_type_VEC3)
             {
                 return ((TuiVec3*)ref)->value;
             }
@@ -1005,7 +971,7 @@ public://functions
         if(objectsByStringKey.count(key) != 0)
         {
             TuiRef* ref = objectsByStringKey[key];
-            if(ref->type() == TuiREF_TYPE_VEC4)
+            if(ref->type() == Tui_ref_type_VEC4)
             {
                 return ((TuiVec4*)ref)->value;
             }
@@ -1029,7 +995,7 @@ public://functions
         if(objectsByStringKey.count(key) != 0)
         {
             TuiRef* ref = objectsByStringKey[key];
-            if(ref->type() == TuiREF_TYPE_NUMBER)
+            if(ref->type() == Tui_ref_type_NUMBER)
             {
                 return ((TuiNumber*)ref)->value;
             }
@@ -1053,7 +1019,7 @@ public://functions
         if(objectsByStringKey.count(key) != 0)
         {
             TuiRef* ref = objectsByStringKey[key];
-            if(ref->type() == TuiREF_TYPE_BOOL)
+            if(ref->type() == Tui_ref_type_BOOL)
             {
                 return ((TuiBool*)ref)->value;
             }
@@ -1079,7 +1045,7 @@ public://functions
         if(objectsByStringKey.count(key) != 0)
         {
             TuiRef* ref = objectsByStringKey[key];
-            if(ref->type() == TuiREF_TYPE_USERDATA)
+            if(ref->type() == Tui_ref_type_USERDATA)
             {
                 return ((TuiUserData*)ref)->value;
             }

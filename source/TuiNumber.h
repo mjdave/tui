@@ -40,7 +40,7 @@ public://functions
     
     //virtual uint64_t generateHash() {return *((uint64_t*)&value);}
     
-    virtual uint8_t type() { return TuiREF_TYPE_NUMBER; }
+    virtual uint8_t type() { return Tui_ref_type_NUMBER; }
     virtual std::string getTypeName() {return "number";}
     virtual std::string getStringValue() {
         if(value == floor(value))
@@ -91,7 +91,7 @@ public://functions
         return nullptr;
     }
     
-    virtual uint8_t type() { return TuiREF_TYPE_BOOL; }
+    virtual uint8_t type() { return Tui_ref_type_BOOL; }
     virtual std::string getTypeName() {return "bool";}
     virtual std::string getStringValue() {
         return (value ? "true" : "false");
@@ -142,7 +142,7 @@ public://functions
                 }
                 else
                 {
-                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec2:%c", *s);
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec2:%c", *s);
                     break;
                 }
             }
@@ -156,7 +156,7 @@ public://functions
         return nullptr;
     }
     
-    virtual uint8_t type() { return TuiREF_TYPE_VEC2; }
+    virtual uint8_t type() { return Tui_ref_type_VEC2; }
     virtual std::string getTypeName() {return "vec2";}
     virtual std::string getStringValue() {
         return string_format("vec2(%s,%s)", doubleToString(value.x).c_str(), doubleToString(value.y).c_str());
@@ -207,7 +207,7 @@ public://functions
                 }
                 else
                 {
-                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec3:%c", *s);
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec3:%c", *s);
                     break;
                 }
             }
@@ -221,7 +221,7 @@ public://functions
         return nullptr;
     }
     
-    virtual uint8_t type() { return TuiREF_TYPE_VEC3; }
+    virtual uint8_t type() { return Tui_ref_type_VEC3; }
     virtual std::string getTypeName() {return "vec3";}
     virtual std::string getStringValue() {
         return string_format("vec3(%s,%s,%s)", doubleToString(value.x).c_str(), doubleToString(value.y).c_str(), doubleToString(value.z).c_str());
@@ -272,7 +272,7 @@ public://functions
                 }
                 else
                 {
-                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec4:%c", *s);
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec4:%c", *s);
                     break;
                 }
             }
@@ -286,7 +286,7 @@ public://functions
         return nullptr;
     }
     
-    virtual uint8_t type() { return TuiREF_TYPE_VEC4; }
+    virtual uint8_t type() { return Tui_ref_type_VEC4; }
     virtual std::string getTypeName() {return "vec4";}
     virtual std::string getStringValue() {
         return string_format("vec4(%s,%s,%s,%s)", doubleToString(value.x).c_str(), doubleToString(value.y).c_str(), doubleToString(value.z).c_str(), doubleToString(value.w).c_str());

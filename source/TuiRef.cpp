@@ -14,7 +14,7 @@ TuiTable* TuiRef::createRootTable()
         if(args->arrayObjects.size() > 0)
         {
             TuiRef* arg = args->arrayObjects[0];
-            if(arg->type() == TuiREF_TYPE_NUMBER)
+            if(arg->type() == Tui_ref_type_NUMBER)
             {
                 const double& numValue = ((TuiNumber*)(arg))->value;
                 if(numValue == floor(numValue))
@@ -215,12 +215,12 @@ TuiRef* loadVariableIfAvailable(TuiString* variableName, TuiRef* existingValue, 
         TuiRef* newValueRef = parentTable->recursivelyFindVariable(variableName, debugInfo, true);
         if(newValueRef)
         {
-            if(newValueRef->type() == TuiREF_TYPE_TABLE)
+            if(newValueRef->type() == Tui_ref_type_TABLE)
             {
                 newValueRef->retain();
                 return newValueRef;
             }
-            else if(newValueRef->type() == TuiREF_TYPE_FUNCTION)
+            else if(newValueRef->type() == Tui_ref_type_FUNCTION)
             {
                 if(variableName->isValidFunctionString)
                 {
@@ -248,7 +248,7 @@ TuiRef* loadVariableIfAvailable(TuiString* variableName, TuiRef* existingValue, 
     }
     if(variableName->isValidFunctionString)
     {
-        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to call missing function: %s()", variableName->value.c_str());
+        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to call missing function: %s()", variableName->value.c_str());
         const char* s = skipToNextChar(*endptr, debugInfo, true);
         if(*s == '(')
         {
@@ -285,7 +285,7 @@ TuiRef* loadValue(const char* str, char** endptr, TuiRef* existingValue, TuiTabl
     TuiRef* valueRef = TuiTable::initUnknownTypeRefWithHumanReadableString(s, endptr, parentTable, debugInfo);
     s = skipToNextChar(*endptr, debugInfo, true);
     
-    if(valueRef->type() == TuiREF_TYPE_STRING)
+    if(valueRef->type() == Tui_ref_type_STRING)
     {
         TuiString* originalString = (TuiString*)valueRef;
         TuiRef* newValueRef = loadVariableIfAvailable(originalString, nullptr, s, endptr, parentTable, debugInfo);
@@ -305,7 +305,7 @@ TuiRef* loadValue(const char* str, char** endptr, TuiRef* existingValue, TuiTabl
         }
         else if(!allowNonVarStrings)
         {
-            TuiSWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Uninitialized variable:%s", originalString->value.c_str());
+            TuiParseWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Uninitialized variable:%s", originalString->value.c_str());
             originalString->release();
             *endptr = (char*)s;
             return nullptr;
@@ -388,7 +388,7 @@ TuiRef* recursivelyLoadValue(const char* str,
     TuiRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, nullptr, parentTable, debugInfo, false, false);
     s = skipToNextChar(*endptr, debugInfo, true);
     
-    if(rightValue->type() == TuiREF_TYPE_STRING)
+    if(rightValue->type() == Tui_ref_type_STRING)
     {
         if(((TuiString*)rightValue)->allowAsVariableName)
         {
@@ -400,16 +400,16 @@ TuiRef* recursivelyLoadValue(const char* str,
             }
             else
             {
-                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Running expression with uninitialized variable:%s", ((TuiString*)rightValue)->value.c_str());
+                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Running expression with uninitialized variable:%s", ((TuiString*)rightValue)->value.c_str());
             }
         }
     }
     
     TuiRef* result = nullptr;
     
-    if(leftValue->type() == TuiREF_TYPE_NUMBER)
+    if(leftValue->type() == Tui_ref_type_NUMBER)
     {
-        if(rightValue->type() == TuiREF_TYPE_NUMBER)
+        if(rightValue->type() == Tui_ref_type_NUMBER)
         {
             switch(operatorChar)
             {
@@ -464,7 +464,7 @@ TuiRef* recursivelyLoadValue(const char* str,
                 break;
             }
         }
-        else if(rightValue->type() == TuiREF_TYPE_VEC2)
+        else if(rightValue->type() == Tui_ref_type_VEC2)
         {
             switch(operatorChar)
             {
@@ -480,7 +480,7 @@ TuiRef* recursivelyLoadValue(const char* str,
                 break;
             }
         }
-        else if(rightValue->type() == TuiREF_TYPE_VEC3)
+        else if(rightValue->type() == Tui_ref_type_VEC3)
         {
             switch(operatorChar)
             {
@@ -496,7 +496,7 @@ TuiRef* recursivelyLoadValue(const char* str,
                 break;
             }
         }
-        else if(rightValue->type() == TuiREF_TYPE_VEC4)
+        else if(rightValue->type() == Tui_ref_type_VEC4)
         {
             switch(operatorChar)
             {
@@ -513,9 +513,9 @@ TuiRef* recursivelyLoadValue(const char* str,
             }
         }
     }
-    else if(leftValue->type() == TuiREF_TYPE_VEC2)
+    else if(leftValue->type() == Tui_ref_type_VEC2)
     {
-        if(rightValue->type() == TuiREF_TYPE_NUMBER)
+        if(rightValue->type() == Tui_ref_type_NUMBER)
         {
             switch(operatorChar)
             {
@@ -531,7 +531,7 @@ TuiRef* recursivelyLoadValue(const char* str,
                 break;
             }
         }
-        else if(rightValue->type() == TuiREF_TYPE_VEC2)
+        else if(rightValue->type() == Tui_ref_type_VEC2)
         {
             switch(operatorChar)
             {
@@ -558,9 +558,9 @@ TuiRef* recursivelyLoadValue(const char* str,
             }
         }
     }
-    else if(leftValue->type() == TuiREF_TYPE_VEC3)
+    else if(leftValue->type() == Tui_ref_type_VEC3)
     {
-        if(rightValue->type() == TuiREF_TYPE_NUMBER)
+        if(rightValue->type() == Tui_ref_type_NUMBER)
         {
             switch(operatorChar)
             {
@@ -576,7 +576,7 @@ TuiRef* recursivelyLoadValue(const char* str,
                 break;
             }
         }
-        else if(rightValue->type() == TuiREF_TYPE_VEC3)
+        else if(rightValue->type() == Tui_ref_type_VEC3)
         {
             switch(operatorChar)
             {
@@ -603,9 +603,9 @@ TuiRef* recursivelyLoadValue(const char* str,
             }
         }
     }
-    else if(leftValue->type() == TuiREF_TYPE_VEC4)
+    else if(leftValue->type() == Tui_ref_type_VEC4)
     {
-        if(rightValue->type() == TuiREF_TYPE_NUMBER)
+        if(rightValue->type() == Tui_ref_type_NUMBER)
         {
             switch(operatorChar)
             {
@@ -621,7 +621,7 @@ TuiRef* recursivelyLoadValue(const char* str,
                 break;
             }
         }
-        else if(rightValue->type() == TuiREF_TYPE_VEC4)
+        else if(rightValue->type() == Tui_ref_type_VEC4)
         {
             switch(operatorChar)
             {
@@ -650,7 +650,7 @@ TuiRef* recursivelyLoadValue(const char* str,
     }
     else
     {
-        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
+        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
     }
     
     if(result)
@@ -677,6 +677,6 @@ TuiRef* recursivelyLoadValue(const char* str,
         return result;
     }
     
-    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid expression");
+    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid expression");
     return nullptr;
 }

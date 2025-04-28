@@ -116,7 +116,7 @@ public: //class functions
     }
     
     
-    virtual uint8_t type() { return TuiREF_TYPE_FUNCTION; }
+    virtual uint8_t type() { return Tui_ref_type_FUNCTION; }
     virtual std::string getTypeName() {return "function";}
     virtual std::string getStringValue() {return "function";}
     

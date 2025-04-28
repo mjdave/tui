@@ -15,23 +15,23 @@ class TuiTable;
 class TuiString;
 class TuiRef;
 
-#define TuiSError(__fileName__, __lineNumber__, fmt__, ...) TuiLog("error %s:%d:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
-#define TuiSWarn(__fileName__, __lineNumber__, fmt__, ...) TuiLog("warning %s:%d:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
+#define TuiParseError(__fileName__, __lineNumber__, fmt__, ...) TuiLog("error %s:%d:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
+#define TuiParseWarn(__fileName__, __lineNumber__, fmt__, ...) TuiLog("warning %s:%d:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
 
 enum {
-    TuiREF_TYPE_NIL = 0,
-    TuiREF_TYPE_TABLE,
-    TuiREF_TYPE_NUMBER,
-    TuiREF_TYPE_STRING,
-    TuiREF_TYPE_BOOL,
-    TuiREF_TYPE_VEC2,
-    TuiREF_TYPE_VEC3,
-    TuiREF_TYPE_VEC4,
-    TuiREF_TYPE_MAT3,
-    TuiREF_TYPE_MAT4,
-    TuiREF_TYPE_USERDATA,
-    TuiREF_TYPE_FUNCTION,
-    TuiREF_TYPE_EXPRESSION,
+    Tui_ref_type_NIL = 0,
+    Tui_ref_type_TABLE,
+    Tui_ref_type_NUMBER,
+    Tui_ref_type_STRING,
+    Tui_ref_type_BOOL,
+    Tui_ref_type_VEC2,
+    Tui_ref_type_VEC3,
+    Tui_ref_type_VEC4,
+    Tui_ref_type_MAT3,
+    Tui_ref_type_MAT4,
+    Tui_ref_type_USERDATA,
+    Tui_ref_type_FUNCTION,
+    Tui_ref_type_EXPRESSION,
 };
 
 struct TuiDebugInfo {
@@ -161,7 +161,7 @@ public://functions
     //static TuiRef* initWithHumanReadableFile(const std::string& filePath);
     
     
-    virtual uint8_t type() { return TuiREF_TYPE_NIL; }
+    virtual uint8_t type() { return Tui_ref_type_NIL; }
     virtual std::string getTypeName() {return "nil";}
     
     virtual bool boolValue() {return false;}
@@ -204,7 +204,7 @@ public:
     virtual ~TuiUserData() {};
     virtual TuiUserData* copy() {return new TuiUserData(value, parent);};
     
-    virtual uint8_t type() { return TuiREF_TYPE_USERDATA; }
+    virtual uint8_t type() { return Tui_ref_type_USERDATA; }
     virtual std::string getTypeName() {return "userData";}
     virtual std::string getStringValue() {
         return string_format("%p", value);
