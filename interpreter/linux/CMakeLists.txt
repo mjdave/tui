@@ -18,7 +18,7 @@ set(CMAKE_INSTALL_RPATH "$ORIGIN")
 set(SOURCES 
     main.cpp
 
-    ../Interpreter.c
+    ../Interpreter.cpp
 
     ../../source/TuiFileUtils.cpp
     ../../source/TuiFunction.cpp
@@ -37,6 +37,7 @@ if ( CMAKE_COMPILER_IS_GNUCC )
 endif ( CMAKE_COMPILER_IS_GNUCC )
 
 include_directories(
+    ../
     ../../source
     ../../thirdParty/glm/glm
 )
