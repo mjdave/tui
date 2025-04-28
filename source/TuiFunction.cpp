@@ -54,10 +54,6 @@ void TuiFunction::recursivelySerializeExpression(const char* str,
                     {
                         tokenMap->refsByToken[leftVarToken] = newValueRef;
                     }
-                    //TuiRef* newValueRef = loadVariableIfAvailable(varString, existingRef, s, endptr, (TuiTable*)parent, debugInfo); //cast dangerous?
-                    
-                   // s = skipToNextChar(*endptr, debugInfo, true);
-                    
                 }
                 
                 expression->tokens.push_back(leftVarToken);
@@ -357,147 +353,6 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
     s = skipToNextChar(*endptr, debugInfo);
     
     return forStatement;
-    
-    /*const char* s = str;
-    if(*s == '(')
-    {
-        s++;
-        s = skipToNextChar(s, debugInfo);
-    }
-    
-    
-    TuiForStatement* statement = new TuiForStatement();
-    statement->lineNumber = debugInfo->lineNumber;
-    
-
-    TuiString* varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
-    s = skipToNextChar(*endptr, debugInfo);
-    
-    if(varNameRef && varNameRef->allowAsVariableName)
-    {
-        statement->varName = varNameRef;
-        
-        if(tokenMap->tokensByVarNames.count(varNameRef->value) != 0)
-        {
-            statement->varToken = tokenMap->tokensByVarNames[varNameRef->value];
-        }
-        else
-        {
-            statement->varToken = tokenMap->tokenIndex++;
-            tokenMap->tokensByVarNames[varNameRef->value] = statement->varToken;
-        }
-        
-        if(*s == '=')
-        {
-            s++;
-            
-            recursivelySerializeExpression(s,
-                                        endptr,
-                                           statement->expression,
-                                        parent,
-                                        tokenMap,
-                                        debugInfo,
-                                        true);
-            
-            s = skipToNextChar(*endptr, debugInfo, true);
-        }
-        else
-        {
-            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "for statement expected '=' after:%s", varNameRef->getDebugString().c_str());
-            return nullptr;
-        }
-    }
-    else
-    {
-        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "for statement bad initial var name:%s", (varNameRef ? varNameRef->value.c_str() : "nil"));
-        return nullptr;
-    }
-        
-    
-    if(*s == ',' || *s == '\n')
-    {
-        s++;
-        s = skipToNextChar(s, debugInfo);
-    }
-    else
-    {
-        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
-        return nullptr;
-    }
-    
-    recursivelySerializeExpression(s, endptr, statement->continueExpression, parent, tokenMap, debugInfo, true);
-    s = skipToNextChar(*endptr, debugInfo);
-    
-    if(*s == ',' || *s == '\n')
-    {
-        s++;
-        s = skipToNextChar(s, debugInfo);
-    }
-    else
-    {
-        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
-        return nullptr;
-    }
-    
-    
-    varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
-    s = skipToNextChar(*endptr, debugInfo);
-    
-    if(varNameRef)
-    {
-        if(varNameRef->isValidFunctionString)
-        {
-            TuiStatement* incrementStatement = new TuiStatement(TuiSTATEMENT_TYPE_FUNCTION_CALL);
-            statement->incrementStatement = incrementStatement;
-            incrementStatement->lineNumber = debugInfo->lineNumber;
-            
-            recursivelySerializeExpression(s, endptr, incrementStatement->expression, parent, tokenMap, debugInfo, true);
-            
-            s = skipToNextChar(*endptr, debugInfo, true);
-            varNameRef->release();
-        }
-        else if(varNameRef->allowAsVariableName)
-        {
-            if(*s == '=')
-            {
-                s++;
-                
-                TuiStatement* incrementStatement = new TuiStatement(TuiSTATEMENT_TYPE_VAR_ASSIGN);
-                statement->incrementStatement = incrementStatement;
-                incrementStatement->lineNumber = debugInfo->lineNumber;
-                incrementStatement->varName = varNameRef;
-                
-                if(tokenMap->tokensByVarNames.count(varNameRef->value) != 0)
-                {
-                    incrementStatement->varToken = tokenMap->tokensByVarNames[varNameRef->value];
-                }
-                else
-                {
-                    incrementStatement->varToken = tokenMap->tokenIndex++;
-                    tokenMap->tokensByVarNames[varNameRef->value] = incrementStatement->varToken;
-                }
-                
-                recursivelySerializeExpression(s, endptr, incrementStatement->expression, parent, tokenMap, debugInfo, true);
-                
-                s = skipToNextChar(*endptr, debugInfo, true);
-            }
-            else
-            {
-                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
-                return nullptr;
-            }
-        }
-    }
-    
-    s = skipToNextChar(s, debugInfo, false);
-    
-    bool success = TuiFunction::serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, &statement->statements);
-    if(!success)
-    {
-        return nullptr;
-    }
-    
-    return statement;*/
 }
 
 bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo, std::vector<TuiStatement*>* statements)
@@ -1195,114 +1050,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
                     }
                 }
             }
-            
-            /*const char* expressionCString = statement->expression.c_str(); //var assign
-            char* endPtr;
-            
-            debugInfo->lineNumber = statement->lineNumber;
-            
-            TuiRef* result = recursivelyLoadValue(expressionCString,
-                                                 &endPtr,
-                                                 nullptr,
-                                                 functionState,
-                                                 debugInfo,
-                                                 true,
-                                                 true);
-            
-            TuiNumber* iterator = (TuiNumber*)result;
-            
-            TuiRef* prevI = nullptr;
-            const std::string& varNameStdString = statement->varName->value;
-            
-            if(functionState->objectsByStringKey.count(varNameStdString) != 0)
-            {
-                prevI = functionState->objectsByStringKey[varNameStdString];
-            }
-            
-            functionState->objectsByStringKey[varNameStdString] = iterator;
-            
-            
-            bool run = true;
-            while(run)
-            {
-                bool expressionPass = true;
-                if(!((TuiForStatement*)statement)->continueExpression.empty())
-                {
-                    const char* expressionCString = ((TuiForStatement*)statement)->continueExpression.c_str();
-                    char* endPtr;
-                    
-                    debugInfo->lineNumber = statement->lineNumber;
-                    
-                    TuiRef* expressionResult = recursivelyLoadValue(expressionCString,
-                                                                   &endPtr,
-                                                                   nullptr,
-                                                                   functionState,
-                                                                   debugInfo,
-                                                                   true,
-                                                                   false);
-                    
-                    if(expressionResult)
-                    {
-                        expressionPass = expressionResult->boolValue();
-                        expressionResult->release();
-                    }
-                    else
-                    {
-                        expressionPass = false;
-                    }
-                }
-                
-                if(!expressionPass)
-                {
-                    break;
-                }
-                
-                TuiRef* result = runStatementArray(((TuiForStatement*)statement)->statements, functionState, parent, debugInfo);
-                
-                if(result)
-                {
-                    if(prevI)
-                    {
-                        functionState->objectsByStringKey[varNameStdString] = prevI;
-                    }
-                    else
-                    {
-                        functionState->objectsByStringKey.erase(varNameStdString);
-                    }
-                    iterator->release();
-                    return result;
-                }
-                
-                
-                if(((TuiForStatement*)statement)->incrementStatement)
-                {
-                    TuiRef* result = runStatement(((TuiForStatement*)statement)->incrementStatement, functionState, parent, debugInfo);
-                    if(result)
-                    {
-                        if(prevI)
-                        {
-                            functionState->objectsByStringKey[varNameStdString] = prevI;
-                        }
-                        else
-                        {
-                            functionState->objectsByStringKey.erase(varNameStdString);
-                        }
-                        iterator->release();
-                        return result;
-                    }
-                }
-                
-            }
-            
-            if(prevI)
-            {
-                functionState->objectsByStringKey[varNameStdString] = prevI;
-            }
-            else
-            {
-                functionState->objectsByStringKey.erase(varNameStdString);
-            }
-            iterator->release();*/
         }
             break;
         case TuiSTATEMENT_TYPE_IF:
@@ -1355,50 +1102,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
                     }
                 }
             }
-            
-            /*bool expressionPass = true;
-            if(!statement->expression.empty()) //an 'else' statement is passed through here with no expression, which is a pass
-            {
-                const char* expressionCString = statement->expression.c_str();
-                char* endPtr;
-                
-                debugInfo->lineNumber = statement->lineNumber;
-                
-                TuiRef* expressionResult = recursivelyLoadValue(expressionCString,
-                                                               &endPtr,
-                                                               nullptr,
-                                                               functionState,
-                                                               debugInfo,
-                                                               true,
-                                                               false);
-                
-                if(expressionResult)
-                {
-                    expressionPass = expressionResult->boolValue();
-                    expressionResult->release();
-                }
-                else
-                {
-                    expressionPass = false;
-                }
-            }
-            if(expressionPass)
-            {
-                TuiRef* result = runStatementArray(((TuiIfStatement*)statement)->statements, functionState, parent, debugInfo);
-                
-                if(result)
-                {
-                    return result;
-                }
-            }
-            else
-            {
-                TuiRef* result = recursivelyRunIfElseStatement(((TuiIfStatement*)statement)->elseIfStatement, functionState, parent, debugInfo);
-                if(result)
-                {
-                    return result;
-                }
-            }*/
         }
             break;
         default:
@@ -1479,7 +1182,6 @@ TuiRef* TuiFunction::call(TuiTable* args, TuiTable* callLocationState, TuiRef* e
         
         
         TuiRef* result = runStatementArray(statements,  existingResult,  currentCallState, (TuiTable*)parent, &tokenMap, locals, &debugInfo);
-        //TuiRef* result = runStatementArray(statements, currentCallState, (TuiTable*)parent, &debugInfo); //TODO!!
         //currentCallState->debugLog();
         currentCallState->release();
         

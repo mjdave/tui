@@ -84,17 +84,16 @@ public://functions
 class TuiFunction : public TuiRef {
     
 public: //static functions
-    //static void serializeExpression(const char* str, char** endptr, TuiExpression* expression, TuiTable* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo);
     static TuiFunction* initWithHumanReadableString( const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo);
     
-    static void recursivelySerializeExpression(     const char* str, char** endptr, TuiExpression* expression,   TuiRef* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo, bool runLowOperators);
-    static bool serializeFunctionBody(                   const char* str, char** endptr,                             TuiRef* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo, std::vector<TuiStatement*>* statements);
-    static TuiForStatement* serializeForStatement(        const char* str, char** endptr,                             TuiRef* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo);
+    static void recursivelySerializeExpression(     const char* str, char** endptr, TuiExpression* expression,  TuiRef* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo, bool runLowOperators);
+    static bool serializeFunctionBody(              const char* str, char** endptr,                             TuiRef* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo, std::vector<TuiStatement*>* statements);
+    static TuiForStatement* serializeForStatement(  const char* str, char** endptr,                             TuiRef* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo);
     
     
-    static TuiRef* runExpression(TuiExpression* expression, uint32_t* tokenIndex,  TuiRef* result,  TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo);
-    static TuiRef* runStatement(                 TuiStatement* statement,         TuiRef* result,  TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo);
-    static TuiRef* runStatementArray(std::vector<TuiStatement*>& statements,      TuiRef* result,  TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo);
+    static TuiRef* runExpression(TuiExpression* expression, uint32_t* tokenIndex,   TuiRef* result,  TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo);
+    static TuiRef* runStatement(                 TuiStatement* statement,           TuiRef* result,  TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo);
+    static TuiRef* runStatementArray(std::vector<TuiStatement*>& statements,        TuiRef* result,  TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo);
 
 public: //class members
     std::vector<std::string> argNames;
@@ -124,7 +123,7 @@ public: //class functions
     virtual bool boolValue() {return true;}
     
     TuiRef* call(TuiTable* args, TuiTable* state, TuiRef* existingResult);
-    //void call(TuiTable* args, std::function<void(TuiRef*)> callback);
+    //void call(TuiTable* args, std::function<void(TuiRef*)> callback); //todo async
     
     virtual TuiRef* recursivelyFindVariable(TuiString* variableName, TuiDebugInfo* debugInfo, bool searchParents, int varStartIndex = 0);
     virtual bool recursivelySetVariable(TuiString* variableName, TuiRef* value, TuiDebugInfo* debugInfo, int varStartIndex = 0);

@@ -149,7 +149,7 @@ public://functions
     
     static TuiTable* createRootTable();
     
-    static TuiRef* load(const std::string& filename, TuiTable* parent = createRootTable()); //public method to read from human readable file/string data
+    static TuiRef* load(const std::string& filename, TuiTable* parent = createRootTable()); //public method to read from human readable file/string data. supply nullptr as last argument to prvent root table from loading
     static TuiRef* runScriptFile(const std::string& filename, TuiTable* parent = createRootTable());  //public method
     
     static TuiRef* load(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr); //public method

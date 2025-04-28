@@ -58,6 +58,25 @@ TuiTable* TuiRef::createRootTable()
     requireFunction->release();
     
     
+    
+    TuiFunction* readStringFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state) {
+        std::string stringValue;
+        std::getline(std::cin, stringValue);
+        
+        TuiDebugInfo debugInfo;
+        debugInfo.fileName = "input";
+        const char* cString = stringValue.c_str();
+        char* endPtr;
+        
+        TuiRef* result = TuiTable::initUnknownTypeRefWithHumanReadableString(cString, &endPtr, state, &debugInfo);
+        
+        return result;
+    }, rootTable);
+    
+    rootTable->set("readInput", readStringFunction);
+    readStringFunction->release();
+    
+    
     return rootTable;
 }
 

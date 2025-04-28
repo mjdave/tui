@@ -1,3 +1,5 @@
+
+
 doCactus = function()
 {
     cactus = random(3)
@@ -17,5 +19,8 @@ doCactus = function()
 }
 
 doCactus()
+result = readInput()
+print("you said:")
+print(result)
 doCactus()
 doCactus()
