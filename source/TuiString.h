@@ -45,6 +45,7 @@ public://functions
         bool singleQuote = false;
         bool doubleQuote = false;
         bool escaped = false;
+        bool foundSpace = false;
         
         std::string currentVarName = "";
         
@@ -137,10 +138,21 @@ public://functions
                 {
                     debugInfo->lineNumber++;
                 }
-                break;
+                if(!isspace(*s))
+                {
+                    break;
+                }
+                else
+                {
+                    foundSpace = true;
+                }
             }
             else
             {
+                if(foundSpace)
+                {
+                    break;
+                }
                 mjString->value += *s;
                 if(mjString->allowAsVariableName)
                 {

@@ -513,6 +513,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* 
     
     while(1)
     {
+        s = skipToNextChar(s, debugInfo);
         if(*s == '}')
         {
             s++;
@@ -653,9 +654,13 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* 
             }
         }
         
-        const char* varNameStartS = s; //rewind if we find a function
+        if(*s == '}')
+        {
+            s++;
+            break;
+        }
+        
         TuiString* varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
-        s = skipToNextChar(*endptr, debugInfo);
         
         if(varNameRef)
         {
@@ -667,7 +672,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* 
                 
                 //s++; //'('
                 //s = skipToNextChar(s, debugInfo);
-                recursivelySerializeExpression(varNameStartS, endptr, statement->expression, parent, tokenMap, debugInfo, true);
+                recursivelySerializeExpression(s, endptr, statement->expression, parent, tokenMap, debugInfo, true);
                 
                 s = skipToNextChar(*endptr, debugInfo, true);
                 if(*s == ')')
@@ -681,6 +686,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* 
             }
             else if(varNameRef->allowAsVariableName)
             {
+                s = skipToNextChar(*endptr, debugInfo);
                 if(*s == '=')
                 {
                     s++;
@@ -694,7 +700,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* 
                     statement->expression = new TuiExpression();
                     recursivelySerializeExpression(s, endptr, statement->expression, parent, tokenMap, debugInfo, true);
                     
-                    s = skipToNextChar(*endptr, debugInfo, true);
+                    s = skipToNextChar(*endptr, debugInfo);
                     
                     
                     if(tokenMap->tokensByVarNames.count(varNameRef->value) != 0)
@@ -711,8 +717,8 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* 
                 }
                 else
                 {
-                    varNameRef->release();
                     TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
+                    varNameRef->release();
                     return false;
                 }
             }
@@ -781,6 +787,12 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
         }
         
         s = skipToNextChar(s, debugInfo);
+        
+        if(*s == ')')
+        {
+            s++;
+            s = skipToNextChar(s, debugInfo);
+        }
         
         bool success = serializeFunctionBody(s, endptr, parent, &mjFunction->tokenMap, debugInfo, &mjFunction->statements);
         if(!success)
@@ -860,6 +872,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
             case Tui_TOKEN_greaterThan:
             case Tui_TOKEN_lessThan:
             case Tui_TOKEN_greaterEqualTo:
+            case Tui_TOKEN_equalTo:
             case Tui_TOKEN_lessEqualTo:
             {
                 *tokenIndex = *tokenIndex + 1;
@@ -870,8 +883,9 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                     {
                         double left = ((TuiNumber*)leftResult)->value;
                         *tokenIndex = *tokenIndex + 1;
-                        static TuiNumber rightResult(0);
-                        if(runExpression(expression, tokenIndex, &rightResult, functionState, parent, tokenMap, locals, debugInfo))
+                        
+                        TuiRef* rightResult = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
+                        if(rightResult->type() != leftType)
                         {
                             TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
                             return nullptr;
@@ -881,16 +895,19 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                         {
                             switch (token) {
                                 case Tui_TOKEN_greaterThan:
-                                    ((TuiBool*)result)->value = left > rightResult.value;
+                                    ((TuiBool*)result)->value = left > ((TuiNumber*)rightResult)->value;
                                     break;
                                 case Tui_TOKEN_lessThan:
-                                    ((TuiBool*)result)->value = left < rightResult.value;
+                                    ((TuiBool*)result)->value = left < ((TuiNumber*)rightResult)->value;
                                     break;
                                 case Tui_TOKEN_greaterEqualTo:
-                                    ((TuiBool*)result)->value = left >= rightResult.value;
+                                    ((TuiBool*)result)->value = left >= ((TuiNumber*)rightResult)->value;
                                     break;
                                 case Tui_TOKEN_lessEqualTo:
-                                    ((TuiBool*)result)->value = left <= rightResult.value;
+                                    ((TuiBool*)result)->value = left <= ((TuiNumber*)rightResult)->value;
+                                    break;
+                                case Tui_TOKEN_equalTo:
+                                    ((TuiBool*)result)->value = (left == ((TuiNumber*)rightResult)->value);
                                     break;
                             };
                         }
@@ -898,16 +915,19 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                         {
                             switch (token) {
                                 case Tui_TOKEN_greaterThan:
-                                    return new TuiBool(left > rightResult.value);
+                                    return new TuiBool(left > ((TuiNumber*)rightResult)->value);
                                     break;
                                 case Tui_TOKEN_lessThan:
-                                    return new TuiBool(left < rightResult.value);
+                                    return new TuiBool(left < ((TuiNumber*)rightResult)->value);
                                     break;
                                 case Tui_TOKEN_greaterEqualTo:
-                                    return new TuiBool(left >= rightResult.value);
+                                    return new TuiBool(left >= ((TuiNumber*)rightResult)->value);
                                     break;
                                 case Tui_TOKEN_lessEqualTo:
-                                    return new TuiBool(left <= rightResult.value);
+                                    return new TuiBool(left <= ((TuiNumber*)rightResult)->value);
+                                    break;
+                                case Tui_TOKEN_equalTo:
+                                    return new TuiBool(left == ((TuiNumber*)rightResult)->value);
                                     break;
                             };
                         }
@@ -1292,6 +1312,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
             
             while(currentSatement)
             {
+                tokenIndex = 0;
                 TuiRef* expressionResult = runExpression(currentSatement->expression, &tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
                 
                 bool expressionPass = true;
