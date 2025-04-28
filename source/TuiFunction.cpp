@@ -1,22 +1,22 @@
-#include "MJFunction.h"
+#include "TuiFunction.h"
 
-#include "MJTable.h"
-#include "MJRef.h"
+#include "TuiTable.h"
+#include "TuiRef.h"
 
 
-void MJFunction::recursivelySerializeExpression(const char* str,
+void TuiFunction::recursivelySerializeExpression(const char* str,
                             char** endptr,
-                            MJExpression* expression,
-                            MJRef* parent,
-                            MJTokenMap* tokenMap,
-                            MJDebugInfo* debugInfo,
+                            TuiExpression* expression,
+                            TuiRef* parent,
+                            TuiTokenMap* tokenMap,
+                            TuiDebugInfo* debugInfo,
                             bool runLowOperators)
 {
     const char* s = str;
     
     uint32_t tokenIndex = (uint32_t)expression->tokens.size();
-    expression->tokens.push_back(MJ_TOKEN_pad);
-    uint32_t leftTokenTypeMarker = MJ_TOKEN_nil;
+    expression->tokens.push_back(Tui_TOKEN_pad);
+    uint32_t leftTokenTypeMarker = Tui_TOKEN_nil;
     
     
     if(*s == '(')
@@ -30,12 +30,12 @@ void MJFunction::recursivelySerializeExpression(const char* str,
     }
     else
     {
-        MJRef* leftValue = MJTable::initUnknownTypeRefWithHumanReadableString(s, endptr, parent, debugInfo);
+        TuiRef* leftValue = TuiTable::initUnknownTypeRefWithHumanReadableString(s, endptr, parent, debugInfo);
         s = skipToNextChar(*endptr, debugInfo, true);
         
-        if(leftValue->type() == MJREF_TYPE_STRING)
+        if(leftValue->type() == TuiREF_TYPE_STRING)
         {
-            MJString* varString = ((MJString*)leftValue);
+            TuiString* varString = ((TuiString*)leftValue);
             if(varString->allowAsVariableName)
             {
                 uint32_t leftVarToken = 0;
@@ -49,12 +49,12 @@ void MJFunction::recursivelySerializeExpression(const char* str,
                     leftVarToken = tokenMap->tokenIndex++;
                     tokenMap->tokensByVarNames[varString->value] = leftVarToken;
                     
-                    MJRef* newValueRef = parent->recursivelyFindVariable(varString, debugInfo, true);
+                    TuiRef* newValueRef = parent->recursivelyFindVariable(varString, debugInfo, true);
                     if(newValueRef)
                     {
                         tokenMap->refsByToken[leftVarToken] = newValueRef;
                     }
-                    //MJRef* newValueRef = loadVariableIfAvailable(varString, existingRef, s, endptr, (MJTable*)parent, debugInfo); //cast dangerous?
+                    //TuiRef* newValueRef = loadVariableIfAvailable(varString, existingRef, s, endptr, (TuiTable*)parent, debugInfo); //cast dangerous?
                     
                    // s = skipToNextChar(*endptr, debugInfo, true);
                     
@@ -65,7 +65,7 @@ void MJFunction::recursivelySerializeExpression(const char* str,
                 
                 if(varString->isValidFunctionString && *s =='(')
                 {
-                    leftTokenTypeMarker = MJ_TOKEN_functionCall;
+                    leftTokenTypeMarker = Tui_TOKEN_functionCall;
                     s++;
                     
                     while(*s != ')' && *s != '\0')
@@ -79,7 +79,7 @@ void MJFunction::recursivelySerializeExpression(const char* str,
                     }
                     s++;
                     
-                    expression->tokens.push_back(MJ_TOKEN_end);
+                    expression->tokens.push_back(Tui_TOKEN_end);
                     s = skipToNextChar(s, debugInfo, true);
                 }
                 
@@ -93,7 +93,7 @@ void MJFunction::recursivelySerializeExpression(const char* str,
         }
         else
         {
-            if(leftValue->type() != MJREF_TYPE_NIL)
+            if(leftValue->type() != TuiREF_TYPE_NIL)
             {
                 uint32_t leftVarToken = tokenMap->tokenIndex++;
                 tokenMap->refsByToken[leftVarToken] = leftValue;
@@ -101,7 +101,7 @@ void MJFunction::recursivelySerializeExpression(const char* str,
             }
             else
             {
-                expression->tokens.push_back(MJ_TOKEN_nil);
+                expression->tokens.push_back(Tui_TOKEN_nil);
             }
         }
     }
@@ -109,12 +109,12 @@ void MJFunction::recursivelySerializeExpression(const char* str,
     char operatorChar = *s;
     char secondOperatorChar = *(s + 1);
     
-    if(MJExpressionOperatorsSet.count(operatorChar) == 0 || (operatorChar == '=' && secondOperatorChar != '=') || (!runLowOperators && (operatorChar == '+' || operatorChar == '-')))
+    if(TuiExpressionOperatorsSet.count(operatorChar) == 0 || (operatorChar == '=' && secondOperatorChar != '=') || (!runLowOperators && (operatorChar == '+' || operatorChar == '-')))
     {
         s = skipToNextChar(s, debugInfo, true);
         *endptr = (char*)s;
         
-        if(leftTokenTypeMarker != MJ_TOKEN_nil)
+        if(leftTokenTypeMarker != Tui_TOKEN_nil)
         {
             expression->tokens[tokenIndex] = leftTokenTypeMarker;
         }
@@ -135,33 +135,33 @@ void MJFunction::recursivelySerializeExpression(const char* str,
     {
         case '+':
         {
-            expression->tokens[tokenIndex] = MJ_TOKEN_add;
+            expression->tokens[tokenIndex] = Tui_TOKEN_add;
         }
             break;
         case '-':
         {
-            expression->tokens[tokenIndex] = MJ_TOKEN_subtract;
+            expression->tokens[tokenIndex] = Tui_TOKEN_subtract;
         }
             break;
         case '*':
         {
-            expression->tokens[tokenIndex] = MJ_TOKEN_multiply;
+            expression->tokens[tokenIndex] = Tui_TOKEN_multiply;
         }
             break;
         case '/':
         {
-            expression->tokens[tokenIndex] = MJ_TOKEN_divide;
+            expression->tokens[tokenIndex] = Tui_TOKEN_divide;
         }
             break;
         case '>':
         {
             if(secondOperatorChar == '=')
             {
-                expression->tokens[tokenIndex] = MJ_TOKEN_greaterEqualTo;
+                expression->tokens[tokenIndex] = Tui_TOKEN_greaterEqualTo;
             }
             else
             {
-                expression->tokens[tokenIndex] = MJ_TOKEN_greaterThan;
+                expression->tokens[tokenIndex] = Tui_TOKEN_greaterThan;
             }
         }
         break;
@@ -169,17 +169,17 @@ void MJFunction::recursivelySerializeExpression(const char* str,
         {
             if(secondOperatorChar == '=')
             {
-                expression->tokens[tokenIndex] = MJ_TOKEN_lessEqualTo;
+                expression->tokens[tokenIndex] = Tui_TOKEN_lessEqualTo;
             }
             else
             {
-                expression->tokens[tokenIndex] = MJ_TOKEN_lessThan;
+                expression->tokens[tokenIndex] = Tui_TOKEN_lessThan;
             }
         }
         break;
         case '=':
         {
-            expression->tokens[tokenIndex] = MJ_TOKEN_equalTo;
+            expression->tokens[tokenIndex] = Tui_TOKEN_equalTo;
         }
         break;
         default:
@@ -200,7 +200,7 @@ void MJFunction::recursivelySerializeExpression(const char* str,
     
 }
 
-MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr, MJRef* parent,  MJTokenMap* tokenMap, MJDebugInfo* debugInfo) //entry point is after 'for'
+TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endptr, TuiRef* parent,  TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo) //entry point is after 'for'
 {
     const char* s = str;
     if(*s == '(')
@@ -209,12 +209,12 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
         s = skipToNextChar(s, debugInfo);
     }
     
-    MJForStatement* forStatement = new MJForStatement();
+    TuiForStatement* forStatement = new TuiForStatement();
     forStatement->lineNumber = debugInfo->lineNumber;
-    forStatement->expression = new MJExpression();
-    forStatement->continueExpression = new MJExpression();
+    forStatement->expression = new TuiExpression();
+    forStatement->continueExpression = new TuiExpression();
     
-    MJString* varNameRef = MJString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    TuiString* varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
     s = skipToNextChar(*endptr, debugInfo);
     
     if(varNameRef && varNameRef->allowAsVariableName)
@@ -240,14 +240,14 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
         }
         else
         {
-            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
+            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
             varNameRef->release();
             return nullptr;
         }
     }
     else
     {
-        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected variable assignment in for loop");
+        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected variable assignment in for loop");
         return nullptr;
     }
     
@@ -258,7 +258,7 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
     }
     else
     {
-        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
+        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
         return nullptr;
     }
     
@@ -273,23 +273,23 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
     }
     else
     {
-        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
+        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
         return nullptr;
     }
     
     //todo this is c/p from below. Should be a factored out
     const char* varNameStartS = s; //rewind if we find a function
-    varNameRef = MJString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
     s = skipToNextChar(*endptr, debugInfo);
     
     if(varNameRef)
     {
         if(varNameRef->isValidFunctionString)
         {
-            MJStatement* incrementStatement = new MJStatement(MJSTATEMENT_TYPE_FUNCTION_CALL);
+            TuiStatement* incrementStatement = new TuiStatement(TuiSTATEMENT_TYPE_FUNCTION_CALL);
             forStatement->incrementStatement = incrementStatement;
             incrementStatement->lineNumber = debugInfo->lineNumber;
-            incrementStatement->expression = new MJExpression();
+            incrementStatement->expression = new TuiExpression();
             
             //s++; //'('
             //s = skipToNextChar(s, debugInfo);
@@ -311,13 +311,13 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
                 s++;
                 s = skipToNextChar(s, debugInfo);
                 
-                MJStatement* incrementStatement = new MJStatement(MJSTATEMENT_TYPE_VAR_ASSIGN);
+                TuiStatement* incrementStatement = new TuiStatement(TuiSTATEMENT_TYPE_VAR_ASSIGN);
                 forStatement->incrementStatement = incrementStatement;
                 incrementStatement->lineNumber = debugInfo->lineNumber;
                 incrementStatement->varName = varNameRef;
                 
                 
-                incrementStatement->expression = new MJExpression();
+                incrementStatement->expression = new TuiExpression();
                 recursivelySerializeExpression(s, endptr, incrementStatement->expression, parent, tokenMap, debugInfo, true);
                 
                 s = skipToNextChar(*endptr, debugInfo, true);
@@ -336,7 +336,7 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
             else
             {
                 varNameRef->release();
-                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
+                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
                 return nullptr;
             }
         }
@@ -366,11 +366,11 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
     }
     
     
-    MJForStatement* statement = new MJForStatement();
+    TuiForStatement* statement = new TuiForStatement();
     statement->lineNumber = debugInfo->lineNumber;
     
 
-    MJString* varNameRef = MJString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    TuiString* varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
     s = skipToNextChar(*endptr, debugInfo);
     
     if(varNameRef && varNameRef->allowAsVariableName)
@@ -403,13 +403,13 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
         }
         else
         {
-            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "for statement expected '=' after:%s", varNameRef->getDebugString().c_str());
+            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "for statement expected '=' after:%s", varNameRef->getDebugString().c_str());
             return nullptr;
         }
     }
     else
     {
-        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "for statement bad initial var name:%s", (varNameRef ? varNameRef->value.c_str() : "nil"));
+        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "for statement bad initial var name:%s", (varNameRef ? varNameRef->value.c_str() : "nil"));
         return nullptr;
     }
         
@@ -421,7 +421,7 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
     }
     else
     {
-        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
+        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
         return nullptr;
     }
     
@@ -435,19 +435,19 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
     }
     else
     {
-        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
+        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
         return nullptr;
     }
     
     
-    varNameRef = MJString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
     s = skipToNextChar(*endptr, debugInfo);
     
     if(varNameRef)
     {
         if(varNameRef->isValidFunctionString)
         {
-            MJStatement* incrementStatement = new MJStatement(MJSTATEMENT_TYPE_FUNCTION_CALL);
+            TuiStatement* incrementStatement = new TuiStatement(TuiSTATEMENT_TYPE_FUNCTION_CALL);
             statement->incrementStatement = incrementStatement;
             incrementStatement->lineNumber = debugInfo->lineNumber;
             
@@ -462,7 +462,7 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
             {
                 s++;
                 
-                MJStatement* incrementStatement = new MJStatement(MJSTATEMENT_TYPE_VAR_ASSIGN);
+                TuiStatement* incrementStatement = new TuiStatement(TuiSTATEMENT_TYPE_VAR_ASSIGN);
                 statement->incrementStatement = incrementStatement;
                 incrementStatement->lineNumber = debugInfo->lineNumber;
                 incrementStatement->varName = varNameRef;
@@ -483,7 +483,7 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
             }
             else
             {
-                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
+                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
                 return nullptr;
             }
         }
@@ -491,7 +491,7 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
     
     s = skipToNextChar(s, debugInfo, false);
     
-    bool success = MJFunction::serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, &statement->statements);
+    bool success = TuiFunction::serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, &statement->statements);
     if(!success)
     {
         return nullptr;
@@ -500,12 +500,12 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
     return statement;*/
 }
 
-bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* parent, MJTokenMap* tokenMap, MJDebugInfo* debugInfo, std::vector<MJStatement*>* statements)
+bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo, std::vector<TuiStatement*>* statements)
 {
     const char* s = str;
     if(*s != '{')
     {
-        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Function expected opening brace");
+        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Function expected opening brace");
         return false;
     }
     s++;
@@ -524,7 +524,7 @@ bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* pa
             s+=3;
             s = skipToNextChar(s, debugInfo);
             
-            MJStatement* statement = MJFunction::serializeForStatement(s, endptr, parent, tokenMap, debugInfo);
+            TuiStatement* statement = TuiFunction::serializeForStatement(s, endptr, parent, tokenMap, debugInfo);
             if(!statement)
             {
                 return false;
@@ -539,9 +539,9 @@ bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* pa
             s+=2;
             s = skipToNextChar(s, debugInfo);
             
-            MJIfStatement* statement = new MJIfStatement();
+            TuiIfStatement* statement = new TuiIfStatement();
             statement->lineNumber = debugInfo->lineNumber;
-            statement->expression = new MJExpression();
+            statement->expression = new TuiExpression();
             
             recursivelySerializeExpression(s, endptr, statement->expression, parent, tokenMap, debugInfo, true);
             
@@ -560,7 +560,7 @@ bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* pa
             
             s = skipToNextChar(*endptr, debugInfo);
             
-            MJIfStatement* currentStatement = statement;
+            TuiIfStatement* currentStatement = statement;
             while(1)
             {
                 if(*s == 'e' && *(s + 1) == 'l' && *(s + 2) == 's' && *(s + 3) == 'e')
@@ -569,7 +569,7 @@ bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* pa
                     s = skipToNextChar(s, debugInfo);
                     if(*s == '{')
                     {
-                        currentStatement->elseIfStatement = new MJIfStatement();
+                        currentStatement->elseIfStatement = new TuiIfStatement();
                         currentStatement->elseIfStatement->lineNumber = debugInfo->lineNumber;
                         
                         bool success = serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, &currentStatement->elseIfStatement->statements);
@@ -584,9 +584,9 @@ bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* pa
                         s+=2;
                         s = skipToNextChar(s, debugInfo);
                         
-                        currentStatement->elseIfStatement = new MJIfStatement();
+                        currentStatement->elseIfStatement = new TuiIfStatement();
                         currentStatement->elseIfStatement->lineNumber = debugInfo->lineNumber;
-                        currentStatement->elseIfStatement->expression = new MJExpression();
+                        currentStatement->elseIfStatement->expression = new TuiExpression();
                         
                         recursivelySerializeExpression(s, endptr, currentStatement->elseIfStatement->expression, parent, tokenMap, debugInfo, true);
                         
@@ -608,7 +608,7 @@ bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* pa
                     }
                     else
                     {
-                        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else statement expected 'if' or '{'");
+                        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else statement expected 'if' or '{'");
                         return false;
                     }
                 }
@@ -633,7 +633,7 @@ bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* pa
             s = skipToNextChar(s, debugInfo);
             if(*s == '}')
             {
-                MJStatement* statement = new MJStatement(MJSTATEMENT_TYPE_RETURN);
+                TuiStatement* statement = new TuiStatement(TuiSTATEMENT_TYPE_RETURN);
                 statements->push_back(statement);
                 s++;
                 s = skipToNextChar(s, debugInfo, true);
@@ -641,9 +641,9 @@ bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* pa
             }
             else
             {
-                MJStatement* statement = new MJStatement(MJSTATEMENT_TYPE_RETURN_EXPRESSION);
+                TuiStatement* statement = new TuiStatement(TuiSTATEMENT_TYPE_RETURN_EXPRESSION);
                 statement->lineNumber = debugInfo->lineNumber;
-                statement->expression = new MJExpression();
+                statement->expression = new TuiExpression();
                 
                 recursivelySerializeExpression(s, endptr, statement->expression, parent, tokenMap, debugInfo, true);
                 
@@ -654,16 +654,16 @@ bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* pa
         }
         
         const char* varNameStartS = s; //rewind if we find a function
-        MJString* varNameRef = MJString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        TuiString* varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
         s = skipToNextChar(*endptr, debugInfo);
         
         if(varNameRef)
         {
             if(varNameRef->isValidFunctionString)
             {
-                MJStatement* statement = new MJStatement(MJSTATEMENT_TYPE_FUNCTION_CALL);
+                TuiStatement* statement = new TuiStatement(TuiSTATEMENT_TYPE_FUNCTION_CALL);
                 statement->lineNumber = debugInfo->lineNumber;
-                statement->expression = new MJExpression();
+                statement->expression = new TuiExpression();
                 
                 //s++; //'('
                 //s = skipToNextChar(s, debugInfo);
@@ -686,12 +686,12 @@ bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* pa
                     s++;
                     s = skipToNextChar(s, debugInfo);
                     
-                    MJStatement* statement = new MJStatement(MJSTATEMENT_TYPE_VAR_ASSIGN);
+                    TuiStatement* statement = new TuiStatement(TuiSTATEMENT_TYPE_VAR_ASSIGN);
                     statement->lineNumber = debugInfo->lineNumber;
                     statement->varName = varNameRef;
                     
                     
-                    statement->expression = new MJExpression();
+                    statement->expression = new TuiExpression();
                     recursivelySerializeExpression(s, endptr, statement->expression, parent, tokenMap, debugInfo, true);
                     
                     s = skipToNextChar(*endptr, debugInfo, true);
@@ -712,7 +712,7 @@ bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* pa
                 else
                 {
                     varNameRef->release();
-                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
+                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
                     return false;
                 }
             }
@@ -725,7 +725,7 @@ bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* pa
     return true;
 }
 
-MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) //assumes that '(' is currently in str
+TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) //assumes that '(' is currently in str
 {
     const char* s = str;
     if(*s == 'f'
@@ -744,7 +744,7 @@ MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endp
         
         s = skipToNextChar(s, debugInfo);
         
-        MJFunction* mjFunction = new MJFunction(parent);
+        TuiFunction* mjFunction = new TuiFunction(parent);
         mjFunction->debugInfo.fileName = debugInfo->fileName;
         
         std::string currentVarName = "";
@@ -799,15 +799,15 @@ MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endp
 }
 
 
-MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex, MJRef* result, MJTable* functionState, MJTable* parent, MJTokenMap* tokenMap, std::map<uint32_t, MJRef*>& locals, MJDebugInfo* debugInfo)
+TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenIndex, TuiRef* result, TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo)
 {
     uint32_t token = expression->tokens[*tokenIndex];
-    if(token == MJ_TOKEN_end)
+    if(token == Tui_TOKEN_end)
     {
         return nullptr;
     }
     
-    while(token == MJ_TOKEN_pad)
+    while(token == Tui_TOKEN_pad)
     {
         *tokenIndex = *tokenIndex + 1;
         if(*tokenIndex >= expression->tokens.size())
@@ -816,23 +816,23 @@ MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex,
         }
         token = expression->tokens[*tokenIndex];
     }
-    if(token < MJ_TOKEN_VAR_START_INDEX)
+    if(token < Tui_TOKEN_VAR_START_INDEX)
     {
         switch (token) {
-            case MJ_TOKEN_functionCall:
+            case Tui_TOKEN_functionCall:
             {
                 *tokenIndex = *tokenIndex + 1;
-                MJFunction* functionVar = (MJFunction*)runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
+                TuiFunction* functionVar = (TuiFunction*)runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
                 *tokenIndex = *tokenIndex + 1;
                 
-                MJTable* args = nullptr;
-                MJRef* arg = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
+                TuiTable* args = nullptr;
+                TuiRef* arg = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
                 *tokenIndex = *tokenIndex + 1;
                 while(arg)
                 {
                     if(!args)
                     {
-                        args = new MJTable(functionState);
+                        args = new TuiTable(functionState);
                     }
                     args->arrayObjects.push_back(arg);
                     arg->retain();
@@ -840,7 +840,7 @@ MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex,
                     *tokenIndex = *tokenIndex + 1;
                 }
                 
-                MJRef* functionResult = ((MJFunction*)functionVar)->call(args, functionState, result);
+                TuiRef* functionResult = ((TuiFunction*)functionVar)->call(args, functionState, result);
                 if(args)
                 {
                     args->release();
@@ -857,57 +857,57 @@ MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex,
                 
             }
                 break;
-            case MJ_TOKEN_greaterThan:
-            case MJ_TOKEN_lessThan:
-            case MJ_TOKEN_greaterEqualTo:
-            case MJ_TOKEN_lessEqualTo:
+            case Tui_TOKEN_greaterThan:
+            case Tui_TOKEN_lessThan:
+            case Tui_TOKEN_greaterEqualTo:
+            case Tui_TOKEN_lessEqualTo:
             {
                 *tokenIndex = *tokenIndex + 1;
-                MJRef* leftResult = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
+                TuiRef* leftResult = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
                 uint32_t leftType = leftResult->type();
                 switch (leftType) {
-                    case MJREF_TYPE_NUMBER:
+                    case TuiREF_TYPE_NUMBER:
                     {
-                        double left = ((MJNumber*)leftResult)->value;
+                        double left = ((TuiNumber*)leftResult)->value;
                         *tokenIndex = *tokenIndex + 1;
-                        static MJNumber rightResult(0);
+                        static TuiNumber rightResult(0);
                         if(runExpression(expression, tokenIndex, &rightResult, functionState, parent, tokenMap, locals, debugInfo))
                         {
-                            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
+                            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
                             return nullptr;
                         }
                         
-                        if(result && result->type() == MJREF_TYPE_BOOL)
+                        if(result && result->type() == TuiREF_TYPE_BOOL)
                         {
                             switch (token) {
-                                case MJ_TOKEN_greaterThan:
-                                    ((MJBool*)result)->value = left > rightResult.value;
+                                case Tui_TOKEN_greaterThan:
+                                    ((TuiBool*)result)->value = left > rightResult.value;
                                     break;
-                                case MJ_TOKEN_lessThan:
-                                    ((MJBool*)result)->value = left < rightResult.value;
+                                case Tui_TOKEN_lessThan:
+                                    ((TuiBool*)result)->value = left < rightResult.value;
                                     break;
-                                case MJ_TOKEN_greaterEqualTo:
-                                    ((MJBool*)result)->value = left >= rightResult.value;
+                                case Tui_TOKEN_greaterEqualTo:
+                                    ((TuiBool*)result)->value = left >= rightResult.value;
                                     break;
-                                case MJ_TOKEN_lessEqualTo:
-                                    ((MJBool*)result)->value = left <= rightResult.value;
+                                case Tui_TOKEN_lessEqualTo:
+                                    ((TuiBool*)result)->value = left <= rightResult.value;
                                     break;
                             };
                         }
                         else
                         {
                             switch (token) {
-                                case MJ_TOKEN_greaterThan:
-                                    return new MJBool(left > rightResult.value);
+                                case Tui_TOKEN_greaterThan:
+                                    return new TuiBool(left > rightResult.value);
                                     break;
-                                case MJ_TOKEN_lessThan:
-                                    return new MJBool(left < rightResult.value);
+                                case Tui_TOKEN_lessThan:
+                                    return new TuiBool(left < rightResult.value);
                                     break;
-                                case MJ_TOKEN_greaterEqualTo:
-                                    return new MJBool(left >= rightResult.value);
+                                case Tui_TOKEN_greaterEqualTo:
+                                    return new TuiBool(left >= rightResult.value);
                                     break;
-                                case MJ_TOKEN_lessEqualTo:
-                                    return new MJBool(left <= rightResult.value);
+                                case Tui_TOKEN_lessEqualTo:
+                                    return new TuiBool(left <= rightResult.value);
                                     break;
                             };
                         }
@@ -920,13 +920,13 @@ MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex,
                 }
             }
                 break;
-            case MJ_TOKEN_add:
-            case MJ_TOKEN_subtract:
-            case MJ_TOKEN_multiply:
-            case MJ_TOKEN_divide:
+            case Tui_TOKEN_add:
+            case Tui_TOKEN_subtract:
+            case Tui_TOKEN_multiply:
+            case Tui_TOKEN_divide:
             {
                 *tokenIndex = *tokenIndex + 1;
-                MJRef* leftResult = runExpression(expression, tokenIndex, result, functionState, parent, tokenMap, locals, debugInfo);
+                TuiRef* leftResult = runExpression(expression, tokenIndex, result, functionState, parent, tokenMap, locals, debugInfo);
                 if(!leftResult)
                 {
                     leftResult = result;
@@ -934,52 +934,52 @@ MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex,
                 
                 uint32_t leftType = leftResult->type();
                 switch (leftType) {
-                    case MJREF_TYPE_NUMBER:
+                    case TuiREF_TYPE_NUMBER:
                     {
-                        double left = ((MJNumber*)leftResult)->value;
+                        double left = ((TuiNumber*)leftResult)->value;
                         *tokenIndex = *tokenIndex + 1;
-                        MJRef* rightResult = runExpression(expression, tokenIndex, result, functionState, parent, tokenMap, locals, debugInfo);
+                        TuiRef* rightResult = runExpression(expression, tokenIndex, result, functionState, parent, tokenMap, locals, debugInfo);
                         if(!rightResult)
                         {
                             rightResult = result;
                         }
                         if(rightResult->type() != leftType)
                         {
-                            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
+                            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
                             return nullptr;
                         }
                         
                         if(result && result->type() == leftType)
                         {
                             switch (token) {
-                                case MJ_TOKEN_add:
-                                    ((MJNumber*)result)->value += left;
+                                case Tui_TOKEN_add:
+                                    ((TuiNumber*)result)->value += left;
                                     break;
-                                case MJ_TOKEN_subtract:
-                                    ((MJNumber*)result)->value -= left;
+                                case Tui_TOKEN_subtract:
+                                    ((TuiNumber*)result)->value -= left;
                                     break;
-                                case MJ_TOKEN_multiply:
-                                    ((MJNumber*)result)->value *= left;
+                                case Tui_TOKEN_multiply:
+                                    ((TuiNumber*)result)->value *= left;
                                     break;
-                                case MJ_TOKEN_divide:
-                                    ((MJNumber*)result)->value /= left;
+                                case Tui_TOKEN_divide:
+                                    ((TuiNumber*)result)->value /= left;
                                     break;
                             };
                         }
                         else
                         {
                             switch (token) {
-                                case MJ_TOKEN_add:
-                                    return new MJNumber(left + ((MJNumber*)rightResult)->value);
+                                case Tui_TOKEN_add:
+                                    return new TuiNumber(left + ((TuiNumber*)rightResult)->value);
                                     break;
-                                case MJ_TOKEN_subtract:
-                                    return new MJNumber(left - ((MJNumber*)rightResult)->value);
+                                case Tui_TOKEN_subtract:
+                                    return new TuiNumber(left - ((TuiNumber*)rightResult)->value);
                                     break;
-                                case MJ_TOKEN_multiply:
-                                    return new MJNumber(left * ((MJNumber*)rightResult)->value);
+                                case Tui_TOKEN_multiply:
+                                    return new TuiNumber(left * ((TuiNumber*)rightResult)->value);
                                     break;
-                                case MJ_TOKEN_divide:
-                                    return new MJNumber(left / ((MJNumber*)rightResult)->value);
+                                case Tui_TOKEN_divide:
+                                    return new TuiNumber(left / ((TuiNumber*)rightResult)->value);
                                     break;
                             };
                         }
@@ -995,14 +995,14 @@ MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex,
                 
             default:
             {
-                MJError("Unimplemented");
+                TuiError("Unimplemented");
             }
                 break;
         }
     }
     else
     {
-        MJRef* foundValue = nullptr;
+        TuiRef* foundValue = nullptr;
         if(locals.count(token) != 0)
         {
             foundValue = locals[token];
@@ -1012,7 +1012,7 @@ MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex,
             foundValue = tokenMap->refsByToken[token];
         }
         
-        if(foundValue && foundValue->type() != MJREF_TYPE_NIL)
+        if(foundValue && foundValue->type() != TuiREF_TYPE_NIL)
         {
             if(result && result->type() == foundValue->type())
             {
@@ -1025,27 +1025,27 @@ MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex,
         }
         else
         {
-            MJError("Bad token");
+            TuiError("Bad token");
         }
     }
     
     return nullptr;
 }
 
-MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* functionState, MJTable* parent, MJTokenMap* tokenMap, std::map<uint32_t, MJRef*>& locals, MJDebugInfo* debugInfo)
+TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo)
 {
     switch(statement->type)
     {
-        case MJSTATEMENT_TYPE_RETURN:
+        case TuiSTATEMENT_TYPE_RETURN:
         {
-            return new MJRef(parent);
+            return new TuiRef(parent);
         }
             break;
-        case MJSTATEMENT_TYPE_RETURN_EXPRESSION:
+        case TuiSTATEMENT_TYPE_RETURN_EXPRESSION:
         {
             uint32_t tokenIndex = 0;
-            MJRef* existingValue = result;
-            MJRef* newResult = runExpression(statement->expression, &tokenIndex, existingValue, functionState, parent, tokenMap, locals, debugInfo);
+            TuiRef* existingValue = result;
+            TuiRef* newResult = runExpression(statement->expression, &tokenIndex, existingValue, functionState, parent, tokenMap, locals, debugInfo);
             if(newResult)
             {
                 return newResult;
@@ -1054,12 +1054,12 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
             {
                 return result;
             }
-            return new MJRef(parent);
+            return new TuiRef(parent);
         }
             break;
-        case MJSTATEMENT_TYPE_VAR_ASSIGN:
+        case TuiSTATEMENT_TYPE_VAR_ASSIGN:
         {
-            MJRef* existingValue = nullptr;
+            TuiRef* existingValue = nullptr;
             if(locals.count(statement->varToken) != 0)
             {
                 existingValue = locals[statement->varToken];
@@ -1079,7 +1079,7 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
             }
             
             uint32_t tokenIndex = 0;
-            MJRef* result = runExpression(statement->expression, &tokenIndex, existingValue, functionState, parent, tokenMap, locals, debugInfo);
+            TuiRef* result = runExpression(statement->expression, &tokenIndex, existingValue, functionState, parent, tokenMap, locals, debugInfo);
             if(result)
             {
                 tokenMap->refsByToken[statement->varToken] = result;
@@ -1091,11 +1091,11 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
             
         }
             break;
-        case MJSTATEMENT_TYPE_FUNCTION_CALL:
+        case TuiSTATEMENT_TYPE_FUNCTION_CALL:
         {
             uint32_t tokenIndex = 0;
             debugInfo->lineNumber = statement->lineNumber; //?
-            MJRef* result = runExpression(statement->expression, &tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
+            TuiRef* result = runExpression(statement->expression, &tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
             if(result)
             {
                 result->release();
@@ -1103,11 +1103,11 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
         }
             break;
             
-        case MJSTATEMENT_TYPE_FOR:
+        case TuiSTATEMENT_TYPE_FOR:
         {
-            MJForStatement* forStatement = (MJForStatement*)statement;
+            TuiForStatement* forStatement = (TuiForStatement*)statement;
             
-            MJRef* existingValue = nullptr;
+            TuiRef* existingValue = nullptr;
             if(locals.count(forStatement->varToken) != 0)
             {
                 existingValue = locals[forStatement->varToken];
@@ -1127,7 +1127,7 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
             }
             
             uint32_t tokenIndex = 0;
-            MJRef* result = runExpression(forStatement->expression, &tokenIndex, existingValue, functionState, parent, tokenMap, locals, debugInfo);
+            TuiRef* result = runExpression(forStatement->expression, &tokenIndex, existingValue, functionState, parent, tokenMap, locals, debugInfo);
             if(result)
             {
                 tokenMap->refsByToken[forStatement->varToken] = result;
@@ -1144,7 +1144,7 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
                 uint32_t tokenIndex = 0;
                 debugInfo->lineNumber = statement->lineNumber; //?
                 
-                MJRef* expressionResult = runExpression(forStatement->continueExpression, &tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo); //todo pass in an MJBool result
+                TuiRef* expressionResult = runExpression(forStatement->continueExpression, &tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo); //todo pass in an TuiBool result
                 
                 bool expressionPass = true;
                 if(expressionResult)
@@ -1154,7 +1154,7 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
                 
                 if(expressionPass)
                 {
-                    MJRef* runResult = runStatementArray(forStatement->statements, result, functionState, parent, tokenMap, locals, debugInfo);
+                    TuiRef* runResult = runStatementArray(forStatement->statements, result, functionState, parent, tokenMap, locals, debugInfo);
                     
                     if(runResult)
                     {
@@ -1168,7 +1168,7 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
                 
                 if(forStatement->incrementStatement)
                 {
-                    MJRef* runResult = runStatement(forStatement->incrementStatement, result, functionState, parent, tokenMap, locals, debugInfo);
+                    TuiRef* runResult = runStatement(forStatement->incrementStatement, result, functionState, parent, tokenMap, locals, debugInfo);
                     if(runResult)
                     {
                         return runResult;
@@ -1181,7 +1181,7 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
             
             debugInfo->lineNumber = statement->lineNumber;
             
-            MJRef* result = recursivelyLoadValue(expressionCString,
+            TuiRef* result = recursivelyLoadValue(expressionCString,
                                                  &endPtr,
                                                  nullptr,
                                                  functionState,
@@ -1189,9 +1189,9 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
                                                  true,
                                                  true);
             
-            MJNumber* iterator = (MJNumber*)result;
+            TuiNumber* iterator = (TuiNumber*)result;
             
-            MJRef* prevI = nullptr;
+            TuiRef* prevI = nullptr;
             const std::string& varNameStdString = statement->varName->value;
             
             if(functionState->objectsByStringKey.count(varNameStdString) != 0)
@@ -1206,14 +1206,14 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
             while(run)
             {
                 bool expressionPass = true;
-                if(!((MJForStatement*)statement)->continueExpression.empty())
+                if(!((TuiForStatement*)statement)->continueExpression.empty())
                 {
-                    const char* expressionCString = ((MJForStatement*)statement)->continueExpression.c_str();
+                    const char* expressionCString = ((TuiForStatement*)statement)->continueExpression.c_str();
                     char* endPtr;
                     
                     debugInfo->lineNumber = statement->lineNumber;
                     
-                    MJRef* expressionResult = recursivelyLoadValue(expressionCString,
+                    TuiRef* expressionResult = recursivelyLoadValue(expressionCString,
                                                                    &endPtr,
                                                                    nullptr,
                                                                    functionState,
@@ -1237,7 +1237,7 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
                     break;
                 }
                 
-                MJRef* result = runStatementArray(((MJForStatement*)statement)->statements, functionState, parent, debugInfo);
+                TuiRef* result = runStatementArray(((TuiForStatement*)statement)->statements, functionState, parent, debugInfo);
                 
                 if(result)
                 {
@@ -1254,9 +1254,9 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
                 }
                 
                 
-                if(((MJForStatement*)statement)->incrementStatement)
+                if(((TuiForStatement*)statement)->incrementStatement)
                 {
-                    MJRef* result = runStatement(((MJForStatement*)statement)->incrementStatement, functionState, parent, debugInfo);
+                    TuiRef* result = runStatement(((TuiForStatement*)statement)->incrementStatement, functionState, parent, debugInfo);
                     if(result)
                     {
                         if(prevI)
@@ -1285,14 +1285,14 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
             iterator->release();*/
         }
             break;
-        case MJSTATEMENT_TYPE_IF:
+        case TuiSTATEMENT_TYPE_IF:
         {
             uint32_t tokenIndex = 0;
-            MJIfStatement* currentSatement = (MJIfStatement*)statement;
+            TuiIfStatement* currentSatement = (TuiIfStatement*)statement;
             
             while(currentSatement)
             {
-                MJRef* expressionResult = runExpression(currentSatement->expression, &tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
+                TuiRef* expressionResult = runExpression(currentSatement->expression, &tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
                 
                 bool expressionPass = true;
                 if(expressionResult)
@@ -1302,7 +1302,7 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
                 
                 if(expressionPass)
                 {
-                    MJRef* runResult = runStatementArray(currentSatement->statements, result, functionState, parent, tokenMap, locals, debugInfo);
+                    TuiRef* runResult = runStatementArray(currentSatement->statements, result, functionState, parent, tokenMap, locals, debugInfo);
                     
                     if(runResult)
                     {
@@ -1320,7 +1320,7 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
                         }
                         else
                         {
-                            MJRef* runResult = runStatementArray(currentSatement->elseIfStatement->statements, result, functionState, parent, tokenMap, locals, debugInfo);
+                            TuiRef* runResult = runStatementArray(currentSatement->elseIfStatement->statements, result, functionState, parent, tokenMap, locals, debugInfo);
                             if(runResult)
                             {
                                 return runResult;
@@ -1343,7 +1343,7 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
                 
                 debugInfo->lineNumber = statement->lineNumber;
                 
-                MJRef* expressionResult = recursivelyLoadValue(expressionCString,
+                TuiRef* expressionResult = recursivelyLoadValue(expressionCString,
                                                                &endPtr,
                                                                nullptr,
                                                                functionState,
@@ -1363,7 +1363,7 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
             }
             if(expressionPass)
             {
-                MJRef* result = runStatementArray(((MJIfStatement*)statement)->statements, functionState, parent, debugInfo);
+                TuiRef* result = runStatementArray(((TuiIfStatement*)statement)->statements, functionState, parent, debugInfo);
                 
                 if(result)
                 {
@@ -1372,7 +1372,7 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
             }
             else
             {
-                MJRef* result = recursivelyRunIfElseStatement(((MJIfStatement*)statement)->elseIfStatement, functionState, parent, debugInfo);
+                TuiRef* result = recursivelyRunIfElseStatement(((TuiIfStatement*)statement)->elseIfStatement, functionState, parent, debugInfo);
                 if(result)
                 {
                     return result;
@@ -1387,11 +1387,11 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
 }
 
     
-MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_,  MJRef* result,  MJTable* functionState, MJTable* parent, MJTokenMap* tokenMap, std::map<uint32_t, MJRef*>& locals, MJDebugInfo* debugInfo) //static
+TuiRef* TuiFunction::runStatementArray(std::vector<TuiStatement*>& statements_,  TuiRef* result,  TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo) //static
 {
-    for(MJStatement* statement : statements_)
+    for(TuiStatement* statement : statements_)
     {
-        MJRef* newResult = MJFunction::runStatement(statement, result, functionState, parent, tokenMap, locals, debugInfo);
+        TuiRef* newResult = TuiFunction::runStatement(statement, result, functionState, parent, tokenMap, locals, debugInfo);
         if(newResult)
         {
             return newResult;
@@ -1402,48 +1402,48 @@ MJRef* MJFunction::runStatementArray(std::vector<MJStatement*>& statements_,  MJ
 }
 
     
-MJFunction::MJFunction(MJRef* parent_)
-:MJRef(parent_)
+TuiFunction::TuiFunction(TuiRef* parent_)
+:TuiRef(parent_)
 {
 }
 
 
-MJFunction::MJFunction(std::function<MJRef*(MJTable* args, MJTable* state)> func_, MJRef* parent_)
-:MJRef(parent_)
+TuiFunction::TuiFunction(std::function<TuiRef*(TuiTable* args, TuiTable* state)> func_, TuiRef* parent_)
+:TuiRef(parent_)
 {
     func = func_;
 }
 
-MJFunction::~MJFunction()
+TuiFunction::~TuiFunction()
 {
-    for(MJStatement* statement : statements)
+    for(TuiStatement* statement : statements)
     {
         delete statement;
     }
 }
 
-MJRef* MJFunction::call(MJTable* args, MJTable* callLocationState, MJRef* existingResult)
+TuiRef* TuiFunction::call(TuiTable* args, TuiTable* callLocationState, TuiRef* existingResult)
 {
     if(func)
     {
-        MJTable* currentCallState = new MJTable(parent);
-        MJRef* result = func(args, currentCallState);
+        TuiTable* currentCallState = new TuiTable(parent);
+        TuiRef* result = func(args, currentCallState);
         currentCallState->release();
         return result;
     }
     else
     {
-        MJTable* currentCallState = new MJTable(parent);
-        std::map<uint32_t, MJRef*> locals;
+        TuiTable* currentCallState = new TuiTable(parent);
+        std::map<uint32_t, TuiRef*> locals;
         
         int i = 0;
         int maxArgs = (int)argNames.size();
-        for(MJRef* arg : args->arrayObjects)
+        for(TuiRef* arg : args->arrayObjects)
         {
             const std::string& argName = argNames[i];
             if(i >= maxArgs)
             {
-                MJSWarn(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function ignoring:%s", argName.c_str());
+                TuiSWarn(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function ignoring:%s", argName.c_str());
                 continue;
             }
             currentCallState->objectsByStringKey[argName] = arg;
@@ -1457,8 +1457,8 @@ MJRef* MJFunction::call(MJTable* args, MJTable* callLocationState, MJRef* existi
         }
         
         
-        MJRef* result = runStatementArray(statements,  existingResult,  currentCallState, (MJTable*)parent, &tokenMap, locals, &debugInfo);
-        //MJRef* result = runStatementArray(statements, currentCallState, (MJTable*)parent, &debugInfo); //TODO!!
+        TuiRef* result = runStatementArray(statements,  existingResult,  currentCallState, (TuiTable*)parent, &tokenMap, locals, &debugInfo);
+        //TuiRef* result = runStatementArray(statements, currentCallState, (TuiTable*)parent, &debugInfo); //TODO!!
         //currentCallState->debugLog();
         currentCallState->release();
         
@@ -1467,17 +1467,17 @@ MJRef* MJFunction::call(MJTable* args, MJTable* callLocationState, MJRef* existi
 }
 
 
-MJRef* MJFunction::recursivelyFindVariable(MJString* variableName, MJDebugInfo* debugInfo, bool searchParents, int varStartIndex)
+TuiRef* TuiFunction::recursivelyFindVariable(TuiString* variableName, TuiDebugInfo* debugInfo, bool searchParents, int varStartIndex)
 {
-    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to get a variable from within a child function");
+    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to get a variable from within a child function");
     return nullptr;
     //return currentCallState->recursivelyFindVariable(variableName, debugInfo, varStartIndex);
 }
 
 
-bool MJFunction::recursivelySetVariable(MJString* variableName, MJRef* value, MJDebugInfo* debugInfo, int varStartIndex)
+bool TuiFunction::recursivelySetVariable(TuiString* variableName, TuiRef* value, TuiDebugInfo* debugInfo, int varStartIndex)
 {
-    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to set variable within a child function");
+    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to set variable within a child function");
     return false;
    // return currentCallState->recursivelySetVariable(variableName, value, debugInfo, varStartIndex);
 }

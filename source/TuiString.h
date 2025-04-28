@@ -1,15 +1,15 @@
 
-#ifndef MJString_h
-#define MJString_h
+#ifndef TuiString_h
+#define TuiString_h
 
 #include <stdio.h>
 #include <string>
 #include "glm.hpp"
-#include "MJLog.h"
+#include "TuiLog.h"
 
-#include "MJRef.h"
+#include "TuiRef.h"
 
-class MJString : public MJRef {
+class TuiString : public TuiRef {
 public: //members
     std::string value;
     bool allowAsVariableName = true; // this is set to false if it finds a quoted string when loaded via readable string
@@ -18,29 +18,29 @@ public: //members
 
 public://functions
     
-    virtual uint8_t type() { return MJREF_TYPE_STRING; }
+    virtual uint8_t type() { return TuiREF_TYPE_STRING; }
     virtual std::string getTypeName() {return "string";}
     virtual std::string getStringValue() {return value;}
     virtual bool boolValue() {return !value.empty();}
     
-    MJString(const std::string& value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
-    virtual ~MJString() {};
+    TuiString(const std::string& value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    virtual ~TuiString() {};
     
-    virtual MJString* copy()
+    virtual TuiString* copy()
     {
-        return new MJString(value, parent);
+        return new TuiString(value, parent);
     }
-    virtual void assign(MJString* other) {
+    virtual void assign(TuiString* other) {
         value = other->value;
         allowAsVariableName = other->allowAsVariableName;
         isValidFunctionString = other->isValidFunctionString;
         varNames = other->varNames;
     };
     
-    static MJString* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
+    static TuiString* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
         const char* s = str;
         
-        MJString* mjString = new MJString("", parent);
+        TuiString* mjString = new TuiString("", parent);
         
         bool singleQuote = false;
         bool doubleQuote = false;
@@ -131,7 +131,7 @@ public://functions
                 }
             }
             else if(!escaped && !singleQuote && !doubleQuote &&
-                    (isspace(*s) || *s == ',' || *s == '\n' || *s == ')' || MJExpressionOperatorsSet.count(*s) != 0))
+                    (isspace(*s) || *s == ',' || *s == '\n' || *s == ')' || TuiExpressionOperatorsSet.count(*s) != 0))
             {
                 if(*s == '\n')
                 {

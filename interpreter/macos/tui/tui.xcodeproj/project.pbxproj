@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5B7B4D062DB1C48300F42201 /* Interpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B7B4D052DB1C48300F42201 /* Interpreter.cpp */; };
 		5B7B4DD52DB1CBDE00F42201 /* examples in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5B7B4DD42DB1CBDE00F42201 /* examples */; };
+		5BEBE5CE2DBF32A8009B2FFA /* Interpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5BEBE5CD2DBF32A8009B2FFA /* Interpreter.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,19 +25,19 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		5B7B4CFB2DB1C2E100F42201 /* mjs */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = mjs; sourceTree = BUILT_PRODUCTS_DIR; };
-		5B7B4D052DB1C48300F42201 /* Interpreter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Interpreter.cpp; path = /Users/davidframpton/Documents/mjscript/interpreter/Interpreter.cpp; sourceTree = "<absolute>"; };
-		5B7B4D072DB1C48A00F42201 /* Interpreter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Interpreter.h; path = /Users/davidframpton/Documents/mjscript/interpreter/Interpreter.h; sourceTree = "<absolute>"; };
+		5B7B4CFB2DB1C2E100F42201 /* tui */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tui; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B7B4DD42DB1CBDE00F42201 /* examples */ = {isa = PBXFileReference; lastKnownFileType = folder; name = examples; path = ../../../examples; sourceTree = "<group>"; };
+		5BEBE5CC2DBF32A8009B2FFA /* Interpreter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Interpreter.h; path = /Users/davidframpton/Documents/mjscript/interpreter/Interpreter.h; sourceTree = "<absolute>"; };
+		5BEBE5CD2DBF32A8009B2FFA /* Interpreter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Interpreter.cpp; path = /Users/davidframpton/Documents/mjscript/interpreter/Interpreter.cpp; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5B7B4CFD2DB1C2E100F42201 /* mjs */ = {
+		5B7B4CFD2DB1C2E100F42201 /* tui */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = mjs;
+			path = tui;
 			sourceTree = "<group>";
 		};
-		5B7B4D112DB1C4CB00F42201 /* source */ = {
+		5BEBE5DE2DBF32CD009B2FFA /* source */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			name = source;
 			path = /Users/davidframpton/Documents/mjscript/source;
@@ -59,11 +59,11 @@
 		5B7B4CF22DB1C2E100F42201 = {
 			isa = PBXGroup;
 			children = (
+				5BEBE5DE2DBF32CD009B2FFA /* source */,
 				5B7B4DD42DB1CBDE00F42201 /* examples */,
-				5B7B4D112DB1C4CB00F42201 /* source */,
-				5B7B4D072DB1C48A00F42201 /* Interpreter.h */,
-				5B7B4D052DB1C48300F42201 /* Interpreter.cpp */,
-				5B7B4CFD2DB1C2E100F42201 /* mjs */,
+				5BEBE5CC2DBF32A8009B2FFA /* Interpreter.h */,
+				5BEBE5CD2DBF32A8009B2FFA /* Interpreter.cpp */,
+				5B7B4CFD2DB1C2E100F42201 /* tui */,
 				5B7B4CFC2DB1C2E100F42201 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -71,7 +71,7 @@
 		5B7B4CFC2DB1C2E100F42201 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5B7B4CFB2DB1C2E100F42201 /* mjs */,
+				5B7B4CFB2DB1C2E100F42201 /* tui */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -79,9 +79,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5B7B4CFA2DB1C2E100F42201 /* mjs */ = {
+		5B7B4CFA2DB1C2E100F42201 /* tui */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5B7B4D022DB1C2E100F42201 /* Build configuration list for PBXNativeTarget "mjs" */;
+			buildConfigurationList = 5B7B4D022DB1C2E100F42201 /* Build configuration list for PBXNativeTarget "tui" */;
 			buildPhases = (
 				5B7B4CF72DB1C2E100F42201 /* Sources */,
 				5B7B4CF82DB1C2E100F42201 /* Frameworks */,
@@ -92,14 +92,14 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				5B7B4CFD2DB1C2E100F42201 /* mjs */,
-				5B7B4D112DB1C4CB00F42201 /* source */,
+				5B7B4CFD2DB1C2E100F42201 /* tui */,
+				5BEBE5DE2DBF32CD009B2FFA /* source */,
 			);
-			name = mjs;
+			name = tui;
 			packageProductDependencies = (
 			);
-			productName = mjs;
-			productReference = 5B7B4CFB2DB1C2E100F42201 /* mjs */;
+			productName = tui;
+			productReference = 5B7B4CFB2DB1C2E100F42201 /* tui */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -116,7 +116,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 5B7B4CF62DB1C2E100F42201 /* Build configuration list for PBXProject "mjs" */;
+			buildConfigurationList = 5B7B4CF62DB1C2E100F42201 /* Build configuration list for PBXProject "tui" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -130,7 +130,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5B7B4CFA2DB1C2E100F42201 /* mjs */,
+				5B7B4CFA2DB1C2E100F42201 /* tui */,
 			);
 		};
 /* End PBXProject section */
@@ -140,7 +140,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5B7B4D062DB1C48300F42201 /* Interpreter.cpp in Sources */,
+				5BEBE5CE2DBF32A8009B2FFA /* Interpreter.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -270,7 +270,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9Q78V5BF2N;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../../thirdParty/glm/glm\"";
 			};
@@ -282,7 +282,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9Q78V5BF2N;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_OPTIMIZATION_LEVEL = 0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../../thirdParty/glm/glm\"";
 			};
@@ -291,7 +291,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5B7B4CF62DB1C2E100F42201 /* Build configuration list for PBXProject "mjs" */ = {
+		5B7B4CF62DB1C2E100F42201 /* Build configuration list for PBXProject "tui" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5B7B4D002DB1C2E100F42201 /* Debug */,
@@ -300,7 +300,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5B7B4D022DB1C2E100F42201 /* Build configuration list for PBXNativeTarget "mjs" */ = {
+		5B7B4D022DB1C2E100F42201 /* Build configuration list for PBXNativeTarget "tui" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5B7B4D032DB1C2E100F42201 /* Debug */,

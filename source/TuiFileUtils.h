@@ -1,12 +1,12 @@
 
-#ifndef __MJFileUtils__
-#define __MJFileUtils__
+#ifndef __TuiFileUtils__
+#define __TuiFileUtils__
 
 #include <stdio.h>
 #include <stdint.h>
 #include <vector>
 #include <string>
-#include "MJLog.h"
+#include "TuiLog.h"
 
 std::string getFileContents(const std::string& filename);
 void writeToFile(const std::string& filename, const std::string& data);

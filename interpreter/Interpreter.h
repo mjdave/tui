@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "MJScript.h"
+#include "TuiScript.h"
 
 
 class Interpreter {

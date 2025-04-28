@@ -1,32 +1,32 @@
-#ifndef MJNumber_h
-#define MJNumber_h
+#ifndef TuiNumber_h
+#define TuiNumber_h
 
 #include <stdio.h>
 #include <string>
 #include "glm.hpp"
-#include "MJLog.h"
+#include "TuiLog.h"
 
-#include "MJRef.h"
+#include "TuiRef.h"
 
 using namespace glm;
 
-class MJNumber : public MJRef {
+class TuiNumber : public TuiRef {
 public: //members
     double value;
 
 public://functions
-    MJNumber(double value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
-    virtual ~MJNumber() {};
+    TuiNumber(double value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    virtual ~TuiNumber() {};
     
-    virtual MJNumber* copy()
+    virtual TuiNumber* copy()
     {
-        return new MJNumber(value, parent);
+        return new TuiNumber(value, parent);
     }
-    virtual void assign(MJRef* other) {
-        value = ((MJNumber*)other)->value;
+    virtual void assign(TuiRef* other) {
+        value = ((TuiNumber*)other)->value;
     };
     
-    static MJNumber* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
+    static TuiNumber* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
         const char* s = str;
         
         double value = strtod(s, endptr);
@@ -34,13 +34,13 @@ public://functions
         s = skipToNextChar(*endptr, debugInfo, true);
         *endptr = (char*)s;
         
-        MJNumber* number = new MJNumber(value, parent);
+        TuiNumber* number = new TuiNumber(value, parent);
         return number;
     }
     
     //virtual uint64_t generateHash() {return *((uint64_t*)&value);}
     
-    virtual uint8_t type() { return MJREF_TYPE_NUMBER; }
+    virtual uint8_t type() { return TuiREF_TYPE_NUMBER; }
     virtual std::string getTypeName() {return "number";}
     virtual std::string getStringValue() {
         if(value == floor(value))
@@ -56,42 +56,42 @@ private:
 private:
 };
 
-class MJBool : public MJRef {
+class TuiBool : public TuiRef {
 public: //members
     bool value;
 
 public://functions
-    MJBool(bool value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
-    virtual ~MJBool() {};
+    TuiBool(bool value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    virtual ~TuiBool() {};
     
-    virtual MJBool* copy()
+    virtual TuiBool* copy()
     {
-        return new MJBool(value, parent);
+        return new TuiBool(value, parent);
     }
-    virtual void assign(MJRef* other) {
-        value = ((MJBool*)other)->value;
+    virtual void assign(TuiRef* other) {
+        value = ((TuiBool*)other)->value;
     };
     
-    static MJBool* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
+    static TuiBool* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
         
         if(*s == 't' && *(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e' )
         {
             *endptr = (char*)(s + 4);
-            MJBool* number = new MJBool(true, parent);
+            TuiBool* number = new TuiBool(true, parent);
             return number;
         }
         if(*s == 'f' && *(s + 1) == 'a' && *(s + 2) == 'l' && *(s + 3) == 's' && *(s + 4) == 'e' )
         {
             *endptr = (char*)(s + 5);
-            MJBool* number = new MJBool(false, parent);
+            TuiBool* number = new TuiBool(false, parent);
             return number;
         }
         
         return nullptr;
     }
     
-    virtual uint8_t type() { return MJREF_TYPE_BOOL; }
+    virtual uint8_t type() { return TuiREF_TYPE_BOOL; }
     virtual std::string getTypeName() {return "bool";}
     virtual std::string getStringValue() {
         return (value ? "true" : "false");
@@ -104,22 +104,22 @@ private:
 };
 
 
-class MJVec2 : public MJRef {
+class TuiVec2 : public TuiRef {
 public: //members
     dvec2 value;
 
 public://functions
-    MJVec2(dvec2 value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
-    virtual ~MJVec2() {};
-    virtual MJVec2* copy()
+    TuiVec2(dvec2 value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    virtual ~TuiVec2() {};
+    virtual TuiVec2* copy()
     {
-        return new MJVec2(value, parent);
+        return new TuiVec2(value, parent);
     }
-    virtual void assign(MJRef* other) {
-        value = ((MJVec2*)other)->value;
+    virtual void assign(TuiRef* other) {
+        value = ((TuiVec2*)other)->value;
     };
     
-    static MJVec2* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
+    static TuiVec2* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '2' && *(s + 4) == '(')
@@ -142,7 +142,7 @@ public://functions
                 }
                 else
                 {
-                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec2:%c", *s);
+                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec2:%c", *s);
                     break;
                 }
             }
@@ -150,13 +150,13 @@ public://functions
             s = skipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
-            return new MJVec2(dvec2(values[0], values[1]), parent);
+            return new TuiVec2(dvec2(values[0], values[1]), parent);
         }
         
         return nullptr;
     }
     
-    virtual uint8_t type() { return MJREF_TYPE_VEC2; }
+    virtual uint8_t type() { return TuiREF_TYPE_VEC2; }
     virtual std::string getTypeName() {return "vec2";}
     virtual std::string getStringValue() {
         return string_format("vec2(%s,%s)", doubleToString(value.x).c_str(), doubleToString(value.y).c_str());
@@ -169,22 +169,22 @@ private:
 };
 
 
-class MJVec3 : public MJRef {
+class TuiVec3 : public TuiRef {
 public: //members
     dvec3 value;
 
 public://functions
-    MJVec3(dvec3 value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
-    virtual ~MJVec3() {};
-    virtual MJVec3* copy()
+    TuiVec3(dvec3 value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    virtual ~TuiVec3() {};
+    virtual TuiVec3* copy()
     {
-        return new MJVec3(value, parent);
+        return new TuiVec3(value, parent);
     }
-    virtual void assign(MJRef* other) {
-        value = ((MJVec3*)other)->value;
+    virtual void assign(TuiRef* other) {
+        value = ((TuiVec3*)other)->value;
     };
     
-    static MJVec3* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
+    static TuiVec3* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '3' && *(s + 4) == '(')
@@ -207,7 +207,7 @@ public://functions
                 }
                 else
                 {
-                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec3:%c", *s);
+                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec3:%c", *s);
                     break;
                 }
             }
@@ -215,13 +215,13 @@ public://functions
             s = skipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
-            return new MJVec3(dvec3(values[0], values[1], values[2]), parent);
+            return new TuiVec3(dvec3(values[0], values[1], values[2]), parent);
         }
         
         return nullptr;
     }
     
-    virtual uint8_t type() { return MJREF_TYPE_VEC3; }
+    virtual uint8_t type() { return TuiREF_TYPE_VEC3; }
     virtual std::string getTypeName() {return "vec3";}
     virtual std::string getStringValue() {
         return string_format("vec3(%s,%s,%s)", doubleToString(value.x).c_str(), doubleToString(value.y).c_str(), doubleToString(value.z).c_str());
@@ -234,22 +234,22 @@ private:
 };
 
 
-class MJVec4 : public MJRef {
+class TuiVec4 : public TuiRef {
 public: //members
     dvec4 value;
 
 public://functions
-    MJVec4(dvec4 value_, MJRef* parent_ = nullptr) : MJRef(parent_) {value = value_;}
-    virtual ~MJVec4() {};
-    virtual MJVec4* copy()
+    TuiVec4(dvec4 value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    virtual ~TuiVec4() {};
+    virtual TuiVec4* copy()
     {
-        return new MJVec4(value, parent);
+        return new TuiVec4(value, parent);
     }
-    virtual void assign(MJRef* other) {
-        value = ((MJVec4*)other)->value;
+    virtual void assign(TuiRef* other) {
+        value = ((TuiVec4*)other)->value;
     };
     
-    static MJVec4* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
+    static TuiVec4* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '4' && *(s + 4) == '(')
@@ -272,7 +272,7 @@ public://functions
                 }
                 else
                 {
-                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec4:%c", *s);
+                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec4:%c", *s);
                     break;
                 }
             }
@@ -280,13 +280,13 @@ public://functions
             s = skipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
-            return new MJVec4(dvec4(values[0], values[1], values[2],  values[3]), parent);
+            return new TuiVec4(dvec4(values[0], values[1], values[2],  values[3]), parent);
         }
         
         return nullptr;
     }
     
-    virtual uint8_t type() { return MJREF_TYPE_VEC4; }
+    virtual uint8_t type() { return TuiREF_TYPE_VEC4; }
     virtual std::string getTypeName() {return "vec4";}
     virtual std::string getStringValue() {
         return string_format("vec4(%s,%s,%s,%s)", doubleToString(value.x).c_str(), doubleToString(value.y).c_str(), doubleToString(value.z).c_str(), doubleToString(value.w).c_str());

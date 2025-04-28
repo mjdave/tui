@@ -1,6 +1,6 @@
 
-#ifndef MJTable_h
-#define MJTable_h
+#ifndef TuiTable_h
+#define TuiTable_h
 
 #include <stdio.h>
 #include <string>
@@ -8,32 +8,32 @@
 #include <map>
 #include <fstream>
 #include "glm.hpp"
-#include "MJLog.h"
-#include "MJRef.h"
-#include "MJNumber.h"
-#include "MJString.h"
-#include "MJFunction.h"
+#include "TuiLog.h"
+#include "TuiRef.h"
+#include "TuiNumber.h"
+#include "TuiString.h"
+#include "TuiFunction.h"
 
-class MJTable : public MJRef {
+class TuiTable : public TuiRef {
 public:
-    std::vector<MJRef*> arrayObjects; // these members are public for ease/speed of iteration, but it's often best to use the get/set methods instead
-    std::map<uint32_t, MJRef*> objectsByNumberKey;
-    std::map<std::string, MJRef*> objectsByStringKey;
+    std::vector<TuiRef*> arrayObjects; // these members are public for ease/speed of iteration, but it's often best to use the get/set methods instead
+    std::map<uint32_t, TuiRef*> objectsByNumberKey;
+    std::map<std::string, TuiRef*> objectsByStringKey;
     
 private: //members
 
 public://functions
     
     
-    virtual uint8_t type() { return MJREF_TYPE_TABLE; }
+    virtual uint8_t type() { return TuiREF_TYPE_TABLE; }
     virtual std::string getTypeName() {return "table";}
     virtual std::string getStringValue() {return "table";}
     virtual std::string getDebugStringValue() {return getDebugString();}
     virtual bool boolValue() {return true;}
     
-    MJTable(MJRef* parent_) : MJRef(parent_) {};
-    virtual ~MJTable() {
-        for(MJRef* ref : arrayObjects)
+    TuiTable(TuiRef* parent_) : TuiRef(parent_) {};
+    virtual ~TuiTable() {
+        for(TuiRef* ref : arrayObjects)
         {
             ref->release();
         }
@@ -47,46 +47,46 @@ public://functions
         }
     };
     
-    virtual MJTable* copy()
+    virtual TuiTable* copy()
     {
-        MJError("MJTable copy() unimplemented");
+        TuiError("TuiTable copy() unimplemented");
         return this;
     }
     
     
-    static MJRef* initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo) {
+    static TuiRef* initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
         const char* s = skipToNextChar(str, debugInfo);
         
         if(isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(*(s + 1))))
         {
-            return MJNumber::initWithHumanReadableString(s, endptr, parent, debugInfo);
+            return TuiNumber::initWithHumanReadableString(s, endptr, parent, debugInfo);
         }
         
-        MJFunction* functionRef = MJFunction::initWithHumanReadableString(str, endptr, parent, debugInfo);
+        TuiFunction* functionRef = TuiFunction::initWithHumanReadableString(str, endptr, parent, debugInfo);
         if(functionRef)
         {
             return functionRef;
         }
         
-        MJBool* boolRef = MJBool::initWithHumanReadableString(str, endptr, parent, debugInfo);
+        TuiBool* boolRef = TuiBool::initWithHumanReadableString(str, endptr, parent, debugInfo);
         if(boolRef)
         {
             return boolRef;
         }
         
-        MJVec2* vec2Ref = MJVec2::initWithHumanReadableString(str, endptr, parent, debugInfo);
+        TuiVec2* vec2Ref = TuiVec2::initWithHumanReadableString(str, endptr, parent, debugInfo);
         if(vec2Ref)
         {
             return vec2Ref;
         }
         
-        MJVec3* vec3Ref = MJVec3::initWithHumanReadableString(str, endptr, parent, debugInfo);
+        TuiVec3* vec3Ref = TuiVec3::initWithHumanReadableString(str, endptr, parent, debugInfo);
         if(vec3Ref)
         {
             return vec3Ref;
         }
         
-        MJVec4* vec4Ref = MJVec4::initWithHumanReadableString(str, endptr, parent, debugInfo);
+        TuiVec4* vec4Ref = TuiVec4::initWithHumanReadableString(str, endptr, parent, debugInfo);
         if(vec4Ref)
         {
             return vec4Ref;
@@ -98,18 +98,18 @@ public://functions
         {
             s+=3;
             *endptr = (char*)s;
-            return new MJRef(parent);
+            return new TuiRef(parent);
         }
         else if(*s == '{' || *s == '[')
         {
-            return MJTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
+            return TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
         }
         
-        return MJString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        return TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
     }
     
     
-    virtual MJRef* recursivelyFindVariable(MJString* variableName, MJDebugInfo* debugInfo, bool searchParents, int varStartIndex = 0)
+    virtual TuiRef* recursivelyFindVariable(TuiString* variableName, TuiDebugInfo* debugInfo, bool searchParents, int varStartIndex = 0)
     {
         //const std::string variableNameString = variableName->value;
         
@@ -119,7 +119,7 @@ public://functions
         {
             if(varNames[varStartIndex][0] == '.')
             {
-                MJRef* tableOrFunction = parent;
+                TuiRef* tableOrFunction = parent;
                 
                 for(int i = varStartIndex + 1; i < variableName->varNames.size(); i++)
                 {
@@ -128,7 +128,7 @@ public://functions
                         tableOrFunction = tableOrFunction->parent;
                         if(!tableOrFunction)
                         {
-                            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found at level:%d for:%s", i + 1, variableName->value.c_str());
+                            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found at level:%d for:%s", i + 1, variableName->value.c_str());
                             return nullptr;
                         }
                     }
@@ -145,10 +145,10 @@ public://functions
             {
                 if(varNames.size() > varStartIndex + 1)
                 {
-                    MJRef* subtableRef = objectsByStringKey[varNames[varStartIndex]];
-                    if(subtableRef->type() != MJREF_TYPE_TABLE)
+                    TuiRef* subtableRef = objectsByStringKey[varNames[varStartIndex]];
+                    if(subtableRef->type() != TuiREF_TYPE_TABLE)
                     {
-                        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                         return nullptr;
                     }
                     
@@ -156,19 +156,19 @@ public://functions
                     {
                         if(i == variableName->varNames.size() - 1)
                         {
-                            if(((MJTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
+                            if(((TuiTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
                             {
-                                return ((MJTable*)subtableRef)->objectsByStringKey[varNames[i]];
+                                return ((TuiTable*)subtableRef)->objectsByStringKey[varNames[i]];
                             }
                             return nullptr;
                         }
                         
-                        if(((MJTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
+                        if(((TuiTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
                         {
                             subtableRef = objectsByStringKey[varNames[i]];
-                            if(subtableRef->type() != MJREF_TYPE_TABLE)
+                            if(subtableRef->type() != TuiREF_TYPE_TABLE)
                             {
-                                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                                 return nullptr;
                             }
                         }
@@ -187,7 +187,7 @@ public://functions
         return nullptr;
     }
     
-    virtual bool recursivelySetVariable(MJString* variableName, MJRef* value, MJDebugInfo* debugInfo, int varStartIndex = 0)
+    virtual bool recursivelySetVariable(TuiString* variableName, TuiRef* value, TuiDebugInfo* debugInfo, int varStartIndex = 0)
     {
         std::vector<std::string>& varNames = variableName->varNames;
         
@@ -195,7 +195,7 @@ public://functions
         {
             if(varNames[varStartIndex][0] == '.')
             {
-                MJRef* tableOrFunction = parent;
+                TuiRef* tableOrFunction = parent;
                 
                 for(int i = varStartIndex + 1; i < variableName->varNames.size(); i++)
                 {
@@ -204,7 +204,7 @@ public://functions
                         tableOrFunction = tableOrFunction->parent;
                         if(!tableOrFunction)
                         {
-                            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found at level:%d for:%s", (i + 1), variableName->value.c_str());
+                            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found at level:%d for:%s", (i + 1), variableName->value.c_str());
                             return false;
                         }
                     }
@@ -214,7 +214,7 @@ public://functions
                     }
                 }
                 
-                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Bad variable name:%s", variableName->value.c_str());
+                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Bad variable name:%s", variableName->value.c_str());
                 return false;
             }
             
@@ -222,10 +222,10 @@ public://functions
             {
                 if(varNames.size() > varStartIndex + 1)
                 {
-                    MJRef* subtableRef = objectsByStringKey[varNames[varStartIndex]];
-                    if(subtableRef->type() != MJREF_TYPE_TABLE)
+                    TuiRef* subtableRef = objectsByStringKey[varNames[varStartIndex]];
+                    if(subtableRef->type() != TuiREF_TYPE_TABLE)
                     {
-                        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                         return false;
                     }
                     
@@ -233,16 +233,16 @@ public://functions
                     {
                         if(i == variableName->varNames.size() - 1)
                         {
-                            ((MJTable*)subtableRef)->set(variableName->varNames[i], value);
+                            ((TuiTable*)subtableRef)->set(variableName->varNames[i], value);
                             return true;
                         }
                         
-                        if(((MJTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
+                        if(((TuiTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
                         {
                             subtableRef = objectsByStringKey[varNames[i]];
-                            if(subtableRef->type() != MJREF_TYPE_TABLE)
+                            if(subtableRef->type() != TuiREF_TYPE_TABLE)
                             {
-                                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
+                                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                                 return false;
                             }
                         }
@@ -265,7 +265,7 @@ public://functions
     
     
     
-    bool addHumanReadableKeyValuePair(const char* str, char** endptr, MJDebugInfo* debugInfo, MJRef** resultRef = nullptr) {
+    bool addHumanReadableKeyValuePair(const char* str, char** endptr, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr) {
         const char* s = skipToNextChar(str, debugInfo);
         
         if(resultRef && *s == 'r'
@@ -279,7 +279,7 @@ public://functions
             s = skipToNextChar(s, debugInfo);
             if(*s == '}')
             {
-                *resultRef = new MJRef(this);
+                *resultRef = new TuiRef(this);
                 s++;
                 s = skipToNextChar(s, debugInfo, true);
                 *endptr = (char*)s;
@@ -306,21 +306,21 @@ public://functions
             s+=3;
             s = skipToNextChar(s, debugInfo);
             
-            MJTokenMap tokenMap;
+            TuiTokenMap tokenMap;
             
-            MJStatement* statement = MJFunction::serializeForStatement(s, endptr, this, &tokenMap, debugInfo);
+            TuiStatement* statement = TuiFunction::serializeForStatement(s, endptr, this, &tokenMap, debugInfo);
             if(!statement)
             {
                 return false;
             }
             s = skipToNextChar(*endptr, debugInfo, false);
             
-            //MJRef* result = nullptr; //TODOD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            //MJRef* result = MJFunction::runStatement(statement, this, (MJTable*)parent, &tokenMap, debugInfo);
+            //TuiRef* result = nullptr; //TODOD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //TuiRef* result = TuiFunction::runStatement(statement, this, (TuiTable*)parent, &tokenMap, debugInfo);
             
             
-            std::map<uint32_t, MJRef*> locals;
-            MJRef* result = MJFunction::runStatement(statement, nullptr, this, (MJTable*)parent, &tokenMap, locals, debugInfo);
+            std::map<uint32_t, TuiRef*> locals;
+            TuiRef* result = TuiFunction::runStatement(statement, nullptr, this, (TuiTable*)parent, &tokenMap, locals, debugInfo);
             
             if(result)
             {
@@ -334,17 +334,17 @@ public://functions
             /*
              
              {
-                 MJTable* currentCallState = new MJTable(parent);
-                 std::map<uint32_t, MJRef*> locals;
+                 TuiTable* currentCallState = new TuiTable(parent);
+                 std::map<uint32_t, TuiRef*> locals;
                  
                  int i = 0;
                  int maxArgs = (int)argNames.size();
-                 for(MJRef* arg : args->arrayObjects)
+                 for(TuiRef* arg : args->arrayObjects)
                  {
                      const std::string& argName = argNames[i];
                      if(i >= maxArgs)
                      {
-                         MJSWarn(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function ignoring:%s", argName.c_str());
+                         TuiSWarn(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function ignoring:%s", argName.c_str());
                          continue;
                      }
                      currentCallState->objectsByStringKey[argName] = arg;
@@ -358,8 +358,8 @@ public://functions
                  }
                  
                  
-                 MJRef* result = runStatementArray(statements,  existingResult,  currentCallState, (MJTable*)parent, &tokenMap, locals, &debugInfo);
-                 //MJRef* result = runStatementArray(statements, currentCallState, (MJTable*)parent, &debugInfo); //TODO!!
+                 TuiRef* result = runStatementArray(statements,  existingResult,  currentCallState, (TuiTable*)parent, &tokenMap, locals, &debugInfo);
+                 //TuiRef* result = runStatementArray(statements, currentCallState, (TuiTable*)parent, &debugInfo); //TODO!!
                  //currentCallState->debugLog();
                  currentCallState->release();
                  
@@ -374,7 +374,7 @@ public://functions
             s = skipToNextChar(s, debugInfo);
             
             bool expressionPass = true;
-            MJRef* expressionResult = recursivelyLoadValue(s,
+            TuiRef* expressionResult = recursivelyLoadValue(s,
                                                  endptr,
                                                            nullptr,
                                                  nullptr,
@@ -425,7 +425,7 @@ public://functions
                 }
                 else
                 {
-                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "if statement expected '{'");
+                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "if statement expected '{'");
                     return false;
                 }
             }
@@ -481,7 +481,7 @@ public://functions
                             s = skipToNextChar(s, debugInfo);
                             
                             bool expressionPass = true;
-                            MJRef* expressionResult = recursivelyLoadValue(s,
+                            TuiRef* expressionResult = recursivelyLoadValue(s,
                                                                            endptr,
                                                                            nullptr,
                                                                            nullptr,
@@ -531,7 +531,7 @@ public://functions
                                 }
                                 else
                                 {
-                                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else if statement expected '{'");
+                                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else if statement expected '{'");
                                     return false;
                                 }
                             }
@@ -543,7 +543,7 @@ public://functions
                         }
                         else
                         {
-                            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else statement expected 'if' or '{'");
+                            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else statement expected 'if' or '{'");
                             return false;
                         }
                     }
@@ -559,22 +559,22 @@ public://functions
         
         const char* keyStartS = s; // rewind to here if we find an array object
         int keyStartLineNumber = debugInfo->lineNumber;
-        MJRef* keyRef = initUnknownTypeRefWithHumanReadableString(s, endptr, this, debugInfo);
+        TuiRef* keyRef = initUnknownTypeRefWithHumanReadableString(s, endptr, this, debugInfo);
         
         s = skipToNextChar(*endptr, debugInfo, true);
         
-        if(*s == ',' || *s == '\n' || *s == '}' || *s == ']' || *s == ')' || *s == '(' || (MJExpressionOperatorsSet.count(*s) != 0 && (*s != '=' || *(s + 1) == '=')))
+        if(*s == ',' || *s == '\n' || *s == '}' || *s == ']' || *s == ')' || *s == '(' || (TuiExpressionOperatorsSet.count(*s) != 0 && (*s != '=' || *(s + 1) == '=')))
         {
             
             bool keyWasFunctionCall = false;
-            if(keyRef->type() == MJREF_TYPE_STRING)
+            if(keyRef->type() == TuiREF_TYPE_STRING)
             {
-                if(((MJString*)keyRef)->isValidFunctionString)
+                if(((TuiString*)keyRef)->isValidFunctionString)
                 {
                     keyWasFunctionCall = true;
                 }
                 
-                /*MJRef* newKeyRef = loadVariableIfAvailable((MJString*)keyRef, s, endptr, this, debugInfo);
+                /*TuiRef* newKeyRef = loadVariableIfAvailable((TuiString*)keyRef, s, endptr, this, debugInfo);
                 if(newKeyRef)
                 {
                     keyRef->release();
@@ -584,7 +584,7 @@ public://functions
             }
             
             debugInfo->lineNumber = keyStartLineNumber;
-            MJRef* newKeyRef = recursivelyLoadValue(keyStartS,
+            TuiRef* newKeyRef = recursivelyLoadValue(keyStartS,
                                                 endptr,
                                                     nullptr,
                                                 nullptr,
@@ -605,7 +605,7 @@ public://functions
                 debugInfo->lineNumber++;
             }
             
-            if(!keyWasFunctionCall || (newKeyRef && newKeyRef->type() != MJREF_TYPE_NIL))
+            if(!keyWasFunctionCall || (newKeyRef && newKeyRef->type() != TuiREF_TYPE_NIL))
             {
                 arrayObjects.push_back(keyRef);
             }
@@ -626,21 +626,21 @@ public://functions
             s++;
             s = skipToNextChar(s, debugInfo);
             
-            if(keyRef->type() != MJREF_TYPE_STRING)
+            if(keyRef->type() != TuiREF_TYPE_STRING)
             {
-                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Table keys must be a string or number only. Found:%s", keyRef->getDebugString().c_str());
+                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Table keys must be a string or number only. Found:%s", keyRef->getDebugString().c_str());
                 return false;
             }
-            else if(!((MJString*)keyRef)->allowAsVariableName)
+            else if(!((TuiString*)keyRef)->allowAsVariableName)
             {
-                ((MJString*)keyRef)->allowAsVariableName = true; //required hack to support json with "x": quoted keys
-                ((MJString*)keyRef)->varNames.push_back(((MJString*)keyRef)->value);
+                ((TuiString*)keyRef)->allowAsVariableName = true; //required hack to support json with "x": quoted keys
+                ((TuiString*)keyRef)->varNames.push_back(((TuiString*)keyRef)->value);
             }
             
-            MJRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, nullptr, this, debugInfo, true, true);
+            TuiRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, nullptr, this, debugInfo, true, true);
             s = skipToNextChar(*endptr, debugInfo, true);
                 
-            recursivelySetVariable(((MJString*)keyRef), valueRef, debugInfo);
+            recursivelySetVariable(((TuiString*)keyRef), valueRef, debugInfo);
             
             bool success = true;
             
@@ -662,13 +662,13 @@ public://functions
             }
             else if(*s != '\0')
             {
-                if(valueRef->type() == MJREF_TYPE_STRING && *s == '(')
+                if(valueRef->type() == TuiREF_TYPE_STRING && *s == '(')
                 {
-                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call non-existent function:%s", ((MJString*)valueRef)->value.c_str());
+                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call non-existent function:%s", ((TuiString*)valueRef)->value.c_str());
                 }
                 else
                 {
-                    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ',' or newline after '=' or ':' assignment. unexpected character loading table:%c", *s);
+                    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ',' or newline after '=' or ':' assignment. unexpected character loading table:%c", *s);
                 }
                 success = false;
             }
@@ -681,7 +681,7 @@ public://functions
         }
         else if(*s != '\0')
         {
-            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
+            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
             delete keyRef;
             return false;
         }
@@ -692,9 +692,9 @@ public://functions
     }
     
     
-    static MJTable* initWithHumanReadableString(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo, MJRef** resultRef = nullptr) {
+    static TuiTable* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr) {
         
-        MJTable* table = new MJTable(parent);
+        TuiTable* table = new TuiTable(parent);
         
         const char* s = skipToNextChar(str, debugInfo);
         
@@ -704,7 +704,7 @@ public://functions
         }
         else
         {
-            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
+            TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
             delete table;
             return nullptr;
         }
@@ -742,7 +742,7 @@ public://functions
         debugString += "{\n";
         indent = indent + 4;
         
-        for(MJRef* object : arrayObjects)
+        for(TuiRef* object : arrayObjects)
         {
             for(int i = 0; i < indent; i++)
             {
@@ -766,7 +766,7 @@ public://functions
             }
             else
             {
-                MJWarn("Nil object for key:%d", kv.first);
+                TuiWarn("Nil object for key:%d", kv.first);
             }
         }
         
@@ -784,7 +784,7 @@ public://functions
             }
             else
             {
-                MJWarn("Nil object for key:%s", kv.first.c_str());
+                TuiWarn("Nil object for key:%s", kv.first.c_str());
             }
         }
         
@@ -796,11 +796,11 @@ public://functions
         debugString += "}";
     }
     
-    void set(const std::string& key, MJRef* value)
+    void set(const std::string& key, TuiRef* value)
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            MJRef* oldValue = objectsByStringKey[key];
+            TuiRef* oldValue = objectsByStringKey[key];
             if(oldValue == value)
             {
                 return;
@@ -808,24 +808,24 @@ public://functions
             
             oldValue->release();
             
-            if(!value || value->type() == MJREF_TYPE_NIL)
+            if(!value || value->type() == TuiREF_TYPE_NIL)
             {
                 objectsByStringKey.erase(key);
             }
         }
         
-        if(value && value->type() != MJREF_TYPE_NIL)
+        if(value && value->type() != TuiREF_TYPE_NIL)
         {
             value->retain();
             objectsByStringKey[key] = value;
         }
     }
     
-    void set(uint32_t key, MJRef* value)
+    void set(uint32_t key, TuiRef* value)
     {
         if(objectsByNumberKey.count(key) != 0)
         {
-            MJRef* oldValue = objectsByNumberKey[key];
+            TuiRef* oldValue = objectsByNumberKey[key];
             if(oldValue == value)
             {
                 return;
@@ -833,20 +833,20 @@ public://functions
             
             oldValue->release();
             
-            if(!value || value->type() == MJREF_TYPE_NIL)
+            if(!value || value->type() == TuiREF_TYPE_NIL)
             {
                 objectsByNumberKey.erase(key);
             }
         }
         
-        if(value && value->type() != MJREF_TYPE_NIL)
+        if(value && value->type() != TuiREF_TYPE_NIL)
         {
             value->retain();
             objectsByNumberKey[key] = value;
         }
     }
     
-    void push(MJRef* value)
+    void push(TuiRef* value)
     {
         value->retain();
         arrayObjects.push_back(value);
@@ -857,7 +857,7 @@ public://functions
         return objectsByStringKey.count(key) != 0;
     }
     
-    MJRef* get(const std::string& key)
+    TuiRef* get(const std::string& key)
     {
         if(objectsByStringKey.count(key) != 0)
         {
@@ -866,7 +866,7 @@ public://functions
         return nullptr;
     }
     
-    MJRef* get(const uint32_t numberKey)
+    TuiRef* get(const uint32_t numberKey)
     {
         if(objectsByNumberKey.count(numberKey) != 0)
         {
@@ -875,7 +875,7 @@ public://functions
         return nullptr;
     }
     
-    MJRef* getArray(int arrayIndex)
+    TuiRef* getArray(int arrayIndex)
     {
         if(arrayIndex >= 0 && arrayIndex < arrayObjects.size())
         {
@@ -884,42 +884,42 @@ public://functions
         return nullptr;
     }
     
-    MJTable* tableAtArrayIndex(int index)
+    TuiTable* tableAtArrayIndex(int index)
     {
         if(index >= 0 && index < arrayObjects.size())
         {
-            MJRef* ref = arrayObjects[index];
-            if(ref->type() == MJREF_TYPE_TABLE)
+            TuiRef* ref = arrayObjects[index];
+            if(ref->type() == TuiREF_TYPE_TABLE)
             {
-                return ((MJTable*)ref);
+                return ((TuiTable*)ref);
             }
             else
             {
-                MJError("Found incorrect type (%s) when loading tableAtArrayIndex expected table at index:%d", ref->getTypeName().c_str(), index);
+                TuiError("Found incorrect type (%s) when loading tableAtArrayIndex expected table at index:%d", ref->getTypeName().c_str(), index);
             }
         }
         return nullptr;
     }
     
     
-    MJTable* getTable(const std::string& key)
+    TuiTable* getTable(const std::string& key)
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            MJRef* ref = objectsByStringKey[key];
-            if(ref->type() == MJREF_TYPE_TABLE)
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == TuiREF_TYPE_TABLE)
             {
-                return ((MJTable*)ref);
+                return ((TuiTable*)ref);
             }
             else
             {
-                MJError("Found incorrect type (%s) when loading expected table:%s", ref->getTypeName().c_str(), key.c_str());
+                TuiError("Found incorrect type (%s) when loading expected table:%s", ref->getTypeName().c_str(), key.c_str());
             }
         }
         return nullptr;
     }
     
-    void setTable(const std::string& key, MJTable* value)
+    void setTable(const std::string& key, TuiTable* value)
     {
         set(key, value);
     }
@@ -929,14 +929,14 @@ public://functions
         static const std::string nilString = "";
         if(objectsByStringKey.count(key) != 0)
         {
-            MJRef* ref = objectsByStringKey[key];
-            if(ref->type() == MJREF_TYPE_STRING)
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == TuiREF_TYPE_STRING)
             {
-                return ((MJString*)ref)->value;
+                return ((TuiString*)ref)->value;
             }
             else
             {
-                MJError("Found incorrect type (%s) when loading expected string:%s", ref->getTypeName().c_str(), key.c_str());
+                TuiError("Found incorrect type (%s) when loading expected string:%s", ref->getTypeName().c_str(), key.c_str());
             }
         }
         return nilString;
@@ -944,7 +944,7 @@ public://functions
     
     void setString(const std::string& key, const std::string& value)
     {
-        MJString* ref = new MJString(value);
+        TuiString* ref = new TuiString(value);
         set(key, ref);
         ref->release();
     }
@@ -954,14 +954,14 @@ public://functions
         static const dvec2 nilVec2 = dvec2(0.0,0.0);
         if(objectsByStringKey.count(key) != 0)
         {
-            MJRef* ref = objectsByStringKey[key];
-            if(ref->type() == MJREF_TYPE_VEC2)
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == TuiREF_TYPE_VEC2)
             {
-                return ((MJVec2*)ref)->value;
+                return ((TuiVec2*)ref)->value;
             }
             else
             {
-                MJError("Found incorrect type (%s) when loading expected vec2:%s", ref->getTypeName().c_str(), key.c_str());
+                TuiError("Found incorrect type (%s) when loading expected vec2:%s", ref->getTypeName().c_str(), key.c_str());
             }
         }
         return nilVec2;
@@ -969,7 +969,7 @@ public://functions
     
     void setVec2(const std::string& key, const dvec2& value)
     {
-        MJVec2* ref = new MJVec2(value);
+        TuiVec2* ref = new TuiVec2(value);
         set(key, ref);
         ref->release();
     }
@@ -979,14 +979,14 @@ public://functions
         static const dvec3 nilVec3 = dvec3(0.0,0.0,0.0);
         if(objectsByStringKey.count(key) != 0)
         {
-            MJRef* ref = objectsByStringKey[key];
-            if(ref->type() == MJREF_TYPE_VEC3)
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == TuiREF_TYPE_VEC3)
             {
-                return ((MJVec3*)ref)->value;
+                return ((TuiVec3*)ref)->value;
             }
             else
             {
-                MJError("Found incorrect type (%s) when loading expected vec3:%s", ref->getTypeName().c_str(), key.c_str());
+                TuiError("Found incorrect type (%s) when loading expected vec3:%s", ref->getTypeName().c_str(), key.c_str());
             }
         }
         return nilVec3;
@@ -994,7 +994,7 @@ public://functions
     
     void setVec3(const std::string& key, const dvec3& value)
     {
-        MJVec3* ref = new MJVec3(value);
+        TuiVec3* ref = new TuiVec3(value);
         set(key, ref);
         ref->release();
     }
@@ -1004,14 +1004,14 @@ public://functions
         static const dvec4 nilVec4 = dvec4(0.0,0.0,0.0,0.0);
         if(objectsByStringKey.count(key) != 0)
         {
-            MJRef* ref = objectsByStringKey[key];
-            if(ref->type() == MJREF_TYPE_VEC4)
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == TuiREF_TYPE_VEC4)
             {
-                return ((MJVec4*)ref)->value;
+                return ((TuiVec4*)ref)->value;
             }
             else
             {
-                MJError("Found incorrect type (%s) when loading expected vec4:%s", ref->getTypeName().c_str(), key.c_str());
+                TuiError("Found incorrect type (%s) when loading expected vec4:%s", ref->getTypeName().c_str(), key.c_str());
             }
         }
         return nilVec4;
@@ -1019,7 +1019,7 @@ public://functions
     
     void setVec4(const std::string& key, const dvec4& value)
     {
-        MJVec4* ref = new MJVec4(value);
+        TuiVec4* ref = new TuiVec4(value);
         set(key, ref);
         ref->release();
     }
@@ -1028,14 +1028,14 @@ public://functions
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            MJRef* ref = objectsByStringKey[key];
-            if(ref->type() == MJREF_TYPE_NUMBER)
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == TuiREF_TYPE_NUMBER)
             {
-                return ((MJNumber*)ref)->value;
+                return ((TuiNumber*)ref)->value;
             }
             else
             {
-                MJError("Found incorrect type (%s) when loading expected double:%s", ref->getTypeName().c_str(), key.c_str());
+                TuiError("Found incorrect type (%s) when loading expected double:%s", ref->getTypeName().c_str(), key.c_str());
             }
         }
         return 0.0;
@@ -1043,7 +1043,7 @@ public://functions
     
     void setDouble(const std::string& key, double value)
     {
-        MJNumber* ref = new MJNumber(value);
+        TuiNumber* ref = new TuiNumber(value);
         set(key, ref);
         ref->release();
     }
@@ -1052,14 +1052,14 @@ public://functions
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            MJRef* ref = objectsByStringKey[key];
-            if(ref->type() == MJREF_TYPE_BOOL)
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == TuiREF_TYPE_BOOL)
             {
-                return ((MJBool*)ref)->value;
+                return ((TuiBool*)ref)->value;
             }
             else
             {
-                MJError("Found incorrect type (%s) when loading expected bool:%s", ref->getTypeName().c_str(), key.c_str());
+                TuiError("Found incorrect type (%s) when loading expected bool:%s", ref->getTypeName().c_str(), key.c_str());
             }
         }
         return false;
@@ -1067,7 +1067,7 @@ public://functions
     
     void setBool(const std::string& key, bool value)
     {
-        MJBool* ref = new MJBool(value);
+        TuiBool* ref = new TuiBool(value);
         set(key, ref);
         ref->release();
     }
@@ -1078,14 +1078,14 @@ public://functions
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            MJRef* ref = objectsByStringKey[key];
-            if(ref->type() == MJREF_TYPE_USERDATA)
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == TuiREF_TYPE_USERDATA)
             {
-                return ((MJUserData*)ref)->value;
+                return ((TuiUserData*)ref)->value;
             }
             else
             {
-                MJError("Found incorrect type (%s) when loading expected userData:%s", ref->getTypeName().c_str(), key.c_str());
+                TuiError("Found incorrect type (%s) when loading expected userData:%s", ref->getTypeName().c_str(), key.c_str());
             }
         }
         return nullptr;
@@ -1093,7 +1093,7 @@ public://functions
     
     void setUserData(const std::string& key, void* value)
     {
-        MJUserData* ref = new MJUserData(value);
+        TuiUserData* ref = new TuiUserData(value);
         set(key, ref);
         ref->release();
     }

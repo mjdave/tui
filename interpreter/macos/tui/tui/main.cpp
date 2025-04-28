@@ -1,13 +1,13 @@
 //
 //  main.cpp
-//  mjs
+//  tui
 //
 //  Created by David Frampton on 18/04/2025.
 //
 
 #include <iostream>
 #include "Interpreter.h"
-#include "MJLog.h"
+#include "TuiLog.h"
 
 int main(int argc, const char * argv[]) {
     
@@ -19,7 +19,7 @@ int main(int argc, const char * argv[]) {
     
     if(args.empty())
     {
-        MJLog("Please supply a script to run, eg. ./mjs examples/example.mjh");
+        TuiLog("Please supply a script to run, eg. ./tui examples/example.mjh");
         return 0;
     }
     
@@ -44,7 +44,7 @@ int main(int argc, const char * argv[]) {
  #include <getopt.h>
  #include "StringUtils.h"
  #include "NetConstants.h"
- #include "MJVersion.h"
+ #include "TuiVersion.h"
 
  static const struct option longopts[] = {
      { "list",               no_argument, NULL, 'l' },

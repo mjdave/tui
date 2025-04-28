@@ -1,5 +1,5 @@
-#include "MJFileUtils.h"
-#include "MJStringUtils.h"
+#include "TuiFileUtils.h"
+#include "TuiStringUtils.h"
 
 #include <fstream>
 
@@ -166,7 +166,7 @@ std::string fileNameFromPath(const std::string& path)
     {
         return filePathComponents[filePathComponents.size() - 1];  
     }
-    MJLog("Error finding fileNameFromPath for input path:%s", path.c_str());
+    TuiLog("Error finding fileNameFromPath for input path:%s", path.c_str());
     return "";
 }
 
@@ -181,7 +181,7 @@ std::string fileExtensionFromPath(const std::string& path)
             return "." + components[components.size() - 1];
         }
     }
-    MJLog("Error finding fileExtensionFromPath for input path:%s", path.c_str());
+    TuiLog("Error finding fileExtensionFromPath for input path:%s", path.c_str());
     return "";
 }
 
@@ -211,7 +211,7 @@ std::string changeExtensionForPath(const std::string& path, const std::string& n
             return result;  
         }
     }
-    MJLog("Error in changeExtensionForPath for input path:%s", path.c_str());
+    TuiLog("Error in changeExtensionForPath for input path:%s", path.c_str());
     return "";
 }
 
@@ -234,7 +234,7 @@ std::string removeExtensionForPath(const std::string& path)
 			return result;  
 		}
 	}
-	MJLog("Error in changeExtensionForPath for input path:%s", path.c_str());
+	TuiLog("Error in changeExtensionForPath for input path:%s", path.c_str());
 	return "";
 }
 
@@ -251,7 +251,7 @@ std::string pathByRemovingLastPathComponent(const std::string& path)
 
         return result;
     }
-    MJLog("Error pathByRemovingLastPathComponent for input path:%s", path.c_str());
+    TuiLog("Error pathByRemovingLastPathComponent for input path:%s", path.c_str());
     return "";
 }
 
@@ -268,7 +268,7 @@ std::string pathByAppendingPathComponent(const std::string& path, const std::str
         outPath = outPath + appendPath;
         return outPath;
     }
-    MJLog("Error pathByAppendingPathComponent for input path:%s", path.c_str());
+    TuiLog("Error pathByAppendingPathComponent for input path:%s", path.c_str());
     return "";
 }
 
@@ -449,7 +449,7 @@ void createDirectoriesIfNeededForDirPath(const std::string& path)
 #endif
                 if(error)
                 {
-                    MJLog("Error createDirectoriesIfNeededForDirPath for input path:%s", path.c_str());
+                    TuiLog("Error createDirectoriesIfNeededForDirPath for input path:%s", path.c_str());
                 }
             }
         }
@@ -474,7 +474,7 @@ bool copyFile(const std::string& sourcePath, const std::string& destinationPath)
 		return true;
 	}
 
-	MJLog("ERROR: Failed to copy file %s -> %s", sourcePath.c_str(), destinationPath.c_str());
+	TuiLog("ERROR: Failed to copy file %s -> %s", sourcePath.c_str(), destinationPath.c_str());
 
 	return false;
 }
@@ -520,7 +520,7 @@ bool copyFileOrDir(const std::string& sourcePath, const std::string& destination
 	}
 	else
 	{
-		MJLog("WARNING: Source file or directory not found for copyFileOrDir:%s", sourcePath.c_str());
+		TuiLog("WARNING: Source file or directory not found for copyFileOrDir:%s", sourcePath.c_str());
 		return false;
 	}
 	return true;
@@ -544,6 +544,6 @@ void openFile(std::string filePath)
         system("/usr/bin/osascript -e 'tell application \"Finder\" to activate'");
     }
 #else
-	MJLog("ERROR:openFile not implemented on this platform");
+	TuiLog("ERROR:openFile not implemented on this platform");
 #endif
 }

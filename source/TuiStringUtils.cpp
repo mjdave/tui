@@ -1,5 +1,5 @@
 
-#include "MJStringUtils.h"
+#include "TuiStringUtils.h"
 #include <stdio.h>
 #include <string>
 #include <cstring>

@@ -3,12 +3,12 @@
 
 Interpreter::Interpreter(std::vector<std::string>& args)
 {
-    //MJRef* debugRef = MJRef::load(getResourcePath("examples/singleNumber.mjh"));
-   // debugRef->debugLog();
+    TuiRef* debugRef = TuiRef::load(getResourcePath("examples/daveTest.mjh"));
+    debugRef->debugLog();
     
     /*for(auto& arg : args)
     {
-        MJRef* scriptRunResult = MJTable::runScriptFile(getResourcePath(arg));
+        TuiRef* scriptRunResult = TuiTable::runScriptFile(getResourcePath(arg));
         if(scriptRunResult)
         {
             scriptRunResult->debugLog();
@@ -16,30 +16,30 @@ Interpreter::Interpreter(std::vector<std::string>& args)
     }*/
     
     
-    MJRef* scriptRunResult = MJTable::runScriptFile("examples/daveTest.mjh");
-    //MJRef* scriptRunResult = MJTable::runScriptFile("examples/scope.mjh");
-    //MJRef* scriptRunResult = MJTable::runScriptFile("examples/simpleScript.mjh");
-    //MJRef* scriptRunResult = MJTable::runScriptFile("examples/functionsAndIfStatements.mjh");
-    //MJRef* scriptRunResult = MJTable::runScriptFile("examples/mathsAndExpressions.mjh");
-    if(scriptRunResult)
+    //TuiRef* scriptRunResult = TuiTable::runScriptFile("examples/daveTest.mjh");
+    //TuiRef* scriptRunResult = TuiTable::runScriptFile("examples/scope.mjh");
+    //TuiRef* scriptRunResult = TuiTable::runScriptFile("examples/simpleScript.mjh");
+    //TuiRef* scriptRunResult = TuiTable::runScriptFile("examples/functionsAndIfStatements.mjh");
+    //TuiRef* scriptRunResult = TuiTable::runScriptFile("examples/mathsAndExpressions.mjh");
+    //if(scriptRunResult)
     {
         //scriptRunResult->debugLog();
     }
 }
 
 
-//#include "MJScript.h"
+//#include "TuiScript.h"
 //
 //int main()
 //{
 //    // load a JSON-like config file, grab a string and a double, make a modification, save it
-//    MJTable* table = MJTable::initWithHumanReadableFilePath("config.mjh");
+//    TuiTable* table = TuiTable::initWithHumanReadableFilePath("config.mjh");
 //    std::string playerName = table->getString("playerName");
 //    double playDuration = table->getDouble("playDuration");
 //    table->setDouble("playDuration", playDuration + 1.0);
 //    table->saveToFile("config.mjh");
 //
 //    //run a script and print the result
-//    MJRef* scriptRunResult = MJTable::runScriptFile("script.mjh");
+//    TuiRef* scriptRunResult = TuiTable::runScriptFile("script.mjh");
 //    scriptRunResult->debugLog();
 //}

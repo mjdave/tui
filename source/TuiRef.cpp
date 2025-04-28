@@ -1,44 +1,44 @@
 
-#include "MJRef.h"
+#include "TuiRef.h"
 
-#include "MJTable.h"
-#include "MJNumber.h"
+#include "TuiTable.h"
+#include "TuiNumber.h"
 
 
-MJTable* MJRef::createRootTable()
+TuiTable* TuiRef::createRootTable()
 {
-    MJTable* rootTable = new MJTable(nullptr);
+    TuiTable* rootTable = new TuiTable(nullptr);
     srand((unsigned)time(nullptr));
     
-    MJFunction* randomFunction = new MJFunction([rootTable](MJTable* args, MJTable* state) {
+    TuiFunction* randomFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state) {
         if(args->arrayObjects.size() > 0)
         {
-            MJRef* arg = args->arrayObjects[0];
-            if(arg->type() == MJREF_TYPE_NUMBER)
+            TuiRef* arg = args->arrayObjects[0];
+            if(arg->type() == TuiREF_TYPE_NUMBER)
             {
-                const double& numValue = ((MJNumber*)(arg))->value;
+                const double& numValue = ((TuiNumber*)(arg))->value;
                 if(numValue == floor(numValue))
                 {
-                    return new MJNumber(floor(((double)rand() / RAND_MAX) * numValue));
+                    return new TuiNumber(floor(((double)rand() / RAND_MAX) * numValue));
                 }
-                return new MJNumber(((double)rand() / RAND_MAX) * numValue);
+                return new TuiNumber(((double)rand() / RAND_MAX) * numValue);
             }
         }
-        return new MJNumber(((double)rand() / RAND_MAX));
+        return new TuiNumber(((double)rand() / RAND_MAX));
     }, rootTable);
     
     rootTable->set("random", randomFunction);
     randomFunction->release();
     
-    MJFunction* printFunction = new MJFunction([rootTable](MJTable* args, MJTable* state) {
+    TuiFunction* printFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state) {
         if(args->arrayObjects.size() > 0)
         {
             std::string printString = "";
-            for(MJRef* arg : args->arrayObjects)
+            for(TuiRef* arg : args->arrayObjects)
             {
                 printString += arg->getDebugStringValue();
             }
-            MJLog("%s", printString.c_str());
+            TuiLog("%s", printString.c_str());
         }
         return nullptr;
     }, rootTable);
@@ -46,12 +46,12 @@ MJTable* MJRef::createRootTable()
     rootTable->set("print", printFunction);
     printFunction->release();
     
-    MJFunction* requireFunction = new MJFunction([rootTable](MJTable* args, MJTable* state) {
+    TuiFunction* requireFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state) {
         if(args->arrayObjects.size() > 0)
         {
-            return MJRef::load(getResourcePath(args->arrayObjects[0]->getStringValue()), state);
+            return TuiRef::load(getResourcePath(args->arrayObjects[0]->getStringValue()), state);
         }
-        return new MJRef();
+        return new TuiRef();
     }, rootTable);
     
     rootTable->set("require", requireFunction);
@@ -61,19 +61,19 @@ MJTable* MJRef::createRootTable()
     return rootTable;
 }
 
-MJRef* MJRef::load(const std::string& inputString, const std::string& debugName, MJTable* parent) {
-    MJDebugInfo debugInfo;
+TuiRef* TuiRef::load(const std::string& inputString, const std::string& debugName, TuiTable* parent) {
+    TuiDebugInfo debugInfo;
     debugInfo.fileName = debugName;
     const char* cString = inputString.c_str();
     char* endPtr;
     
-    return MJRef::load(cString, &endPtr, parent, &debugInfo);
+    return TuiRef::load(cString, &endPtr, parent, &debugInfo);
 }
 
-MJRef* MJRef::load(const std::string& filename, MJTable* parent) {
+TuiRef* TuiRef::load(const std::string& filename, TuiTable* parent) {
     
     std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
-    MJDebugInfo debugInfo;
+    TuiDebugInfo debugInfo;
     debugInfo.fileName = filename;
     if(in)
     {
@@ -85,19 +85,19 @@ MJRef* MJRef::load(const std::string& filename, MJTable* parent) {
         in.close();
         const char* cString = contents.c_str();
         char* endPtr;
-        return MJRef::load(cString, &endPtr, parent, &debugInfo);
+        return TuiRef::load(cString, &endPtr, parent, &debugInfo);
     }
     else
     {
-        MJError("File not found in MJTable::initWithHumanReadableFilePath at:%s", filename.c_str());
+        TuiError("File not found in TuiTable::initWithHumanReadableFilePath at:%s", filename.c_str());
     }
     return nullptr;
 }
 
-MJRef* MJRef::runScriptFile(const std::string& filename, MJTable* parent)
+TuiRef* TuiRef::runScriptFile(const std::string& filename, TuiTable* parent)
 {
     std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
-    MJDebugInfo debugInfo;
+    TuiDebugInfo debugInfo;
     debugInfo.fileName = filename;
     if(in)
     {
@@ -109,8 +109,8 @@ MJRef* MJRef::runScriptFile(const std::string& filename, MJTable* parent)
         in.close();
         const char* cString = contents.c_str();
         char* endPtr;
-        MJRef* resultRef = nullptr;
-        MJRef* table = MJRef::load(cString, &endPtr, parent, &debugInfo, &resultRef);
+        TuiRef* resultRef = nullptr;
+        TuiRef* table = TuiRef::load(cString, &endPtr, parent, &debugInfo, &resultRef);
         //todo if debug logging
         if(table)
         {
@@ -121,15 +121,15 @@ MJRef* MJRef::runScriptFile(const std::string& filename, MJTable* parent)
     }
     else
     {
-        MJError("File not found in MJTable::initWithHumanReadableFilePath at:%s", filename.c_str());
+        TuiError("File not found in TuiTable::initWithHumanReadableFilePath at:%s", filename.c_str());
     }
     return nullptr;
-    //MJRef** resultRef
+    //TuiRef** resultRef
 }
 
-MJRef* MJRef::load(const char* str, char** endptr, MJRef* parent, MJDebugInfo* debugInfo, MJRef** resultRef) {
+TuiRef* TuiRef::load(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef) {
     
-    MJTable* table = new MJTable(parent);
+    TuiTable* table = new TuiTable(parent);
     
     const char* s = skipToNextChar(str, debugInfo);
     
@@ -173,7 +173,7 @@ MJRef* MJRef::load(const char* str, char** endptr, MJRef* parent, MJDebugInfo* d
             int arrayObjectCount = (int)table->arrayObjects.size();
             if(arrayObjectCount == 1)
             {
-                MJRef* object = table->arrayObjects[0];
+                TuiRef* object = table->arrayObjects[0];
                 object->retain();
                 table->release();
                 return object;
@@ -189,27 +189,27 @@ MJRef* MJRef::load(const char* str, char** endptr, MJRef* parent, MJDebugInfo* d
     return table;
 }
 
-MJRef* loadVariableIfAvailable(MJString* variableName, MJRef* existingValue, const char* str, char** endptr, MJTable* parentTable, MJDebugInfo* debugInfo)
+TuiRef* loadVariableIfAvailable(TuiString* variableName, TuiRef* existingValue, const char* str, char** endptr, TuiTable* parentTable, TuiDebugInfo* debugInfo)
 {
     if(variableName->allowAsVariableName && parentTable)
     {
-        MJRef* newValueRef = parentTable->recursivelyFindVariable(variableName, debugInfo, true);
+        TuiRef* newValueRef = parentTable->recursivelyFindVariable(variableName, debugInfo, true);
         if(newValueRef)
         {
-            if(newValueRef->type() == MJREF_TYPE_TABLE)
+            if(newValueRef->type() == TuiREF_TYPE_TABLE)
             {
                 newValueRef->retain();
                 return newValueRef;
             }
-            else if(newValueRef->type() == MJREF_TYPE_FUNCTION)
+            else if(newValueRef->type() == TuiREF_TYPE_FUNCTION)
             {
                 if(variableName->isValidFunctionString)
                 {
                     const char* s = str;
-                    MJTable* argsArrayTable = MJTable::initWithHumanReadableString(s, endptr, parentTable, debugInfo);
+                    TuiTable* argsArrayTable = TuiTable::initWithHumanReadableString(s, endptr, parentTable, debugInfo);
                     s = skipToNextChar(*endptr, debugInfo, true);
                     
-                    MJRef* result = ((MJFunction*)newValueRef)->call(argsArrayTable, parentTable, existingValue);
+                    TuiRef* result = ((TuiFunction*)newValueRef)->call(argsArrayTable, parentTable, existingValue);
                     *endptr = (char*)s;
                     
                     if(result)
@@ -229,7 +229,7 @@ MJRef* loadVariableIfAvailable(MJString* variableName, MJRef* existingValue, con
     }
     if(variableName->isValidFunctionString)
     {
-        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to call missing function: %s()", variableName->value.c_str());
+        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to call missing function: %s()", variableName->value.c_str());
         const char* s = skipToNextChar(*endptr, debugInfo, true);
         if(*s == '(')
         {
@@ -247,10 +247,10 @@ MJRef* loadVariableIfAvailable(MJString* variableName, MJRef* existingValue, con
 }
 
 
-bool setVariable(MJString* variableName,
-                            MJRef* value,
-                               MJTable* parentTable,
-                               MJDebugInfo* debugInfo)
+bool setVariable(TuiString* variableName,
+                            TuiRef* value,
+                               TuiTable* parentTable,
+                               TuiDebugInfo* debugInfo)
 {
     if(variableName->allowAsVariableName && parentTable)
     {
@@ -259,17 +259,17 @@ bool setVariable(MJString* variableName,
     return false;
 }
 
-MJRef* loadValue(const char* str, char** endptr, MJRef* existingValue, MJTable* parentTable, MJDebugInfo* debugInfo, bool allowNonVarStrings)
+TuiRef* loadValue(const char* str, char** endptr, TuiRef* existingValue, TuiTable* parentTable, TuiDebugInfo* debugInfo, bool allowNonVarStrings)
 {
     const char* s = str;
     
-    MJRef* valueRef = MJTable::initUnknownTypeRefWithHumanReadableString(s, endptr, parentTable, debugInfo);
+    TuiRef* valueRef = TuiTable::initUnknownTypeRefWithHumanReadableString(s, endptr, parentTable, debugInfo);
     s = skipToNextChar(*endptr, debugInfo, true);
     
-    if(valueRef->type() == MJREF_TYPE_STRING)
+    if(valueRef->type() == TuiREF_TYPE_STRING)
     {
-        MJString* originalString = (MJString*)valueRef;
-        MJRef* newValueRef = loadVariableIfAvailable(originalString, nullptr, s, endptr, parentTable, debugInfo);
+        TuiString* originalString = (TuiString*)valueRef;
+        TuiRef* newValueRef = loadVariableIfAvailable(originalString, nullptr, s, endptr, parentTable, debugInfo);
         
         s = skipToNextChar(*endptr, debugInfo, true);
         
@@ -286,7 +286,7 @@ MJRef* loadValue(const char* str, char** endptr, MJRef* existingValue, MJTable* 
         }
         else if(!allowNonVarStrings)
         {
-            MJSWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Uninitialized variable:%s", originalString->value.c_str());
+            TuiSWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Uninitialized variable:%s", originalString->value.c_str());
             originalString->release();
             *endptr = (char*)s;
             return nullptr;
@@ -298,12 +298,12 @@ MJRef* loadValue(const char* str, char** endptr, MJRef* existingValue, MJTable* 
     return valueRef;
 }
 
-MJRef* recursivelyLoadValue(const char* str,
+TuiRef* recursivelyLoadValue(const char* str,
                             char** endptr,
-                            MJRef* existingValue,
-                            MJRef* leftValue,
-                            MJTable* parentTable,
-                            MJDebugInfo* debugInfo,
+                            TuiRef* existingValue,
+                            TuiRef* leftValue,
+                            TuiTable* parentTable,
+                            TuiDebugInfo* debugInfo,
                             bool runLowOperators,
                             bool allowNonVarStrings)
 {
@@ -346,7 +346,7 @@ MJRef* recursivelyLoadValue(const char* str,
         return leftValue;
     }
     
-    if(MJExpressionOperatorsSet.count(operatorChar) == 0 || (operatorChar == '=' && secondOperatorChar != '=') || (!runLowOperators && (operatorChar == '+' || operatorChar == '-')))
+    if(TuiExpressionOperatorsSet.count(operatorChar) == 0 || (operatorChar == '=' && secondOperatorChar != '=') || (!runLowOperators && (operatorChar == '+' || operatorChar == '-')))
     {
         s = skipToNextChar(s, debugInfo, true);
         *endptr = (char*)s;
@@ -366,14 +366,14 @@ MJRef* recursivelyLoadValue(const char* str,
     
     s = skipToNextChar(s, debugInfo, true);
     
-    MJRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, nullptr, parentTable, debugInfo, false, false);
+    TuiRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, nullptr, parentTable, debugInfo, false, false);
     s = skipToNextChar(*endptr, debugInfo, true);
     
-    if(rightValue->type() == MJREF_TYPE_STRING)
+    if(rightValue->type() == TuiREF_TYPE_STRING)
     {
-        if(((MJString*)rightValue)->allowAsVariableName)
+        if(((TuiString*)rightValue)->allowAsVariableName)
         {
-            MJRef* newValueRef = parentTable->recursivelyFindVariable((MJString*)rightValue, debugInfo, true);
+            TuiRef* newValueRef = parentTable->recursivelyFindVariable((TuiString*)rightValue, debugInfo, true);
             if(newValueRef)
             {
                 delete rightValue;
@@ -381,48 +381,48 @@ MJRef* recursivelyLoadValue(const char* str,
             }
             else
             {
-                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Running expression with uninitialized variable:%s", ((MJString*)rightValue)->value.c_str());
+                TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Running expression with uninitialized variable:%s", ((TuiString*)rightValue)->value.c_str());
             }
         }
     }
     
-    MJRef* result = nullptr;
+    TuiRef* result = nullptr;
     
-    if(leftValue->type() == MJREF_TYPE_NUMBER)
+    if(leftValue->type() == TuiREF_TYPE_NUMBER)
     {
-        if(rightValue->type() == MJREF_TYPE_NUMBER)
+        if(rightValue->type() == TuiREF_TYPE_NUMBER)
         {
             switch(operatorChar)
             {
                 case '+':
                 {
-                    result = new MJNumber(((MJNumber*)leftValue)->value + ((MJNumber*)rightValue)->value);
+                    result = new TuiNumber(((TuiNumber*)leftValue)->value + ((TuiNumber*)rightValue)->value);
                 }
                 break;
                 case '-':
                 {
-                    result = new MJNumber(((MJNumber*)leftValue)->value - ((MJNumber*)rightValue)->value);
+                    result = new TuiNumber(((TuiNumber*)leftValue)->value - ((TuiNumber*)rightValue)->value);
                 }
                 break;
                 case '*':
                 {
-                    result = new MJNumber(((MJNumber*)leftValue)->value * ((MJNumber*)rightValue)->value);
+                    result = new TuiNumber(((TuiNumber*)leftValue)->value * ((TuiNumber*)rightValue)->value);
                 }
                 break;
                 case '/':
                 {
-                    result = new MJNumber(((MJNumber*)leftValue)->value / ((MJNumber*)rightValue)->value);
+                    result = new TuiNumber(((TuiNumber*)leftValue)->value / ((TuiNumber*)rightValue)->value);
                 }
                 break;
                 case '>':
                 {
                     if(secondOperatorChar == '=')
                     {
-                        result = new MJBool(((MJNumber*)leftValue)->value >= ((MJNumber*)rightValue)->value);
+                        result = new TuiBool(((TuiNumber*)leftValue)->value >= ((TuiNumber*)rightValue)->value);
                     }
                     else
                     {
-                        result = new MJBool(((MJNumber*)leftValue)->value > ((MJNumber*)rightValue)->value);
+                        result = new TuiBool(((TuiNumber*)leftValue)->value > ((TuiNumber*)rightValue)->value);
                     }
                 }
                 break;
@@ -430,200 +430,200 @@ MJRef* recursivelyLoadValue(const char* str,
                 {
                     if(secondOperatorChar == '=')
                     {
-                        result = new MJBool(((MJNumber*)leftValue)->value <= ((MJNumber*)rightValue)->value);
+                        result = new TuiBool(((TuiNumber*)leftValue)->value <= ((TuiNumber*)rightValue)->value);
                     }
                     else
                     {
-                        result = new MJBool(((MJNumber*)leftValue)->value < ((MJNumber*)rightValue)->value);
+                        result = new TuiBool(((TuiNumber*)leftValue)->value < ((TuiNumber*)rightValue)->value);
                     }
                 }
                 break;
                 case '=':
                 {
-                    result = new MJBool(((MJNumber*)leftValue)->value == ((MJNumber*)rightValue)->value);
+                    result = new TuiBool(((TuiNumber*)leftValue)->value == ((TuiNumber*)rightValue)->value);
                 }
                 break;
             }
         }
-        else if(rightValue->type() == MJREF_TYPE_VEC2)
+        else if(rightValue->type() == TuiREF_TYPE_VEC2)
         {
             switch(operatorChar)
             {
                 case '*':
                 {
-                    result = new MJVec2(dvec2(((MJNumber*)leftValue)->value) * ((MJVec2*)rightValue)->value);
+                    result = new TuiVec2(dvec2(((TuiNumber*)leftValue)->value) * ((TuiVec2*)rightValue)->value);
                 }
                 break;
                 case '/':
                 {
-                    result = new MJVec2(dvec2(((MJNumber*)leftValue)->value) / ((MJVec2*)rightValue)->value);
+                    result = new TuiVec2(dvec2(((TuiNumber*)leftValue)->value) / ((TuiVec2*)rightValue)->value);
                 }
                 break;
             }
         }
-        else if(rightValue->type() == MJREF_TYPE_VEC3)
+        else if(rightValue->type() == TuiREF_TYPE_VEC3)
         {
             switch(operatorChar)
             {
                 case '*':
                 {
-                    result = new MJVec3(dvec3(((MJNumber*)leftValue)->value) * ((MJVec3*)rightValue)->value);
+                    result = new TuiVec3(dvec3(((TuiNumber*)leftValue)->value) * ((TuiVec3*)rightValue)->value);
                 }
                 break;
                 case '/':
                 {
-                    result = new MJVec3(dvec3(((MJNumber*)leftValue)->value) / ((MJVec3*)rightValue)->value);
+                    result = new TuiVec3(dvec3(((TuiNumber*)leftValue)->value) / ((TuiVec3*)rightValue)->value);
                 }
                 break;
             }
         }
-        else if(rightValue->type() == MJREF_TYPE_VEC4)
+        else if(rightValue->type() == TuiREF_TYPE_VEC4)
         {
             switch(operatorChar)
             {
                 case '*':
                 {
-                    result = new MJVec4(dvec4(((MJNumber*)leftValue)->value) * ((MJVec4*)rightValue)->value);
+                    result = new TuiVec4(dvec4(((TuiNumber*)leftValue)->value) * ((TuiVec4*)rightValue)->value);
                 }
                 break;
                 case '/':
                 {
-                    result = new MJVec4(dvec4(((MJNumber*)leftValue)->value) / ((MJVec4*)rightValue)->value);
-                }
-                break;
-            }
-        }
-    }
-    else if(leftValue->type() == MJREF_TYPE_VEC2)
-    {
-        if(rightValue->type() == MJREF_TYPE_NUMBER)
-        {
-            switch(operatorChar)
-            {
-                case '*':
-                {
-                    result = new MJVec2(((MJVec2*)leftValue)->value * ((MJNumber*)rightValue)->value);
-                }
-                break;
-                case '/':
-                {
-                    result = new MJVec2(((MJVec2*)leftValue)->value / ((MJNumber*)rightValue)->value);
-                }
-                break;
-            }
-        }
-        else if(rightValue->type() == MJREF_TYPE_VEC2)
-        {
-            switch(operatorChar)
-            {
-                case '+':
-                {
-                    result = new MJVec2(((MJVec2*)leftValue)->value + ((MJVec2*)rightValue)->value);
-                }
-                break;
-                case '-':
-                {
-                    result = new MJVec2(((MJVec2*)leftValue)->value - ((MJVec2*)rightValue)->value);
-                }
-                break;
-                case '*':
-                {
-                    result = new MJVec2(((MJVec2*)leftValue)->value * ((MJVec2*)rightValue)->value);
-                }
-                break;
-                case '/':
-                {
-                    result = new MJVec2(((MJVec2*)leftValue)->value / ((MJVec2*)rightValue)->value);
+                    result = new TuiVec4(dvec4(((TuiNumber*)leftValue)->value) / ((TuiVec4*)rightValue)->value);
                 }
                 break;
             }
         }
     }
-    else if(leftValue->type() == MJREF_TYPE_VEC3)
+    else if(leftValue->type() == TuiREF_TYPE_VEC2)
     {
-        if(rightValue->type() == MJREF_TYPE_NUMBER)
+        if(rightValue->type() == TuiREF_TYPE_NUMBER)
         {
             switch(operatorChar)
             {
                 case '*':
                 {
-                    result = new MJVec3(((MJVec3*)leftValue)->value * ((MJNumber*)rightValue)->value);
+                    result = new TuiVec2(((TuiVec2*)leftValue)->value * ((TuiNumber*)rightValue)->value);
                 }
                 break;
                 case '/':
                 {
-                    result = new MJVec3(((MJVec3*)leftValue)->value / ((MJNumber*)rightValue)->value);
+                    result = new TuiVec2(((TuiVec2*)leftValue)->value / ((TuiNumber*)rightValue)->value);
                 }
                 break;
             }
         }
-        else if(rightValue->type() == MJREF_TYPE_VEC3)
+        else if(rightValue->type() == TuiREF_TYPE_VEC2)
         {
             switch(operatorChar)
             {
                 case '+':
                 {
-                    result = new MJVec3(((MJVec3*)leftValue)->value + ((MJVec3*)rightValue)->value);
+                    result = new TuiVec2(((TuiVec2*)leftValue)->value + ((TuiVec2*)rightValue)->value);
                 }
                 break;
                 case '-':
                 {
-                    result = new MJVec3(((MJVec3*)leftValue)->value - ((MJVec3*)rightValue)->value);
+                    result = new TuiVec2(((TuiVec2*)leftValue)->value - ((TuiVec2*)rightValue)->value);
                 }
                 break;
                 case '*':
                 {
-                    result = new MJVec3(((MJVec3*)leftValue)->value * ((MJVec3*)rightValue)->value);
+                    result = new TuiVec2(((TuiVec2*)leftValue)->value * ((TuiVec2*)rightValue)->value);
                 }
                 break;
                 case '/':
                 {
-                    result = new MJVec3(((MJVec3*)leftValue)->value / ((MJVec3*)rightValue)->value);
+                    result = new TuiVec2(((TuiVec2*)leftValue)->value / ((TuiVec2*)rightValue)->value);
                 }
                 break;
             }
         }
     }
-    else if(leftValue->type() == MJREF_TYPE_VEC4)
+    else if(leftValue->type() == TuiREF_TYPE_VEC3)
     {
-        if(rightValue->type() == MJREF_TYPE_NUMBER)
+        if(rightValue->type() == TuiREF_TYPE_NUMBER)
         {
             switch(operatorChar)
             {
                 case '*':
                 {
-                    result = new MJVec4(((MJVec4*)leftValue)->value * ((MJNumber*)rightValue)->value);
+                    result = new TuiVec3(((TuiVec3*)leftValue)->value * ((TuiNumber*)rightValue)->value);
                 }
                 break;
                 case '/':
                 {
-                    result = new MJVec4(((MJVec4*)leftValue)->value / ((MJNumber*)rightValue)->value);
+                    result = new TuiVec3(((TuiVec3*)leftValue)->value / ((TuiNumber*)rightValue)->value);
                 }
                 break;
             }
         }
-        else if(rightValue->type() == MJREF_TYPE_VEC4)
+        else if(rightValue->type() == TuiREF_TYPE_VEC3)
         {
             switch(operatorChar)
             {
                 case '+':
                 {
-                    result = new MJVec4(((MJVec4*)leftValue)->value + ((MJVec4*)rightValue)->value);
+                    result = new TuiVec3(((TuiVec3*)leftValue)->value + ((TuiVec3*)rightValue)->value);
                 }
                 break;
                 case '-':
                 {
-                    result = new MJVec4(((MJVec4*)leftValue)->value - ((MJVec4*)rightValue)->value);
+                    result = new TuiVec3(((TuiVec3*)leftValue)->value - ((TuiVec3*)rightValue)->value);
                 }
                 break;
                 case '*':
                 {
-                    result = new MJVec4(((MJVec4*)leftValue)->value * ((MJVec4*)rightValue)->value);
+                    result = new TuiVec3(((TuiVec3*)leftValue)->value * ((TuiVec3*)rightValue)->value);
                 }
                 break;
                 case '/':
                 {
-                    result = new MJVec4(((MJVec4*)leftValue)->value / ((MJVec4*)rightValue)->value);
+                    result = new TuiVec3(((TuiVec3*)leftValue)->value / ((TuiVec3*)rightValue)->value);
+                }
+                break;
+            }
+        }
+    }
+    else if(leftValue->type() == TuiREF_TYPE_VEC4)
+    {
+        if(rightValue->type() == TuiREF_TYPE_NUMBER)
+        {
+            switch(operatorChar)
+            {
+                case '*':
+                {
+                    result = new TuiVec4(((TuiVec4*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                }
+                break;
+                case '/':
+                {
+                    result = new TuiVec4(((TuiVec4*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                }
+                break;
+            }
+        }
+        else if(rightValue->type() == TuiREF_TYPE_VEC4)
+        {
+            switch(operatorChar)
+            {
+                case '+':
+                {
+                    result = new TuiVec4(((TuiVec4*)leftValue)->value + ((TuiVec4*)rightValue)->value);
+                }
+                break;
+                case '-':
+                {
+                    result = new TuiVec4(((TuiVec4*)leftValue)->value - ((TuiVec4*)rightValue)->value);
+                }
+                break;
+                case '*':
+                {
+                    result = new TuiVec4(((TuiVec4*)leftValue)->value * ((TuiVec4*)rightValue)->value);
+                }
+                break;
+                case '/':
+                {
+                    result = new TuiVec4(((TuiVec4*)leftValue)->value / ((TuiVec4*)rightValue)->value);
                 }
                 break;
             }
@@ -631,7 +631,7 @@ MJRef* recursivelyLoadValue(const char* str,
     }
     else
     {
-        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
+        TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
     }
     
     if(result)
@@ -644,7 +644,7 @@ MJRef* recursivelyLoadValue(const char* str,
             s++;
             s = skipToNextChar(s, debugInfo, true);
         }
-        else if(MJExpressionOperatorsSet.count(*s) != 0)
+        else if(TuiExpressionOperatorsSet.count(*s) != 0)
         {
             if(runLowOperators || *s == '*' || *s == '/')
             {
@@ -658,6 +658,6 @@ MJRef* recursivelyLoadValue(const char* str,
         return result;
     }
     
-    MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid expression");
+    TuiSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid expression");
     return nullptr;
 }

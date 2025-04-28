@@ -1,7 +1,7 @@
 
 
-#ifndef MJStringUtils_h
-#define MJStringUtils_h
+#ifndef TuiStringUtils_h
+#define TuiStringUtils_h
 
 #include <stdarg.h>  // for va_start, etc
 #include <memory>    // for std::unique_ptr
@@ -14,7 +14,7 @@
 #include <ctype.h>
 #include <iomanip>
 #include <limits>
-#include "MJSha1.h"
+#include "TuiSha1.h"
 //#include <fmt/printf.h>
 
 #include <stdexcept>
