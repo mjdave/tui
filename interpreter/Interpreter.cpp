@@ -26,20 +26,3 @@ Interpreter::Interpreter(std::vector<std::string>& args)
         scriptRunResult->debugLog();
     }
 }
-
-
-//#include "TuiScript.h"
-//
-//int main()
-//{
-//    // load a JSON-like config file, grab a string and a double, make a modification, save it
-//    TuiTable* table = TuiTable::initWithHumanReadableFilePath("config.tui");
-//    std::string playerName = table->getString("playerName");
-//    double playDuration = table->getDouble("playDuration");
-//    table->setDouble("playDuration", playDuration + 1.0);
-//    table->saveToFile("config.tui");
-//
-//    //run a script and print the result
-//    TuiRef* scriptRunResult = TuiTable::runScriptFile("script.tui");
-//    scriptRunResult->debugLog();
-//}
