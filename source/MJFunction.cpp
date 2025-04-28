@@ -209,6 +209,162 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
         s = skipToNextChar(s, debugInfo);
     }
     
+    MJForStatement* forStatement = new MJForStatement();
+    forStatement->lineNumber = debugInfo->lineNumber;
+    forStatement->expression = new MJExpression();
+    forStatement->continueExpression = new MJExpression();
+    
+    MJString* varNameRef = MJString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    s = skipToNextChar(*endptr, debugInfo);
+    
+    if(varNameRef && varNameRef->allowAsVariableName)
+    {
+        if(*s == '=')
+        {
+            s++;
+            s = skipToNextChar(s, debugInfo);
+            
+            forStatement->varName = varNameRef;
+            recursivelySerializeExpression(s, endptr, forStatement->expression, parent, tokenMap, debugInfo, true);
+            s = skipToNextChar(*endptr, debugInfo, true);
+            
+            if(tokenMap->tokensByVarNames.count(varNameRef->value) != 0)
+            {
+                forStatement->varToken = tokenMap->tokensByVarNames[varNameRef->value];
+            }
+            else
+            {
+                forStatement->varToken = tokenMap->tokenIndex++;
+                tokenMap->tokensByVarNames[varNameRef->value] = forStatement->varToken;
+            }
+        }
+        else
+        {
+            MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
+            varNameRef->release();
+            return nullptr;
+        }
+    }
+    else
+    {
+        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected variable assignment in for loop");
+        return nullptr;
+    }
+    
+    if(*s == ',' || *s == '\n')
+    {
+        s++;
+        s = skipToNextChar(s, debugInfo);
+    }
+    else
+    {
+        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
+        return nullptr;
+    }
+    
+    
+    recursivelySerializeExpression(s, endptr, forStatement->continueExpression, parent, tokenMap, debugInfo, true);
+    s = skipToNextChar(*endptr, debugInfo);
+    
+    if(*s == ',' || *s == '\n')
+    {
+        s++;
+        s = skipToNextChar(s, debugInfo);
+    }
+    else
+    {
+        MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or '\n'");
+        return nullptr;
+    }
+    
+    //todo this is c/p from below. Should be a factored out
+    const char* varNameStartS = s; //rewind if we find a function
+    varNameRef = MJString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    s = skipToNextChar(*endptr, debugInfo);
+    
+    if(varNameRef)
+    {
+        if(varNameRef->isValidFunctionString)
+        {
+            MJStatement* incrementStatement = new MJStatement(MJSTATEMENT_TYPE_FUNCTION_CALL);
+            forStatement->incrementStatement = incrementStatement;
+            incrementStatement->lineNumber = debugInfo->lineNumber;
+            incrementStatement->expression = new MJExpression();
+            
+            //s++; //'('
+            //s = skipToNextChar(s, debugInfo);
+            recursivelySerializeExpression(varNameStartS, endptr, incrementStatement->expression, parent, tokenMap, debugInfo, true);
+            
+            s = skipToNextChar(*endptr, debugInfo, true);
+            if(*s == ')')
+            {
+                s++;
+                s = skipToNextChar(s, debugInfo, true);
+            }
+            
+            varNameRef->release();
+        }
+        else if(varNameRef->allowAsVariableName)
+        {
+            if(*s == '=')
+            {
+                s++;
+                s = skipToNextChar(s, debugInfo);
+                
+                MJStatement* incrementStatement = new MJStatement(MJSTATEMENT_TYPE_VAR_ASSIGN);
+                forStatement->incrementStatement = incrementStatement;
+                incrementStatement->lineNumber = debugInfo->lineNumber;
+                incrementStatement->varName = varNameRef;
+                
+                
+                incrementStatement->expression = new MJExpression();
+                recursivelySerializeExpression(s, endptr, incrementStatement->expression, parent, tokenMap, debugInfo, true);
+                
+                s = skipToNextChar(*endptr, debugInfo, true);
+                
+                
+                if(tokenMap->tokensByVarNames.count(varNameRef->value) != 0)
+                {
+                    incrementStatement->varToken = tokenMap->tokensByVarNames[varNameRef->value];
+                }
+                else
+                {
+                    incrementStatement->varToken = tokenMap->tokenIndex++;
+                    tokenMap->tokensByVarNames[varNameRef->value] = incrementStatement->varToken;
+                }
+            }
+            else
+            {
+                varNameRef->release();
+                MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' after:%s", varNameRef->getDebugString().c_str());
+                return nullptr;
+            }
+        }
+    }
+    
+    if(*s == ')')
+    {
+        s++;
+    }
+    s = skipToNextChar(s, debugInfo);
+    
+    bool success = serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, &forStatement->statements);
+    if(!success)
+    {
+        return nullptr;
+    }
+    
+    s = skipToNextChar(*endptr, debugInfo);
+    
+    return forStatement;
+    
+    /*const char* s = str;
+    if(*s == '(')
+    {
+        s++;
+        s = skipToNextChar(s, debugInfo);
+    }
+    
     
     MJForStatement* statement = new MJForStatement();
     statement->lineNumber = debugInfo->lineNumber;
@@ -341,7 +497,7 @@ MJForStatement* MJFunction::serializeForStatement(const char* str, char** endptr
         return nullptr;
     }
     
-    return statement;
+    return statement;*/
 }
 
 bool MJFunction::serializeFunctionBody(const char* str, char** endptr, MJRef* parent, MJTokenMap* tokenMap, MJDebugInfo* debugInfo, std::vector<MJStatement*>* statements)
@@ -645,11 +801,6 @@ MJFunction* MJFunction::initWithHumanReadableString(const char* str, char** endp
 
 MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex, MJRef* result, MJTable* functionState, MJTable* parent, MJTokenMap* tokenMap, std::map<uint32_t, MJRef*>& locals, MJDebugInfo* debugInfo)
 {
-    if(*tokenIndex >= expression->tokens.size())
-    {
-        MJError("invalid token index");
-        return nullptr;
-    }
     uint32_t token = expression->tokens[*tokenIndex];
     if(token == MJ_TOKEN_end)
     {
@@ -708,6 +859,8 @@ MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex,
                 break;
             case MJ_TOKEN_greaterThan:
             case MJ_TOKEN_lessThan:
+            case MJ_TOKEN_greaterEqualTo:
+            case MJ_TOKEN_lessEqualTo:
             {
                 *tokenIndex = *tokenIndex + 1;
                 MJRef* leftResult = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
@@ -717,8 +870,8 @@ MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex,
                     {
                         double left = ((MJNumber*)leftResult)->value;
                         *tokenIndex = *tokenIndex + 1;
-                        MJRef* rightResult = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
-                        if(rightResult->type() != leftType)
+                        static MJNumber rightResult(0);
+                        if(runExpression(expression, tokenIndex, &rightResult, functionState, parent, tokenMap, locals, debugInfo))
                         {
                             MJSError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
                             return nullptr;
@@ -728,10 +881,16 @@ MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex,
                         {
                             switch (token) {
                                 case MJ_TOKEN_greaterThan:
-                                    ((MJBool*)result)->value = left > ((MJNumber*)rightResult)->value;
+                                    ((MJBool*)result)->value = left > rightResult.value;
                                     break;
                                 case MJ_TOKEN_lessThan:
-                                    ((MJBool*)result)->value = left < ((MJNumber*)rightResult)->value;
+                                    ((MJBool*)result)->value = left < rightResult.value;
+                                    break;
+                                case MJ_TOKEN_greaterEqualTo:
+                                    ((MJBool*)result)->value = left >= rightResult.value;
+                                    break;
+                                case MJ_TOKEN_lessEqualTo:
+                                    ((MJBool*)result)->value = left <= rightResult.value;
                                     break;
                             };
                         }
@@ -739,10 +898,16 @@ MJRef* MJFunction::runExpression(MJExpression* expression, uint32_t* tokenIndex,
                         {
                             switch (token) {
                                 case MJ_TOKEN_greaterThan:
-                                    return new MJBool(left > ((MJNumber*)rightResult)->value);
+                                    return new MJBool(left > rightResult.value);
                                     break;
                                 case MJ_TOKEN_lessThan:
-                                    return new MJBool(left < ((MJNumber*)rightResult)->value);
+                                    return new MJBool(left < rightResult.value);
+                                    break;
+                                case MJ_TOKEN_greaterEqualTo:
+                                    return new MJBool(left >= rightResult.value);
+                                    break;
+                                case MJ_TOKEN_lessEqualTo:
+                                    return new MJBool(left <= rightResult.value);
                                     break;
                             };
                         }
@@ -912,12 +1077,6 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
                     locals[statement->varToken] = existingValue;
                 }
             }
-                
-            /*if(functionState->objectsByStringKey.count(statement->varName->value) != 0)
-            {
-                existingValue = functionState->objectsByStringKey[statement->varName->value];
-                locals[statement->varToken] = existingValue;
-            }*/
             
             uint32_t tokenIndex = 0;
             MJRef* result = runExpression(statement->expression, &tokenIndex, existingValue, functionState, parent, tokenMap, locals, debugInfo);
@@ -935,28 +1094,88 @@ MJRef* MJFunction::runStatement(MJStatement* statement, MJRef* result, MJTable* 
         case MJSTATEMENT_TYPE_FUNCTION_CALL:
         {
             uint32_t tokenIndex = 0;
-            runExpression(statement->expression, &tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
-            /*const char* cString = statement->expression.c_str();
-            char* endPtr;
-            
-            debugInfo->lineNumber = statement->lineNumber;
-            
-            MJRef* result = recursivelyLoadValue(cString,
-                                    &endPtr,
-                                        nullptr,
-                                 functionState,
-                                                 debugInfo,
-                                 true,
-                                                 true);
+            debugInfo->lineNumber = statement->lineNumber; //?
+            MJRef* result = runExpression(statement->expression, &tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
             if(result)
             {
                 result->release();
-            }*/
+            }
         }
             break;
             
         case MJSTATEMENT_TYPE_FOR:
         {
+            MJForStatement* forStatement = (MJForStatement*)statement;
+            
+            MJRef* existingValue = nullptr;
+            if(locals.count(forStatement->varToken) != 0)
+            {
+                existingValue = locals[forStatement->varToken];
+            }
+            else if(functionState->objectsByStringKey.count(forStatement->varName->value) != 0)
+            {
+                existingValue = functionState->objectsByStringKey[forStatement->varName->value];
+                locals[forStatement->varToken] = existingValue;
+            }
+            else
+            {
+                existingValue = functionState->recursivelyFindVariable(forStatement->varName, debugInfo, false);
+                if(existingValue)
+                {
+                    locals[forStatement->varToken] = existingValue;
+                }
+            }
+            
+            uint32_t tokenIndex = 0;
+            MJRef* result = runExpression(forStatement->expression, &tokenIndex, existingValue, functionState, parent, tokenMap, locals, debugInfo);
+            if(result)
+            {
+                tokenMap->refsByToken[forStatement->varToken] = result;
+                functionState->objectsByStringKey[forStatement->varName->value] = result;
+                result->retain();
+                locals[forStatement->varToken] = result;
+                
+            }
+            
+            
+            bool run = true;
+            while(run)
+            {
+                uint32_t tokenIndex = 0;
+                debugInfo->lineNumber = statement->lineNumber; //?
+                
+                MJRef* expressionResult = runExpression(forStatement->continueExpression, &tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo); //todo pass in an MJBool result
+                
+                bool expressionPass = true;
+                if(expressionResult)
+                {
+                    expressionPass = expressionResult->boolValue();
+                }
+                
+                if(expressionPass)
+                {
+                    MJRef* runResult = runStatementArray(forStatement->statements, result, functionState, parent, tokenMap, locals, debugInfo);
+                    
+                    if(runResult)
+                    {
+                        return runResult;
+                    }
+                }
+                else
+                {
+                    break;
+                }
+                
+                if(forStatement->incrementStatement)
+                {
+                    MJRef* runResult = runStatement(forStatement->incrementStatement, result, functionState, parent, tokenMap, locals, debugInfo);
+                    if(runResult)
+                    {
+                        return runResult;
+                    }
+                }
+            }
+            
             /*const char* expressionCString = statement->expression.c_str(); //var assign
             char* endPtr;
             

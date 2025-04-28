@@ -114,7 +114,7 @@ MJRef* MJRef::runScriptFile(const std::string& filename, MJTable* parent)
         //todo if debug logging
         if(table)
         {
-            table->debugLog();
+           // table->debugLog();
             table->release();
         }
         return resultRef;

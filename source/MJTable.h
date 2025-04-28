@@ -308,15 +308,19 @@ public://functions
             
             MJTokenMap tokenMap;
             
-            MJStatement* statement = MJFunction::serializeForStatement(s, endptr, parent, &tokenMap, debugInfo);
+            MJStatement* statement = MJFunction::serializeForStatement(s, endptr, this, &tokenMap, debugInfo);
             if(!statement)
             {
                 return false;
             }
             s = skipToNextChar(*endptr, debugInfo, false);
             
-            MJRef* result = nullptr; //TODOD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            //MJRef* result = nullptr; //TODOD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             //MJRef* result = MJFunction::runStatement(statement, this, (MJTable*)parent, &tokenMap, debugInfo);
+            
+            
+            std::map<uint32_t, MJRef*> locals;
+            MJRef* result = MJFunction::runStatement(statement, nullptr, this, (MJTable*)parent, &tokenMap, locals, debugInfo);
             
             if(result)
             {
@@ -326,6 +330,42 @@ public://functions
             }
             *endptr = (char*)s;
             return true;
+            
+            /*
+             
+             {
+                 MJTable* currentCallState = new MJTable(parent);
+                 std::map<uint32_t, MJRef*> locals;
+                 
+                 int i = 0;
+                 int maxArgs = (int)argNames.size();
+                 for(MJRef* arg : args->arrayObjects)
+                 {
+                     const std::string& argName = argNames[i];
+                     if(i >= maxArgs)
+                     {
+                         MJSWarn(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function ignoring:%s", argName.c_str());
+                         continue;
+                     }
+                     currentCallState->objectsByStringKey[argName] = arg;
+                     arg->retain();
+                     if(tokenMap.tokensByVarNames.count(argName) != 0)
+                     {
+                         locals[tokenMap.tokensByVarNames[argName]] = arg;
+                     }
+                     
+                     i++;
+                 }
+                 
+                 
+                 MJRef* result = runStatementArray(statements,  existingResult,  currentCallState, (MJTable*)parent, &tokenMap, locals, &debugInfo);
+                 //MJRef* result = runStatementArray(statements, currentCallState, (MJTable*)parent, &debugInfo); //TODO!!
+                 //currentCallState->debugLog();
+                 currentCallState->release();
+                 
+                 return result;
+             
+             */
         }
         
         if(*s == 'i' && *(s + 1) == 'f' && (*(s + 2) == '(' || isspace(*(s + 2))))
