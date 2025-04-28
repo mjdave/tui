@@ -8,6 +8,7 @@
 #include <iostream>
 #include <cstdio>
 
+namespace Tui {
 
 void printBits(size_t const size, void const * const ptr)
 {
@@ -24,6 +25,8 @@ void printBits(size_t const size, void const * const ptr)
         }
     }
     puts("\n");
+}
+
 }
 
 

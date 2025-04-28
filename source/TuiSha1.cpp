@@ -31,20 +31,20 @@
 #define SHA1_R3(v,w,x,y,z,i) z += (((w|x)&y)|(w&x)) + SHA1_BLK(i) + 0x8f1bbcdc + SHA1_ROL(v,5); w=SHA1_ROL(w,30);
 #define SHA1_R4(v,w,x,y,z,i) z += (w^x^y)           + SHA1_BLK(i) + 0xca62c1d6 + SHA1_ROL(v,5); w=SHA1_ROL(w,30);
 
-SHA1::SHA1()
+TuiSHA1::TuiSHA1()
 {
     reset();
 }
 
 
-void SHA1::update(const std::string &s)
+void TuiSHA1::update(const std::string &s)
 {
     std::istringstream is(s);
     update(is);
 }
 
 
-void SHA1::update(std::istream &is)
+void TuiSHA1::update(std::istream &is)
 {
     std::string rest_of_buffer;
     read(is, rest_of_buffer, BLOCK_BYTES - buffer.size());
@@ -64,7 +64,7 @@ void SHA1::update(std::istream &is)
  * Add padding and return the message digest.
  */
 
-std::string SHA1::final()
+std::string TuiSHA1::final()
 {
     /* Total number of hashed bits */
     uint64 total_bits = (transforms*BLOCK_BYTES + buffer.size()) * 8;
@@ -109,16 +109,16 @@ std::string SHA1::final()
 }
 
 
-std::string SHA1::from_file(const std::string &filename)
+std::string TuiSHA1::from_file(const std::string &filename)
 {
     std::ifstream stream(filename.c_str(), std::ios::binary);
-    SHA1 checksum;
+    TuiSHA1 checksum;
     checksum.update(stream);
     return checksum.final();
 }
 
 
-void SHA1::reset()
+void TuiSHA1::reset()
 {
     /* SHA1 initialization constants */
     digest[0] = 0x67452301;
@@ -137,7 +137,7 @@ void SHA1::reset()
  * Hash a single 512-bit block. This is the core of the algorithm.
  */
 
-void SHA1::transform(uint32 block[BLOCK_BYTES])
+void TuiSHA1::transform(uint32 block[BLOCK_BYTES])
 {
     /* Copy digest[] to working vars */
     uint32 a = digest[0];
@@ -241,7 +241,7 @@ void SHA1::transform(uint32 block[BLOCK_BYTES])
 }
 
 
-void SHA1::buffer_to_block(const std::string &buffer, uint32 block[BLOCK_BYTES])
+void TuiSHA1::buffer_to_block(const std::string &buffer, uint32 block[BLOCK_BYTES])
 {
     /* Convert the std::string (byte buffer) to a uint32 array (MSB) */
     for (unsigned int i = 0; i < BLOCK_INTS; i++)
@@ -254,7 +254,7 @@ void SHA1::buffer_to_block(const std::string &buffer, uint32 block[BLOCK_BYTES])
 }
 
 
-void SHA1::read(std::istream &is, std::string &s, int max)
+void TuiSHA1::read(std::istream &is, std::string &s, int max)
 {
     char* sbuf = (char*)malloc(sizeof(char) * max);
     is.read(sbuf, max);
@@ -263,9 +263,9 @@ void SHA1::read(std::istream &is, std::string &s, int max)
 }
 
 
-std::string sha1(const std::string &string)
+std::string TuiSHA1::sha1(const std::string &string)
 {
-    SHA1 checksum;
+    TuiSHA1 checksum;
     checksum.update(string);
     return checksum.final();
 }

@@ -38,7 +38,7 @@ This is the same data in JSON. tui can read this too, as it treats ":" and "=" t
         "z":3
     },
     true,
-    nil,
+    null,
     {
         "x":10
     }
@@ -46,12 +46,12 @@ This is the same data in JSON. tui can read this too, as it treats ":" and "=" t
 ```
 
 Whitespace is ignored, however newlines are treated like commas, unless quoted or within a bracketed expression
-```javascript
+```json
 array = {
     ThisIsTheFirstObjectWithIndexZero
     "This is the second object with spaces, so it needs quotes"
     "We don't have any commas after each variable, but we can if we want to.
-Also, quotes and brackets allow us to use newlines",
+    Also, quotes and brackets allow us to use newlines",
     surprise = "We can also mix array values with keyed values like in lua"
 }
 
@@ -219,16 +219,16 @@ int main()
 
 ```
 
-With no virtual machine, and no bindings required in C++, all of the data and script state is stored in a public std::map or std::vector under the hood. Scripts and tables are parsed together and are treated the same. Each character is simply parsed one by one in a single phase, with data loaded immediately. Functions are quickly serialized and called as required.
+With no virtual machine, and no bindings required in C++, all of the data and script state is stored in a public std::map or std::vector under the hood. Scripts and tables are parsed together and are treated the same. Each character is simply parsed one by one in a single phase, with data loaded immediately. Functions and for loops are quickly serialized and called as required.
 
-This means tui can solve two problems. You can use it as a fast and small scripting language, that also happens to have built in serialization support from/to both binary(todo) and human readable data formats.
+This means tui can solve two problems. You can use it as a fast and small scripting language, that also happens to have built in serialization support from/to both binary (todo) and human readable data formats.
 
 Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other ways of storing and sharing data, tui reads JSON out of the box, while adding a bunch of new features.
 
 # What tui is not
 tui is not finished!
 
-It should not be used in production environments yet. Binary formats are not yet implemented, there is a lot of optimization work yet to do, and there are many missing functions, even to do basic things like insert into arrays.
+It should not be used in production environments yet. Binary formats are not yet implemented, there is a lot of optimization work yet to do, error reporting has a few issues, and there are many missing functions, even to do basic things like inserting into arrays.
 
 tui has 'objects', as tables. However there is no concept of 'self/this', and no direct support for inheritance or classes in general. Further OOP support is not planned.
 

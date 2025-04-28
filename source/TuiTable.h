@@ -55,7 +55,7 @@ public://functions
     
     
     static TuiRef* initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
-        const char* s = skipToNextChar(str, debugInfo);
+        const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(*(s + 1))))
         {
@@ -120,8 +120,6 @@ public://functions
     
     virtual TuiRef* recursivelyFindVariable(TuiString* variableName, TuiDebugInfo* debugInfo, bool searchParents, int varStartIndex = 0)
     {
-        //const std::string variableNameString = variableName->value;
-        
         std::vector<std::string>& varNames = variableName->varNames;
         
         if(varNames.size() > varStartIndex)
@@ -272,7 +270,7 @@ public://functions
     }
     
     bool addHumanReadableKeyValuePair(const char* str, char** endptr, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr) {
-        const char* s = skipToNextChar(str, debugInfo);
+        const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(resultRef && *s == 'r'
            && *(s + 1) == 'e'
@@ -282,12 +280,12 @@ public://functions
            && *(s + 5) == 'n')
         {
             s+=6;
-            s = skipToNextChar(s, debugInfo);
+            s = tuiSkipToNextChar(s, debugInfo);
             if(*s == '}')
             {
                 *resultRef = new TuiRef(this);
                 s++;
-                s = skipToNextChar(s, debugInfo, true);
+                s = tuiSkipToNextChar(s, debugInfo, true);
                 *endptr = (char*)s;
                 return false;
             }
@@ -301,7 +299,7 @@ public://functions
                                                      debugInfo,
                                                      true,
                                                   true);
-                s = skipToNextChar(*endptr, debugInfo, true);
+                s = tuiSkipToNextChar(*endptr, debugInfo, true);
                 *endptr = (char*)s;
                 return false;
             }
@@ -310,7 +308,7 @@ public://functions
         if(*s == 'f' && *(s + 1) == 'o' && *(s + 2) == 'r' && (*(s + 3) == '(' || isspace(*(s + 3))))
         {
             s+=3;
-            s = skipToNextChar(s, debugInfo);
+            s = tuiSkipToNextChar(s, debugInfo);
             
             TuiTokenMap tokenMap;
             
@@ -319,7 +317,7 @@ public://functions
             {
                 return false;
             }
-            s = skipToNextChar(*endptr, debugInfo, false);
+            s = tuiSkipToNextChar(*endptr, debugInfo, false);
             
             std::map<uint32_t, TuiRef*> locals;
             TuiRef* result = TuiFunction::runStatement(statement, nullptr, this, (TuiTable*)parent, &tokenMap, locals, debugInfo);
@@ -337,7 +335,7 @@ public://functions
         if(*s == 'i' && *(s + 1) == 'f' && (*(s + 2) == '(' || isspace(*(s + 2))))
         {
             s+=2;
-            s = skipToNextChar(s, debugInfo);
+            s = tuiSkipToNextChar(s, debugInfo);
             
             bool expressionPass = true;
             TuiRef* expressionResult = recursivelyLoadValue(s,
@@ -348,7 +346,7 @@ public://functions
                                                  debugInfo,
                                                  true,
                                               true);
-            s = skipToNextChar(*endptr, debugInfo);
+            s = tuiSkipToNextChar(*endptr, debugInfo);
             if(expressionResult)
             {
                 expressionPass = expressionResult->boolValue();
@@ -363,7 +361,7 @@ public://functions
             
             if(expressionPass)
             {
-                s = skipToNextChar(s, debugInfo);
+                s = tuiSkipToNextChar(s, debugInfo);
                 if(*s == '{')
                 {
                     s++;
@@ -371,11 +369,11 @@ public://functions
                     
                     while(1)
                     {
-                        s = skipToNextChar(s, debugInfo);
+                        s = tuiSkipToNextChar(s, debugInfo);
                         
                         if(*s == '}' || *s == ']' || *s == ')')
                         {
-                            s = skipToNextChar(s + 1, debugInfo);
+                            s = tuiSkipToNextChar(s + 1, debugInfo);
                             *endptr = (char*)s;
                             break;
                         }
@@ -397,8 +395,8 @@ public://functions
             }
             else
             {
-                s = skipToNextMatchingChar(s, debugInfo, '}');
-                s = skipToNextChar(s + 1, debugInfo);
+                s = tuiSkipToNextMatchingChar(s, debugInfo, '}');
+                s = tuiSkipToNextChar(s + 1, debugInfo);
             }
             
             
@@ -408,13 +406,13 @@ public://functions
                 {
                     if(ifStatementComplete)
                     {
-                        s = skipToNextMatchingChar(s, debugInfo, '}');
-                        s = skipToNextChar(s + 1, debugInfo);
+                        s = tuiSkipToNextMatchingChar(s, debugInfo, '}');
+                        s = tuiSkipToNextChar(s + 1, debugInfo);
                     }
                     else
                     {
                         s+=4;
-                        s = skipToNextChar(s, debugInfo);
+                        s = tuiSkipToNextChar(s, debugInfo);
                         if(*s == '{')
                         {
                             s++;
@@ -422,11 +420,11 @@ public://functions
                             
                             while(1)
                             {
-                                s = skipToNextChar(s, debugInfo);
+                                s = tuiSkipToNextChar(s, debugInfo);
                                 
                                 if(*s == '}' || *s == ']' || *s == ')')
                                 {
-                                    s = skipToNextChar(s + 1, debugInfo);
+                                    s = tuiSkipToNextChar(s + 1, debugInfo);
                                     *endptr = (char*)s;
                                     break;
                                 }
@@ -438,13 +436,13 @@ public://functions
                                 s = *endptr;
                             }
                             
-                            s = skipToNextChar(*endptr, debugInfo);
+                            s = tuiSkipToNextChar(*endptr, debugInfo);
                             break;
                         }
                         else if(*s == 'i' && *(s + 1) == 'f')
                         {
                             s+=2;
-                            s = skipToNextChar(s, debugInfo);
+                            s = tuiSkipToNextChar(s, debugInfo);
                             
                             bool expressionPass = true;
                             TuiRef* expressionResult = recursivelyLoadValue(s,
@@ -455,7 +453,7 @@ public://functions
                                                                            debugInfo,
                                                                            true,
                                                                            true);
-                            s = skipToNextChar(*endptr, debugInfo);
+                            s = tuiSkipToNextChar(*endptr, debugInfo);
                             if(expressionResult)
                             {
                                 expressionPass = expressionResult->boolValue();
@@ -469,7 +467,7 @@ public://functions
                             
                             if(expressionPass)
                             {
-                                s = skipToNextChar(s, debugInfo);
+                                s = tuiSkipToNextChar(s, debugInfo);
                                 if(*s == '{')
                                 {
                                     s++;
@@ -477,11 +475,11 @@ public://functions
                                     
                                     while(1)
                                     {
-                                        s = skipToNextChar(s, debugInfo);
+                                        s = tuiSkipToNextChar(s, debugInfo);
                                         
                                         if(*s == '}' || *s == ']' || *s == ')')
                                         {
-                                            s = skipToNextChar(s + 1, debugInfo);
+                                            s = tuiSkipToNextChar(s + 1, debugInfo);
                                             *endptr = (char*)s;
                                             break;
                                         }
@@ -493,7 +491,7 @@ public://functions
                                         s = *endptr;
                                     }
                                     
-                                    s = skipToNextChar(*endptr, debugInfo);
+                                    s = tuiSkipToNextChar(*endptr, debugInfo);
                                 }
                                 else
                                 {
@@ -503,8 +501,8 @@ public://functions
                             }
                             else
                             {
-                                s = skipToNextMatchingChar(s, debugInfo, '}');
-                                s = skipToNextChar(s + 1, debugInfo);
+                                s = tuiSkipToNextMatchingChar(s, debugInfo, '}');
+                                s = tuiSkipToNextChar(s + 1, debugInfo);
                             }
                         }
                         else
@@ -527,7 +525,7 @@ public://functions
         int keyStartLineNumber = debugInfo->lineNumber;
         TuiRef* keyRef = initUnknownTypeRefWithHumanReadableString(s, endptr, this, debugInfo);
         
-        s = skipToNextChar(*endptr, debugInfo, true);
+        s = tuiSkipToNextChar(*endptr, debugInfo, true);
         
         if(*s == ',' || *s == '\n' || *s == '}' || *s == ']' || *s == ')' || *s == '(' || (TuiExpressionOperatorsSet.count(*s) != 0 && (*s != '=' || *(s + 1) == '=')))
         {
@@ -546,7 +544,7 @@ public://functions
                     keyRef->release();
                     keyRef = newKeyRef;
                 }
-                s = skipToNextChar(*endptr, debugInfo, true);*/
+                s = tuiSkipToNextChar(*endptr, debugInfo, true);*/
             }
             
             debugInfo->lineNumber = keyStartLineNumber;
@@ -563,7 +561,7 @@ public://functions
                 keyRef->release();
                 keyRef = newKeyRef;
             }
-            s = skipToNextChar(*endptr, debugInfo, true);
+            s = tuiSkipToNextChar(*endptr, debugInfo, true);
             
             
             if(*s == '\n')
@@ -590,7 +588,7 @@ public://functions
         else if(*s == '=' || *s == ':')
         {
             s++;
-            s = skipToNextChar(s, debugInfo);
+            s = tuiSkipToNextChar(s, debugInfo);
             
             if(keyRef->type() != Tui_ref_type_STRING)
             {
@@ -604,7 +602,7 @@ public://functions
             }
             
             TuiRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, nullptr, this, debugInfo, true, true);
-            s = skipToNextChar(*endptr, debugInfo, true);
+            s = tuiSkipToNextChar(*endptr, debugInfo, true);
                 
             recursivelySetVariable(((TuiString*)keyRef), valueRef, debugInfo);
             
@@ -662,7 +660,7 @@ public://functions
         
         TuiTable* table = new TuiTable(parent);
         
-        const char* s = skipToNextChar(str, debugInfo);
+        const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == '{' || *s == '[' || *s == '(') // is added here to allow function arg lists when this method is called directly, but '(' is restricted in initUnknownTypeRefWithHumanReadableString.
         {
@@ -677,7 +675,7 @@ public://functions
             
         while(1)
         {
-            s = skipToNextChar(s, debugInfo);
+            s = tuiSkipToNextChar(s, debugInfo);
             
             if(*s == '\0')
             {
@@ -726,7 +724,7 @@ public://functions
                 {
                     debugString += " ";
                 }
-                debugString += string_format("%d = ", kv.first);
+                debugString += Tui::string_format("%d = ", kv.first);
                 kv.second->printHumanReadableString(debugString, indent);
                 debugString += ",\n";
             }

@@ -176,7 +176,7 @@ public://functions
         }
         
         
-        s = skipToNextChar(s, debugInfo, true);
+        s = tuiSkipToNextChar(s, debugInfo, true);
         *endptr = (char*)s;
         
         

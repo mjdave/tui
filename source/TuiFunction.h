@@ -13,36 +13,35 @@
 
 class TuiTable;
 
-
 enum {
-    Tui_TOKEN_nil = 0,
-    Tui_TOKEN_pad,
-    Tui_TOKEN_functionCall,
-    Tui_TOKEN_end,
-    Tui_TOKEN_add,
-    Tui_TOKEN_subtract,
-    Tui_TOKEN_divide,
-    Tui_TOKEN_multiply,
-    Tui_TOKEN_equalTo,
-    Tui_TOKEN_lessThan,
-    Tui_TOKEN_greaterThan,
-    Tui_TOKEN_greaterEqualTo,
-    Tui_TOKEN_lessEqualTo,
-    Tui_TOKEN_VAR_START_INDEX
+    Tui_token_nil = 0,
+    Tui_token_pad,
+    Tui_token_functionCall,
+    Tui_token_end,
+    Tui_token_add,
+    Tui_token_subtract,
+    Tui_token_divide,
+    Tui_token_multiply,
+    Tui_token_equalTo,
+    Tui_token_lessThan,
+    Tui_token_greaterThan,
+    Tui_token_greaterEqualTo,
+    Tui_token_lessEqualTo,
+    Tui_token_VAR_START_INDEX
 };
 
 enum {
-    TuiSTATEMENT_TYPE_RETURN = 0,
-    TuiSTATEMENT_TYPE_RETURN_EXPRESSION,
-    TuiSTATEMENT_TYPE_VAR_ASSIGN,
-    TuiSTATEMENT_TYPE_FUNCTION_CALL,
-    TuiSTATEMENT_TYPE_IF,
-    TuiSTATEMENT_TYPE_FOR,
+    Tui_statement_type_RETURN = 0,
+    Tui_statement_type_RETURN_EXPRESSION,
+    Tui_statement_type_VAR_ASSIGN,
+    Tui_statement_type_FUNCTION_CALL,
+    Tui_statement_type_IF,
+    Tui_statement_type_FOR,
 };
 
 
 struct TuiTokenMap {
-    uint32_t tokenIndex = Tui_TOKEN_VAR_START_INDEX;
+    uint32_t tokenIndex = Tui_token_VAR_START_INDEX;
     std::map<uint32_t, TuiRef*> refsByToken;
     std::map<std::string, uint32_t> tokensByVarNames;
 };
@@ -68,7 +67,7 @@ class TuiIfStatement : public TuiStatement {
 public://functions
     std::vector<TuiStatement*> statements;
     TuiIfStatement* elseIfStatement = nullptr;
-    TuiIfStatement() : TuiStatement(TuiSTATEMENT_TYPE_IF) {}
+    TuiIfStatement() : TuiStatement(Tui_statement_type_IF) {}
 };
 
 
@@ -78,7 +77,7 @@ public://functions
     TuiExpression* continueExpression = nullptr;
     TuiStatement* incrementStatement = nullptr;
     
-    TuiForStatement() : TuiStatement(TuiSTATEMENT_TYPE_FOR) {}
+    TuiForStatement() : TuiStatement(Tui_statement_type_FOR) {}
 };
 
 class TuiFunction : public TuiRef {

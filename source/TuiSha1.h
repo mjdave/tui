@@ -22,10 +22,13 @@
 #include <iostream>
 #include <string>
 
-class SHA1
+class TuiSHA1
 {
+public: //static functions
+    static std::string sha1(const std::string &string);
+    
 public:
-    SHA1();
+    TuiSHA1();
     void update(const std::string &s);
     void update(std::istream &is);
     std::string final();
@@ -50,7 +53,6 @@ private:
     static void read(std::istream &is, std::string &s, int max);
 };
 
-std::string sha1(const std::string &string);
 
 
 

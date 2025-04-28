@@ -49,7 +49,7 @@ TuiTable* TuiRef::createRootTable()
     TuiFunction* requireFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state) {
         if(args->arrayObjects.size() > 0)
         {
-            return TuiRef::load(getResourcePath(args->arrayObjects[0]->getStringValue()), state);
+            return TuiRef::load(Tui::getResourcePath(args->arrayObjects[0]->getStringValue()), state);
         }
         return new TuiRef();
     }, rootTable);
@@ -150,7 +150,7 @@ TuiRef* TuiRef::load(const char* str, char** endptr, TuiRef* parent, TuiDebugInf
     
     TuiTable* table = new TuiTable(parent);
     
-    const char* s = skipToNextChar(str, debugInfo);
+    const char* s = tuiSkipToNextChar(str, debugInfo);
     
     //uint32_t integerIndex = 0;
     
@@ -164,7 +164,7 @@ TuiRef* TuiRef::load(const char* str, char** endptr, TuiRef* parent, TuiDebugInf
         
     while(1)
     {
-        s = skipToNextChar(s, debugInfo);
+        s = tuiSkipToNextChar(s, debugInfo);
         
         if(*s == '\0')
         {
@@ -208,7 +208,7 @@ TuiRef* TuiRef::load(const char* str, char** endptr, TuiRef* parent, TuiDebugInf
     return table;
 }
 
-TuiRef* loadVariableIfAvailable(TuiString* variableName, TuiRef* existingValue, const char* str, char** endptr, TuiTable* parentTable, TuiDebugInfo* debugInfo)
+TuiRef* TuiRef::loadVariableIfAvailable(TuiString* variableName, TuiRef* existingValue, const char* str, char** endptr, TuiTable* parentTable, TuiDebugInfo* debugInfo)
 {
     if(variableName->allowAsVariableName && parentTable)
     {
@@ -226,7 +226,7 @@ TuiRef* loadVariableIfAvailable(TuiString* variableName, TuiRef* existingValue, 
                 {
                     const char* s = str;
                     TuiTable* argsArrayTable = TuiTable::initWithHumanReadableString(s, endptr, parentTable, debugInfo);
-                    s = skipToNextChar(*endptr, debugInfo, true);
+                    s = tuiSkipToNextChar(*endptr, debugInfo, true);
                     
                     TuiRef* result = ((TuiFunction*)newValueRef)->call(argsArrayTable, parentTable, existingValue);
                     *endptr = (char*)s;
@@ -249,15 +249,15 @@ TuiRef* loadVariableIfAvailable(TuiString* variableName, TuiRef* existingValue, 
     if(variableName->isValidFunctionString)
     {
         TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to call missing function: %s()", variableName->value.c_str());
-        const char* s = skipToNextChar(*endptr, debugInfo, true);
+        const char* s = tuiSkipToNextChar(*endptr, debugInfo, true);
         if(*s == '(')
         {
             s++;
-            s = skipToNextChar(s, debugInfo);
+            s = tuiSkipToNextChar(s, debugInfo);
             if(*s == ')')
             {
                 s++;
-                s = skipToNextChar(s, debugInfo, true);
+                s = tuiSkipToNextChar(s, debugInfo, true);
             }
         }
         *endptr = (char*)s;
@@ -266,7 +266,7 @@ TuiRef* loadVariableIfAvailable(TuiString* variableName, TuiRef* existingValue, 
 }
 
 
-bool setVariable(TuiString* variableName,
+bool TuiRef::setVariable(TuiString* variableName,
                             TuiRef* value,
                                TuiTable* parentTable,
                                TuiDebugInfo* debugInfo)
@@ -283,14 +283,14 @@ TuiRef* loadValue(const char* str, char** endptr, TuiRef* existingValue, TuiTabl
     const char* s = str;
     
     TuiRef* valueRef = TuiTable::initUnknownTypeRefWithHumanReadableString(s, endptr, parentTable, debugInfo);
-    s = skipToNextChar(*endptr, debugInfo, true);
+    s = tuiSkipToNextChar(*endptr, debugInfo, true);
     
     if(valueRef->type() == Tui_ref_type_STRING)
     {
         TuiString* originalString = (TuiString*)valueRef;
-        TuiRef* newValueRef = loadVariableIfAvailable(originalString, nullptr, s, endptr, parentTable, debugInfo);
+        TuiRef* newValueRef = TuiRef::loadVariableIfAvailable(originalString, nullptr, s, endptr, parentTable, debugInfo);
         
-        s = skipToNextChar(*endptr, debugInfo, true);
+        s = tuiSkipToNextChar(*endptr, debugInfo, true);
         
         if(newValueRef)
         {
@@ -317,7 +317,7 @@ TuiRef* loadValue(const char* str, char** endptr, TuiRef* existingValue, TuiTabl
     return valueRef;
 }
 
-TuiRef* recursivelyLoadValue(const char* str,
+TuiRef* TuiRef::recursivelyLoadValue(const char* str,
                             char** endptr,
                             TuiRef* existingValue,
                             TuiRef* leftValue,
@@ -333,8 +333,8 @@ TuiRef* recursivelyLoadValue(const char* str,
         if(*s == '(')
         {
             s++;
-            s = skipToNextChar(s, debugInfo, true);
-            leftValue = recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, debugInfo, true, allowNonVarStrings);
+            s = tuiSkipToNextChar(s, debugInfo, true);
+            leftValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, debugInfo, true, allowNonVarStrings);
         }
         else
         {
@@ -347,7 +347,7 @@ TuiRef* recursivelyLoadValue(const char* str,
         }
         
         
-        s = skipToNextChar(*endptr, debugInfo, true);
+        s = tuiSkipToNextChar(*endptr, debugInfo, true);
     }
     
     char operatorChar = *s;
@@ -356,7 +356,7 @@ TuiRef* recursivelyLoadValue(const char* str,
     if(operatorChar == ')')
     {
         //s++;
-        s = skipToNextChar(s, debugInfo, true);
+        s = tuiSkipToNextChar(s, debugInfo, true);
         *endptr = (char*)s;
         if(existingValue)
         {
@@ -367,7 +367,7 @@ TuiRef* recursivelyLoadValue(const char* str,
     
     if(TuiExpressionOperatorsSet.count(operatorChar) == 0 || (operatorChar == '=' && secondOperatorChar != '=') || (!runLowOperators && (operatorChar == '+' || operatorChar == '-')))
     {
-        s = skipToNextChar(s, debugInfo, true);
+        s = tuiSkipToNextChar(s, debugInfo, true);
         *endptr = (char*)s;
         if(existingValue)
         {
@@ -383,10 +383,10 @@ TuiRef* recursivelyLoadValue(const char* str,
         s++;
     }
     
-    s = skipToNextChar(s, debugInfo, true);
+    s = tuiSkipToNextChar(s, debugInfo, true);
     
     TuiRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, nullptr, parentTable, debugInfo, false, false);
-    s = skipToNextChar(*endptr, debugInfo, true);
+    s = tuiSkipToNextChar(*endptr, debugInfo, true);
     
     if(rightValue->type() == Tui_ref_type_STRING)
     {
@@ -661,14 +661,14 @@ TuiRef* recursivelyLoadValue(const char* str,
         if(*s == ')')
         {
             s++;
-            s = skipToNextChar(s, debugInfo, true);
+            s = tuiSkipToNextChar(s, debugInfo, true);
         }
         else if(TuiExpressionOperatorsSet.count(*s) != 0)
         {
             if(runLowOperators || *s == '*' || *s == '/')
             {
                 result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, runLowOperators, allowNonVarStrings);
-                s = skipToNextChar(*endptr, debugInfo, true);
+                s = tuiSkipToNextChar(*endptr, debugInfo, true);
             }
         }
         

@@ -49,7 +49,7 @@ static std::set<char> TuiExpressionOperatorsSet = {
     '=',
 };
 
-inline const char* skipToNextChar(const char* str, TuiDebugInfo* debugInfo, bool stopAtNewLine = false)
+inline const char* tuiSkipToNextChar(const char* str, TuiDebugInfo* debugInfo, bool stopAtNewLine = false)
 {
     const char* s = str;
     bool comment = false;
@@ -82,7 +82,7 @@ inline const char* skipToNextChar(const char* str, TuiDebugInfo* debugInfo, bool
     }
 }
 
-inline const char* skipToNextMatchingChar(const char* str, TuiDebugInfo* debugInfo, char matchChar)
+inline const char* tuiSkipToNextMatchingChar(const char* str, TuiDebugInfo* debugInfo, char matchChar)
 {
     const char* s = str;
     bool comment = false;
@@ -108,29 +108,47 @@ inline const char* skipToNextMatchingChar(const char* str, TuiDebugInfo* debugIn
     }
 }
 
-
-TuiRef* loadVariableIfAvailable(TuiString* variableName,
-                               TuiRef* existingValue,
-                               const char* str,
-                               char** endptr,
-                               TuiTable* parentTable,
-                               TuiDebugInfo* debugInfo);
-
-bool setVariable(TuiString* variableName,
-                            TuiRef* value,
-                               TuiTable* parentTable,
-                               TuiDebugInfo* debugInfo);
-
-TuiRef* recursivelyLoadValue(const char* str,
-                            char** endptr,
-                            TuiRef* existingValue,
-                            TuiRef* leftValue,
-                            TuiTable* parentTable,
-                            TuiDebugInfo* debugInfo,
-                            bool runLowOperators,
-                            bool allowNonVarStrings);
-
 class TuiRef {
+    
+public: //static functions
+   
+    static TuiTable* createRootTable();
+    
+    static TuiRef* load(const std::string& filename, TuiTable* parent = createRootTable()); //public method to read from human readable file/string data. supply nullptr as last argument to prvent root table from loading
+    static TuiRef* runScriptFile(const std::string& filename, TuiTable* parent = createRootTable());  //public method
+    
+    static TuiRef* load(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr); //public method
+    static TuiRef* load(const std::string& inputString, const std::string& debugName, TuiTable* parent); //public method
+    
+    //static TuiRef* initWithBinaryData(void* data); //todo
+    //static TuiRef* initWithBinaryFile(const std::string& filePath);  //todo
+    static TuiRef* initWithHumanReadableString(const std::string& stringData, TuiRef* parent) {return new TuiRef(parent);} //internal, loads a single value/expression
+    //static TuiRef* initWithHumanReadableFile(const std::string& filePath);
+    
+    
+    
+    static TuiRef* loadVariableIfAvailable(TuiString* variableName,
+                                   TuiRef* existingValue,
+                                   const char* str,
+                                   char** endptr,
+                                   TuiTable* parentTable,
+                                   TuiDebugInfo* debugInfo);
+
+    static bool setVariable(TuiString* variableName,
+                                TuiRef* value,
+                                   TuiTable* parentTable,
+                                   TuiDebugInfo* debugInfo);
+
+    static TuiRef* recursivelyLoadValue(const char* str,
+                                char** endptr,
+                                TuiRef* existingValue,
+                                TuiRef* leftValue,
+                                TuiTable* parentTable,
+                                TuiDebugInfo* debugInfo,
+                                bool runLowOperators,
+                                bool allowNonVarStrings);
+    
+    
 public: //members
     TuiRef* parent = nullptr; //this is only stored by tables and functions, variables don't use it currently.
     uint8_t refCount = 1;
@@ -146,19 +164,6 @@ public://functions
     virtual TuiRef* copy() {return new TuiRef(parent);};
     virtual void assign(TuiRef* other) {};
     
-    
-    static TuiTable* createRootTable();
-    
-    static TuiRef* load(const std::string& filename, TuiTable* parent = createRootTable()); //public method to read from human readable file/string data. supply nullptr as last argument to prvent root table from loading
-    static TuiRef* runScriptFile(const std::string& filename, TuiTable* parent = createRootTable());  //public method
-    
-    static TuiRef* load(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr); //public method
-    static TuiRef* load(const std::string& inputString, const std::string& debugName, TuiTable* parent); //public method
-    
-    //static TuiRef* initWithBinaryData(void* data); //todo
-    //static TuiRef* initWithBinaryFile(const std::string& filePath);  //todo
-    static TuiRef* initWithHumanReadableString(const std::string& stringData, TuiRef* parent) {return new TuiRef(parent);} //internal, loads a single value/expression
-    //static TuiRef* initWithHumanReadableFile(const std::string& filePath);
     
     
     virtual uint8_t type() { return Tui_ref_type_NIL; }
@@ -186,7 +191,7 @@ public://functions
     void saveToFile(const std::string& filePath) {
         std::string exportString;
         printHumanReadableString(exportString);
-        writeToFile(filePath, exportString);
+        Tui::writeToFile(filePath, exportString);
     };
     
     virtual TuiRef* recursivelyFindVariable(TuiString* variableName, TuiDebugInfo* debugInfo, bool searchParents, int varStartIndex = 0) {return nullptr;} //valid for tables and functions only
@@ -195,7 +200,7 @@ public://functions
 
 };
 
-class TuiUserData : public TuiRef {
+class TuiUserData : public TuiRef { //todo TuiUserData is not fully implemented or tested
 public:
     void* value;
 
@@ -207,7 +212,7 @@ public:
     virtual uint8_t type() { return Tui_ref_type_USERDATA; }
     virtual std::string getTypeName() {return "userData";}
     virtual std::string getStringValue() {
-        return string_format("%p", value);
+        return Tui::string_format("%p", value);
     }
 
 private:

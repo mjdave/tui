@@ -8,7 +8,7 @@ Interpreter::Interpreter(std::vector<std::string>& args)
     
     for(auto& arg : args)
     {
-        TuiRef* scriptRunResult = TuiTable::runScriptFile(getResourcePath(arg));
+        TuiRef* scriptRunResult = TuiTable::runScriptFile(Tui::getResourcePath(arg));
         if(scriptRunResult)
         {
             scriptRunResult->debugLog();

@@ -31,23 +31,21 @@ public://functions
         
         double value = strtod(s, endptr);
         
-        s = skipToNextChar(*endptr, debugInfo, true);
+        s = tuiSkipToNextChar(*endptr, debugInfo, true);
         *endptr = (char*)s;
         
         TuiNumber* number = new TuiNumber(value, parent);
         return number;
     }
     
-    //virtual uint64_t generateHash() {return *((uint64_t*)&value);}
-    
     virtual uint8_t type() { return Tui_ref_type_NUMBER; }
     virtual std::string getTypeName() {return "number";}
     virtual std::string getStringValue() {
         if(value == floor(value))
         {
-            return string_format("%.0f", value);
+            return Tui::string_format("%.0f", value);
         }
-        return string_format("%s", doubleToString(value).c_str());
+        return Tui::string_format("%s", Tui::doubleToString(value).c_str());
     }
     virtual bool boolValue() {return value != 0;}
 
@@ -73,7 +71,7 @@ public://functions
     };
     
     static TuiBool* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
-        const char* s = skipToNextChar(str, debugInfo);
+        const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == 't' && *(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e' )
         {
@@ -120,7 +118,7 @@ public://functions
     };
     
     static TuiVec2* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
-        const char* s = skipToNextChar(str, debugInfo);
+        const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '2' && *(s + 4) == '(')
         {
@@ -130,7 +128,7 @@ public://functions
             for(int i = 0; i < 2; i++)
             {
                 values[i] = strtod(s, endptr);
-                s = skipToNextChar(*endptr, debugInfo);
+                s = tuiSkipToNextChar(*endptr, debugInfo);
                 if(*s == ',')
                 {
                     s++;
@@ -147,7 +145,7 @@ public://functions
                 }
             }
             
-            s = skipToNextChar(s, debugInfo, true);
+            s = tuiSkipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
             return new TuiVec2(dvec2(values[0], values[1]), parent);
@@ -159,7 +157,7 @@ public://functions
     virtual uint8_t type() { return Tui_ref_type_VEC2; }
     virtual std::string getTypeName() {return "vec2";}
     virtual std::string getStringValue() {
-        return string_format("vec2(%s,%s)", doubleToString(value.x).c_str(), doubleToString(value.y).c_str());
+        return Tui::string_format("vec2(%s,%s)", Tui::doubleToString(value.x).c_str(), Tui::doubleToString(value.y).c_str());
     }
     virtual bool boolValue() {return true;}
 
@@ -185,7 +183,7 @@ public://functions
     };
     
     static TuiVec3* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
-        const char* s = skipToNextChar(str, debugInfo);
+        const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '3' && *(s + 4) == '(')
         {
@@ -195,7 +193,7 @@ public://functions
             for(int i = 0; i < 3; i++)
             {
                 values[i] = strtod(s, endptr);
-                s = skipToNextChar(*endptr, debugInfo);
+                s = tuiSkipToNextChar(*endptr, debugInfo);
                 if(*s == ',')
                 {
                     s++;
@@ -212,7 +210,7 @@ public://functions
                 }
             }
             
-            s = skipToNextChar(s, debugInfo, true);
+            s = tuiSkipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
             return new TuiVec3(dvec3(values[0], values[1], values[2]), parent);
@@ -224,7 +222,7 @@ public://functions
     virtual uint8_t type() { return Tui_ref_type_VEC3; }
     virtual std::string getTypeName() {return "vec3";}
     virtual std::string getStringValue() {
-        return string_format("vec3(%s,%s,%s)", doubleToString(value.x).c_str(), doubleToString(value.y).c_str(), doubleToString(value.z).c_str());
+        return Tui::string_format("vec3(%s,%s,%s)", Tui::doubleToString(value.x).c_str(), Tui::doubleToString(value.y).c_str(), Tui::doubleToString(value.z).c_str());
     }
     virtual bool boolValue() {return true;}
 
@@ -250,7 +248,7 @@ public://functions
     };
     
     static TuiVec4* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
-        const char* s = skipToNextChar(str, debugInfo);
+        const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '4' && *(s + 4) == '(')
         {
@@ -260,7 +258,7 @@ public://functions
             for(int i = 0; i < 4; i++)
             {
                 values[i] = strtod(s, endptr);
-                s = skipToNextChar(*endptr, debugInfo);
+                s = tuiSkipToNextChar(*endptr, debugInfo);
                 if(*s == ',')
                 {
                     s++;
@@ -277,7 +275,7 @@ public://functions
                 }
             }
             
-            s = skipToNextChar(s, debugInfo, true);
+            s = tuiSkipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
             return new TuiVec4(dvec4(values[0], values[1], values[2],  values[3]), parent);
@@ -289,7 +287,7 @@ public://functions
     virtual uint8_t type() { return Tui_ref_type_VEC4; }
     virtual std::string getTypeName() {return "vec4";}
     virtual std::string getStringValue() {
-        return string_format("vec4(%s,%s,%s,%s)", doubleToString(value.x).c_str(), doubleToString(value.y).c_str(), doubleToString(value.z).c_str(), doubleToString(value.w).c_str());
+        return Tui::string_format("vec4(%s,%s,%s,%s)", Tui::doubleToString(value.x).c_str(), Tui::doubleToString(value.y).c_str(), Tui::doubleToString(value.z).c_str(), Tui::doubleToString(value.w).c_str());
     }
     virtual bool boolValue() {return true;}
 

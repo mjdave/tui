@@ -13,18 +13,20 @@
 #include <unistd.h>
 #endif
 
+namespace Tui {
+
 std::string getFileContents(const std::string& filename)
 {
     std::ifstream in((filename).c_str(), std::ios::in | std::ios::binary);
-	if(!in)
-	{
-		std::string tmpFilename = filename + ".tmp";
-		if(fileExistsAtPath(tmpFilename))
-		{
-			moveFile(tmpFilename, filename);
-			in = std::ifstream((filename).c_str(), std::ios::in | std::ios::binary);
-		}
-	}
+    if(!in)
+    {
+        std::string tmpFilename = filename + ".tmp";
+        if(Tui::fileExistsAtPath(tmpFilename))
+        {
+            moveFile(tmpFilename, filename);
+            in = std::ifstream((filename).c_str(), std::ios::in | std::ios::binary);
+        }
+    }
     if(in)
     {
         std::string contents;
@@ -41,32 +43,32 @@ std::string getFileContents(const std::string& filename)
 
 void writeToFile(const std::string& filename, const std::string& data)
 {
-	std::string tmpFile = filename + ".tmp";
-	std::ofstream ofs((tmpFile).c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
-	if(ofs)
-	{
-		ofs.write(data.data(), data.size());
-		ofs.close();
-		moveFile(tmpFile, filename);
-	}
+    std::string tmpFile = filename + ".tmp";
+    std::ofstream ofs((tmpFile).c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
+    if(ofs)
+    {
+        ofs.write(data.data(), data.size());
+        ofs.close();
+        moveFile(tmpFile, filename);
+    }
 }
 
 void moveFile(const std::string& fromPath, const std::string& toPath)
 {
 #ifdef WIN32 //windows won't overwrite, doesn't seem to be a way to do it atomically, so just remove then rename.
-	_wremove(convertUtf8ToWide(toPath).c_str());
-	_wrename(convertUtf8ToWide(fromPath).c_str(), convertUtf8ToWide(toPath).c_str());
+    _wremove(convertUtf8ToWide(toPath).c_str());
+    _wrename(convertUtf8ToWide(fromPath).c_str(), convertUtf8ToWide(toPath).c_str());
 #else
-	rename(fromPath.c_str(), toPath.c_str());
+    rename(fromPath.c_str(), toPath.c_str());
 #endif
 }
 
 bool removeFile(const std::string& removePath)
 {
 #ifdef WIN32
-	return (_wremove(convertUtf8ToWide(removePath).c_str()) == 0);
+    return (_wremove(convertUtf8ToWide(removePath).c_str()) == 0);
 #else
-	return (remove(removePath.c_str()) == 0);
+    return (remove(removePath.c_str()) == 0);
 #endif
 }
 
@@ -74,29 +76,29 @@ bool removeFile(const std::string& removePath)
 bool removeEmptyDirectory(const std::string& removePath)
 {
 #ifdef WIN32
-	return (_wrmdir(convertUtf8ToWide(removePath).c_str()) == 0);
+    return (_wrmdir(convertUtf8ToWide(removePath).c_str()) == 0);
 #else
-	//return (_rmdir(removePath.c_str()) == 0); //maybe linux?
+    //return (_rmdir(removePath.c_str()) == 0); //maybe linux?
     return (rmdir(removePath.c_str()) == 0);
 #endif
 }
 
 bool removeDirectory(const std::string& removePath)
 {
-	std::vector<std::string> contents = getDirectoryContents(removePath);
-	for(auto& subName : contents)
-	{
-		std::string subPath = removePath + "/" + subName;
-		if(isDirectoryAtPath(subPath) && !isSymLinkAtPath(subPath))
-		{
-			removeDirectory(subPath);
-		}
-		else
-		{
-			removeFile(subPath);
-		}
-	}
-	return removeEmptyDirectory(removePath);
+    std::vector<std::string> contents = getDirectoryContents(removePath);
+    for(auto& subName : contents)
+    {
+        std::string subPath = removePath + "/" + subName;
+        if(isDirectoryAtPath(subPath) && !isSymLinkAtPath(subPath))
+        {
+            removeDirectory(subPath);
+        }
+        else
+        {
+            removeFile(subPath);
+        }
+    }
+    return removeEmptyDirectory(removePath);
 }
 
 
@@ -112,12 +114,12 @@ std::vector<std::string> getDirectoryContents(const std::string& dirName)
     WIN32_FIND_DATAW findData;
     std::string query = dirName + "/*";
     HANDLE findHandle = FindFirstFileW(convertUtf8ToWide(query).c_str(), &findData);
-
+    
     if (findHandle == INVALID_HANDLE_VALUE)
     {
         return result;
     }
-
+    
     do
     {
         std::string name = convertWideToUtf8(findData.cFileName);
@@ -126,7 +128,7 @@ std::vector<std::string> getDirectoryContents(const std::string& dirName)
             result.push_back(name);
         }
     } while (FindNextFileW(findHandle, &findData));
-
+    
     FindClose(findHandle);
 #else
     DIR * dir = opendir(dirName.c_str());
@@ -134,24 +136,24 @@ std::vector<std::string> getDirectoryContents(const std::string& dirName)
     {
         return result;
     }
-
+    
     // Read directory entries
     struct dirent * entry = readdir(dir);
     while (entry)
     {
         // Get name
         std::string name = entry->d_name;
-
+        
         // Ignore . and ..
         if (name != ".." && name != ".")
         {
             result.push_back(name);
         }
-
+        
         // Next entry
         entry = readdir(dir);
     }
-
+    
     // Close directory
     closedir(dir);
 #endif
@@ -164,7 +166,7 @@ std::string fileNameFromPath(const std::string& path)
     std::vector<std::string> filePathComponents = splitString(normalizedPath(path), '/');
     if(filePathComponents.size() > 0)
     {
-        return filePathComponents[filePathComponents.size() - 1];  
+        return filePathComponents[filePathComponents.size() - 1];
     }
     TuiLog("Error finding fileNameFromPath for input path:%s", path.c_str());
     return "";
@@ -198,7 +200,7 @@ std::string changeExtensionForPath(const std::string& path, const std::string& n
             {
                 result = result + filePathComponents[i] + "/";
             }
-
+            
             if(newExtension[0] == '.')
             {
                 result = result + fileNameComponents[0] + newExtension;
@@ -207,8 +209,8 @@ std::string changeExtensionForPath(const std::string& path, const std::string& n
             {
                 result = result + fileNameComponents[0] + "." + newExtension;
             }
-
-            return result;  
+            
+            return result;
         }
     }
     TuiLog("Error in changeExtensionForPath for input path:%s", path.c_str());
@@ -217,25 +219,25 @@ std::string changeExtensionForPath(const std::string& path, const std::string& n
 
 std::string removeExtensionForPath(const std::string& path)
 {
-	std::vector<std::string> filePathComponents = splitString(normalizedPath(path), '/');
-	if(filePathComponents.size() > 0)
-	{
-		std::vector<std::string> fileNameComponents = splitString(filePathComponents[filePathComponents.size() - 1], '.');
-		if(fileNameComponents.size() > 0)
-		{
-			std::string result = "";
-			for(int i = 0; i < filePathComponents.size() - 1; i++)
-			{
-				result = result + filePathComponents[i] + "/";
-			}
-
-			result = result + fileNameComponents[0];
-
-			return result;  
-		}
-	}
-	TuiLog("Error in changeExtensionForPath for input path:%s", path.c_str());
-	return "";
+    std::vector<std::string> filePathComponents = splitString(normalizedPath(path), '/');
+    if(filePathComponents.size() > 0)
+    {
+        std::vector<std::string> fileNameComponents = splitString(filePathComponents[filePathComponents.size() - 1], '.');
+        if(fileNameComponents.size() > 0)
+        {
+            std::string result = "";
+            for(int i = 0; i < filePathComponents.size() - 1; i++)
+            {
+                result = result + filePathComponents[i] + "/";
+            }
+            
+            result = result + fileNameComponents[0];
+            
+            return result;
+        }
+    }
+    TuiLog("Error in changeExtensionForPath for input path:%s", path.c_str());
+    return "";
 }
 
 std::string pathByRemovingLastPathComponent(const std::string& path)
@@ -248,7 +250,7 @@ std::string pathByRemovingLastPathComponent(const std::string& path)
         {
             result = result + filePathComponents[i] + "/";
         }
-
+        
         return result;
     }
     TuiLog("Error pathByRemovingLastPathComponent for input path:%s", path.c_str());
@@ -264,7 +266,7 @@ std::string pathByAppendingPathComponent(const std::string& path, const std::str
         {
             outPath = outPath + "/";
         }
-
+        
         outPath = outPath + appendPath;
         return outPath;
     }
@@ -281,23 +283,23 @@ int64_t fileSizeAtPath(const std::string& path)
 {
 #ifdef WIN32
     WIN32_FILE_ATTRIBUTE_DATA* m_fileInfo = new WIN32_FILE_ATTRIBUTE_DATA;
-
+    
     if (!GetFileAttributesExW(convertUtf8ToWide(path).c_str(), GetFileExInfoStandard, m_fileInfo))
     {
         delete m_fileInfo;
         m_fileInfo = nullptr;
     }
-
+    
     if(m_fileInfo)
     {
         auto fileSizeH  = m_fileInfo->nFileSizeHigh;
         auto fileSizeL = m_fileInfo->nFileSizeLow;
-		delete m_fileInfo;
+        delete m_fileInfo;
         return static_cast<int64_t>(static_cast<__int64>(fileSizeH) << 32 | fileSizeL);
     }
 #else
     struct stat* m_fileInfo = new struct stat;
-
+    
     // Get file info
     if (stat(path.c_str(), m_fileInfo) != 0)
     {
@@ -305,7 +307,7 @@ int64_t fileSizeAtPath(const std::string& path)
         delete m_fileInfo;
         m_fileInfo = nullptr;
     }
-
+    
     if (m_fileInfo)
     {
         if (S_ISREG( m_fileInfo->st_mode ))
@@ -325,87 +327,87 @@ int64_t fileSizeAtPath(const std::string& path)
 bool isSymLinkAtPath(const std::string& path)
 {
 #ifdef WIN32
-	WIN32_FILE_ATTRIBUTE_DATA* m_fileInfo = new WIN32_FILE_ATTRIBUTE_DATA;
-
-	if (!GetFileAttributesExW(convertUtf8ToWide(path).c_str(), GetFileExInfoStandard, m_fileInfo))
-	{
-		delete m_fileInfo;
-		m_fileInfo = nullptr;
-	}
-
-	if(m_fileInfo)
-	{
-		return m_fileInfo->dwFileAttributes != INVALID_FILE_ATTRIBUTES && (m_fileInfo->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT);
-	}
-	
+    WIN32_FILE_ATTRIBUTE_DATA* m_fileInfo = new WIN32_FILE_ATTRIBUTE_DATA;
+    
+    if (!GetFileAttributesExW(convertUtf8ToWide(path).c_str(), GetFileExInfoStandard, m_fileInfo))
+    {
+        delete m_fileInfo;
+        m_fileInfo = nullptr;
+    }
+    
+    if(m_fileInfo)
+    {
+        return m_fileInfo->dwFileAttributes != INVALID_FILE_ATTRIBUTES && (m_fileInfo->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT);
+    }
+    
 #else
     struct stat p_statbuf;
-
+    
     if (lstat(path.c_str(), &p_statbuf) < 0) {  /* if error occured */
         return false;
     }
-
+    
     if (S_ISLNK(p_statbuf.st_mode) == 1) {
         return true;
     }
 #endif
-
-	return false;
+    
+    return false;
 }
 
 bool isDirectoryAtPath(const std::string& path)
 {
 #ifdef WIN32
-	WIN32_FILE_ATTRIBUTE_DATA* m_fileInfo = new WIN32_FILE_ATTRIBUTE_DATA;
-
-	if (!GetFileAttributesExW(convertUtf8ToWide(path).c_str(), GetFileExInfoStandard, m_fileInfo))
-	{
-		delete m_fileInfo;
-		m_fileInfo = nullptr;
-	}
-
-	if(m_fileInfo)
-	{
-		return m_fileInfo->dwFileAttributes != INVALID_FILE_ATTRIBUTES && (m_fileInfo->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
-	}
+    WIN32_FILE_ATTRIBUTE_DATA* m_fileInfo = new WIN32_FILE_ATTRIBUTE_DATA;
+    
+    if (!GetFileAttributesExW(convertUtf8ToWide(path).c_str(), GetFileExInfoStandard, m_fileInfo))
+    {
+        delete m_fileInfo;
+        m_fileInfo = nullptr;
+    }
+    
+    if(m_fileInfo)
+    {
+        return m_fileInfo->dwFileAttributes != INVALID_FILE_ATTRIBUTES && (m_fileInfo->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+    }
 #else
-	struct stat* m_fileInfo = new struct stat;
-
-	// Get file info
-	if (stat(path.c_str(), m_fileInfo) != 0)
-	{
-		// Error!
-		delete m_fileInfo;
-		m_fileInfo = nullptr;
-	}
-
-	if (m_fileInfo)
-	{
-		return S_ISDIR(m_fileInfo->st_mode);
-	}
+    struct stat* m_fileInfo = new struct stat;
+    
+    // Get file info
+    if (stat(path.c_str(), m_fileInfo) != 0)
+    {
+        // Error!
+        delete m_fileInfo;
+        m_fileInfo = nullptr;
+    }
+    
+    if (m_fileInfo)
+    {
+        return S_ISDIR(m_fileInfo->st_mode);
+    }
 #endif
-
-	return false;
+    
+    return false;
 }
 
 bool fileExistsAtPath(const std::string& path)
 {
 #ifdef WIN32
     WIN32_FILE_ATTRIBUTE_DATA* m_fileInfo = new WIN32_FILE_ATTRIBUTE_DATA;
-
+    
     if (!GetFileAttributesExW(convertUtf8ToWide(path).c_str(), GetFileExInfoStandard, m_fileInfo))
     {
         delete m_fileInfo;
         m_fileInfo = nullptr;
     }
-
+    
     if(m_fileInfo)
     {
         return true;
     }
 #else
     struct stat* m_fileInfo = new struct stat;
-
+    
     // Get file info
     if (stat(path.c_str(), m_fileInfo) != 0)
     {
@@ -413,14 +415,14 @@ bool fileExistsAtPath(const std::string& path)
         delete m_fileInfo;
         return false;
     }
-
+    
     if (m_fileInfo)
     {
         delete m_fileInfo;
         return true;
     }
 #endif
-
+    
     return false;
 }
 
@@ -464,73 +466,73 @@ void createDirectoriesIfNeededForFilePath(const std::string& path)
 
 bool copyFile(const std::string& sourcePath, const std::string& destinationPath)
 {
-	std::ifstream ifs((sourcePath).c_str(), std::ios::in|std::ios::binary);
-	std::ofstream ofs((destinationPath).c_str(), std::ios::out|std::ios::binary);
-	if(ifs && ofs)
-	{
-		ofs << ifs.rdbuf();
-		ifs.close();
-		ofs.close();
-		return true;
-	}
-
-	TuiLog("ERROR: Failed to copy file %s -> %s", sourcePath.c_str(), destinationPath.c_str());
-
-	return false;
+    std::ifstream ifs((sourcePath).c_str(), std::ios::in|std::ios::binary);
+    std::ofstream ofs((destinationPath).c_str(), std::ios::out|std::ios::binary);
+    if(ifs && ofs)
+    {
+        ofs << ifs.rdbuf();
+        ifs.close();
+        ofs.close();
+        return true;
+    }
+    
+    TuiLog("ERROR: Failed to copy file %s -> %s", sourcePath.c_str(), destinationPath.c_str());
+    
+    return false;
 }
 
 bool copyDirectory(const std::string& sourcePath, const std::string& destinationPath)
 {
-	createDirectoriesIfNeededForDirPath(destinationPath);
-	std::vector<std::string> contents = getDirectoryContents(sourcePath);
-	for(const std::string& subFile : contents)
-	{
-		std::string fullSourcePath = pathByAppendingPathComponent(sourcePath, subFile);
-		std::string fullDstPath = pathByAppendingPathComponent(destinationPath, subFile);
-		if(isDirectoryAtPath(fullSourcePath) && !isSymLinkAtPath(fullSourcePath))
-		{
-			if(!copyDirectory(fullSourcePath, fullDstPath))
-			{
-				return false;
-			}
-		}
-		else
-		{ 
-			if(!copyFile(fullSourcePath, fullDstPath))
-			{
-				return false;
-			}
-		}
-	}
-	return true;
+    createDirectoriesIfNeededForDirPath(destinationPath);
+    std::vector<std::string> contents = getDirectoryContents(sourcePath);
+    for(const std::string& subFile : contents)
+    {
+        std::string fullSourcePath = pathByAppendingPathComponent(sourcePath, subFile);
+        std::string fullDstPath = pathByAppendingPathComponent(destinationPath, subFile);
+        if(isDirectoryAtPath(fullSourcePath) && !isSymLinkAtPath(fullSourcePath))
+        {
+            if(!copyDirectory(fullSourcePath, fullDstPath))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if(!copyFile(fullSourcePath, fullDstPath))
+            {
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 bool copyFileOrDir(const std::string& sourcePath, const std::string& destinationPath)
 {
-	if(fileExistsAtPath(sourcePath))
-	{
-		if(isDirectoryAtPath(sourcePath) && !isSymLinkAtPath(sourcePath))
-		{
-			return copyDirectory(sourcePath, destinationPath);
-		}
-		else
-		{
-			return copyFile(sourcePath, destinationPath);
-		}
-	}
-	else
-	{
-		TuiLog("WARNING: Source file or directory not found for copyFileOrDir:%s", sourcePath.c_str());
-		return false;
-	}
-	return true;
+    if(fileExistsAtPath(sourcePath))
+    {
+        if(isDirectoryAtPath(sourcePath) && !isSymLinkAtPath(sourcePath))
+        {
+            return copyDirectory(sourcePath, destinationPath);
+        }
+        else
+        {
+            return copyFile(sourcePath, destinationPath);
+        }
+    }
+    else
+    {
+        TuiLog("WARNING: Source file or directory not found for copyFileOrDir:%s", sourcePath.c_str());
+        return false;
+    }
+    return true;
 }
 
 
 void openFile(std::string filePath)
 {
 #ifdef WIN32
-	ShellExecuteW(NULL, L"open", convertUtf8ToWide(filePath).c_str(), NULL, NULL, SW_SHOWDEFAULT);
+    ShellExecuteW(NULL, L"open", convertUtf8ToWide(filePath).c_str(), NULL, NULL, SW_SHOWDEFAULT);
 #elif __APPLE__
     if(filePath.substr(0,4) == "http")
     {
@@ -544,6 +546,8 @@ void openFile(std::string filePath)
         system("/usr/bin/osascript -e 'tell application \"Finder\" to activate'");
     }
 #else
-	TuiLog("ERROR:openFile not implemented on this platform");
+    TuiLog("ERROR:openFile not implemented on this platform");
 #endif
+}
+
 }

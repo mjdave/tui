@@ -8,6 +8,8 @@
 #include <string>
 #include "TuiLog.h"
 
+namespace Tui {
+
 std::string getFileContents(const std::string& filename);
 void writeToFile(const std::string& filename, const std::string& data);
 
@@ -39,5 +41,7 @@ bool removeDirectory(const std::string& removePath);
 bool copyFileOrDir(const std::string& sourcePath, const std::string& destinationPath);
 
 void openFile(std::string filePath);
+
+}
 
 #endif
