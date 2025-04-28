@@ -2,11 +2,15 @@
 
 tui is a small, cross platform, open source scripting and serialization library for C++.
 
-NOTE: tui is very early in development, it is still likely to have issues, and not ready to be used.
+NOTE: tui is very early in development, it is still likely to have crashes and issues, is not fully optimized or tested, and not ready to be used.
 
-Created by a solo game developer to be fast, simple, and easy to use and modify, tui combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
+Created by a solo game developer to be fast, small, and easy to integrate and use, tui combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
 
 tui is dynamically typed, flexible, and lightweight. Data is shared in memory between tui and the host c++ program, allowing high performance read/writes in both enviornments.
+
+Compared to a JSON serializer, tui adds a whole scrpting language on top! It's also super fast, provides your data in thinly wrapped stl containers (eg std::map, std::vector), and populates the data for the host program to read immediately when parsed.
+
+Compared to lua, tui is generally slower (up to 10x slower in tight loops), but easier to integrate and bind, and (potentially) faster when sharing data between C++ and the scripting enviornment. It has a smaller footprint, but less language features, and has good, fast built-in table serialization.
 
 # Features & Usage/Examples
 
@@ -74,7 +78,7 @@ else // 'else if' and 'elseif' are both valid too
 }
 ```
 ## Functions
-Functions are still a work in progress, but we have value assignments, if/else statements, and basic expressions so far.
+Functions support value assignments, if/else statements, and for loops.
 ```javascript
 addTariff = function(base)
 {
@@ -88,10 +92,33 @@ addTariff = function(base)
 
 costOfTV = addTariff(500)
 costOfPlaystation = addTariff(400)
+sadness = 10
+
+for (i = 0, i < 5, i = i + 1)
+{
+    print("sigh")
+    sadness = sadness + 1
+}
 ```
 
-You can supply your own functions in C++ easily
+You can supply your own functions in C++ easily by providing a std::function that takes tables for args and any parent state, and gives you the result, eg. here is the code that adds the print function:
 ```c++
+
+TuiFunction* printFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state) {
+    if(args->arrayObjects.size() > 0)
+    {
+        std::string printString = "";
+        for(TuiRef* arg : args->arrayObjects)
+        {
+            printString += arg->getDebugStringValue();
+        }
+        TuiLog("%s", printString.c_str());
+    }
+    return nullptr;
+}, rootTable);
+
+rootTable->set("print", printFunction);
+printFunction->release();
 
 ```
 
@@ -106,7 +133,9 @@ halfSize = size * 0.5
 ## Scope
 Every table and every function has its own scope for variable creation/assignment.
 
-All variable assignments create new local within the enclosing function or table. They are limited in scope to the table/function they are declared in, and readable for all child tables/functions, and also read/writable via the `'.'` syntax to access children and `'..'` to access parents.
+If you assign to a variable eg: `a = 42` then that will assign to any existing variable named 'a' within the current scope only. If the parent table or function has a variable named 'a', it remains unaffected, and a new local 'a' is created.
+
+Variables are readable for all child tables/functions, and also read/writable via the `'.'` syntax to access children and `'..'` to access parents.
 
 ```javascript
 value = 10
@@ -135,7 +164,7 @@ table = {
     
     outsideFunc = subTable.testFunction // we can grab a reference to that subTable's function and call it directly here
     outsideFunc(200) // ..value is now 200. '....value' still works, because we find variables relative to where the function was defined, not where it is called
-    thisFuncDoesntExist() // error examples/scope.mjh:27:attempt to call missing function: thisFuncDoesntExist()
+    thisFuncDoesntExist() // error examples/scope.tui:27:attempt to call missing function: thisFuncDoesntExist()
 }
 ```
 
@@ -161,6 +190,12 @@ doubleWidth = baseWidth * 2.0
 baseWidth = nil
 ```
 
+## Performance
+
+As tui parses and immediately runs hand written script code in a single pass, in cases with few loops, it should perform just as well as, or better than the alternatives. 
+
+Where tui will be noticably slower than lua, is when writing high performance loops and functions. To make up for that it is much easier to call out to your own C++ functions where needed.
+
 # Using tui in C++
 
 You can add the files to your c++ project, run a script, and access the output easily. The only dependency is glm for vector math support.
@@ -170,14 +205,14 @@ You can add the files to your c++ project, run a script, and access the output e
 
 int main()
 {
-    TuiTable* table = TuiTable::initWithHumanReadableFilePath("config.mjh"); // load a JSON-like config file
+    TuiTable* table = TuiTable::initWithHumanReadableFilePath("config.tui"); // load a JSON-like config file
     std::string playerName = table->getString("playerName"); //get a string
     double playDuration = table->getDouble("playDuration"); //get a number
     table->setDouble("playDuration", playDuration + 1.0); //set a number
-    table->saveToFile("config.mjh"); //save in a human readable JSON-like format
+    table->saveToFile("config.tui"); //save in a human readable JSON-like format
     table->release(); //cleanup
     
-    TuiRef* scriptRunResult = TuiTable::runScriptFile("script.mjh"); //run a script file
+    TuiRef* scriptRunResult = TuiTable::runScriptFile("script.tui"); //run a script file
     scriptRunResult->debugLog(); //print the result
     scriptRunResult->release(); //cleanup
 }
@@ -197,18 +232,16 @@ It should not be used in production environments yet. Binary formats and for sta
 
 The interpreter only builds for macos at present, but getting it building on other platforms will happen soon. tui is cross platform, tested on windows, macos and linux.
 
-tui has 'objects', as tables. However there is no concept of 'self/this', and no direct support for inheritance or classes in general.
+tui has 'objects', as tables. However there is no concept of 'self/this', and no direct support for inheritance or classes in general. Further OOP support is not planned.
 
 tui will stay small, and won't add a lot of support for built in system functionality. If this functionality is desired, it can easily be added on the C++ side by registering your own functions.
 
-There are no bindings for languages other than C++ at present, however porting to other languages will not be a difficult job.
+There are no bindings for languages other than C++ at present.
 
 # More about the motivations and ideologies behind tui
 This is a one-man project (to start with), my name is Dave Frampton, I made the games Sapiens (C++/Lua) and The Blockheads (Objective C) using my own custom engines.
 
 tui was initially created to serialize and share data in C++ for my games, so it started life as a quick little JSON parser. Very soon though, missing the power of lua, I started adding variables and functions.
-
-During this process, I have taken a performance-centric approach, while trying to keep it simple and clear. As it parses and immediately runs hand written script code in a single pass, in many cases where a script is just read, or a config file loaded, it should perform faster than the alternatives. Where tui might not be as fast is when you have a lot of function calls with long variable names, but we'll see how it goes.
 
 I feel this could be useful for a lot of people. I don't desire to keep it only for myself or to profit from it, and I wouldn't mind some help, so I'm making it open source. 
 

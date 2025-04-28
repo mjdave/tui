@@ -53,11 +53,11 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "examples/simpleScript.mjh"
+            argument = "examples/simpleScript.tui"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "examples/daveTest.mjh"
+            argument = "examples/daveTest.tui"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

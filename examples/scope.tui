@@ -24,11 +24,11 @@ table = {
     
     outsideFunc = subTable.testFunction // we can grab a reference to that subTable's function and call it directly here
     outsideFunc(200) // ..value is now 200. '....value' still works, because we find variables relative to where the function was defined, not where it is called
-    thisFuncDoesntExist() // error examples/scope.mjh:27:attempt to call missing function: thisFuncDoesntExist()
+    thisFuncDoesntExist() // error examples/scope.tui:27:attempt to call missing function: thisFuncDoesntExist()
 }
 
 #result:
-#error examples/scope.mjh:27:attempt to call missing function: thisFuncDoesntExist()
+#error examples/scope.tui:27:attempt to call missing function: thisFuncDoesntExist()
 #{
 #    "table" = {
 #        function,

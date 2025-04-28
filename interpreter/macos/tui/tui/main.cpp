@@ -19,7 +19,7 @@ int main(int argc, const char * argv[]) {
     
     if(args.empty())
     {
-        TuiLog("Please supply a script to run, eg. ./tui examples/example.mjh");
+        TuiLog("Please supply a script to run, eg. ./tui examples/example.tui");
         return 0;
     }
     
