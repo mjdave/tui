@@ -2,15 +2,15 @@
 
 tui is a small, cross platform, open source embeddable scripting language and serialization library for C++.
 
-NOTE: tui is very early in development, it is still likely to have crashes and issues, is not fully optimized or tested, and not ready to be used.
+***NOTE: tui is very early in development, it is still likely to have crashes and issues, is not fully optimized or tested, is missing key features, and is generally not ready to be used yet!***
 
 Created by a solo game developer to be fast, small, and easy to integrate and use, tui combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
 
-tui is dynamically typed, flexible, and lightweight. Data is shared in memory between tui and the host c++ program, allowing high performance read/writes in both enviornments.
+tui is dynamically typed, flexible, and lightweight. Data is shared in memory between tui and the host c++ program, allowing high performance data read/writes in both environments.
 
-Compared to a JSON serializer, tui adds a whole scrpting language on top! It's also super fast, provides your data in thinly wrapped stl containers (eg std::map, std::vector), and populates the data for the host program to read immediately when parsed.
+Compared to a JSON serializer, tui adds a whole scripting language on top! It's also super fast, provides your data in thinly wrapped stl containers (eg std::map, std::vector), and populates the data for the host program to read immediately when parsed.
 
-Compared to lua, tui is generally slower (up to 10x slower in tight loops), but easier to integrate and bind, and (potentially) faster when sharing data between C++ and the scripting enviornment. It has a smaller footprint, but less language features, and has good, fast built-in table serialization.
+Compared to lua, tui is generally slower (up to 10x slower in tight loops), but easier to integrate and bind, and (potentially) faster when sharing data between C++ and the scripting environment. It has a smaller footprint, but less language features, and has good, fast built-in table serialization.
 
 # Features & Usage/Examples
 
@@ -46,7 +46,7 @@ This is the same data in JSON. tui can read this too, as it treats ":" and "=" t
 ```
 
 Whitespace is ignored, however newlines are treated like commas, unless quoted or within a bracketed expression
-```json
+```lua
 array = {
     ThisIsTheFirstObjectWithIndexZero
     "This is the second object with spaces, so it needs quotes"
@@ -194,7 +194,7 @@ baseWidth = nil
 
 As tui parses and immediately runs hand written script code in a single pass, in cases with few loops, it should perform just as well as, or better than the alternatives. 
 
-Where tui will be noticably slower than lua, is when writing high performance loops and functions. To make up for that it is much easier to call out to your own C++ functions where needed.
+Where tui will be noticeably slower than lua, is when writing high performance loops and functions. To make up for that it is much easier to call out to your own C++ functions where needed.
 
 # Using tui in C++
 
@@ -219,11 +219,11 @@ int main()
 
 ```
 
-With no virtual machine, and no bindings required in C++, all of the data and script state is stored in a public std::map or std::vector under the hood. Scripts and tables are parsed together and are treated the same. Each character is simply parsed one by one in a single phase, with data loaded immediately. Functions and for loops are quickly serialized and called as required.
+With no virtual machine, and no bindings required to access data in C++, all of the data and script state is stored in a public std::map or std::vector under the hood. Scripts and tables are parsed together and are treated the same. Each character is simply parsed one by one in a single phase, with data loaded immediately. Functions and for loops are quickly serialized and called as required.
 
 This means tui can solve two problems. You can use it as a fast and small scripting language, that also happens to have built in serialization support from/to both binary (todo) and human readable data formats.
 
-Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other ways of storing and sharing data, tui reads JSON out of the box, while adding a bunch of new features.
+Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other formats for storing and sharing data, tui reads JSON out of the box, while adding a bunch of new features.
 
 # What tui is not
 tui is not finished!
