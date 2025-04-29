@@ -137,6 +137,7 @@ public://functions
                 if(*s == '\n')
                 {
                     debugInfo->lineNumber++;
+                    break;
                 }
                 if(!isspace(*s))
                 {

@@ -1,0 +1,56 @@
+
+testAdd = function(a,b)
+{
+    return a + b
+}
+
+testSub = function(a,b)
+{
+    return a - b
+}
+
+testMult = function(a,b)
+{
+    return a * b
+}
+
+testDivide = function(a,b)
+{
+    return a / b
+}
+
+testGreaterThan = function(a,b)
+{
+    return a > b
+}
+
+testEqualTo = function(a,b)
+{
+    return a == b
+}
+
+return {
+    n_10 = testAdd(2,8)
+    n_10b = testSub(20,10)
+    n_25 = testMult(5,5)
+    n_10Divide = testDivide(100,10)
+    n_testGreaterThan_true = testGreaterThan(100,10)
+    n_testEqualTo_false = testEqualTo(100,10)
+    n_testEqualTo_true = testEqualTo(10,10)
+
+    v2_10 = testAdd(vec2(2,2),vec2(8,8))
+    v2_10b = testSub(vec2(20,20),vec2(10,10))
+    v2_25 = testMult(vec2(5, 5), 5)
+    v2_10Divide = testDivide(vec2(100, 100), vec2(10, 10))
+
+    v2b_25 = testMult(vec2(5, 5), 5)
+    v2b_10Divide = testDivide(vec2(100, 100), 10)
+
+    v3_10 = testAdd(vec3(2,2,2),vec3(8,8,2))
+    v3_10b = testSub(vec3(20,20,20),vec3(10,10,10))
+    v3_25 = testMult(vec3(5, 5,5), 5)
+    v3_10Divide = testDivide(vec3(100, 100,100), vec3(10, 10,10))
+
+    v3b_25 = testMult(vec3(5, 5,5), 5)
+    v3b_10Divide = testDivide(vec3(100, 100, 100), 10)
+}
