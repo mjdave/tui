@@ -5,3 +5,5 @@ interpreter/macos/tui/tui.xcodeproj/xcuserdata
 interpreter/linux/build
 interpreter/linux/bin
 interpreter/linux/tui
+interpreter/windows/tui/tui
+interpreter/windows/tui/x64
