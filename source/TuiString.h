@@ -74,6 +74,10 @@ public://functions
                         }
                     }
                 }
+                else
+                {
+                    mjString->value += *s;
+                }
             }
             else if(*s == '"')
             {
@@ -93,6 +97,10 @@ public://functions
                             mjString->allowAsVariableName = false;
                         }
                     }
+                }
+                else
+                {
+                    mjString->value += *s;
                 }
             }
             else if(*s == '\\')

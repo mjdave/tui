@@ -1,20 +1,35 @@
-#print("This is printing the first line from example/example.tui")
+print("This is printing the first line from example/example.tui")
 
 example = {
 
-    #print("tui just loaded up a table")
+    print("now we are creating a table")
 
     innerTable = {
-        #print("and we've just created a new table inside that one. This is what the example table looks like now:")
-        print(example)
-        exampleString = "Now we are setting a value in the table. Once you see this, it's accessible in C++ too"
-        print(example)
+        print("and we've just created a new table inside that one.")
+        exampleString = "This is a value inside it."
+    }
+    print("that table has been created. Here it is:")
+    print(innerTable)
+
+    this = {
+        is
+        some
+        strings
+        in
+        an
+        array
     }
 
-    testInnerTable = {
-        test4 = 6
+    print("this:", this)
+
+    x = 78
+    someMaths = 5 * (x + 4)
+    print("we can do some maths:", someMaths)
+
+    aStringInsideAFunction = function()
+    {
+        return "a string inside a function"
     }
-    test10 = testInnerTable.test4
-    test7 = 40
-    print(test10)
+
+    print("and here is ", aStringInsideAFunction())
 }

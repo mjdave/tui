@@ -53,7 +53,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "examples/daveTest.tui"
+            argument = "examples/example.tui"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
