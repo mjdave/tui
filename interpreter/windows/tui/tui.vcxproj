@@ -111,7 +111,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>MKLINK "$(TargetDir)\examples" "$(SolutionDir)..\..\..\examples" /J</Command>
+      <Command>MKLINK "$(TargetDir)\examples" "$(SolutionDir)..\..\..\examples" /J | echo done</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

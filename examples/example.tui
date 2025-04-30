@@ -1,0 +1,20 @@
+#print("This is printing the first line from example/example.tui")
+
+example = {
+
+    #print("tui just loaded up a table")
+
+    innerTable = {
+        #print("and we've just created a new table inside that one. This is what the example table looks like now:")
+        print(example)
+        exampleString = "Now we are setting a value in the table. Once you see this, it's accessible in C++ too"
+        print(example)
+    }
+
+    testInnerTable = {
+        test4 = 6
+    }
+    test10 = testInnerTable.test4
+    test7 = 40
+    print(test10)
+}

@@ -1,8 +1,0 @@
-{
-    testInnerTable = {
-        test4 = 6
-    }
-    test10 = testInnerTable.test4
-    test7 = 40
-    print(test10)
-}

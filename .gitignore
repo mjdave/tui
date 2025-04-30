@@ -7,3 +7,4 @@ interpreter/linux/bin
 interpreter/linux/tui
 interpreter/windows/tui/tui
 interpreter/windows/tui/x64
+examples/examples
