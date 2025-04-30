@@ -73,7 +73,7 @@ TuiTable* TuiRef::createRootTable()
         return result;
     }, rootTable);
     
-    rootTable->set("readInput", readStringFunction);
+    rootTable->set("readValue", readStringFunction);
     readStringFunction->release();
     
     
@@ -385,7 +385,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     
     s = tuiSkipToNextChar(s, debugInfo, true);
     
-    TuiRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, nullptr, parentTable, debugInfo, false, false);
+    TuiRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, nullptr, parentTable, debugInfo, false, true);
     s = tuiSkipToNextChar(*endptr, debugInfo, true);
     
     if(rightValue->type() == Tui_ref_type_STRING)
@@ -407,250 +407,300 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     
     TuiRef* result = nullptr;
     
-    if(leftValue->type() == Tui_ref_type_NUMBER)
+    if(operatorChar == '=')
     {
-        if(rightValue->type() == Tui_ref_type_NUMBER)
-        {
-            switch(operatorChar)
-            {
-                case '+':
-                {
-                    result = new TuiNumber(((TuiNumber*)leftValue)->value + ((TuiNumber*)rightValue)->value);
-                }
-                break;
-                case '-':
-                {
-                    result = new TuiNumber(((TuiNumber*)leftValue)->value - ((TuiNumber*)rightValue)->value);
-                }
-                break;
-                case '*':
-                {
-                    result = new TuiNumber(((TuiNumber*)leftValue)->value * ((TuiNumber*)rightValue)->value);
-                }
-                break;
-                case '/':
-                {
-                    result = new TuiNumber(((TuiNumber*)leftValue)->value / ((TuiNumber*)rightValue)->value);
-                }
-                break;
-                case '>':
-                {
-                    if(secondOperatorChar == '=')
-                    {
-                        result = new TuiBool(((TuiNumber*)leftValue)->value >= ((TuiNumber*)rightValue)->value);
-                    }
-                    else
-                    {
-                        result = new TuiBool(((TuiNumber*)leftValue)->value > ((TuiNumber*)rightValue)->value);
-                    }
-                }
-                break;
-                case '<':
-                {
-                    if(secondOperatorChar == '=')
-                    {
-                        result = new TuiBool(((TuiNumber*)leftValue)->value <= ((TuiNumber*)rightValue)->value);
-                    }
-                    else
-                    {
-                        result = new TuiBool(((TuiNumber*)leftValue)->value < ((TuiNumber*)rightValue)->value);
-                    }
-                }
-                break;
-                case '=':
-                {
-                    result = new TuiBool(((TuiNumber*)leftValue)->value == ((TuiNumber*)rightValue)->value);
-                }
-                break;
-            }
-        }
-        else if(rightValue->type() == Tui_ref_type_VEC2)
-        {
-            switch(operatorChar)
-            {
-                case '*':
-                {
-                    result = new TuiVec2(dvec2(((TuiNumber*)leftValue)->value) * ((TuiVec2*)rightValue)->value);
-                }
-                break;
-                case '/':
-                {
-                    result = new TuiVec2(dvec2(((TuiNumber*)leftValue)->value) / ((TuiVec2*)rightValue)->value);
-                }
-                break;
-            }
-        }
-        else if(rightValue->type() == Tui_ref_type_VEC3)
-        {
-            switch(operatorChar)
-            {
-                case '*':
-                {
-                    result = new TuiVec3(dvec3(((TuiNumber*)leftValue)->value) * ((TuiVec3*)rightValue)->value);
-                }
-                break;
-                case '/':
-                {
-                    result = new TuiVec3(dvec3(((TuiNumber*)leftValue)->value) / ((TuiVec3*)rightValue)->value);
-                }
-                break;
-            }
-        }
-        else if(rightValue->type() == Tui_ref_type_VEC4)
-        {
-            switch(operatorChar)
-            {
-                case '*':
-                {
-                    result = new TuiVec4(dvec4(((TuiNumber*)leftValue)->value) * ((TuiVec4*)rightValue)->value);
-                }
-                break;
-                case '/':
-                {
-                    result = new TuiVec4(dvec4(((TuiNumber*)leftValue)->value) / ((TuiVec4*)rightValue)->value);
-                }
-                break;
-            }
-        }
-    }
-    else if(leftValue->type() == Tui_ref_type_VEC2)
-    {
-        if(rightValue->type() == Tui_ref_type_NUMBER)
-        {
-            switch(operatorChar)
-            {
-                case '*':
-                {
-                    result = new TuiVec2(((TuiVec2*)leftValue)->value * ((TuiNumber*)rightValue)->value);
-                }
-                break;
-                case '/':
-                {
-                    result = new TuiVec2(((TuiVec2*)leftValue)->value / ((TuiNumber*)rightValue)->value);
-                }
-                break;
-            }
-        }
-        else if(rightValue->type() == Tui_ref_type_VEC2)
-        {
-            switch(operatorChar)
-            {
-                case '+':
-                {
-                    result = new TuiVec2(((TuiVec2*)leftValue)->value + ((TuiVec2*)rightValue)->value);
-                }
-                break;
-                case '-':
-                {
-                    result = new TuiVec2(((TuiVec2*)leftValue)->value - ((TuiVec2*)rightValue)->value);
-                }
-                break;
-                case '*':
-                {
-                    result = new TuiVec2(((TuiVec2*)leftValue)->value * ((TuiVec2*)rightValue)->value);
-                }
-                break;
-                case '/':
-                {
-                    result = new TuiVec2(((TuiVec2*)leftValue)->value / ((TuiVec2*)rightValue)->value);
-                }
-                break;
-            }
-        }
-    }
-    else if(leftValue->type() == Tui_ref_type_VEC3)
-    {
-        if(rightValue->type() == Tui_ref_type_NUMBER)
-        {
-            switch(operatorChar)
-            {
-                case '*':
-                {
-                    result = new TuiVec3(((TuiVec3*)leftValue)->value * ((TuiNumber*)rightValue)->value);
-                }
-                break;
-                case '/':
-                {
-                    result = new TuiVec3(((TuiVec3*)leftValue)->value / ((TuiNumber*)rightValue)->value);
-                }
-                break;
-            }
-        }
-        else if(rightValue->type() == Tui_ref_type_VEC3)
-        {
-            switch(operatorChar)
-            {
-                case '+':
-                {
-                    result = new TuiVec3(((TuiVec3*)leftValue)->value + ((TuiVec3*)rightValue)->value);
-                }
-                break;
-                case '-':
-                {
-                    result = new TuiVec3(((TuiVec3*)leftValue)->value - ((TuiVec3*)rightValue)->value);
-                }
-                break;
-                case '*':
-                {
-                    result = new TuiVec3(((TuiVec3*)leftValue)->value * ((TuiVec3*)rightValue)->value);
-                }
-                break;
-                case '/':
-                {
-                    result = new TuiVec3(((TuiVec3*)leftValue)->value / ((TuiVec3*)rightValue)->value);
-                }
-                break;
-            }
-        }
-    }
-    else if(leftValue->type() == Tui_ref_type_VEC4)
-    {
-        if(rightValue->type() == Tui_ref_type_NUMBER)
-        {
-            switch(operatorChar)
-            {
-                case '*':
-                {
-                    result = new TuiVec4(((TuiVec4*)leftValue)->value * ((TuiNumber*)rightValue)->value);
-                }
-                break;
-                case '/':
-                {
-                    result = new TuiVec4(((TuiVec4*)leftValue)->value / ((TuiNumber*)rightValue)->value);
-                }
-                break;
-            }
-        }
-        else if(rightValue->type() == Tui_ref_type_VEC4)
-        {
-            switch(operatorChar)
-            {
-                case '+':
-                {
-                    result = new TuiVec4(((TuiVec4*)leftValue)->value + ((TuiVec4*)rightValue)->value);
-                }
-                break;
-                case '-':
-                {
-                    result = new TuiVec4(((TuiVec4*)leftValue)->value - ((TuiVec4*)rightValue)->value);
-                }
-                break;
-                case '*':
-                {
-                    result = new TuiVec4(((TuiVec4*)leftValue)->value * ((TuiVec4*)rightValue)->value);
-                }
-                break;
-                case '/':
-                {
-                    result = new TuiVec4(((TuiVec4*)leftValue)->value / ((TuiVec4*)rightValue)->value);
-                }
-                break;
-            }
-        }
+        result = new TuiBool(leftValue->isEqual(rightValue));
     }
     else
     {
-        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
+        
+        if(leftValue->type() == Tui_ref_type_NUMBER)
+        {
+            if(rightValue->type() == Tui_ref_type_NUMBER)
+            {
+                switch(operatorChar)
+                {
+                    case '+':
+                    {
+                        result = new TuiNumber(((TuiNumber*)leftValue)->value + ((TuiNumber*)rightValue)->value);
+                    }
+                        break;
+                    case '-':
+                    {
+                        result = new TuiNumber(((TuiNumber*)leftValue)->value - ((TuiNumber*)rightValue)->value);
+                    }
+                        break;
+                    case '*':
+                    {
+                        result = new TuiNumber(((TuiNumber*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                    }
+                        break;
+                    case '/':
+                    {
+                        result = new TuiNumber(((TuiNumber*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                    }
+                        break;
+                    case '>':
+                    {
+                        if(secondOperatorChar == '=')
+                        {
+                            result = new TuiBool(((TuiNumber*)leftValue)->value >= ((TuiNumber*)rightValue)->value);
+                        }
+                        else
+                        {
+                            result = new TuiBool(((TuiNumber*)leftValue)->value > ((TuiNumber*)rightValue)->value);
+                        }
+                    }
+                        break;
+                    case '<':
+                    {
+                        if(secondOperatorChar == '=')
+                        {
+                            result = new TuiBool(((TuiNumber*)leftValue)->value <= ((TuiNumber*)rightValue)->value);
+                        }
+                        else
+                        {
+                            result = new TuiBool(((TuiNumber*)leftValue)->value < ((TuiNumber*)rightValue)->value);
+                        }
+                    }
+                        break;
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        break;
+                }
+            }
+            else if(rightValue->type() == Tui_ref_type_VEC2)
+            {
+                switch(operatorChar)
+                {
+                    case '*':
+                    {
+                        result = new TuiVec2(dvec2(((TuiNumber*)leftValue)->value) * ((TuiVec2*)rightValue)->value);
+                    }
+                        break;
+                    case '/':
+                    {
+                        result = new TuiVec2(dvec2(((TuiNumber*)leftValue)->value) / ((TuiVec2*)rightValue)->value);
+                    }
+                        break;
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        break;
+                }
+            }
+            else if(rightValue->type() == Tui_ref_type_VEC3)
+            {
+                switch(operatorChar)
+                {
+                    case '*':
+                    {
+                        result = new TuiVec3(dvec3(((TuiNumber*)leftValue)->value) * ((TuiVec3*)rightValue)->value);
+                    }
+                        break;
+                    case '/':
+                    {
+                        result = new TuiVec3(dvec3(((TuiNumber*)leftValue)->value) / ((TuiVec3*)rightValue)->value);
+                    }
+                        break;
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        break;
+                }
+            }
+            else if(rightValue->type() == Tui_ref_type_VEC4)
+            {
+                switch(operatorChar)
+                {
+                    case '*':
+                    {
+                        result = new TuiVec4(dvec4(((TuiNumber*)leftValue)->value) * ((TuiVec4*)rightValue)->value);
+                    }
+                        break;
+                    case '/':
+                    {
+                        result = new TuiVec4(dvec4(((TuiNumber*)leftValue)->value) / ((TuiVec4*)rightValue)->value);
+                    }
+                        break;
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        break;
+                }
+            }
+        }
+        else if(leftValue->type() == Tui_ref_type_VEC2)
+        {
+            if(rightValue->type() == Tui_ref_type_NUMBER)
+            {
+                switch(operatorChar)
+                {
+                    case '*':
+                    {
+                        result = new TuiVec2(((TuiVec2*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                    }
+                        break;
+                    case '/':
+                    {
+                        result = new TuiVec2(((TuiVec2*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                    }
+                        break;
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        break;
+                }
+            }
+            else if(rightValue->type() == Tui_ref_type_VEC2)
+            {
+                switch(operatorChar)
+                {
+                    case '+':
+                    {
+                        result = new TuiVec2(((TuiVec2*)leftValue)->value + ((TuiVec2*)rightValue)->value);
+                    }
+                        break;
+                    case '-':
+                    {
+                        result = new TuiVec2(((TuiVec2*)leftValue)->value - ((TuiVec2*)rightValue)->value);
+                    }
+                        break;
+                    case '*':
+                    {
+                        result = new TuiVec2(((TuiVec2*)leftValue)->value * ((TuiVec2*)rightValue)->value);
+                    }
+                        break;
+                    case '/':
+                    {
+                        result = new TuiVec2(((TuiVec2*)leftValue)->value / ((TuiVec2*)rightValue)->value);
+                    }
+                        break;
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        break;
+                }
+            }
+        }
+        else if(leftValue->type() == Tui_ref_type_VEC3)
+        {
+            if(rightValue->type() == Tui_ref_type_NUMBER)
+            {
+                switch(operatorChar)
+                {
+                    case '*':
+                    {
+                        result = new TuiVec3(((TuiVec3*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                    }
+                        break;
+                    case '/':
+                    {
+                        result = new TuiVec3(((TuiVec3*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                    }
+                        break;
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        break;
+                }
+            }
+            else if(rightValue->type() == Tui_ref_type_VEC3)
+            {
+                switch(operatorChar)
+                {
+                    case '+':
+                    {
+                        result = new TuiVec3(((TuiVec3*)leftValue)->value + ((TuiVec3*)rightValue)->value);
+                    }
+                        break;
+                    case '-':
+                    {
+                        result = new TuiVec3(((TuiVec3*)leftValue)->value - ((TuiVec3*)rightValue)->value);
+                    }
+                        break;
+                    case '*':
+                    {
+                        result = new TuiVec3(((TuiVec3*)leftValue)->value * ((TuiVec3*)rightValue)->value);
+                    }
+                        break;
+                    case '/':
+                    {
+                        result = new TuiVec3(((TuiVec3*)leftValue)->value / ((TuiVec3*)rightValue)->value);
+                    }
+                        break;
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        break;
+                }
+            }
+        }
+        else if(leftValue->type() == Tui_ref_type_VEC4)
+        {
+            if(rightValue->type() == Tui_ref_type_NUMBER)
+            {
+                switch(operatorChar)
+                {
+                    case '*':
+                    {
+                        result = new TuiVec4(((TuiVec4*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                    }
+                        break;
+                    case '/':
+                    {
+                        result = new TuiVec4(((TuiVec4*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                    }
+                        break;
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        break;
+                }
+            }
+            else if(rightValue->type() == Tui_ref_type_VEC4)
+            {
+                switch(operatorChar)
+                {
+                    case '+':
+                    {
+                        result = new TuiVec4(((TuiVec4*)leftValue)->value + ((TuiVec4*)rightValue)->value);
+                    }
+                        break;
+                    case '-':
+                    {
+                        result = new TuiVec4(((TuiVec4*)leftValue)->value - ((TuiVec4*)rightValue)->value);
+                    }
+                        break;
+                    case '*':
+                    {
+                        result = new TuiVec4(((TuiVec4*)leftValue)->value * ((TuiVec4*)rightValue)->value);
+                    }
+                        break;
+                    case '/':
+                    {
+                        result = new TuiVec4(((TuiVec4*)leftValue)->value / ((TuiVec4*)rightValue)->value);
+                    }
+                        break;
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        break;
+                }
+            }
+        }
+        else if(leftValue->type() == Tui_ref_type_STRING)
+        {
+            if(rightValue->type() == Tui_ref_type_STRING)
+            {
+                switch(operatorChar)
+                {
+                    case '+':
+                    {
+                        result = new TuiString(((TuiString*)leftValue)->value + ((TuiString*)rightValue)->value);
+                    }
+                        break;
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        break;
+                }
+            }
+        }
+        else
+        {
+            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
+        }
     }
     
     if(result)

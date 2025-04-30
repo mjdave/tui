@@ -22,6 +22,7 @@ public://functions
     virtual std::string getTypeName() {return "string";}
     virtual std::string getStringValue() {return value;}
     virtual bool boolValue() {return !value.empty();}
+    virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_STRING && ((TuiString*)other)->value == value;}
     
     TuiString(const std::string& value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
     virtual ~TuiString() {};
@@ -133,10 +134,17 @@ public://functions
             }
             else if(*s == '(')
             {
-                if(mjString->allowAsVariableName && !escaped && !singleQuote && !doubleQuote)
+                if(!escaped && !singleQuote && !doubleQuote)
                 {
-                    mjString->isValidFunctionString = true;
-                    break;
+                    if(mjString->allowAsVariableName)
+                    {
+                        mjString->isValidFunctionString = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    mjString->value += *s;
                 }
             }
             else if(!escaped && !singleQuote && !doubleQuote &&

@@ -30,6 +30,7 @@ public://functions
     virtual std::string getStringValue() {return "table";}
     virtual std::string getDebugStringValue() {return getDebugString();}
     virtual bool boolValue() {return true;}
+    virtual bool isEqual(TuiRef* other) {return other == this;}
     
     TuiTable(TuiRef* parent_) : TuiRef(parent_) {};
     virtual ~TuiTable() {

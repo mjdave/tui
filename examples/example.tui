@@ -32,4 +32,18 @@ example = {
     }
 
     print("and here is ", aStringInsideAFunction())
+    
+    print("would you like to see an example of user input?")
+    value = readValue()
+
+    if (value == "yes")
+    {
+        print("ok thanks! I hope you find tui useful.")
+    }
+    else
+    {
+        print("Too bad haha! Your answer was (hopefully):", value)
+    }
+
+    
 }

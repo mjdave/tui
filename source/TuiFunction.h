@@ -118,6 +118,7 @@ public: //class functions
     virtual uint8_t type() { return Tui_ref_type_FUNCTION; }
     virtual std::string getTypeName() {return "function";}
     virtual std::string getStringValue() {return "function";}
+    virtual bool isEqual(TuiRef* other) {return other == this;}
     
     virtual bool boolValue() {return true;}
     

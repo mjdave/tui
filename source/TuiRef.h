@@ -163,6 +163,7 @@ public://functions
     void retain() {refCount++;}
     virtual TuiRef* copy() {return new TuiRef(parent);};
     virtual void assign(TuiRef* other) {};
+    virtual bool isEqual(TuiRef* other) {return true;}
     
     
     

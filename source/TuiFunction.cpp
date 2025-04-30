@@ -722,10 +722,26 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                 
             }
                 break;
+            case Tui_token_equalTo:
+            {
+                *tokenIndex = *tokenIndex + 1;
+                TuiRef* leftResult = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
+                *tokenIndex = *tokenIndex + 1;
+                TuiRef* rightResult = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
+                
+                if(result && result->type() == Tui_ref_type_BOOL)
+                {
+                    ((TuiBool*)result)->value = leftResult->isEqual(rightResult);
+                }
+                else
+                {
+                    return new TuiBool(leftResult->isEqual(rightResult));
+                }
+            }
+                break;
             case Tui_token_greaterThan:
             case Tui_token_lessThan:
             case Tui_token_greaterEqualTo:
-            case Tui_token_equalTo:
             case Tui_token_lessEqualTo:
             {
                 *tokenIndex = *tokenIndex + 1;
@@ -759,9 +775,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                                 case Tui_token_lessEqualTo:
                                     ((TuiBool*)result)->value = left <= ((TuiNumber*)rightResult)->value;
                                     break;
-                                case Tui_token_equalTo:
-                                    ((TuiBool*)result)->value = (left == ((TuiNumber*)rightResult)->value);
-                                    break;
                             };
                         }
                         else
@@ -778,9 +791,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                                     break;
                                 case Tui_token_lessEqualTo:
                                     return new TuiBool(left <= ((TuiNumber*)rightResult)->value);
-                                    break;
-                                case Tui_token_equalTo:
-                                    return new TuiBool(left == ((TuiNumber*)rightResult)->value);
                                     break;
                             };
                         }
