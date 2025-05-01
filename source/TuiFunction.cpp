@@ -1486,12 +1486,12 @@ TuiRef* TuiFunction::call(TuiTable* args, TuiTable* callLocationState, TuiRef* e
         int maxArgs = (int)argNames.size();
         for(TuiRef* arg : args->arrayObjects)
         {
-            const std::string& argName = argNames[i];
             if(i >= maxArgs)
             {
-                TuiParseWarn(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function ignoring:%s", argName.c_str());
+                TuiParseWarn(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function. ignoring:%s", arg->getDebugString().c_str());
                 continue;
             }
+            const std::string& argName = argNames[i];
             currentCallState->objectsByStringKey[argName] = arg;
             arg->retain();
             if(tokenMap.tokensByVarNames.count(argName) != 0)

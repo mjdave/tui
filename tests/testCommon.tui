@@ -1,0 +1,17 @@
+{
+    passCount = 0
+    failCount = 0
+
+    assert = function(pass, info)
+    {
+        if(pass)
+        {
+            passCount++
+        }
+        else
+        {
+            failCount++
+            print("test fail! ", info)
+        }
+    }
+}

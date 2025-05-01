@@ -1,0 +1,89 @@
+testCommon = require("tests/testCommon.tui")
+assert = testCommon.assert
+
+testAdd = function(a,b)
+{
+    return a + b
+}
+
+testSub = function(a,b)
+{
+    return a - b
+}
+
+testMult = function(a,b)
+{
+    return a * b
+}
+
+testDivide = function(a,b)
+{
+    return a / b
+}
+
+testGreaterThan = function(a,b)
+{
+    return a > b
+}
+
+testEqualTo = function(a,b)
+{
+    return a == b
+}
+
+testGreaterThanEqualTo = function(a,b)
+{
+    return a >= b
+}
+
+testLessThanEqualTo = function(a,b)
+{
+    return a <= b
+}
+
+#assert(,"")
+
+varTen = 10
+
+assert(testAdd(2,8) == 10, "testAdd(2,8) == 10")
+assert(testSub(20,varTen) == 10, "testSub(20,varTen) == 10")
+assert(testMult(5,5) == 25, "testMult(5,5) == 25")
+assert(testDivide(100,10) == 10, "testDivide(100,10) == 10")
+assert(testGreaterThan(100,10), "testGreaterThan(100,10)")
+assert(testGreaterThanEqualTo(9,10) == false, "testGreaterThanEqualTo(9,10) = false")
+assert(testGreaterThanEqualTo(10,varTen), "testGreaterThanEqualTo(10,varTen)")
+assert(testGreaterThanEqualTo(11,10), "testGreaterThanEqualTo(11,10)")
+assert(testLessThanEqualTo(9,10), "testLessThanEqualTo(9,10)")
+assert(testLessThanEqualTo(10,varTen), "testLessThanEqualTo(10,varTen)")
+assert(testLessThanEqualTo(11,10) == false, "testLessThanEqualTo(11,10 = false)")
+assert(testEqualTo(20,10) == false, "testEqualTo(20,10) == false")
+assert(testEqualTo(10,20) == false, "testEqualTo(10,20) == false")
+assert(testEqualTo(varTen,10) == true, "testEqualTo(varTen,10) == true")
+assert(testEqualTo(10,"10") == false, "testEqualTo(10,\"10\") == false")
+assert(testEqualTo("10","10") == true, 'testEqualTo("10","10") == true')
+assert(testEqualTo("hello","10") == false, "testEqualTo('hello','10') == false")
+
+assert(testAdd(vec2(2,2),vec2(8,8)) == vec2(10,10), "testAdd(vec2(2,2),vec2(8,8)) == vec2(10,10)")
+assert(testSub(vec2(20,20),vec2(10,10)) == vec2(10,10), "testSub(vec2(20,20),vec2(10,10))")
+assert(testMult(vec2(5, 5), 5) == vec2(25,25), "testMult(vec2(5, 5), 5)")
+assert(testDivide(vec2(100, 100), vec2(10, 10)) == vec2(10,10), "testDivide(vec2(100, 100), vec2(10, 10))")
+
+assert(testMult(vec2(5, 5), 5) == vec2(25,25), "testMult(vec2(5, 5), 5)")
+assert(testDivide(vec2(100, 100), 10) == vec2(10,10), "testDivide(vec2(100, 100), 10)")
+
+assert(testAdd(vec3(2,2,2),vec3(8,8,8)) == vec3(10,10,10), "testAdd(vec3(2,2,2),vec3(8,8,2))")
+#assert(testSub(vec3(20,20,20),vec3(varTen,10,10)) == vec3(10,10,10), "testSub(vec3(20,20,20),vec3(varTen,10,10))") #fails, vec3 can't take a variable
+assert(testMult(vec3(5, 5,5), 5) == vec3(25,25,25) "testMult(vec3(5, 5,5), 5)")
+#assert(testDivide(vec3(100, 100,100), vec3(10, 10,10)) == vec3(10,varTen,10), "testDivide(vec3(100, 100,100), vec3(10, 10,10))")  #fails, vec3 can't take a variable
+
+assert(testMult(vec3(5, 5,5), 5) == vec3(25,25,25), "testMult(vec3(5, 5,5), 5)")
+assert(testDivide(vec3(100, 100, 100), 10) == vec3(10,10,10), "testDivide(vec3(100, 100, 100), 10)")
+
+if testCommon.failCount > 0
+{
+    print("tests failed! ", testCommon.passCount, " tests passed, ", testCommon.failCount, " tests failed.")
+}
+else
+{
+    print("test complete. ", testCommon.passCount, " tests passed.")
+}

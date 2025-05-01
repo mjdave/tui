@@ -812,12 +812,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         leftValue->release();
         rightValue->release();
         
-        if(*s == ')')
-        {
-            s++;
-            s = tuiSkipToNextChar(s, debugInfo, true);
-        }
-        else if(TuiExpressionOperatorsSet.count(*s) != 0)
+        if(TuiExpressionOperatorsSet.count(*s) != 0)
         {
             if(runLowOperators || *s == '*' || *s == '/')
             {
