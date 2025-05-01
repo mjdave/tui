@@ -531,22 +531,14 @@ public://functions
         if(*s == ',' || *s == '\n' || *s == '}' || *s == ']' || *s == ')' || *s == '(' || (TuiExpressionOperatorsSet.count(*s) != 0 && (*s != '=' || *(s + 1) == '=')))
         {
             
-            bool keyWasFunctionCall = false;
+            /*bool keyWasFunctionCall = false;
             if(keyRef->type() == Tui_ref_type_STRING)
             {
                 if(((TuiString*)keyRef)->isValidFunctionString)
                 {
                     keyWasFunctionCall = true;
                 }
-                
-                /*TuiRef* newKeyRef = loadVariableIfAvailable((TuiString*)keyRef, s, endptr, this, debugInfo);
-                if(newKeyRef)
-                {
-                    keyRef->release();
-                    keyRef = newKeyRef;
-                }
-                s = tuiSkipToNextChar(*endptr, debugInfo, true);*/
-            }
+            }*/
             
             debugInfo->lineNumber = keyStartLineNumber;
             TuiRef* newKeyRef = recursivelyLoadValue(keyStartS,
@@ -570,9 +562,15 @@ public://functions
                 debugInfo->lineNumber++;
             }
             
-            if(!keyWasFunctionCall || (newKeyRef && newKeyRef->type() != Tui_ref_type_NIL))
+            if((newKeyRef && newKeyRef->type() != Tui_ref_type_NIL))
             {
                 arrayObjects.push_back(keyRef);
+            }
+            
+            if(*s == '\0')
+            {
+                *endptr = (char*)s;
+                return false;
             }
             
             if(*s == '}' || *s == ']' || *s == ')') // ')' is added here to terminate function arg lists, but '(' is not valid generally.

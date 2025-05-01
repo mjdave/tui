@@ -113,7 +113,7 @@ TuiRef* TuiRef::load(const std::string& filename, TuiTable* parent) {
     return nullptr;
 }
 
-TuiRef* TuiRef::runScriptFile(const std::string& filename, TuiTable* parent)
+TuiRef* TuiRef::runScriptFile(const std::string& filename, bool debugLogging, TuiTable* parent)
 {
     std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
     TuiDebugInfo debugInfo;
@@ -130,10 +130,12 @@ TuiRef* TuiRef::runScriptFile(const std::string& filename, TuiTable* parent)
         char* endPtr;
         TuiRef* resultRef = nullptr;
         TuiRef* table = TuiRef::load(cString, &endPtr, parent, &debugInfo, &resultRef);
-        //todo if debug logging
         if(table)
         {
-           // table->debugLog();
+            if(debugLogging)
+            {
+                table->debugLog();
+            }
             table->release();
         }
         return resultRef;
@@ -231,17 +233,15 @@ TuiRef* TuiRef::loadVariableIfAvailable(TuiString* variableName, TuiRef* existin
                     TuiRef* result = ((TuiFunction*)newValueRef)->call(argsArrayTable, parentTable, existingValue);
                     *endptr = (char*)s;
                     
-                    if(result)
-                    {
-                        return result;
-                    }
+                    return result;
                 }
                 newValueRef->retain();
                 return newValueRef;
             }
             else
             {
-                newValueRef = newValueRef->copy();
+                //newValueRef = newValueRef->copy();
+                newValueRef->retain();
                 return newValueRef;
             }
         }
@@ -351,7 +351,17 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     }
     
     char operatorChar = *s;
-    char secondOperatorChar = *(s + 1);
+    
+    if(operatorChar == '\0')
+    {
+        *endptr = (char*)s;
+        if(existingValue)
+        {
+            return nullptr;
+        }
+        return leftValue;
+    }
+    
     
     if(operatorChar == ')')
     {
@@ -364,6 +374,9 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         }
         return leftValue;
     }
+    
+    char secondOperatorChar = *(s + 1);
+    
     
     if(TuiExpressionOperatorsSet.count(operatorChar) == 0 || (operatorChar == '=' && secondOperatorChar != '=') || (!runLowOperators && (operatorChar == '+' || operatorChar == '-')))
     {
@@ -383,6 +396,66 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         s++;
     }
     
+    TuiRef* result = nullptr;
+    
+    if((operatorChar == '+' && (secondOperatorChar == '+' || secondOperatorChar == '=')) ||
+       (operatorChar == '-' && (secondOperatorChar == '-' || secondOperatorChar == '=')) ||
+       (operatorChar == '*' && secondOperatorChar == '=') ||
+       (operatorChar == '/' && secondOperatorChar == '='))
+    {
+        s++;
+        
+        if(secondOperatorChar != '=') //x++/--. watch out, this could break if more operators added ^^^^
+        {
+            if(leftValue->type() == Tui_ref_type_NUMBER)
+            {
+                switch(operatorChar)
+                {
+                    case '+':
+                    {
+                        ((TuiNumber*)leftValue)->value++;
+                        result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array
+                    }
+                        break;
+                    case '-':
+                    {
+                        ((TuiNumber*)leftValue)->value--;
+                        result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array
+                    }
+                        break;
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        break;
+                }
+            }
+            else
+            {
+                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
+            }
+            
+            
+            leftValue->release();
+            
+            if(*s == ')')
+            {
+                s++;
+                s = tuiSkipToNextChar(s, debugInfo, true);
+            }
+            else if(TuiExpressionOperatorsSet.count(*s) != 0)
+            {
+                if(runLowOperators || *s == '*' || *s == '/')
+                {
+                    result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, runLowOperators, allowNonVarStrings);
+                    s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                }
+            }
+            
+            *endptr = (char*)s;
+            
+            return result;
+        }
+    }
+        
     s = tuiSkipToNextChar(s, debugInfo, true);
     
     TuiRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, nullptr, parentTable, debugInfo, false, true);
@@ -405,7 +478,6 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         }
     }
     
-    TuiRef* result = nullptr;
     
     if(operatorChar == '=')
     {
@@ -422,22 +494,54 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
                 {
                     case '+':
                     {
-                        result = new TuiNumber(((TuiNumber*)leftValue)->value + ((TuiNumber*)rightValue)->value);
+                        if(secondOperatorChar == '=')
+                        {
+                            ((TuiNumber*)leftValue)->value += ((TuiNumber*)rightValue)->value;
+                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array
+                        }
+                        else
+                        {
+                            result = new TuiNumber(((TuiNumber*)leftValue)->value + ((TuiNumber*)rightValue)->value);
+                        }
                     }
                         break;
                     case '-':
                     {
-                        result = new TuiNumber(((TuiNumber*)leftValue)->value - ((TuiNumber*)rightValue)->value);
+                        if(secondOperatorChar == '=')
+                        {
+                            ((TuiNumber*)leftValue)->value -= ((TuiNumber*)rightValue)->value;
+                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array
+                        }
+                        else
+                        {
+                            result = new TuiNumber(((TuiNumber*)leftValue)->value - ((TuiNumber*)rightValue)->value);
+                        }
                     }
                         break;
                     case '*':
                     {
-                        result = new TuiNumber(((TuiNumber*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                        if(secondOperatorChar == '=')
+                        {
+                            ((TuiNumber*)leftValue)->value *= ((TuiNumber*)rightValue)->value;
+                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array
+                        }
+                        else
+                        {
+                            result = new TuiNumber(((TuiNumber*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                        }
                     }
                         break;
                     case '/':
                     {
-                        result = new TuiNumber(((TuiNumber*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                        if(secondOperatorChar == '=')
+                        {
+                            ((TuiNumber*)leftValue)->value /= ((TuiNumber*)rightValue)->value;
+                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array
+                        }
+                        else
+                        {
+                            result = new TuiNumber(((TuiNumber*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                        }
                     }
                         break;
                     case '>':
@@ -705,8 +809,8 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     
     if(result)
     {
-        delete leftValue;
-        delete rightValue;
+        leftValue->release();
+        rightValue->release();
         
         if(*s == ')')
         {

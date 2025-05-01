@@ -22,11 +22,20 @@ enum {
     Tui_token_subtract,
     Tui_token_divide,
     Tui_token_multiply,
-    Tui_token_equalTo,
+    
+    Tui_token_equalTo, //8
     Tui_token_lessThan,
     Tui_token_greaterThan,
     Tui_token_greaterEqualTo,
     Tui_token_lessEqualTo,
+    Tui_token_not, //todo
+    Tui_token_increment,
+    Tui_token_decrement,
+    
+    Tui_token_addInPlace, //16
+    Tui_token_subtractInPlace,
+    Tui_token_multiplyInPlace,
+    Tui_token_divideInPlace,
     Tui_token_VAR_START_INDEX
 };
 
