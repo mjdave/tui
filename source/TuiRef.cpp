@@ -10,7 +10,7 @@ TuiTable* TuiRef::createRootTable()
     TuiTable* rootTable = new TuiTable(nullptr);
     srand((unsigned)time(nullptr));
     
-    TuiFunction* randomFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state) {
+    TuiFunction* randomFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) {
         if(args->arrayObjects.size() > 0)
         {
             TuiRef* arg = args->arrayObjects[0];
@@ -30,7 +30,7 @@ TuiTable* TuiRef::createRootTable()
     rootTable->set("random", randomFunction);
     randomFunction->release();
     
-    TuiFunction* printFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state) {
+    TuiFunction* printFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) {
         if(args->arrayObjects.size() > 0)
         {
             std::string printString = "";
@@ -46,7 +46,7 @@ TuiTable* TuiRef::createRootTable()
     rootTable->set("print", printFunction);
     printFunction->release();
     
-    TuiFunction* requireFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state) {
+    TuiFunction* requireFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) {
         if(args->arrayObjects.size() > 0)
         {
             return TuiRef::load(Tui::getResourcePath(args->arrayObjects[0]->getStringValue()), state);
@@ -59,7 +59,7 @@ TuiTable* TuiRef::createRootTable()
     
     
     
-    TuiFunction* readStringFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state) {
+    TuiFunction* readStringFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) {
         std::string stringValue;
         std::getline(std::cin, stringValue);
         
@@ -75,6 +75,24 @@ TuiTable* TuiRef::createRootTable()
     
     rootTable->set("readValue", readStringFunction);
     readStringFunction->release();
+    
+    
+    TuiFunction* printDebug = new TuiFunction([rootTable](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) {
+        if(callingDebugInfo)
+        {
+            //state->debugLog();
+            TuiLog("%s:%d", callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber);
+        }
+        else
+        {
+           // state->debugLog();
+            TuiLog("No calling debug info.");
+        }
+        return nullptr;
+    }, rootTable);
+    
+    rootTable->set("printDebug", printDebug);
+    printDebug->release();
     
     
     return rootTable;
@@ -230,7 +248,7 @@ TuiRef* TuiRef::loadVariableIfAvailable(TuiString* variableName, TuiRef* existin
                     TuiTable* argsArrayTable = TuiTable::initWithHumanReadableString(s, endptr, parentTable, debugInfo);
                     s = tuiSkipToNextChar(*endptr, debugInfo, true);
                     
-                    TuiRef* result = ((TuiFunction*)newValueRef)->call(argsArrayTable, parentTable, existingValue);
+                    TuiRef* result = ((TuiFunction*)newValueRef)->call(argsArrayTable, parentTable, existingValue, debugInfo);
                     *endptr = (char*)s;
                     
                     return result;
@@ -335,10 +353,14 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
             s++;
             s = tuiSkipToNextChar(s, debugInfo, true);
             leftValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, debugInfo, true, allowNonVarStrings);
+            s = tuiSkipToNextChar(*endptr, debugInfo, true);
+            s++; //HMMMM
+            s = tuiSkipToNextChar(s, debugInfo, true);
         }
         else
         {
             leftValue = TuiRef::loadValue(s, endptr, existingValue, parentTable, debugInfo, allowNonVarStrings);
+            s = tuiSkipToNextChar(*endptr, debugInfo, true);
         }
         
         if(!leftValue)
@@ -347,7 +369,6 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         }
         
         
-        s = tuiSkipToNextChar(*endptr, debugInfo, true);
     }
     
     char operatorChar = *s;

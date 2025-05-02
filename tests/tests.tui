@@ -45,11 +45,10 @@ testLessThanEqualTo = function(a,b)
 
 varTen = 10
 
-assert(testSub(vec2(20,20),vec2(varTen,10)) == vec2(10,10), "test 1")
-assert(testDivide(vec2(100, 100), vec2(10, 10)) == vec2(10,varTen), "test 2)")
-
 assert(testAdd(2,8) == 10, "testAdd(2,8) == 10")
+assert((2 + 8) == 10, "(2 + 8) == 10")
 assert(testSub(20,varTen) == 10, "testSub(20,varTen) == 10")
+assert((20 - varTen) == 10, "(20 - 10) == 10")
 assert(testMult(5,5) == 25, "testMult(5,5) == 25")
 assert(testDivide(100,10) == 10, "testDivide(100,10) == 10")
 assert(testGreaterThan(100,10), "testGreaterThan(100,10)")

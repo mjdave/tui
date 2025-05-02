@@ -326,6 +326,7 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
     
     //todo this is c/p from below. Should be a factored out
     const char* varNameStartS = s; //rewind if we find a function
+    int keyStartLineNumber = debugInfo->lineNumber;
     varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
     s = tuiSkipToNextChar(*endptr, debugInfo);
     
@@ -340,6 +341,7 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
             
             //s++; //'('
             //s = tuiSkipToNextChar(s, debugInfo);
+            debugInfo->lineNumber = keyStartLineNumber;
             recursivelySerializeExpression(varNameStartS, endptr, incrementStatement->expression, parent, tokenMap, debugInfo, true);
             
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
@@ -370,6 +372,7 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
                 }
                 else
                 {
+                    debugInfo->lineNumber = keyStartLineNumber;
                     recursivelySerializeExpression(varNameStartS, endptr, incrementStatement->expression, parent, tokenMap, debugInfo, true);
                 }
                 
@@ -599,6 +602,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* 
             else if(varNameRef->allowAsVariableName)
             {
                 const char* varStartS = s;
+                int keyStartLineNumber = debugInfo->lineNumber;
                 s = tuiSkipToNextChar(*endptr, debugInfo);
                 
                 if(*s == '}')
@@ -623,6 +627,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* 
                     }
                     else
                     {
+                        debugInfo->lineNumber = keyStartLineNumber;
                         recursivelySerializeExpression(varStartS, endptr, statement->expression, parent, tokenMap, debugInfo, true);
                     }
                     
@@ -699,6 +704,10 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
                 if(*s == '\n')
                 {
                     debugInfo->lineNumber++;
+                    if(debugInfo->lineNumber == 6)
+                    {
+                        TuiLog("hi");
+                    }
                 }
                 if(!currentVarName.empty())
                 {
@@ -778,7 +787,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                     *tokenIndex = *tokenIndex + 1;
                 }
                 
-                TuiRef* functionResult = ((TuiFunction*)functionVar)->call(args, functionState, result);
+                TuiRef* functionResult = ((TuiFunction*)functionVar)->call(args, functionState, result, debugInfo);
                 if(args)
                 {
                     args->release();
@@ -1454,7 +1463,7 @@ TuiFunction::TuiFunction(TuiRef* parent_)
 }
 
 
-TuiFunction::TuiFunction(std::function<TuiRef*(TuiTable* args, TuiTable* state)> func_, TuiRef* parent_)
+TuiFunction::TuiFunction(std::function<TuiRef*(TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> func_, TuiRef* parent_)
 :TuiRef(parent_)
 {
     func = func_;
@@ -1468,12 +1477,12 @@ TuiFunction::~TuiFunction()
     }
 }
 
-TuiRef* TuiFunction::call(TuiTable* args, TuiTable* callLocationState, TuiRef* existingResult)
+TuiRef* TuiFunction::call(TuiTable* args, TuiTable* callLocationState, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)
 {
     if(func)
     {
         TuiTable* currentCallState = new TuiTable(parent);
-        TuiRef* result = func(args, currentCallState);
+        TuiRef* result = func(args, currentCallState, existingResult, callingDebugInfo);
         currentCallState->release();
         return result;
     }

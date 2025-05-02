@@ -106,7 +106,7 @@ public: //static functions
 public: //class members
     std::vector<std::string> argNames;
     std::vector<TuiStatement*> statements;
-    std::function<TuiRef*(TuiTable* args, TuiTable* state)> func;
+    std::function<TuiRef*(TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> func;
     
     TuiTokenMap tokenMap;
     
@@ -115,7 +115,7 @@ public: //class members
     
 public: //class functions
     TuiFunction(TuiRef* parent_);
-    TuiFunction(std::function<TuiRef*(TuiTable* args, TuiTable* state)> func_, TuiRef* parent_);
+    TuiFunction(std::function<TuiRef*(TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> func_, TuiRef* parent_);
     virtual ~TuiFunction();
     
     virtual TuiFunction* copy()
@@ -131,7 +131,7 @@ public: //class functions
     
     virtual bool boolValue() {return true;}
     
-    TuiRef* call(TuiTable* args, TuiTable* state, TuiRef* existingResult);
+    TuiRef* call(TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo);
     //void call(TuiTable* args, std::function<void(TuiRef*)> callback); //todo async
     
     virtual TuiRef* recursivelyFindVariable(TuiString* variableName, TuiDebugInfo* debugInfo, bool searchParents, int varStartIndex = 0);
