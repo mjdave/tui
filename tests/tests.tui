@@ -45,6 +45,9 @@ testLessThanEqualTo = function(a,b)
 
 varTen = 10
 
+assert(testSub(vec2(20,20),vec2(varTen,10)) == vec2(10,10), "test 1")
+assert(testDivide(vec2(100, 100), vec2(10, 10)) == vec2(10,varTen), "test 2)")
+
 assert(testAdd(2,8) == 10, "testAdd(2,8) == 10")
 assert(testSub(20,varTen) == 10, "testSub(20,varTen) == 10")
 assert(testMult(5,5) == 25, "testMult(5,5) == 25")
@@ -72,9 +75,9 @@ assert(testMult(vec2(5, 5), 5) == vec2(25,25), "testMult(vec2(5, 5), 5)")
 assert(testDivide(vec2(100, 100), 10) == vec2(10,10), "testDivide(vec2(100, 100), 10)")
 
 assert(testAdd(vec3(2,2,2),vec3(8,8,8)) == vec3(10,10,10), "testAdd(vec3(2,2,2),vec3(8,8,2))")
-#assert(testSub(vec3(20,20,20),vec3(varTen,10,10)) == vec3(10,10,10), "testSub(vec3(20,20,20),vec3(varTen,10,10))") #fails, vec3 can't take a variable
+assert(testSub(vec3(20,20,20),vec3(varTen,10,10)) == vec3(10,10,10), "testSub(vec3(20,20,20),vec3(varTen,10,10))")
 assert(testMult(vec3(5, 5,5), 5) == vec3(25,25,25) "testMult(vec3(5, 5,5), 5)")
-#assert(testDivide(vec3(100, 100,100), vec3(10, 10,10)) == vec3(10,varTen,10), "testDivide(vec3(100, 100,100), vec3(10, 10,10))")  #fails, vec3 can't take a variable
+assert(testDivide(vec3(100, 100,100), vec3(10, 10,10)) == vec3(10,varTen,10), "testDivide(vec3(100, 100,100), vec3(10, 10,10))")
 
 assert(testMult(vec3(5, 5,5), 5) == vec3(25,25,25), "testMult(vec3(5, 5,5), 5)")
 assert(testDivide(vec3(100, 100, 100), 10) == vec3(10,10,10), "testDivide(vec3(100, 100, 100), 10)")

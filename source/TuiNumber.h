@@ -129,13 +129,23 @@ public://functions
             double values[2] = {0.0,0.0};
             for(int i = 0; i < 2; i++)
             {
-                values[i] = strtod(s, endptr);
-                s = tuiSkipToNextChar(*endptr, debugInfo);
-                if(*s == ',')
+                TuiRef* loadedValue = TuiRef::loadValue(s, endptr, nullptr, (TuiTable*)parent, debugInfo, false);
+                
+                if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
+                {
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "uninitialized or non-number value in vec2 constructor:%c", *s);
+                    s = tuiSkipToNextChar(s, debugInfo);
+                    *endptr = (char*)s;
+                    break;
+                }
+                
+                values[i] = ((TuiNumber*)loadedValue)->value;
+                s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                if(*s == ',' || *s == '\n')
                 {
                     s++;
                 }
-                else if(*s == ')')
+                else if(*s == ')' || *s == '\0')
                 {
                     s++;
                     break;
@@ -195,13 +205,23 @@ public://functions
             double values[3] = {0.0,0.0,0.0};
             for(int i = 0; i < 3; i++)
             {
-                values[i] = strtod(s, endptr);
-                s = tuiSkipToNextChar(*endptr, debugInfo);
-                if(*s == ',')
+                TuiRef* loadedValue = TuiRef::loadValue(s, endptr, nullptr, (TuiTable*)parent, debugInfo, false);
+                
+                if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
+                {
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "uninitialized or non-number value in vec3 constructor:%c", *s);
+                    s = tuiSkipToNextChar(s, debugInfo);
+                    *endptr = (char*)s;
+                    break;
+                }
+                
+                values[i] = ((TuiNumber*)loadedValue)->value;
+                s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                if(*s == ',' || *s == '\n')
                 {
                     s++;
                 }
-                else if(*s == ')')
+                else if(*s == ')' || *s == '\0')
                 {
                     s++;
                     break;
@@ -261,13 +281,23 @@ public://functions
             double values[4] = {0.0,0.0,0.0,0.0};
             for(int i = 0; i < 4; i++)
             {
-                values[i] = strtod(s, endptr);
-                s = tuiSkipToNextChar(*endptr, debugInfo);
-                if(*s == ',')
+                TuiRef* loadedValue = TuiRef::loadValue(s, endptr, nullptr, (TuiTable*)parent, debugInfo, false);
+                
+                if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
+                {
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "uninitialized or non-number value in vec4 constructor:%c", *s);
+                    s = tuiSkipToNextChar(s, debugInfo);
+                    *endptr = (char*)s;
+                    break;
+                }
+                
+                values[i] = ((TuiNumber*)loadedValue)->value;
+                s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                if(*s == ',' || *s == '\n')
                 {
                     s++;
                 }
-                else if(*s == ')')
+                else if(*s == ')' || *s == '\0')
                 {
                     s++;
                     break;

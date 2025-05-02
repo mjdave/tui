@@ -278,7 +278,7 @@ bool TuiRef::setVariable(TuiString* variableName,
     return false;
 }
 
-TuiRef* loadValue(const char* str, char** endptr, TuiRef* existingValue, TuiTable* parentTable, TuiDebugInfo* debugInfo, bool allowNonVarStrings)
+TuiRef* TuiRef::loadValue(const char* str, char** endptr, TuiRef* existingValue, TuiTable* parentTable, TuiDebugInfo* debugInfo, bool allowNonVarStrings)
 {
     const char* s = str;
     
@@ -338,7 +338,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         }
         else
         {
-            leftValue = loadValue(s, endptr, existingValue, parentTable, debugInfo, allowNonVarStrings);
+            leftValue = TuiRef::loadValue(s, endptr, existingValue, parentTable, debugInfo, allowNonVarStrings);
         }
         
         if(!leftValue)

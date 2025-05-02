@@ -149,6 +149,10 @@ public: //static functions
                                 bool allowNonVarStrings);
     
     
+    //loadValue calls initUnknownTypeRefWithHumanReadableString, and if it is a string, it calls TuiRef::loadVariableIfAvailable which also will call it if it is a function.
+    static TuiRef* loadValue(const char* str, char** endptr, TuiRef* existingValue, TuiTable* parentTable, TuiDebugInfo* debugInfo, bool allowNonVarStrings);
+    
+    
 public: //members
     TuiRef* parent = nullptr; //this is only stored by tables and functions, variables don't use it currently.
     uint8_t refCount = 1;
