@@ -81,6 +81,28 @@ assert(testDivide(vec3(100, 100,100), vec3(10, 10,10)) == vec3(10,varTen,10), "t
 assert(testMult(vec3(5, 5,5), 5) == vec3(25,25,25), "testMult(vec3(5, 5,5), 5)")
 assert(testDivide(vec3(100, 100, 100), 10) == vec3(10,10,10), "testDivide(vec3(100, 100, 100), 10)")
 
+print("lineNumber:", debug.getLineNumber())
+print("fileName:", debug.getFileName())
+
+assert(type(5) == "number", "type(5) == number")
+assert(type(varTen) == "number", "type(varTen) == number")
+assert(type("hello") == "string", "type(hello) == string")
+assert(type({5}) == "table", "type({5}) == table")
+assert(type(true) == "bool", "type(true) == bool")
+assert(type(vec2(1,2)) == "vec2", "type(vec2(1,2)) == vec2")
+assert(type(vec3(1,2,3)) == "vec3", "type(vec3(1,2,3)) == vec3")
+assert(type(vec4(1,2,3,4)) == "vec4", "type(vec4(1,2,3,4)) == vec4")
+
+testTable = {
+    zero,
+    one,
+    two,
+    four,
+    five
+}
+table.insert(testTable, 3, "three")
+print(testTable)
+
 if testCommon.failCount > 0
 {
     print("tests failed! ", testCommon.passCount, " tests passed, ", testCommon.failCount, " tests failed.")
