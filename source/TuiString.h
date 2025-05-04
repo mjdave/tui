@@ -9,12 +9,26 @@
 
 #include "TuiRef.h"
 
+enum {
+    Tui_var_token_type_undefined = 0,
+    Tui_var_token_type_string,
+    Tui_var_token_type_parent,
+    Tui_var_token_type_arrayIndex,
+    Tui_var_token_type_setIndex
+};
+
+struct TuiVarToken {
+    uint32_t type = Tui_var_token_type_undefined;
+    uint32_t arrayOrSetIndex;
+    std::string varName;
+};
+
 class TuiString : public TuiRef {
 public: //members
     std::string value;
     bool allowAsVariableName = true; // this is set to false if it finds a quoted string when loaded via readable string
     bool isValidFunctionString = false; // optimization
-    std::vector<std::string> varNames; // optimization, finds look ups of sub-tables on load
+    std::vector<TuiVarToken> vars; // optimization, finds look ups of sub-tables on load
 
 public://functions
     
@@ -35,7 +49,7 @@ public://functions
         value = other->value;
         allowAsVariableName = other->allowAsVariableName;
         isValidFunctionString = other->isValidFunctionString;
-        varNames = other->varNames;
+        vars = other->vars;
     };
     
     static TuiString* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
@@ -116,21 +130,64 @@ public://functions
                 if(*(s+1) == '.')
                 {
                     s++;
-                    mjString->varNames.push_back(".");
+                    mjString->vars.resize(mjString->vars.size() + 1);
+                    mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_parent;
                     mjString->value += "..";
                     while(*(s+1) == '.')
                     {
                         s++;
-                        mjString->varNames.push_back(".");
+                        mjString->vars.resize(mjString->vars.size() + 1);
+                        mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_parent;
                         mjString->value += ".";
                     }
                 }
                 else
                 {
-                    mjString->varNames.push_back(currentVarName);
+                    mjString->vars.resize(mjString->vars.size() + 1);
+                    mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_string;
+                    mjString->vars[mjString->vars.size() - 1].varName = currentVarName;
                     currentVarName = "";
                     mjString->value += *s;
                 }
+            }
+            else if(*s == '[' && mjString->allowAsVariableName && !escaped)
+            {
+                mjString->value += *s;
+                s++;
+                s = tuiSkipToNextChar(s, debugInfo);
+                if(isdigit(*s))
+                {
+                    uint32_t arrayIndex = (uint32_t)strtoul(s, endptr, 10);
+                    s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                    if(*s != ']')
+                    {
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ']''");
+                        return nullptr;
+                    }
+                    
+                    mjString->value += Tui::string_format("%d]",arrayIndex);
+                    
+                    if(!currentVarName.empty())
+                    {
+                        mjString->vars.resize(mjString->vars.size() + 1);
+                        mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_string;
+                        mjString->vars[mjString->vars.size() - 1].varName = currentVarName;
+                        currentVarName = "";
+                    }
+                    
+                    mjString->vars.resize(mjString->vars.size() + 1);
+                    mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_arrayIndex;
+                    mjString->vars[mjString->vars.size() - 1].arrayOrSetIndex = arrayIndex;
+                }
+                else
+                {
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected number after '['");
+                }
+
+                /*mjString->varNames.resize(mjString->varNames.size() + 1);
+                mjString->varNames[mjString->varNames.size() - 1].varName = currentVarName;
+                currentVarName = "";
+                mjString->value += *s;*/
             }
             else if(*s == '(')
             {
@@ -187,7 +244,9 @@ public://functions
             }
             else if(!currentVarName.empty())
             {
-                mjString->varNames.push_back(currentVarName);
+                mjString->vars.resize(mjString->vars.size() + 1);
+                mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_string;
+                mjString->vars[mjString->vars.size() - 1].varName = currentVarName;
             }
         }
         

@@ -23,7 +23,7 @@ If you loaded it, the TuiRef* you got would be an TuiNumber with the value of 42
 
 This is also valid file that will give us an TuiTable with array elements:
 ```lua
-42, coconut, vec3(1,2,3), true, nil, {x=10}
+42, "coconut", vec3(1,2,3), true, nil, {x=10}
 ```
 
 ## Reads JSON
@@ -48,10 +48,8 @@ This is the same data in JSON. tui can read this too, as it treats ":" and "=" t
 Whitespace is ignored, however newlines are treated like commas, unless quoted or within a bracketed expression
 ```lua
 array = {
-    ThisIsTheFirstObjectWithIndexZero
-    "This is the second object with spaces, so it needs quotes"
-    "We don't have any commas after each variable, but we can if we want to.
-    Also, quotes and brackets allow us to use newlines",
+    "This is the first object with index zero"
+    "We don't have any commas after each variable, but we can if we want to",
     surprise = "We can also mix array values with keyed values like in lua"
 }
 

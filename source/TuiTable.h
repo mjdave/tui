@@ -121,73 +121,61 @@ public://functions
     
     virtual TuiRef* recursivelyFindVariable(TuiString* variableName, TuiDebugInfo* debugInfo, bool searchParents, int varStartIndex = 0)
     {
-        std::vector<std::string>& varNames = variableName->varNames;
+        std::vector<TuiVarToken>& vars = variableName->vars;
         
-        if(varNames.size() > varStartIndex)
+        TuiVarToken& varToken = vars[varStartIndex];
+        
+        switch(varToken.type)
         {
-            if(varNames[varStartIndex][0] == '.')
+            case Tui_var_token_type_parent:
             {
-                TuiRef* tableOrFunction = parent;
-                
-                for(int i = varStartIndex + 1; i < variableName->varNames.size(); i++)
+                if(varStartIndex == vars.size() - 1)
                 {
-                    if(varNames[i][0] == '.')
+                    return parent;
+                }
+                return parent->recursivelyFindVariable(variableName, debugInfo, searchParents, varStartIndex + 1);
+            }
+                break;
+            case Tui_var_token_type_string:
+            {
+                if(objectsByStringKey.count(varToken.varName) != 0)
+                {
+                    if(varStartIndex == vars.size() - 1)
                     {
-                        tableOrFunction = tableOrFunction->parent;
-                        if(!tableOrFunction)
-                        {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found at level:%d for:%s", i + 1, variableName->value.c_str());
-                            return nullptr;
-                        }
+                        return objectsByStringKey[varToken.varName];
                     }
                     else
                     {
-                        return tableOrFunction->recursivelyFindVariable(variableName, debugInfo, searchParents, i);
-                    }
-                }
-                
-                return tableOrFunction;
-            }
-            
-            if(objectsByStringKey.count(varNames[varStartIndex]) != 0)
-            {
-                if(varNames.size() > varStartIndex + 1)
-                {
-                    TuiRef* subtableRef = objectsByStringKey[varNames[varStartIndex]];
-                    if(subtableRef->type() != Tui_ref_type_TABLE)
-                    {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
-                        return nullptr;
-                    }
-                    
-                    for(int i = varStartIndex + 1; i < variableName->varNames.size(); i++)
-                    {
-                        if(i == variableName->varNames.size() - 1)
+                        TuiRef* subtableRef = objectsByStringKey[varToken.varName];
+                        if(subtableRef->type() != Tui_ref_type_TABLE)
                         {
-                            if(((TuiTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
-                            {
-                                return ((TuiTable*)subtableRef)->objectsByStringKey[varNames[i]];
-                            }
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                             return nullptr;
                         }
-                        
-                        if(((TuiTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
-                        {
-                            subtableRef = objectsByStringKey[varNames[i]];
-                            if(subtableRef->type() != Tui_ref_type_TABLE)
-                            {
-                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
-                                return nullptr;
-                            }
-                        }
+                        return subtableRef->recursivelyFindVariable(variableName, debugInfo, searchParents, varStartIndex + 1);
                     }
                 }
-                
-                return objectsByStringKey[variableName->varNames[varStartIndex]];
             }
+                break;
+            case Tui_var_token_type_arrayIndex:
+            {
+                if(arrayObjects.size() > varToken.arrayOrSetIndex)
+                {
+                    return arrayObjects[varToken.arrayOrSetIndex];
+                }
+            }
+                break;
+            case Tui_var_token_type_setIndex:
+            {
+                if(objectsByNumberKey.count(varToken.arrayOrSetIndex) != 0)
+                {
+                    return objectsByNumberKey[varToken.arrayOrSetIndex];
+                }
+            }
+                break;
         }
         
-        if(searchParents && parent)
+        if(searchParents && parent && varStartIndex == 0)
         {
             return parent->recursivelyFindVariable(variableName, debugInfo, searchParents);
         }
@@ -197,72 +185,81 @@ public://functions
     
     virtual bool recursivelySetVariable(TuiString* variableName, TuiRef* value, TuiDebugInfo* debugInfo, int varStartIndex = 0)
     {
-        std::vector<std::string>& varNames = variableName->varNames;
+        std::vector<TuiVarToken>& vars = variableName->vars;
         
-        if(varNames.size() > varStartIndex)
+        TuiVarToken& varToken = vars[varStartIndex];
+        
+        switch(varToken.type)
         {
-            if(varNames[varStartIndex][0] == '.')
+            case Tui_var_token_type_parent:
             {
-                TuiRef* tableOrFunction = parent;
-                
-                for(int i = varStartIndex + 1; i < variableName->varNames.size(); i++)
+                if(varStartIndex == vars.size() - 1)
                 {
-                    if(varNames[i][0] == '.')
-                    {
-                        tableOrFunction = tableOrFunction->parent;
-                        if(!tableOrFunction)
-                        {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found at level:%d for:%s", (i + 1), variableName->value.c_str());
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        return tableOrFunction->recursivelySetVariable(variableName, value, debugInfo, i);
-                    }
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to set parent table");
                 }
-                
-                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Bad variable name:%s", variableName->value.c_str());
-                return false;
+                return parent->recursivelySetVariable(variableName, value, debugInfo, varStartIndex + 1);
             }
-            
-            if(objectsByStringKey.count(varNames[varStartIndex]) != 0)
+                break;
+            case Tui_var_token_type_string:
             {
-                if(varNames.size() > varStartIndex + 1)
+                if(varStartIndex == vars.size() - 1)
                 {
-                    TuiRef* subtableRef = objectsByStringKey[varNames[varStartIndex]];
+                    set(varToken.varName, value);
+                }
+                else if(objectsByStringKey.count(varToken.varName) != 0)
+                {
+                    TuiRef* subtableRef = objectsByStringKey[varToken.varName];
                     if(subtableRef->type() != Tui_ref_type_TABLE)
                     {
                         TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                         return false;
                     }
-                    
-                    for(int i = varStartIndex + 1; i < variableName->varNames.size(); i++)
-                    {
-                        if(i == variableName->varNames.size() - 1)
-                        {
-                            ((TuiTable*)subtableRef)->set(variableName->varNames[i], value);
-                            return true;
-                        }
-                        
-                        if(((TuiTable*)subtableRef)->objectsByStringKey.count(varNames[i]) != 0)
-                        {
-                            subtableRef = objectsByStringKey[varNames[i]];
-                            if(subtableRef->type() != Tui_ref_type_TABLE)
-                            {
-                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
-                                return false;
-                            }
-                        }
-                    }
+                    return ((TuiTable*)subtableRef)->recursivelySetVariable(variableName, value, debugInfo, varStartIndex + 1);
                 }
             }
-            
-            set(variableName->varNames[varStartIndex], value);
-            return true;
+                break;
+            case Tui_var_token_type_arrayIndex:
+            {
+                if(varToken.arrayOrSetIndex < arrayObjects.size())
+                {
+                    TuiRef* oldValue = arrayObjects[varToken.arrayOrSetIndex];
+                    if(oldValue)
+                    {
+                        if(oldValue == value)
+                        {
+                            return true;
+                        }
+                        oldValue->release();
+                    }
+                    
+                    if(value && value->type() != Tui_ref_type_NIL)
+                    {
+                        value->retain();
+                        arrayObjects[varToken.arrayOrSetIndex] = value;
+                    }
+                    else
+                    {
+                        arrayObjects[varToken.arrayOrSetIndex] = nullptr;
+                    }
+                }
+                else if(value && value->type() != Tui_ref_type_NIL)
+                {
+                    arrayObjects.resize(varToken.arrayOrSetIndex + 1);
+                    value->retain();
+                    arrayObjects[varToken.arrayOrSetIndex] = value;
+                }
+                return true;
+            }
+                break;
+            case Tui_var_token_type_setIndex:
+            {
+                TuiError("Unimplimented");
+                return false;
+            }
+                break;
         }
         
-        if(parent)
+        if(parent && varStartIndex == 0)
         {
             return parent->recursivelySetVariable(variableName, value, debugInfo);
         }
@@ -597,7 +594,11 @@ public://functions
             else if(!((TuiString*)keyRef)->allowAsVariableName)
             {
                 ((TuiString*)keyRef)->allowAsVariableName = true; //required hack to support json with "x": quoted keys
-                ((TuiString*)keyRef)->varNames.push_back(((TuiString*)keyRef)->value);
+                //((TuiString*)keyRef)->varNames.push_back(((TuiString*)keyRef)->value);
+                
+                ((TuiString*)keyRef)->vars.resize(((TuiString*)keyRef)->vars.size() + 1);
+                ((TuiString*)keyRef)->vars[((TuiString*)keyRef)->vars.size() - 1].type = Tui_var_token_type_string;
+                ((TuiString*)keyRef)->vars[((TuiString*)keyRef)->vars.size() - 1].varName = ((TuiString*)keyRef)->value;
             }
             
             TuiRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, nullptr, this, debugInfo, true, true);
@@ -711,7 +712,14 @@ public://functions
             {
                 debugString += " ";
             }
-            object->printHumanReadableString(debugString, indent);
+            if(object)
+            {
+                object->printHumanReadableString(debugString, indent);
+            }
+            else
+            {
+                debugString += "nil";
+            }
             debugString += ",\n";
         }
         

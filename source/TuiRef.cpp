@@ -154,8 +154,38 @@ TuiTable* TuiRef::createRootTable()
                 }
                 int addIndex = ((TuiNumber*)indexObject)->value;
                 TuiRef* addObject = args->arrayObjects[2];
-                addObject->retain();
-                ((TuiTable*)tableRef)->arrayObjects.insert(((TuiTable*)tableRef)->arrayObjects.begin() + addIndex, addObject);
+                //addObject->retain();
+                //gfdjsh//((TuiTable*)tableRef)->arrayObjects.insert(((TuiTable*)tableRef)->arrayObjects.begin() + addIndex, addObject);
+                
+                if(addIndex < ((TuiTable*)tableRef)->arrayObjects.size())
+                {
+                    TuiRef* oldValue = ((TuiTable*)tableRef)->arrayObjects[addIndex];
+                    if(oldValue)
+                    {
+                        if(oldValue == addObject)
+                        {
+                            return nullptr;
+                        }
+                        oldValue->release();
+                    }
+                    
+                    if(addObject && addObject->type() != Tui_ref_type_NIL)
+                    {
+                        addObject->retain();
+                        ((TuiTable*)tableRef)->arrayObjects[addIndex] = addObject;
+                    }
+                    else
+                    {
+                        ((TuiTable*)tableRef)->arrayObjects[addIndex] = nullptr;
+                    }
+                }
+                else if(addObject && addObject->type() != Tui_ref_type_NIL)
+                {
+                    ((TuiTable*)tableRef)->arrayObjects.resize(addIndex + 1);
+                    addObject->retain();
+                    ((TuiTable*)tableRef)->arrayObjects[addIndex] = addObject;
+                }
+                
             }
             else
             {
@@ -400,12 +430,12 @@ TuiRef* TuiRef::loadValue(const char* str, char** endptr, TuiRef* existingValue,
             *endptr = (char*)s;
             return nullptr;
         }
-        else if(!allowNonVarStrings)
+        else if(!allowNonVarStrings || originalString->allowAsVariableName)
         {
             TuiParseWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Uninitialized variable:%s", originalString->value.c_str());
             originalString->release();
             *endptr = (char*)s;
-            return nullptr;
+            return new TuiRef();
         }
         
     }
@@ -421,7 +451,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
                             TuiTable* parentTable,
                             TuiDebugInfo* debugInfo,
                             bool runLowOperators,
-                            bool allowNonVarStrings)
+                             bool allowNonVarStrings)
 {
     const char* s = str;
     

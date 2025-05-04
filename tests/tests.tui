@@ -1,6 +1,9 @@
 testCommon = require("tests/testCommon.tui")
 assert = testCommon.assert
 
+emptyTable = {}
+print(emptyTable[2] == nil)
+
 testAdd = function(a,b)
 {
     return a + b
@@ -94,13 +97,21 @@ assert(type(vec3(1,2,3)) == "vec3", "type(vec3(1,2,3)) == vec3")
 assert(type(vec4(1,2,3,4)) == "vec4", "type(vec4(1,2,3,4)) == vec4")
 
 testTable = {
-    zero,
-    one,
-    two,
-    four,
-    five
+    "zero",
+    "one",
+    "two",
+    "four",
+    "five"
 }
 table.insert(testTable, 3, "three")
+assert(testTable[3] == "three", "testTable[3] == three")
+testTable[2] = 2.0
+assert(testTable[2] == 2, "testTable[2] == 2")
+
+testTable[7] = "seven"
+assert(testTable[7] == "seven", "testTable[7] == seven")
+assert(testTable[6] == nil, "testTable[6] == nil")
+
 print(testTable)
 
 if testCommon.failCount > 0
