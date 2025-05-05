@@ -154,30 +154,11 @@ TuiTable* TuiRef::createRootTable()
                 }
                 int addIndex = ((TuiNumber*)indexObject)->value;
                 TuiRef* addObject = args->arrayObjects[2];
-                //addObject->retain();
-                //gfdjsh//((TuiTable*)tableRef)->arrayObjects.insert(((TuiTable*)tableRef)->arrayObjects.begin() + addIndex, addObject);
                 
                 if(addIndex < ((TuiTable*)tableRef)->arrayObjects.size())
                 {
-                    TuiRef* oldValue = ((TuiTable*)tableRef)->arrayObjects[addIndex];
-                    if(oldValue)
-                    {
-                        if(oldValue == addObject)
-                        {
-                            return nullptr;
-                        }
-                        oldValue->release();
-                    }
-                    
-                    if(addObject && addObject->type() != Tui_ref_type_NIL)
-                    {
-                        addObject->retain();
-                        ((TuiTable*)tableRef)->arrayObjects[addIndex] = addObject;
-                    }
-                    else
-                    {
-                        ((TuiTable*)tableRef)->arrayObjects[addIndex] = nullptr;
-                    }
+                    addObject->retain();
+                    ((TuiTable*)tableRef)->arrayObjects.insert(((TuiTable*)tableRef)->arrayObjects.begin() + addIndex, addObject);
                 }
                 else if(addObject && addObject->type() != Tui_ref_type_NIL)
                 {
@@ -444,6 +425,12 @@ TuiRef* TuiRef::loadValue(const char* str, char** endptr, TuiRef* existingValue,
     return valueRef;
 }
 
+
+TuiBool* TuiRef::logicalNot(TuiRef* value)
+{
+    return new TuiBool(!value || !value->boolValue());
+}
+
 TuiRef* TuiRef::recursivelyLoadValue(const char* str,
                             char** endptr,
                             TuiRef* existingValue,
@@ -455,15 +442,35 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
 {
     const char* s = str;
     
+    
     if(!leftValue)
     {
-        if(*s == '(')
+        if(*s == '!')
+        {
+            s++;
+            s = tuiSkipToNextChar(s, debugInfo, true);
+            TuiRef* rightValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, debugInfo, true, allowNonVarStrings);
+            if(!rightValue)
+            {
+                rightValue = existingValue;
+            }
+            leftValue = TuiRef::logicalNot(rightValue);
+            rightValue->release();
+            s = tuiSkipToNextChar(*endptr, debugInfo, true);
+            
+        }
+        else if(*s == '(')
         {
             s++;
             s = tuiSkipToNextChar(s, debugInfo, true);
             leftValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, debugInfo, true, allowNonVarStrings);
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
-            s++; //HMMMM
+            if(*s != ')')
+            {
+                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ')'");
+                return nullptr;
+            }
+            s++;
             s = tuiSkipToNextChar(s, debugInfo, true);
         }
         else

@@ -44,6 +44,18 @@ testLessThanEqualTo = function(a,b)
     return a <= b
 }
 
+testNotLogicalOperators = function(somethingTrue)
+{
+    somethingFalse = !somethingTrue
+    
+    assert(somethingTrue == true, "somethingTrue == true")
+    assert(somethingTrue, "somethingTrue")
+    assert(somethingFalse == false, "somethingFalse == false")
+    assert(!somethingFalse, "!somethingFalse")
+}
+
+testNotLogicalOperators(4 == (2 + 2))
+
 #assert(,"")
 
 varTen = 10
@@ -104,6 +116,7 @@ testTable = {
     "five"
 }
 table.insert(testTable, 3, "three")
+print(testTable)
 assert(testTable[3] == "three", "testTable[3] == three")
 testTable[2] = 2.0
 assert(testTable[2] == 2, "testTable[2] == 2")
@@ -113,6 +126,9 @@ assert(testTable[7] == "seven", "testTable[7] == seven")
 assert(testTable[6] == nil, "testTable[6] == nil")
 
 print(testTable)
+
+notTrue = !true
+assert(notTrue == false, "notTrue == false")
 
 if testCommon.failCount > 0
 {

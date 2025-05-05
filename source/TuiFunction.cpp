@@ -24,7 +24,16 @@ void TuiFunction::recursivelySerializeExpression(const char* str,
     uint32_t leftTokenTypeMarker = Tui_token_nil;
     
     
-    if(*s == '(')
+    if(*s == '!')
+    {
+        s++;
+        s = tuiSkipToNextChar(s, debugInfo, true);
+        expression->tokens.push_back(Tui_token_not);
+        recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, false);
+        expression->tokens.push_back(Tui_token_end);
+        s = tuiSkipToNextChar(*endptr, debugInfo, true);
+    }
+    else if(*s == '(')
     {
         s++;
         s = tuiSkipToNextChar(s, debugInfo);
@@ -819,6 +828,14 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                 {
                     return new TuiBool(leftResult->isEqual(rightResult));
                 }
+            }
+                break;
+            case Tui_token_not:
+            {
+                *tokenIndex = *tokenIndex + 1;
+                TuiRef* leftResult = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
+                *tokenIndex = *tokenIndex + 1;
+                return TuiRef::logicalNot(leftResult);
             }
                 break;
             case Tui_token_greaterThan:

@@ -14,6 +14,7 @@
 class TuiTable;
 class TuiString;
 class TuiRef;
+class TuiBool;
 
 #define TuiParseError(__fileName__, __lineNumber__, fmt__, ...) TuiLog("error %s:%d:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
 #define TuiParseWarn(__fileName__, __lineNumber__, fmt__, ...) TuiLog("warning %s:%d:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
@@ -47,6 +48,7 @@ static std::set<char> TuiExpressionOperatorsSet = {
     '>',
     '<',
     '=',
+    '!',
 };
 
 inline const char* tuiSkipToNextChar(const char* str, TuiDebugInfo* debugInfo, bool stopAtNewLine = false)
@@ -152,6 +154,7 @@ public: //static functions
     //loadValue calls initUnknownTypeRefWithHumanReadableString, and if it is a string, it calls TuiRef::loadVariableIfAvailable which also will call it if it is a function.
     static TuiRef* loadValue(const char* str, char** endptr, TuiRef* existingValue, TuiTable* parentTable, TuiDebugInfo* debugInfo, bool allowNonVarStrings);
     
+    static TuiBool* logicalNot(TuiRef* value);
     
 public: //members
     TuiRef* parent = nullptr; //this is only stored by tables and functions, variables don't use it currently.
@@ -168,7 +171,6 @@ public://functions
     virtual TuiRef* copy() {return new TuiRef(parent);};
     virtual void assign(TuiRef* other) {};
     virtual bool isEqual(TuiRef* other) {return true;}
-    
     
     
     virtual uint8_t type() { return Tui_ref_type_NIL; }
