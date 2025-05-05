@@ -528,7 +528,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     
     s++;
     
-    if(secondOperatorChar == '=' && (operatorChar == '=' || operatorChar == '>' || operatorChar == '<') )
+    if(secondOperatorChar == '=' && (operatorChar == '!' || operatorChar == '=' || operatorChar == '>' || operatorChar == '<') )
     {
         s++;
     }
@@ -619,6 +619,10 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     if(operatorChar == '=')
     {
         result = new TuiBool(leftValue->isEqual(rightValue));
+    }
+    else if(operatorChar == '!')
+    {
+        result = new TuiBool(!leftValue->isEqual(rightValue));
     }
     else
     {

@@ -16,7 +16,7 @@ Interpreter::Interpreter(std::vector<std::string>& args)
         }
     }*/
     
-    bool debugLogging = true;
+    bool debugLogging = false;
     TuiRef* scriptRunResult = TuiRef::runScriptFile("tests/tests.tui", debugLogging);
     //TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/scope.tui");
     //TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/functionExpressions.tui");

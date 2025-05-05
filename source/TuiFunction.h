@@ -24,15 +24,16 @@ enum {
     Tui_token_multiply,
     
     Tui_token_equalTo, //8
+    Tui_token_notEqualTo,
     Tui_token_lessThan,
     Tui_token_greaterThan,
     Tui_token_greaterEqualTo,
     Tui_token_lessEqualTo,
-    Tui_token_not, //todo
+    Tui_token_not,
     Tui_token_increment,
-    Tui_token_decrement,
     
-    Tui_token_addInPlace, //16
+    Tui_token_decrement, //16
+    Tui_token_addInPlace,
     Tui_token_subtractInPlace,
     Tui_token_multiplyInPlace,
     Tui_token_divideInPlace,

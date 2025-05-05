@@ -134,7 +134,7 @@ void TuiFunction::recursivelySerializeExpression(const char* str,
     
     s++;
     
-    if(secondOperatorChar == '=' && (operatorChar == '=' || operatorChar == '>' || operatorChar == '<') )
+    if(secondOperatorChar == '=' && (operatorChar == '=' || operatorChar == '>' || operatorChar == '<' || operatorChar == '!') )
     {
         s++;
     }
@@ -234,6 +234,11 @@ void TuiFunction::recursivelySerializeExpression(const char* str,
         case '=':
         {
             expression->tokens[tokenIndex] = Tui_token_equalTo;
+        }
+        break;
+        case '!':
+        {
+            expression->tokens[tokenIndex] = Tui_token_notEqualTo;
         }
         break;
         default:
@@ -713,10 +718,6 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
                 if(*s == '\n')
                 {
                     debugInfo->lineNumber++;
-                    if(debugInfo->lineNumber == 6)
-                    {
-                        TuiLog("hi");
-                    }
                 }
                 if(!currentVarName.empty())
                 {
@@ -822,11 +823,50 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
                 
                 if(result && result->type() == Tui_ref_type_BOOL)
                 {
-                    ((TuiBool*)result)->value = leftResult->isEqual(rightResult);
+                    if(!leftResult)
+                    {
+                        ((TuiBool*)result)->value = (!rightResult || rightResult->type() == Tui_ref_type_NIL);
+                    }
+                    else
+                    {
+                        ((TuiBool*)result)->value = leftResult->isEqual(rightResult);
+                    }
                 }
                 else
                 {
+                    if(!leftResult)
+                    {
+                        return new TuiBool(!rightResult || rightResult->type() == Tui_ref_type_NIL);
+                    }
                     return new TuiBool(leftResult->isEqual(rightResult));
+                }
+            }
+                break;
+            case Tui_token_notEqualTo:
+            {
+                *tokenIndex = *tokenIndex + 1;
+                TuiRef* leftResult = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
+                *tokenIndex = *tokenIndex + 1;
+                TuiRef* rightResult = runExpression(expression, tokenIndex, nullptr, functionState, parent, tokenMap, locals, debugInfo);
+                
+                if(result && result->type() == Tui_ref_type_BOOL)
+                {
+                    if(!leftResult)
+                    {
+                        ((TuiBool*)result)->value = (rightResult && rightResult->type() != Tui_ref_type_NIL);
+                    }
+                    else
+                    {
+                        ((TuiBool*)result)->value = !leftResult->isEqual(rightResult);
+                    }
+                }
+                else
+                {
+                    if(!leftResult)
+                    {
+                        return new TuiBool(rightResult && rightResult->type() != Tui_ref_type_NIL);
+                    }
+                    return new TuiBool(!leftResult->isEqual(rightResult));
                 }
             }
                 break;
@@ -1247,7 +1287,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenInd
         }
         else
         {
-            TuiError("Bad token");
+            return nullptr;
         }
     }
     

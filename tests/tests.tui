@@ -52,13 +52,19 @@ testNotLogicalOperators = function(somethingTrue)
     assert(somethingTrue, "somethingTrue")
     assert(somethingFalse == false, "somethingFalse == false")
     assert(!somethingFalse, "!somethingFalse")
+    assert(!nothing == true, "!nothing == true")
+
+    somethingFalse = 4 != 4
+    assert(somethingFalse == false, "4 != 4 == false")
 }
 
-testNotLogicalOperators(4 == (2 + 2))
-
-#assert(,"")
-
 varTen = 10
+
+testNotLogicalOperators(2 != (2 + 2))
+notEqualPassTest = 4 != 5
+assert(notEqualPassTest == true, "notEqualPassTest == true")
+notEqualFailTest = 4 != 4
+assert(notEqualFailTest == false, "notEqualFailTest == false")
 
 assert(testAdd(2,8) == 10, "testAdd(2,8) == 10")
 assert((2 + 8) == 10, "(2 + 8) == 10")
