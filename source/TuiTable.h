@@ -205,6 +205,7 @@ public://functions
                 if(varStartIndex == vars.size() - 1)
                 {
                     set(varToken.varName, value);
+                    return true;
                 }
                 else if(objectsByStringKey.count(varToken.varName) != 0)
                 {

@@ -15,8 +15,8 @@
  -- Volker Grabsch <vog@notjusthosting.com>
  */
 
-#ifndef SHA1_HPP
-#define SHA1_HPP
+#ifndef TUI_SHA1_HPP
+#define TUI_SHA1_HPP
 
 
 #include <iostream>
@@ -56,4 +56,4 @@ private:
 
 
 
-#endif /* SHA1_HPP */
+#endif /* TUI_SHA1_HPP */

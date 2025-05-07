@@ -216,7 +216,7 @@ TuiRef* TuiRef::load(const std::string& filename, TuiTable* parent) {
     }
     else
     {
-        TuiError("File not found in TuiTable::initWithHumanReadableFilePath at:%s", filename.c_str());
+        TuiError("File not found in TuiRef::load at:%s", filename.c_str());
     }
     return nullptr;
 }
@@ -250,7 +250,7 @@ TuiRef* TuiRef::runScriptFile(const std::string& filename, bool debugLogging, Tu
     }
     else
     {
-        TuiError("File not found in TuiTable::initWithHumanReadableFilePath at:%s", filename.c_str());
+        TuiError("File not found in TuiRef::runScriptFile at:%s", filename.c_str());
     }
     return nullptr;
     //TuiRef** resultRef
