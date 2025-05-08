@@ -12,12 +12,12 @@ example = {
     print(innerTable)
 
     this = {
-        is
-        some
-        strings
-        in
-        an
-        array
+        "is"
+        "some"
+        "strings"
+        "in"
+        "an"
+        "array"
     }
 
     print("this:", this)
