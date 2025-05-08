@@ -203,14 +203,14 @@ You can add the files to your c++ project, run a script, and access the output e
 
 int main()
 {
-    TuiTable* table = TuiTable::initWithHumanReadableFilePath("config.tui"); // load a JSON-like config file
+    TuiTable* table = (TuiTable*)TuiRef::load("config.tui"); // load a JSON-like config file
     std::string playerName = table->getString("playerName"); //get a string
     double playDuration = table->getDouble("playDuration"); //get a number
     table->setDouble("playDuration", playDuration + 1.0); //set a number
     table->saveToFile("config.tui"); //save in a human readable JSON-like format
     table->release(); //cleanup
-    
-    TuiRef* scriptRunResult = TuiTable::runScriptFile("script.tui"); //run a script file
+
+    TuiRef* scriptRunResult = TuiRef::runScriptFile("script.tui"); //run a script file
     scriptRunResult->debugLog(); //print the result
     scriptRunResult->release(); //cleanup
 }
