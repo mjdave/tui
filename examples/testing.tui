@@ -28,3 +28,33 @@ for(i=0,i<20,i+=2)
 }
 
 print("10:", j)
+
+
+array = {1,2,"buckle","my","shoe"}
+
+for(object in array)
+{
+    print(object)
+}
+
+for(index,object in array)
+{
+    print(object, " is at index ", index)
+}
+
+table = {
+    a = "apple",
+    b = "bee",
+    c = "car",
+    d = "dinosaur",
+}
+
+for(object in table)
+{
+    print(object)
+}
+
+for(key, object in table)
+{
+    print(key, " => ", object)
+}

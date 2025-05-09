@@ -23,6 +23,7 @@ Interpreter::Interpreter(std::vector<std::string>& args)
     //TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/simpleScript.tui");
     //TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/functionsAndIfStatements.tui");
     //TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/mathsAndExpressions.tui");
+    //TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/testing.tui");
     //if(scriptRunResult)
     //{
     //    scriptRunResult->debugLog();

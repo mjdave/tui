@@ -87,6 +87,10 @@ public://functions
     TuiExpression* continueExpression = nullptr;
     TuiStatement* incrementStatement = nullptr;
     
+    TuiString* indexOrKeyName = nullptr; //todo leaks
+    uint32_t indexOrKeyToken = 0;
+    
+    
     TuiForStatement() : TuiStatement(Tui_statement_type_FOR) {}
 };
 
