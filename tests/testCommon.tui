@@ -14,4 +14,17 @@
             print("test fail! ", info)
         }
     }
+
+    printResult = function()
+    {
+        if(failCount > 0)
+        {
+            print("tests failed! ", passCount, " tests passed, ", failCount, " tests failed.")
+        }
+        else
+        {
+            print("All ", passCount, " tests passed!")
+        }
+    }
+
 }

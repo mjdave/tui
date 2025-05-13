@@ -515,7 +515,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     char secondOperatorChar = *(s + 1);
     
     
-    if(TuiExpressionOperatorsSet.count(operatorChar) == 0 || (operatorChar == '=' && secondOperatorChar != '=') || (!runLowOperators && (operatorChar == '+' || operatorChar == '-')))
+    if(TuiExpressionOperatorsSet.count(operatorChar) == 0 || (operatorChar == '=' && (secondOperatorChar != '=' || !runLowOperators)) || (!runLowOperators && (operatorChar == '+' || operatorChar == '-')))
     {
         s = tuiSkipToNextChar(s, debugInfo, true);
         *endptr = (char*)s;

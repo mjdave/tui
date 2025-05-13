@@ -254,7 +254,7 @@ void TuiFunction::recursivelySerializeExpression(const char* str,
                                    parent,
                                    tokenMap,
                                    debugInfo,
-                                   false);
+                                   runLowOperators);
     s = tuiSkipToNextChar(*endptr, debugInfo, true);
     
     *endptr = (char*)s;
