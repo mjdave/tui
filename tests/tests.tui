@@ -161,11 +161,11 @@ assert(7 * 2 - 5 == 9, "expression 2 - wrapped")
 
 assert(1 + 2 * 3 * 4 - 5 * 4 + 12 / 2 == 11, "expression 3")
 
-#expression3Function = function()
-#{
-#    return 1 + 2 * 3 * 4 - 5 * 4 + 12 / 2 == 11 #crash
-#}
-#assert(expression3Function(), "expression 3 - function")
+expression3Function = function()
+{
+    return 1 + 2 * 3 * 4 - 5 * 4 + 12 / 2 == 11
+}
+assert(expression3Function(), "expression 3 - function")
 
 #test5 = testInnerTable.test4 + 1
 #test6 = 3 * 2

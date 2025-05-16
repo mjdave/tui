@@ -437,7 +437,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
                             TuiRef* leftValue,
                             TuiTable* parentTable,
                             TuiDebugInfo* debugInfo,
-                            bool runLowOperators,
+                            int operatorLevel,
                              bool allowNonVarStrings)
 {
     const char* s = str;
@@ -449,7 +449,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         {
             s++;
             s = tuiSkipToNextChar(s, debugInfo, true);
-            TuiRef* rightValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, debugInfo, true, allowNonVarStrings);
+            TuiRef* rightValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, debugInfo, Tui_operator_level_not, allowNonVarStrings);
             if(!rightValue)
             {
                 rightValue = existingValue;
@@ -463,7 +463,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         {
             s++;
             s = tuiSkipToNextChar(s, debugInfo, true);
-            leftValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, debugInfo, true, allowNonVarStrings);
+            leftValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, debugInfo, Tui_operator_level_default, allowNonVarStrings);
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
             if(*s != ')')
             {
@@ -515,7 +515,9 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     char secondOperatorChar = *(s + 1);
     
     
-    if(TuiExpressionOperatorsSet.count(operatorChar) == 0 || (operatorChar == '=' && (secondOperatorChar != '=' || !runLowOperators)) || (!runLowOperators && (operatorChar == '+' || operatorChar == '-')))
+    if(TuiExpressionOperatorsSet.count(operatorChar) == 0 ||
+       (operatorChar == '=' && secondOperatorChar != '=') ||
+       TuiExpressionOperatorsToLevelMap[operatorChar] <= operatorLevel)
     {
         s = tuiSkipToNextChar(s, debugInfo, true);
         *endptr = (char*)s;
@@ -580,9 +582,9 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
             }
             else if(TuiExpressionOperatorsSet.count(*s) != 0)
             {
-                if(runLowOperators || *s == '*' || *s == '/')
+                if(TuiExpressionOperatorsToLevelMap[*s] >= operatorLevel)//operatorLevel == 0 || *s == '*' || *s == '/')
                 {
-                    result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, runLowOperators, allowNonVarStrings);
+                    result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel, allowNonVarStrings);
                     s = tuiSkipToNextChar(*endptr, debugInfo, true);
                 }
             }
@@ -595,7 +597,9 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         
     s = tuiSkipToNextChar(s, debugInfo, true);
     
-    TuiRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, nullptr, parentTable, debugInfo, false, true);
+    int newOperatorLevel = TuiExpressionOperatorsToLevelMap[operatorChar];
+    
+    TuiRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, nullptr, parentTable, debugInfo, newOperatorLevel, true);
     s = tuiSkipToNextChar(*endptr, debugInfo, true);
     
     if(rightValue->type() == Tui_ref_type_STRING)
@@ -955,9 +959,10 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         
         if(TuiExpressionOperatorsSet.count(*s) != 0)
         {
-            if(runLowOperators || *s == '*' || *s == '/')
+            int newOperatorLevel = TuiExpressionOperatorsToLevelMap[*s];
+            if(newOperatorLevel >= operatorLevel)
             {
-                result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, runLowOperators, allowNonVarStrings);
+                result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel, allowNonVarStrings);
                 s = tuiSkipToNextChar(*endptr, debugInfo, true);
             }
         }

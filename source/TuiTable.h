@@ -296,7 +296,7 @@ public://functions
                                                      nullptr,
                                                      this,
                                                      debugInfo,
-                                                     true,
+                                                  Tui_operator_level_default,
                                                   true);
                 s = tuiSkipToNextChar(*endptr, debugInfo, true);
                 *endptr = (char*)s;
@@ -343,7 +343,7 @@ public://functions
                                                  nullptr,
                                                  this,
                                                  debugInfo,
-                                                 true,
+                                                            Tui_operator_level_default,
                                               true);
             s = tuiSkipToNextChar(*endptr, debugInfo);
             if(expressionResult)
@@ -450,7 +450,7 @@ public://functions
                                                                            nullptr,
                                                                            this,
                                                                            debugInfo,
-                                                                           true,
+                                                                            Tui_operator_level_default,
                                                                            true);
                             s = tuiSkipToNextChar(*endptr, debugInfo);
                             if(expressionResult)
@@ -545,7 +545,7 @@ public://functions
                                                 nullptr,
                                                 this,
                                                 debugInfo,
-                                                true,
+                                                     Tui_operator_level_default,
                                                 true);
             if(newKeyRef)
             {
@@ -602,7 +602,7 @@ public://functions
                 ((TuiString*)keyRef)->vars[((TuiString*)keyRef)->vars.size() - 1].varName = ((TuiString*)keyRef)->value;
             }
             
-            TuiRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, nullptr, this, debugInfo, true, true);
+            TuiRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, nullptr, this, debugInfo, Tui_operator_level_default, true);
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
                 
             recursivelySetVariable(((TuiString*)keyRef), valueRef, debugInfo);

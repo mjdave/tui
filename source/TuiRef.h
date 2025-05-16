@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string>
 #include <set>
+#include <map>
 
 #include "glm.hpp"
 #include "TuiLog.h"
@@ -35,6 +36,15 @@ enum {
     Tui_ref_type_EXPRESSION,
 };
 
+enum {
+    Tui_operator_level_default = 0,
+    Tui_operator_level_and_or,
+    Tui_operator_level_comparison,
+    Tui_operator_level_addition_subtraction,
+    Tui_operator_level_multiply_divide,
+    Tui_operator_level_not
+};
+
 struct TuiDebugInfo {
     std::string fileName;
     int lineNumber = 1;
@@ -49,6 +59,17 @@ static std::set<char> TuiExpressionOperatorsSet = {
     '<',
     '=',
     '!',
+};
+
+static std::map<char, int> TuiExpressionOperatorsToLevelMap = {
+    {'*', Tui_operator_level_multiply_divide},
+    {'/', Tui_operator_level_multiply_divide},
+    {'+', Tui_operator_level_addition_subtraction},
+    {'-', Tui_operator_level_addition_subtraction},
+    {'>', Tui_operator_level_comparison},
+    {'<', Tui_operator_level_comparison},
+    {'=', Tui_operator_level_comparison},
+    {'!', Tui_operator_level_not},
 };
 
 inline const char* tuiSkipToNextChar(const char* str, TuiDebugInfo* debugInfo, bool stopAtNewLine = false)
@@ -147,7 +168,7 @@ public: //static functions
                                 TuiRef* leftValue,
                                 TuiTable* parentTable,
                                 TuiDebugInfo* debugInfo,
-                                bool runLowOperators,
+                                        int operatorLevel,
                                 bool allowNonVarStrings);
     
     
