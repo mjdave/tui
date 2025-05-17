@@ -644,6 +644,11 @@ public://functions
             delete keyRef;
             keyRef = nullptr;
             
+            if(valueRef)
+            {
+                valueRef->release();
+            }
+            
             return success;
             
         }

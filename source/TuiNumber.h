@@ -136,10 +136,16 @@ public://functions
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "uninitialized or non-number value in vec2 constructor:%c", *s);
                     s = tuiSkipToNextChar(s, debugInfo);
                     *endptr = (char*)s;
+                    if(loadedValue)
+                    {
+                        loadedValue->release();
+                    }
                     break;
                 }
                 
                 values[i] = ((TuiNumber*)loadedValue)->value;
+                loadedValue->release();
+                
                 s = tuiSkipToNextChar(*endptr, debugInfo, true);
                 if(*s == ',' || *s == '\n')
                 {
@@ -212,10 +218,16 @@ public://functions
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "uninitialized or non-number value in vec3 constructor:%c", *s);
                     s = tuiSkipToNextChar(s, debugInfo);
                     *endptr = (char*)s;
+                    if(loadedValue)
+                    {
+                        loadedValue->release();
+                    }
                     break;
                 }
                 
                 values[i] = ((TuiNumber*)loadedValue)->value;
+                loadedValue->release();
+                
                 s = tuiSkipToNextChar(*endptr, debugInfo, true);
                 if(*s == ',' || *s == '\n')
                 {
@@ -288,10 +300,16 @@ public://functions
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "uninitialized or non-number value in vec4 constructor:%c", *s);
                     s = tuiSkipToNextChar(s, debugInfo);
                     *endptr = (char*)s;
+                    if(loadedValue)
+                    {
+                        loadedValue->release();
+                    }
                     break;
                 }
                 
                 values[i] = ((TuiNumber*)loadedValue)->value;
+                loadedValue->release();
+                
                 s = tuiSkipToNextChar(*endptr, debugInfo, true);
                 if(*s == ',' || *s == '\n')
                 {

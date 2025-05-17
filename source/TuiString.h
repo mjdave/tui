@@ -162,6 +162,7 @@ public://functions
                     if(*s != ']')
                     {
                         TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ']''");
+                        mjString->release();
                         return nullptr;
                     }
                     
@@ -182,6 +183,8 @@ public://functions
                 else
                 {
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected number after '['");
+                    mjString->release();
+                    return nullptr;
                 }
 
                 /*mjString->varNames.resize(mjString->varNames.size() + 1);
