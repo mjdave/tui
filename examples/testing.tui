@@ -1,19 +1,11 @@
 
-
-#test13 = (4 * (3 + 1) + 4) - 1 - 2 * (2 + 1)
-#print(test13 == 13, ": expression 1 - variable")
-#print(((4 * (3 + 1) + 4) - 1 - 2 * (2 + 1)) == 13, ": expression 1 - call")
-
-testTrue = 7 * 2 - 5 == 9
-print(testTrue, ": expression 2 - variable")
-print(7 * 2 - 5 == 9, ": expression 2 - wrapped")
-
-print(1 + 2 * 3 * 4 - 5 * 4 + 12 / 2 == 11, ": expression 3")
-
-print(5 * 4 + 12 / 2 == 26, ": expression 4")
-
-expression3Function = function()
+orAndFunction = function()
 {
-    return 5 * 4 + 12 / 2 == 26
+    orTrue = (1 == 2) or (2 == 2)
+    print(orTrue, ": function orTrue 1")
+
+    orTrue = (2 == 2) or (1 == 2)
+    print(orTrue, ": function orTrue 2")
 }
-print(expression3Function(), ": expression3Function")
+
+orAndFunction()

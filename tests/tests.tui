@@ -149,7 +149,7 @@ for(index,object in array)
 {
     sum = sum + object + index
 }
-assert(sum == 25, "for arry index loop")
+assert(sum == 25, "for array index loop")
 
 test13 = (4 * (3 + 1) + 4) - 1 - 2 * (2 + 1)
 assert(test13 == 13, "expression 1 - variable")
@@ -166,6 +166,79 @@ expression3Function = function()
     return 1 + 2 * 3 * 4 - 5 * 4 + 12 / 2 == 11
 }
 assert(expression3Function(), "expression 3 - function")
+
+orTrue = (1 == 2) or (2 == 2)
+assert(orTrue, "orTrue 1")
+
+orTrue = (2 == 2) or (1 == 2)
+assert(orTrue, "orTrue 2")
+
+orTrue = 1 == 2 or 2 == 2
+assert(orTrue, "orTrue 3")
+
+orFalse = (2 == 3) or (1 == 2)
+assert(!orFalse, "orFalse 1")
+
+orFalse = (2 == 3 or 1 == 2)
+assert(!orFalse, "orFalse 2")
+
+
+andTrue = (1 == 1) and (2 == 2)
+assert(andTrue, "andTrue 1")
+
+andTrue = (2 == 2) and (1 != 2)
+assert(andTrue, "andTrue 2")
+
+andTrue = 1 == 1 and 2 == 2
+assert(andTrue, "andTrue 3")
+
+andFalse = (2 == 2) and (1 == 2)
+assert(!andFalse, "andFalse 1")
+
+andFalse = (2 == 3 and 1 == 1)
+assert(!andFalse, "andFalse 2")
+
+andFalse = (2 != 3 and 1 != 1)
+assert(!andFalse, "andFalse 3")
+
+orAndFunction = function()
+{
+    orTrue = (1 == 2) or (2 == 2)
+    assert(orTrue, "function orTrue 1")
+
+    orTrue = (2 == 2) or (1 == 2)
+    assert(orTrue, "function orTrue 2")
+
+    orTrue = 1 == 2 or 2 == 2
+    assert(orTrue, "function orTrue 3")
+
+    orFalse = (2 == 3) or (1 == 2)
+    assert(!orFalse, "function orFalse 1")
+
+    orFalse = (2 == 3 or 1 == 2)
+    assert(!orFalse, "function orFalse 2")
+
+
+    andTrue = (1 == 1) and (2 == 2)
+    assert(andTrue, "function andTrue 1")
+
+    andTrue = (2 == 2) and (1 != 2)
+    assert(andTrue, "function andTrue 2")
+
+    andTrue = 1 == 1 and 2 == 2
+    assert(andTrue, "function andTrue 3")
+
+    andFalse = (2 == 2) and (1 == 2)
+    assert(!andFalse, "function andFalse 1")
+
+    andFalse = (2 == 3 and 1 == 1)
+    assert(!andFalse, "function andFalse 2")
+
+    andFalse = (2 != 3 and 1 != 1)
+    assert(!andFalse, "function andFalse 3")
+}
+
+orAndFunction()
 
 #test5 = testInnerTable.test4 + 1
 #test6 = 3 * 2

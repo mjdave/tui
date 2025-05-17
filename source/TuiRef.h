@@ -72,10 +72,10 @@ static std::map<char, int> TuiExpressionOperatorsToLevelMap = {
     {'!', Tui_operator_level_not},
 };
 
-inline const char* tuiSkipToNextChar(const char* str, TuiDebugInfo* debugInfo, bool stopAtNewLine = false)
+inline const char* tuiSkipToNextChar(const char* str, TuiDebugInfo* debugInfo = nullptr, bool stopAtNewLine = false)
 {
     const char* s = str;
-    bool comment = false;
+    bool lineComment = false;
     for(;; s++)
     {
         if(*s == '\0')
@@ -84,21 +84,21 @@ inline const char* tuiSkipToNextChar(const char* str, TuiDebugInfo* debugInfo, b
         }
         else if(*s == '#' || (*s == '/' && *(s+1) == '/'))
         {
-            comment = true;
+            lineComment = true;
         }
         else if(*s == '\n')
         {
-            comment = false;
+            lineComment = false;
             if(stopAtNewLine)
             {
                 return s;
             }
-            else
+            else if(debugInfo)
             {
                 debugInfo->lineNumber++;
             }
         }
-        else if(!comment && !isspace(*s))
+        else if(!lineComment && !isspace(*s))
         {
             return s;
         }
@@ -108,7 +108,7 @@ inline const char* tuiSkipToNextChar(const char* str, TuiDebugInfo* debugInfo, b
 inline const char* tuiSkipToNextMatchingChar(const char* str, TuiDebugInfo* debugInfo, char matchChar)
 {
     const char* s = str;
-    bool comment = false;
+    bool lineComment = false;
     for(;; s++)
     {
         if(*s == matchChar)
@@ -121,14 +121,19 @@ inline const char* tuiSkipToNextMatchingChar(const char* str, TuiDebugInfo* debu
         }
         else if(*s == '#' || (*s == '/' && *(s+1) == '/'))
         {
-            comment = true;
+            lineComment = true;
         }
         else if(*s == '\n')
         {
-            comment = false;
+            lineComment = false;
             debugInfo->lineNumber++;
         }
     }
+}
+
+inline bool checkSymbolNameComplete(const char* str)
+{
+    return *tuiSkipToNextChar(str) != *str;
 }
 
 class TuiRef {

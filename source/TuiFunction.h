@@ -4,8 +4,9 @@
 #include <stdio.h>
 #include <string>
 #include <set>
+#include <functional>
 #include <map>
-#include <list>
+#include <vector>
 #include "glm.hpp"
 #include "TuiLog.h"
 
@@ -16,28 +17,29 @@ class TuiTable;
 
 enum {
     Tui_token_nil = 0,
-    Tui_token_pad,
     Tui_token_functionCall,
     Tui_token_end,
     Tui_token_add,
     Tui_token_subtract,
     Tui_token_divide,
     Tui_token_multiply,
+    Tui_token_equalTo,
     
-    Tui_token_equalTo, //8
-    Tui_token_notEqualTo,
+    Tui_token_notEqualTo, //8
     Tui_token_lessThan,
     Tui_token_greaterThan,
     Tui_token_greaterEqualTo,
     Tui_token_lessEqualTo,
     Tui_token_not,
     Tui_token_increment,
+    Tui_token_decrement,
     
-    Tui_token_decrement, //16
-    Tui_token_addInPlace,
+    Tui_token_addInPlace, //16
     Tui_token_subtractInPlace,
     Tui_token_multiplyInPlace,
     Tui_token_divideInPlace,
+    Tui_token_or,
+    Tui_token_and,
     Tui_token_VAR_START_INDEX
 };
 
@@ -58,7 +60,7 @@ struct TuiTokenMap {
 };
 
 struct TuiExpression {
-    std::list<uint32_t> tokens;
+    std::vector<uint32_t> tokens;
 };
 
 class TuiStatement {
@@ -100,12 +102,12 @@ class TuiFunction : public TuiRef {
 public: //static functions
     static TuiFunction* initWithHumanReadableString( const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo);
     
-    static bool recursivelySerializeExpression(     const char* str, char** endptr, TuiExpression* expression,  TuiRef* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo, int operatorLevel, std::list<uint32_t>::iterator* subExpressionTokenStartPos = nullptr);
+    static bool recursivelySerializeExpression(     const char* str, char** endptr, TuiExpression* expression,  TuiRef* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo, int operatorLevel, uint32_t subExpressionTokenStartPos = UINT32_MAX);
     static bool serializeFunctionBody(              const char* str, char** endptr,                             TuiRef* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo, std::vector<TuiStatement*>* statements);
     static TuiForStatement* serializeForStatement(  const char* str, char** endptr,                             TuiRef* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo);
     
     
-    static TuiRef* runExpression(TuiExpression* expression, std::list<uint32_t>::iterator& tokenPos,   TuiRef* result,  TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo);
+    static TuiRef* runExpression(TuiExpression* expression, uint32_t* tokenPos,   TuiRef* result,  TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo);
     static TuiRef* runStatement(                 TuiStatement* statement,           TuiRef* result,  TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo);
     static TuiRef* runStatementArray(std::vector<TuiStatement*>& statements,        TuiRef* result,  TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo);
 

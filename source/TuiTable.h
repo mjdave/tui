@@ -526,7 +526,10 @@ public://functions
         
         s = tuiSkipToNextChar(*endptr, debugInfo, true);
         
-        if(*s == ',' || *s == '\n' || *s == '}' || *s == ']' || *s == ')' || *s == '(' || (TuiExpressionOperatorsSet.count(*s) != 0 && (*s != '=' || *(s + 1) == '=')))
+        bool operatorOr = (*s == 'o' && *(s + 1) == 'r' && checkSymbolNameComplete(s + 2));
+        bool operatorAnd = (*s == 'a' && *(s + 1) == 'n' && *(s + 2) == 'd' && checkSymbolNameComplete(s + 3));
+        
+        if(operatorOr || operatorAnd || *s == ',' || *s == '\n' || *s == '}' || *s == ']' || *s == ')' || *s == '(' || (TuiExpressionOperatorsSet.count(*s) != 0 && (*s != '=' || *(s + 1) == '=')))
         {
             
             /*bool keyWasFunctionCall = false;

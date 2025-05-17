@@ -514,25 +514,51 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     
     char secondOperatorChar = *(s + 1);
     
+    bool operatorOr = (operatorChar == 'o' && secondOperatorChar == 'r' && checkSymbolNameComplete(s + 2));
+    bool operatorAnd = (operatorChar == 'a' && secondOperatorChar == 'n' && *(s + 2) == 'd' && checkSymbolNameComplete(s + 3));
     
-    if(TuiExpressionOperatorsSet.count(operatorChar) == 0 ||
-       (operatorChar == '=' && secondOperatorChar != '=') ||
-       TuiExpressionOperatorsToLevelMap[operatorChar] <= operatorLevel)
+    if(operatorOr || operatorAnd)
     {
-        s = tuiSkipToNextChar(s, debugInfo, true);
-        *endptr = (char*)s;
-        if(existingValue)
+        if(Tui_operator_level_and_or <= operatorLevel)
         {
-            return nullptr;
+            s = tuiSkipToNextChar(s, debugInfo, true);
+            *endptr = (char*)s;
+            if(existingValue)
+            {
+                return nullptr;
+            }
+            return leftValue;
         }
-        return leftValue;
+    }
+    else
+    {
+        if(((TuiExpressionOperatorsSet.count(operatorChar) == 0)) ||
+           (operatorChar == '=' && secondOperatorChar != '=') ||
+           TuiExpressionOperatorsToLevelMap[operatorChar] <= operatorLevel)
+        {
+            s = tuiSkipToNextChar(s, debugInfo, true);
+            *endptr = (char*)s;
+            if(existingValue)
+            {
+                return nullptr;
+            }
+            return leftValue;
+        }
     }
     
     s++;
     
-    if(secondOperatorChar == '=' && (operatorChar == '!' || operatorChar == '=' || operatorChar == '>' || operatorChar == '<') )
+    if(secondOperatorChar == '=' && (operatorChar == '!' || operatorChar == '=' || operatorChar == '>' || operatorChar == '<'))
     {
         s++;
+    }
+    else if(operatorOr)
+    {
+        s++;
+    }
+    else if(operatorAnd)
+    {
+        s+=2;
     }
     
     TuiRef* result = nullptr;
@@ -580,12 +606,25 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
                 s++;
                 s = tuiSkipToNextChar(s, debugInfo, true);
             }
-            else if(TuiExpressionOperatorsSet.count(*s) != 0)
+            else
             {
-                if(TuiExpressionOperatorsToLevelMap[*s] >= operatorLevel)//operatorLevel == 0 || *s == '*' || *s == '/')
+                if(TuiExpressionOperatorsSet.count(*s) != 0)
                 {
-                    result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel, allowNonVarStrings);
-                    s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                    if(TuiExpressionOperatorsToLevelMap[*s] >= operatorLevel)//operatorLevel == 0 || *s == '*' || *s == '/')
+                    {
+                        result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel, allowNonVarStrings);
+                        s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                    }
+                }
+                else if(Tui_operator_level_and_or >= operatorLevel)
+                {
+                    bool newOperatorOr = (*s == 'o' && *(s + 1) == 'r' && checkSymbolNameComplete(s + 2));
+                    bool newOperatorAnd = (*s == 'a' && *(s + 1) == 'n' && *(s + 2) == 'd' && checkSymbolNameComplete(s + 3));
+                    if(newOperatorOr || newOperatorAnd)
+                    {
+                        result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel, allowNonVarStrings);
+                        s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                    }
                 }
             }
             
@@ -627,6 +666,14 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     else if(operatorChar == '!')
     {
         result = new TuiBool(!leftValue->isEqual(rightValue));
+    }
+    else if(operatorOr)
+    {
+        result = new TuiBool(leftValue->boolValue() || rightValue->boolValue());
+    }
+    else if(operatorAnd)
+    {
+        result = new TuiBool(leftValue->boolValue() && rightValue->boolValue());
     }
     else
     {
@@ -961,6 +1008,16 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         {
             int newOperatorLevel = TuiExpressionOperatorsToLevelMap[*s];
             if(newOperatorLevel >= operatorLevel)
+            {
+                result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel, allowNonVarStrings);
+                s = tuiSkipToNextChar(*endptr, debugInfo, true);
+            }
+        }
+        else if(Tui_operator_level_and_or >= operatorLevel)
+        {
+            bool newOperatorOr = (*s == 'o' && *(s + 1) == 'r' && checkSymbolNameComplete(s + 2));
+            bool newOperatorAnd = (*s == 'a' && *(s + 1) == 'n' && *(s + 2) == 'd' && checkSymbolNameComplete(s + 3));
+            if(newOperatorOr || newOperatorAnd)
             {
                 result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel, allowNonVarStrings);
                 s = tuiSkipToNextChar(*endptr, debugInfo, true);
