@@ -224,7 +224,9 @@ public://functions
                 }
             }
             else if(!escaped && !singleQuote && !doubleQuote &&
-                    ((*s == 'o' && *(s + 1) == 'r' && checkSymbolNameComplete(s + 2)) ||  (*s == 'a' && *(s + 1) == 'n' && *(s + 2) == 'd' && checkSymbolNameComplete(s + 3))))
+                    s == str && //start of string
+                    ((*s == 'o' && *(s + 1) == 'r' && checkSymbolNameComplete(s + 2)) ||
+                     (*s == 'a' && *(s + 1) == 'n' && *(s + 2) == 'd' && checkSymbolNameComplete(s + 3))))
             {
                 break;
             }

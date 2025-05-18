@@ -1,11 +1,8 @@
 
-orAndFunction = function()
-{
-    orTrue = (1 == 2) or (2 == 2)
-    print(orTrue, ": function orTrue 1")
-
-    orTrue = (2 == 2) or (1 == 2)
-    print(orTrue, ": function orTrue 2")
+table = {
+    color = vec4(1,1,1,1),
+    sand = vec3(1,1,1),
 }
 
-orAndFunction()
+print("table:", table)
+
