@@ -863,6 +863,10 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
 
 TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenPos, TuiRef* result, TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>* locals, TuiDebugInfo* debugInfo)
 {
+    if(*tokenPos >= expression->tokens.size())
+    {
+        return nullptr;
+    }
     uint32_t token = expression->tokens[*tokenPos];
     if(token == Tui_token_end)
     {

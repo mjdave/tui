@@ -31,7 +31,16 @@
 
 testFunc()*/
 
-print("hello 1")
-value = readValue()
-clear()
-print("hello 2")
+for(i=1,i>0,i++)
+{
+    print("hello")
+    /*input = readValue()
+    print(input)
+    if(input == "test")
+    {
+        print("test")
+    }*/
+
+    print(readValue())
+    
+}
