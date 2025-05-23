@@ -1139,9 +1139,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenPos
                         }
                         else
                         {
-                            double left = ((TuiNumber*)leftResult)->value;
                             (*tokenPos)++;
-                            TuiRef* rightResult = runExpression(expression, tokenPos, result, functionState, parent, tokenMap, locals, debugInfo);
+                            TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, functionState, parent, tokenMap, locals, debugInfo);
                             if(!rightResult)
                             {
                                 rightResult = result;
@@ -1156,34 +1155,35 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenPos
                             {
                                 switch (token) {
                                     case Tui_token_add:
-                                        ((TuiNumber*)result)->value += left;
+                                        ((TuiNumber*)result)->value += ((TuiNumber*)rightResult)->value;
                                         break;
                                     case Tui_token_subtract:
-                                        ((TuiNumber*)result)->value -= left;
+                                        ((TuiNumber*)result)->value -= ((TuiNumber*)rightResult)->value;
                                         break;
                                     case Tui_token_multiply:
-                                        ((TuiNumber*)result)->value *= left;
+                                        ((TuiNumber*)result)->value *= ((TuiNumber*)rightResult)->value;
                                         break;
                                     case Tui_token_divide:
-                                        ((TuiNumber*)result)->value /= left;
+                                        ((TuiNumber*)result)->value /= ((TuiNumber*)rightResult)->value;
                                         break;
                                         
                                     case Tui_token_addInPlace:
-                                        ((TuiNumber*)result)->value += left;
+                                        ((TuiNumber*)result)->value += ((TuiNumber*)rightResult)->value;
                                         break;
                                     case Tui_token_subtractInPlace:
-                                        ((TuiNumber*)result)->value = left - ((TuiNumber*)result)->value;
+                                        ((TuiNumber*)result)->value -= ((TuiNumber*)rightResult)->value;
                                         break;
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiNumber*)result)->value *= left;
+                                        ((TuiNumber*)result)->value *= ((TuiNumber*)rightResult)->value;
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiNumber*)result)->value = left / ((TuiNumber*)result)->value;
+                                        ((TuiNumber*)result)->value /= ((TuiNumber*)rightResult)->value;
                                         break;
                                 };
                             }
                             else
                             {
+                                double left = ((TuiNumber*)leftResult)->value;
                                 switch (token) {
                                     case Tui_token_add:
                                         return new TuiNumber(left + ((TuiNumber*)rightResult)->value);

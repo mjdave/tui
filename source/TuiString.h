@@ -152,6 +152,11 @@ public://functions
                 {
                     escaped = true;
                 }
+                else
+                {
+                    escaped = false;
+                    mjString->value += *s;
+                }
             }
             else if(*s == '.' && mjString->allowAsVariableName && !escaped)
             {

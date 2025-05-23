@@ -31,11 +31,55 @@
 
 testFunc()*/
 
-testAssign = function()
-{
-    input = "a"
-    input = "b"
-    print(input)
-}
 
-testAssign()
+
+cookieCount = 1
+
+multiplier = 1
+
+clear()
+
+for(i=1,i>0,i++)
+{
+
+    print("     You have ", cookieCount, " cookie      ")
+    print("            _   _           ")
+    print("           (.)_(.)          ")
+    print("        _ (   _   ) _       ")
+    print("       / \\/`-----'\\/ \\      ")
+    print("     __\\ ( (     ) ) /__    ")
+    print("     )   /\\ \\._./ /\\   (    ")
+    print("      )_/ /|\\   /|\\ \\_(     ")
+    print("                            ")
+    print("        grapes: ", multiplier, "        ")
+
+    if(cookieCount >= 10 * multiplier)
+    {
+        print("grapes available for purchase!")
+    }
+    else
+    {
+        print("shop closed")
+    }
+
+    input = readValue()
+    clear()
+
+    if(input == "grapes")
+    {
+        if(cookieCount >= 10 * multiplier)
+        {
+            cookieCount = cookieCount - (10 * multiplier)
+            multiplier = multiplier + 1
+        }
+        else
+        {
+            print("You can't afford more grapes!")
+        }
+    }
+    else
+    {
+        cookieCount = cookieCount + multiplier
+    }
+
+}
