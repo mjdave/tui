@@ -4,6 +4,70 @@
 #include "TuiTable.h"
 #include "TuiNumber.h"
 
+TuiRef* TuiRef::initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo)
+{
+    const char* s = tuiSkipToNextChar(str, debugInfo);
+    
+    if(isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(*(s + 1))))
+    {
+        return TuiNumber::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    }
+    
+    TuiFunction* functionRef = TuiFunction::initWithHumanReadableString(str, endptr, parent, debugInfo);
+    if(functionRef)
+    {
+        return functionRef;
+    }
+    
+    TuiBool* boolRef = TuiBool::initWithHumanReadableString(str, endptr, parent, debugInfo);
+    if(boolRef)
+    {
+        return boolRef;
+    }
+    
+    TuiVec2* vec2Ref = TuiVec2::initWithHumanReadableString(str, endptr, parent, debugInfo);
+    if(vec2Ref)
+    {
+        return vec2Ref;
+    }
+    
+    TuiVec3* vec3Ref = TuiVec3::initWithHumanReadableString(str, endptr, parent, debugInfo);
+    if(vec3Ref)
+    {
+        return vec3Ref;
+    }
+    
+    TuiVec4* vec4Ref = TuiVec4::initWithHumanReadableString(str, endptr, parent, debugInfo);
+    if(vec4Ref)
+    {
+        return vec4Ref;
+    }
+    
+    if(*s == 'n'
+        && *(s + 1) == 'i'
+        && *(s + 2) == 'l')
+    {
+        s+=3;
+        *endptr = (char*)s;
+        return new TuiRef(parent);
+    }
+    else if(*s == 'n'
+            && *(s + 1) == 'u'
+            && *(s + 2) == 'l'
+            && *(s + 3) == 'l')
+    {
+        s+=4;
+        *endptr = (char*)s;
+        return new TuiRef(parent);
+    }
+    else if(*s == '{' || *s == '[')
+    {
+        return TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    }
+    
+    return TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_runExpressions);
+}
+
 
 TuiTable* TuiRef::createRootTable()
 {
@@ -44,7 +108,7 @@ TuiTable* TuiRef::createRootTable()
     randomIntFunction->release();
     
     
-    // print values, args are concatenated together
+    // print(msg1, msg2, msg3, ...) print values, args are concatenated together
     TuiFunction* printFunction = new TuiFunction([](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0)
         {
@@ -60,7 +124,7 @@ TuiTable* TuiRef::createRootTable()
     rootTable->set("print", printFunction);
     printFunction->release();
     
-    //require loads the given tui file, path is relative to the tui binary (for now)
+    //require(path) loads the given tui file, path is relative to the tui binary (for now)
     TuiFunction* requireFunction = new TuiFunction([](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0)
         {
@@ -71,7 +135,7 @@ TuiTable* TuiRef::createRootTable()
     rootTable->set("require", requireFunction);
     requireFunction->release();
     
-    //reads input from the command line, serializing just the first value, doesn't (shouldn't!) call functions or load variables
+    //readValue() reads input from the command line, serializing just the first value, doesn't (shouldn't!) call functions or load variables
     TuiFunction* readStringFunction = new TuiFunction([](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         std::string stringValue;
         std::getline(std::cin, stringValue);
@@ -81,7 +145,7 @@ TuiTable* TuiRef::createRootTable()
         const char* cString = stringValue.c_str();
         char* endPtr;
         
-        TuiRef* result = TuiTable::initUnknownTypeRefWithHumanReadableString(cString, &endPtr, state, &debugInfo);
+        TuiRef* result = TuiRef::initUnknownTypeRefWithHumanReadableString(cString, &endPtr, state, &debugInfo);
         
         return result;
     }, rootTable);
@@ -89,8 +153,24 @@ TuiTable* TuiRef::createRootTable()
     rootTable->set("readValue", readStringFunction);
     readStringFunction->release();
     
+    //clear() clears the console
+    TuiFunction* clearFunction = new TuiFunction([](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+#if defined _WIN32
+        system("cls");
+    //clrscr(); // including header file : conio.h
+#elif defined (__LINUX__) || defined(__gnu_linux__) || defined(__linux__)
+        system("clear");
+    //std::cout<< u8"\033[2J\033[1;1H"; //Using ANSI Escape Sequences
+#elif defined (__APPLE__)
+        system("clear");
+#endif
+        return nullptr;
+    }, rootTable);
     
-    //returns the type name of the given object, eg. 'table', 'string', 'number', 'vec4', 'bool'
+    rootTable->set("clear", clearFunction);
+    clearFunction->release();
+    
+    //type() returns the type name of the given object, eg. 'table', 'string', 'number', 'vec4', 'bool'
     TuiFunction* typeFunction = new TuiFunction([](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0)
         {
@@ -109,7 +189,7 @@ TuiTable* TuiRef::createRootTable()
     debugTable->release();
     
     
-    //debug.getLineNumber returns the line number in the current script file
+    //debug.getLineNumber() returns the line number in the current script file
     TuiFunction* getLineNumber = new TuiFunction([](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         return new TuiNumber(callingDebugInfo->lineNumber);
     }, debugTable);
@@ -117,7 +197,7 @@ TuiTable* TuiRef::createRootTable()
     getLineNumber->release();
     
     
-    //debug.getFileName returns the current script file name or debug identifier string
+    //debug.getFileName() returns the current script file name or debug identifier string
     TuiFunction* getFileName = new TuiFunction([](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         return new TuiString(callingDebugInfo->fileName);
     }, debugTable);
@@ -188,6 +268,7 @@ TuiTable* TuiRef::createRootTable()
     return rootTable;
 }
 
+
 TuiRef* TuiRef::load(const std::string& inputString, const std::string& debugName, TuiTable* parent) {
     TuiDebugInfo debugInfo;
     debugInfo.fileName = debugName;
@@ -256,7 +337,7 @@ TuiRef* TuiRef::runScriptFile(const std::string& filename, bool debugLogging, Tu
     //TuiRef** resultRef
 }
 
-TuiRef* TuiRef::load(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef) {
+TuiRef* TuiRef::load(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef) {
     
     TuiTable* table = new TuiTable(parent);
     
@@ -318,11 +399,11 @@ TuiRef* TuiRef::load(const char* str, char** endptr, TuiRef* parent, TuiDebugInf
     return table;
 }
 
-TuiRef* TuiRef::loadVariableIfAvailable(TuiString* variableName, TuiRef* existingValue, const char* str, char** endptr, TuiTable* parentTable, TuiDebugInfo* debugInfo)
+TuiRef* TuiRef::loadVariableIfAvailable(TuiString* variableName, TuiRef* existingValue, const char* str, char** endptr, TuiTable* parentTable, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>* locals, TuiDebugInfo* debugInfo)
 {
     if(variableName->allowAsVariableName && parentTable)
     {
-        TuiRef* newValueRef = parentTable->recursivelyFindVariable(variableName, debugInfo, true);
+        TuiRef* newValueRef = parentTable->recursivelyFindVariable(variableName, true, parentTable, tokenMap, locals, debugInfo);
         if(newValueRef)
         {
             if(newValueRef->type() == Tui_ref_type_TABLE)
@@ -373,30 +454,24 @@ TuiRef* TuiRef::loadVariableIfAvailable(TuiString* variableName, TuiRef* existin
     return nullptr;
 }
 
-
-bool TuiRef::setVariable(TuiString* variableName,
-                            TuiRef* value,
-                               TuiTable* parentTable,
-                               TuiDebugInfo* debugInfo)
-{
-    if(variableName->allowAsVariableName && parentTable)
-    {
-        return parentTable->recursivelySetVariable(variableName, value, debugInfo);
-    }
-    return false;
-}
-
-TuiRef* TuiRef::loadValue(const char* str, char** endptr, TuiRef* existingValue, TuiTable* parentTable, TuiDebugInfo* debugInfo, bool allowNonVarStrings)
+TuiRef* TuiRef::loadValue(const char* str,
+                          char** endptr,
+                          TuiRef* existingValue,
+                          TuiTable* parentTable,
+                          TuiTokenMap* tokenMap,
+                          std::map<uint32_t,TuiRef*>* locals,
+                          TuiDebugInfo* debugInfo,
+                          bool allowNonVarStrings)
 {
     const char* s = str;
     
-    TuiRef* valueRef = TuiTable::initUnknownTypeRefWithHumanReadableString(s, endptr, parentTable, debugInfo);
+    TuiRef* valueRef = TuiRef::initUnknownTypeRefWithHumanReadableString(s, endptr, parentTable, debugInfo);
     s = tuiSkipToNextChar(*endptr, debugInfo, true);
     
     if(valueRef->type() == Tui_ref_type_STRING)
     {
         TuiString* originalString = (TuiString*)valueRef;
-        TuiRef* newValueRef = TuiRef::loadVariableIfAvailable(originalString, nullptr, s, endptr, parentTable, debugInfo);
+        TuiRef* newValueRef = TuiRef::loadVariableIfAvailable(originalString, nullptr, s, endptr, parentTable, tokenMap, locals, debugInfo);
         
         s = tuiSkipToNextChar(*endptr, debugInfo, true);
         
@@ -432,13 +507,15 @@ TuiBool* TuiRef::logicalNot(TuiRef* value)
 }
 
 TuiRef* TuiRef::recursivelyLoadValue(const char* str,
-                            char** endptr,
-                            TuiRef* existingValue,
-                            TuiRef* leftValue,
-                            TuiTable* parentTable,
-                            TuiDebugInfo* debugInfo,
-                            int operatorLevel,
-                             bool allowNonVarStrings)
+                                     char** endptr,
+                                     TuiRef* existingValue,
+                                     TuiRef* leftValue,
+                                     TuiTable* parentTable,
+                                     TuiTokenMap* tokenMap,
+                                     std::map<uint32_t,TuiRef*>* locals,
+                                     TuiDebugInfo* debugInfo,
+                                     int operatorLevel,
+                                     bool allowNonVarStrings)
 {
     const char* s = str;
     
@@ -449,7 +526,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         {
             s++;
             s = tuiSkipToNextChar(s, debugInfo, true);
-            TuiRef* rightValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, debugInfo, Tui_operator_level_not, allowNonVarStrings);
+            TuiRef* rightValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, tokenMap, locals, debugInfo, Tui_operator_level_not, allowNonVarStrings);
             if(!rightValue)
             {
                 rightValue = existingValue;
@@ -463,7 +540,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         {
             s++;
             s = tuiSkipToNextChar(s, debugInfo, true);
-            leftValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, debugInfo, Tui_operator_level_default, allowNonVarStrings);
+            leftValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, tokenMap, locals, debugInfo, Tui_operator_level_default, allowNonVarStrings);
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
             if(*s != ')')
             {
@@ -475,7 +552,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         }
         else
         {
-            leftValue = TuiRef::loadValue(s, endptr, existingValue, parentTable, debugInfo, allowNonVarStrings);
+            leftValue = TuiRef::loadValue(s, endptr, existingValue, parentTable, tokenMap, locals, debugInfo, allowNonVarStrings);
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
         }
         
@@ -489,21 +566,8 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     
     char operatorChar = *s;
     
-    if(operatorChar == '\0')
+    if(operatorChar == '\0' || operatorChar == ')' || operatorChar == ']')
     {
-        *endptr = (char*)s;
-        if(existingValue)
-        {
-            return nullptr;
-        }
-        return leftValue;
-    }
-    
-    
-    if(operatorChar == ')')
-    {
-        //s++;
-        s = tuiSkipToNextChar(s, debugInfo, true);
         *endptr = (char*)s;
         if(existingValue)
         {
@@ -612,7 +676,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
                 {
                     if(TuiExpressionOperatorsToLevelMap[*s] >= operatorLevel)//operatorLevel == 0 || *s == '*' || *s == '/')
                     {
-                        result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel, allowNonVarStrings);
+                        result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, tokenMap, locals, debugInfo, operatorLevel, allowNonVarStrings);
                         s = tuiSkipToNextChar(*endptr, debugInfo, true);
                     }
                 }
@@ -622,7 +686,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
                     bool newOperatorAnd = (*s == 'a' && *(s + 1) == 'n' && *(s + 2) == 'd' && checkSymbolNameComplete(s + 3));
                     if(newOperatorOr || newOperatorAnd)
                     {
-                        result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel, allowNonVarStrings);
+                        result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, tokenMap, locals, debugInfo, operatorLevel, allowNonVarStrings);
                         s = tuiSkipToNextChar(*endptr, debugInfo, true);
                     }
                 }
@@ -638,14 +702,14 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     
     int newOperatorLevel = TuiExpressionOperatorsToLevelMap[operatorChar];
     
-    TuiRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, nullptr, parentTable, debugInfo, newOperatorLevel, true);
+    TuiRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, nullptr, parentTable, tokenMap, locals, debugInfo, newOperatorLevel, true);
     s = tuiSkipToNextChar(*endptr, debugInfo, true);
     
     if(rightValue->type() == Tui_ref_type_STRING)
     {
         if(((TuiString*)rightValue)->allowAsVariableName)
         {
-            TuiRef* newValueRef = parentTable->recursivelyFindVariable((TuiString*)rightValue, debugInfo, true);
+            TuiRef* newValueRef = parentTable->recursivelyFindVariable((TuiString*)rightValue, true, parentTable, tokenMap, locals, debugInfo);
             if(newValueRef)
             {
                 delete rightValue;
@@ -1009,7 +1073,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
             int newOperatorLevel = TuiExpressionOperatorsToLevelMap[*s];
             if(newOperatorLevel >= operatorLevel)
             {
-                result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel, allowNonVarStrings);
+                result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, tokenMap, locals, debugInfo, operatorLevel, allowNonVarStrings);
                 s = tuiSkipToNextChar(*endptr, debugInfo, true);
             }
         }
@@ -1019,7 +1083,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
             bool newOperatorAnd = (*s == 'a' && *(s + 1) == 'n' && *(s + 2) == 'd' && checkSymbolNameComplete(s + 3));
             if(newOperatorOr || newOperatorAnd)
             {
-                result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel, allowNonVarStrings);
+                result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, tokenMap, locals, debugInfo, operatorLevel, allowNonVarStrings);
                 s = tuiSkipToNextChar(*endptr, debugInfo, true);
             }
         }

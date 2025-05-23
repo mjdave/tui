@@ -11,6 +11,7 @@
 #include "TuiLog.h"
 #include "TuiFileUtils.h"
 #include "TuiStringUtils.h"
+#include "TuiStatement.h"
 
 class TuiTable;
 class TuiString;
@@ -76,13 +77,33 @@ inline const char* tuiSkipToNextChar(const char* str, TuiDebugInfo* debugInfo = 
 {
     const char* s = str;
     bool lineComment = false;
+    bool blockComment = false;
     for(;; s++)
     {
         if(*s == '\0')
         {
             return s;
         }
-        else if(*s == '#' || (*s == '/' && *(s+1) == '/'))
+        else if(blockComment)
+        {
+            if(*s == '*' && *(s+1) == '/')
+            {
+                blockComment = false;
+                s++;
+            }
+        }
+        else if(*s == '/' && (*(s+1) == '*' || *(s+1) == '/'))
+        {
+            if(*(s+1) == '*')
+            {
+                blockComment = true;
+            }
+            else
+            {
+                lineComment = true;
+            }
+        }
+        else if(*s == '#')
         {
             lineComment = true;
         }
@@ -139,55 +160,67 @@ inline bool checkSymbolNameComplete(const char* str)
 class TuiRef {
     
 public: //static functions
-   
+    static TuiRef* initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo);
     static TuiTable* createRootTable(); //adds the built in functions 'print', 'require' etc.
     
     static TuiRef* load(const std::string& filename, TuiTable* parent = createRootTable()); //public method to read from human readable file/string data. supply nullptr as last argument to prvent root table from loading
     static TuiRef* runScriptFile(const std::string& filename, bool debugLogging = false, TuiTable* parent = createRootTable());  //public method
     
-    static TuiRef* load(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr); //public method
+    static TuiRef* load(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr); //public method
     static TuiRef* load(const std::string& inputString, const std::string& debugName, TuiTable* parent); //public method
     
     //static TuiRef* initWithBinaryData(void* data); //todo
     //static TuiRef* initWithBinaryFile(const std::string& filePath);  //todo
-    static TuiRef* initWithHumanReadableString(const std::string& stringData, TuiRef* parent) {return new TuiRef(parent);} //internal, loads a single value/expression
+    static TuiRef* initWithHumanReadableString(const std::string& stringData, TuiTable* parent) {return new TuiRef(parent);} //internal, loads a single value/expression
     //static TuiRef* initWithHumanReadableFile(const std::string& filePath);
     
     
     
     static TuiRef* loadVariableIfAvailable(TuiString* variableName,
-                                   TuiRef* existingValue,
-                                   const char* str,
-                                   char** endptr,
-                                   TuiTable* parentTable,
-                                   TuiDebugInfo* debugInfo);
+                                           TuiRef* existingValue,
+                                           const char* str,
+                                           char** endptr,
+                                           TuiTable* parentTable,
+                                           TuiTokenMap* tokenMap,
+                                           std::map<uint32_t,TuiRef*>* locals,
+                                           TuiDebugInfo* debugInfo);
 
     static bool setVariable(TuiString* variableName,
-                                TuiRef* value,
-                                   TuiTable* parentTable,
-                                   TuiDebugInfo* debugInfo);
+                            TuiRef* value,
+                            TuiTable* parentTable,
+                            TuiTokenMap* tokenMap,
+                            std::map<uint32_t,TuiRef*>* locals,
+                            TuiDebugInfo* debugInfo);
 
     static TuiRef* recursivelyLoadValue(const char* str,
-                                char** endptr,
-                                TuiRef* existingValue,
-                                TuiRef* leftValue,
-                                TuiTable* parentTable,
-                                TuiDebugInfo* debugInfo,
+                                        char** endptr,
+                                        TuiRef* existingValue,
+                                        TuiRef* leftValue,
+                                        TuiTable* parentTable,
+                                        TuiTokenMap* tokenMap,
+                                        std::map<uint32_t,TuiRef*>* locals,
+                                        TuiDebugInfo* debugInfo,
                                         int operatorLevel,
-                                bool allowNonVarStrings);
-    
+                                        bool allowNonVarStrings);
     
     //loadValue calls initUnknownTypeRefWithHumanReadableString, and if it is a string, it calls TuiRef::loadVariableIfAvailable which also will call it if it is a function.
-    static TuiRef* loadValue(const char* str, char** endptr, TuiRef* existingValue, TuiTable* parentTable, TuiDebugInfo* debugInfo, bool allowNonVarStrings);
+    static TuiRef* loadValue(const char* str,
+                             char** endptr,
+                             TuiRef* existingValue,
+                             TuiTable* parentTable,
+                             TuiTokenMap* tokenMap,
+                             std::map<uint32_t,TuiRef*>* locals,
+                             TuiDebugInfo* debugInfo,
+                             bool allowNonVarStrings);
     
     static TuiBool* logicalNot(TuiRef* value);
     
 public: //members
-    TuiRef* parent = nullptr; //this is only stored by tables and functions, variables don't use it currently.
+    TuiTable* parent = nullptr; //this is only stored by tables and functions, variables don't use it currently.
     uint8_t refCount = 1;
 
 public://functions
-    TuiRef(TuiRef* parent_ = nullptr) {parent = parent_;}
+    TuiRef(TuiTable* parent_ = nullptr) {parent = parent_;}
     
     virtual ~TuiRef() {}
     
@@ -227,9 +260,6 @@ public://functions
         Tui::writeToFile(filePath, exportString);
     };
     
-    virtual TuiRef* recursivelyFindVariable(TuiString* variableName, TuiDebugInfo* debugInfo, bool searchParents, int varStartIndex = 0) {return nullptr;} //valid for tables and functions only
-    virtual bool recursivelySetVariable(TuiString* variableName, TuiRef* value, TuiDebugInfo* debugInfo, int varStartIndex = 0) {return false;};
-    
 
 };
 
@@ -238,7 +268,7 @@ public:
     void* value;
 
 public:
-    TuiUserData(void* value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    TuiUserData(void* value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
     virtual ~TuiUserData() {};
     virtual TuiUserData* copy() {return new TuiUserData(value, parent);};
     

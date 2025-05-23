@@ -8,19 +8,31 @@
 #include "TuiLog.h"
 
 #include "TuiRef.h"
+#include "TuiNumber.h"
+#include "TuiStatement.h"
+#include "TuiFunction.h"
 
 enum {
     Tui_var_token_type_undefined = 0,
     Tui_var_token_type_string,
     Tui_var_token_type_parent,
     Tui_var_token_type_arrayIndex,
-    Tui_var_token_type_setIndex
+    Tui_var_token_type_setIndex,
+    Tui_var_token_type_expression
+};
+
+
+enum {
+    Tui_variable_load_type_ignore = 0, //variables will not be loaded into the vars member, treated as a simple string
+    Tui_variable_load_type_serializeExpressions, //variable tokens are stored, will serialize an expression if hitting variable[getIndex()] Must pass a tokenMap
+    Tui_variable_load_type_runExpressions //variable tokens are stored, will immediately run an expression if hitting variable[getIndex()]
 };
 
 struct TuiVarToken {
     uint32_t type = Tui_var_token_type_undefined;
     uint32_t arrayOrSetIndex;
     std::string varName;
+    TuiExpression* expression = nullptr;
 };
 
 class TuiString : public TuiRef {
@@ -38,8 +50,19 @@ public://functions
     virtual bool boolValue() {return !value.empty();}
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_STRING && ((TuiString*)other)->value == value;}
     
-    TuiString(const std::string& value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
-    virtual ~TuiString() {};
+    TuiString(const std::string& value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    virtual ~TuiString() {
+        if(allowAsVariableName)
+        {
+            for(TuiVarToken& token : vars)
+            {
+                if(token.expression)
+                {
+                    delete token.expression;
+                }
+            }
+        }
+    };
     
     virtual TuiString* copy()
     {
@@ -52,7 +75,7 @@ public://functions
         vars = other->vars;
     };
     
-    static TuiString* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
+    static TuiString* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, uint32_t variableLoadType, TuiTokenMap* tokenMap = nullptr) {
         const char* s = str;
         
         TuiString* mjString = new TuiString("", parent);
@@ -61,6 +84,11 @@ public://functions
         bool doubleQuote = false;
         bool escaped = false;
         bool foundSpace = false;
+        
+        if(variableLoadType == Tui_variable_load_type_ignore)
+        {
+            mjString->allowAsVariableName = false;
+        }
         
         std::string currentVarName = "";
         
@@ -152,55 +180,73 @@ public://functions
             }
             else if(*s == '[' && mjString->allowAsVariableName && !escaped)
             {
+                mjString->vars.resize(mjString->vars.size() + 1);
+                mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_string;
+                mjString->vars[mjString->vars.size() - 1].varName = currentVarName;
+                currentVarName = "";
+                
                 mjString->value += *s;
                 s++;
                 s = tuiSkipToNextChar(s, debugInfo);
-                if(isdigit(*s))
+                
+                
+                if(variableLoadType == Tui_variable_load_type_runExpressions)
                 {
-                    uint32_t arrayIndex = (uint32_t)strtoul(s, endptr, 10);
-                    s = tuiSkipToNextChar(*endptr, debugInfo, true);
-                    if(*s != ']')
+                    std::map<uint32_t, TuiRef*> locals;
+                    TuiRef* expressionResult = TuiRef::recursivelyLoadValue(s,
+                                                                    endptr,
+                                                                    nullptr,
+                                                                    nullptr,
+                                                                    (TuiTable*)parent, tokenMap, &locals,
+                                                                    debugInfo,
+                                                                    Tui_operator_level_default,
+                                                                    true);
+                    s = tuiSkipToNextChar(*endptr, debugInfo);
+                    s++; //']'
+                    
+                    if(expressionResult->type() == Tui_ref_type_NUMBER)
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ']''");
-                        mjString->release();
-                        return nullptr;
+                        mjString->vars.resize(mjString->vars.size() + 1);
+                        mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_arrayIndex;
+                        mjString->vars[mjString->vars.size() - 1].arrayOrSetIndex = ((TuiNumber*)expressionResult)->value;
+                        mjString->value += Tui::string_format("%d]",(int)(((TuiNumber*)expressionResult)->value));
                     }
-                    
-                    mjString->value += Tui::string_format("%d]",arrayIndex);
-                    
-                    if(!currentVarName.empty())
+                    else if(expressionResult->type() == Tui_ref_type_STRING)
                     {
                         mjString->vars.resize(mjString->vars.size() + 1);
                         mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_string;
-                        mjString->vars[mjString->vars.size() - 1].varName = currentVarName;
-                        currentVarName = "";
+                        mjString->vars[mjString->vars.size() - 1].varName = ((TuiString*)expressionResult)->value;
+                        mjString->value += (((TuiString*)expressionResult)->value + "]");
                     }
+                    expressionResult->release();
+                    currentVarName = "";
+                    
+                }
+                else if(tokenMap)
+                {
+                    TuiExpression* expression = new TuiExpression();
                     
                     mjString->vars.resize(mjString->vars.size() + 1);
-                    mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_arrayIndex;
-                    mjString->vars[mjString->vars.size() - 1].arrayOrSetIndex = arrayIndex;
+                    mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_expression;
+                    mjString->vars[mjString->vars.size() - 1].expression = expression;
+                
+                    TuiFunction::recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, Tui_operator_level_default);
+                    
+                    s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                    if(*s == ']')
+                    {
+                        s++;
+                        s = tuiSkipToNextChar(s, debugInfo, true);
+                    }
                 }
-                else
-                {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected number after '['");
-                    mjString->release();
-                    return nullptr;
-                }
-
-                /*mjString->varNames.resize(mjString->varNames.size() + 1);
-                mjString->varNames[mjString->varNames.size() - 1].varName = currentVarName;
-                currentVarName = "";
-                mjString->value += *s;*/
+                
             }
             else if(*s == '(')
             {
-                if(!escaped && !singleQuote && !doubleQuote)
+                if(!escaped && mjString->allowAsVariableName)
                 {
-                    if(mjString->allowAsVariableName)
-                    {
-                        mjString->isValidFunctionString = true;
-                        break;
-                    }
+                    mjString->isValidFunctionString = true;
+                    break;
                 }
                 else
                 {
@@ -208,7 +254,7 @@ public://functions
                 }
             }
             else if(!escaped && !singleQuote && !doubleQuote &&
-                    (isspace(*s) || *s == ',' || *s == '\n' || *s == ')' || TuiExpressionOperatorsSet.count(*s) != 0))
+                    (isspace(*s) || *s == ',' || *s == '\n' || *s == ')' || *s == ']' || TuiExpressionOperatorsSet.count(*s) != 0))
             {
                 if(*s == '\n')
                 {

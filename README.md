@@ -12,6 +12,8 @@ Compared to a JSON serializer, tui adds a whole scripting language on top! It's 
 
 Compared to lua, tui is generally slower (up to 10x slower in tight loops), but easier to integrate and bind, and (potentially) faster when sharing data between C++ and the scripting environment. It has a smaller footprint, but less language features, and has good, fast built-in table serialization.
 
+There is a [VSCode extension](https://github.com/PythooonUser/vscode-tui-language-support) that adds language support for tui too!
+
 # Features & Usage/Examples
 
 ## A single object is valid
@@ -46,7 +48,7 @@ This is the same data in JSON. tui can read this too, as it treats ":" and "=" t
 ```
 
 Whitespace is ignored, however newlines are treated like commas, unless quoted or within a bracketed expression
-```lua
+```java
 array = {
     "This is the first object with index zero"
     "We don't have any commas after each variable, but we can if we want to",
@@ -55,6 +57,10 @@ array = {
 
 //this is a comment, anything after '//' will be skipped by the parser until the next line
 #this is also a comment
+/*
+and this is a
+block comment
+*/
 ```
 
 ## Adds variables, if statements & Expressions
@@ -66,13 +72,13 @@ halfWidth = width * 0.5,
 doubleWidth = width * 2.0,
 
 //if statements can be put right in there with your data
-if(width > 300) // brackets optional, 'if width > 300' is also valid
+if(width > 300 or height < 150) // brackets optional, 'if width > 300' is also valid. 'or' and 'and' are supported, as well as !,<,>,>=,<=,==,!=
 {
-    height = height * 2.0
+    height *= 2.0
 }
 else // 'else if' and 'elseif' are both valid too
 {
-    height = height * 0.5
+    height *= 0.5
 }
 ```
 ## Functions
@@ -81,7 +87,7 @@ Functions support value assignments, if/else statements, and for loops.
 addTariff = function(base)
 {
     tariff = 145 / 100
-    if(random(2) > 0)
+    if(randomInt(2) > 0)
     {
         tariff = 245 / 100
     }
@@ -98,6 +104,29 @@ for (i = 0, i < 5, i++)
     sadness = sadness + 1
 }
 ```
+The randomInt() function is built in, it's loaded in to the root table by default. 
+
+### List of built in functions (so far):
+```c++
+random(max)             // provides a floating point value between 0 and max (default 1.0)
+randomInt(max)          // provides an integer from 0 to (max - 1) with a default of 2.
+
+print(msg1, msg2, ...)  // print values, args are concatenated together
+readValue()             // reads input from the command line, serializing just the first value, doesn't (shouldn't!) call functions or load variables
+clear()                 // clears the console when run from a command line
+
+require(path)   // loads the given tui file, path is relative to the tui binary (for now)
+type()          // returns the type name of the given object, eg. 'table', 'string', 'number', 'vec4', 'bool'
+
+debug.getLineNumber()           // returns the line number in the current script file
+debug.getFileName()             // returns the current script file name or debug identifier string
+
+table.insert(table, index, value)   // insert into an array, specifying the index
+table.insert(table,value)           // to add to the end of an array
+
+```
+
+### Supplying custom functions in C++
 
 You can supply your own functions in C++ easily by providing a std::function that takes tables for args and any parent state, and gives you the result, eg. here is the code that adds the print function:
 ```c++
@@ -121,7 +150,7 @@ printFunction->release();
 ```
 
 ## Vectors
-The only dependency of tui is glm, which currently exposes vec2, vec3, vec4, and mat3 types, as well as a number of builtin math functions
+The only dependency of tui is glm, which currently exposes vec2, vec3, vec4, and mat3(WIP) types, as well as a number of builtin math functions (not yet implemented)
 ```javascript
 size = vec2(400,200)
 color = vec4(0.0,1.0,0.0,1.0)

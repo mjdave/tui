@@ -1,8 +1,37 @@
 
-table = {
-    color = vec4(1,1,1,1),
-    sand = vec3(1,1,1),
+#table = {
+#    color = vec4(1,1,1,1),
+#    sand = vec3(1,1,1),
+#}
+
+#array = {"orange", "banana", "apple"}
+#table = {} //no way to add keyed values
+
+#for(item in array)
+#{
+#    table.insert(costs, randomInt())
+#}
+
+#print("table:", table)
+
+/*testFunc = function()
+{
+    table = {}
+
+    table[2] = "hello"
+
+    print(table)
+
+    three = 3
+
+    table[three] = "this should be at index 3"
+
+    print(table)
 }
 
-print("table:", table)
+testFunc()*/
 
+print("hello 1")
+value = readValue()
+clear()
+print("hello 2")

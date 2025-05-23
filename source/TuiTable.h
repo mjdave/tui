@@ -32,11 +32,14 @@ public://functions
     virtual bool boolValue() {return true;}
     virtual bool isEqual(TuiRef* other) {return other == this;}
     
-    TuiTable(TuiRef* parent_) : TuiRef(parent_) {};
+    TuiTable(TuiTable* parent_) : TuiRef(parent_) {};
     virtual ~TuiTable() {
         for(TuiRef* ref : arrayObjects)
         {
-            ref->release();
+            if(ref)
+            {
+                ref->release();
+            }
         }
         for(auto& kv : objectsByNumberKey)
         {
@@ -55,71 +58,10 @@ public://functions
     }
     
     
-    static TuiRef* initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
-        const char* s = tuiSkipToNextChar(str, debugInfo);
-        
-        if(isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(*(s + 1))))
-        {
-            return TuiNumber::initWithHumanReadableString(s, endptr, parent, debugInfo);
-        }
-        
-        TuiFunction* functionRef = TuiFunction::initWithHumanReadableString(str, endptr, parent, debugInfo);
-        if(functionRef)
-        {
-            return functionRef;
-        }
-        
-        TuiBool* boolRef = TuiBool::initWithHumanReadableString(str, endptr, parent, debugInfo);
-        if(boolRef)
-        {
-            return boolRef;
-        }
-        
-        TuiVec2* vec2Ref = TuiVec2::initWithHumanReadableString(str, endptr, parent, debugInfo);
-        if(vec2Ref)
-        {
-            return vec2Ref;
-        }
-        
-        TuiVec3* vec3Ref = TuiVec3::initWithHumanReadableString(str, endptr, parent, debugInfo);
-        if(vec3Ref)
-        {
-            return vec3Ref;
-        }
-        
-        TuiVec4* vec4Ref = TuiVec4::initWithHumanReadableString(str, endptr, parent, debugInfo);
-        if(vec4Ref)
-        {
-            return vec4Ref;
-        }
-        
-        if(*s == 'n'
-            && *(s + 1) == 'i'
-            && *(s + 2) == 'l')
-        {
-            s+=3;
-            *endptr = (char*)s;
-            return new TuiRef(parent);
-        }
-        else if(*s == 'n'
-                && *(s + 1) == 'u'
-                && *(s + 2) == 'l'
-                && *(s + 3) == 'l')
-        {
-            s+=4;
-            *endptr = (char*)s;
-            return new TuiRef(parent);
-        }
-        else if(*s == '{' || *s == '[')
-        {
-            return TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
-        }
-        
-        return TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
-    }
     
     
-    virtual TuiRef* recursivelyFindVariable(TuiString* variableName, TuiDebugInfo* debugInfo, bool searchParents, int varStartIndex = 0)
+    
+    TuiRef* recursivelyFindVariable(TuiString* variableName, bool searchParents, TuiTable* functionState, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>* locals, TuiDebugInfo* debugInfo, int varStartIndex = 0)
     {
         std::vector<TuiVarToken>& vars = variableName->vars;
         
@@ -133,7 +75,7 @@ public://functions
                 {
                     return parent;
                 }
-                return parent->recursivelyFindVariable(variableName, debugInfo, searchParents, varStartIndex + 1);
+                return parent->recursivelyFindVariable(variableName, searchParents, functionState, tokenMap, locals, debugInfo, varStartIndex + 1);
             }
                 break;
             case Tui_var_token_type_string:
@@ -152,7 +94,7 @@ public://functions
                             TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                             return nullptr;
                         }
-                        return subtableRef->recursivelyFindVariable(variableName, debugInfo, searchParents, varStartIndex + 1);
+                        return ((TuiTable*)subtableRef)->recursivelyFindVariable(variableName, searchParents, functionState, tokenMap, locals, debugInfo, varStartIndex + 1);
                     }
                 }
             }
@@ -163,6 +105,15 @@ public://functions
                 {
                     return arrayObjects[varToken.arrayOrSetIndex];
                 }
+            }
+                break;
+            case Tui_var_token_type_expression:
+            {
+                
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Unimplimented! This feature not yet supported.");
+                    return nullptr;
+                //uint32_t tokenPos = 0;
+                //TuiRef* newResult = TuiFunction::runExpression(varToken.expression, &tokenPos, nullptr, functionState, parent, tokenMap, locals, debugInfo);
             }
                 break;
             case Tui_var_token_type_setIndex:
@@ -177,13 +128,15 @@ public://functions
         
         if(searchParents && parent && varStartIndex == 0)
         {
-            return parent->recursivelyFindVariable(variableName, debugInfo, searchParents);
+            return parent->recursivelyFindVariable(variableName, searchParents, functionState, tokenMap, locals, debugInfo);
         }
         
         return nullptr;
     }
     
-    virtual bool recursivelySetVariable(TuiString* variableName, TuiRef* value, TuiDebugInfo* debugInfo, int varStartIndex = 0)
+    virtual bool recursivelySetVariable(TuiString* variableName, TuiRef* value, TuiTable* functionState, TuiTokenMap* tokenMap,
+                                        std::map<uint32_t,TuiRef*>* locals,
+                                        TuiDebugInfo* debugInfo, int varStartIndex = 0)
     {
         std::vector<TuiVarToken>& vars = variableName->vars;
         
@@ -197,7 +150,7 @@ public://functions
                 {
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to set parent table");
                 }
-                return parent->recursivelySetVariable(variableName, value, debugInfo, varStartIndex + 1);
+                return parent->recursivelySetVariable(variableName, value, functionState, tokenMap, locals, debugInfo, varStartIndex + 1);
             }
                 break;
             case Tui_var_token_type_string:
@@ -215,7 +168,7 @@ public://functions
                         TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected table, but found:%s in %s", subtableRef->getTypeName().c_str(), variableName->value.c_str());
                         return false;
                     }
-                    return ((TuiTable*)subtableRef)->recursivelySetVariable(variableName, value, debugInfo, varStartIndex + 1);
+                    return ((TuiTable*)subtableRef)->recursivelySetVariable(variableName, value, functionState, tokenMap, locals, debugInfo, varStartIndex + 1);
                 }
             }
                 break;
@@ -262,7 +215,7 @@ public://functions
         
         if(parent && varStartIndex == 0)
         {
-            return parent->recursivelySetVariable(variableName, value, debugInfo);
+            return parent->recursivelySetVariable(variableName, value, functionState, tokenMap, locals, debugInfo);
         }
         
         return false;
@@ -290,11 +243,14 @@ public://functions
             }
             else
             {
+                TuiTokenMap tokenMap;
+                std::map<uint32_t, TuiRef*> locals;
                 *resultRef = recursivelyLoadValue(s,
                                                      endptr,
                                                   nullptr,
                                                      nullptr,
                                                      this,
+                                                  &tokenMap, &locals,
                                                      debugInfo,
                                                   Tui_operator_level_default,
                                                   true);
@@ -319,7 +275,7 @@ public://functions
             s = tuiSkipToNextChar(*endptr, debugInfo, false);
             
             std::map<uint32_t, TuiRef*> locals;
-            TuiRef* result = TuiFunction::runStatement(statement, nullptr, this, (TuiTable*)parent, &tokenMap, locals, debugInfo);
+            TuiRef* result = TuiFunction::runStatement(statement, nullptr, this, (TuiTable*)parent, &tokenMap, &locals, debugInfo);
             
             if(result)
             {
@@ -337,11 +293,14 @@ public://functions
             s = tuiSkipToNextChar(s, debugInfo);
             
             bool expressionPass = true;
+            TuiTokenMap tokenMap;
+            std::map<uint32_t, TuiRef*> locals;
             TuiRef* expressionResult = recursivelyLoadValue(s,
                                                  endptr,
                                                            nullptr,
                                                  nullptr,
                                                  this,
+                                                            &tokenMap, &locals,
                                                  debugInfo,
                                                             Tui_operator_level_default,
                                               true);
@@ -449,6 +408,7 @@ public://functions
                                                                            nullptr,
                                                                            nullptr,
                                                                            this,
+                                                                            &tokenMap, &locals,
                                                                            debugInfo,
                                                                             Tui_operator_level_default,
                                                                            true);
@@ -522,7 +482,7 @@ public://functions
         
         const char* keyStartS = s; // rewind to here if we find an array object
         int keyStartLineNumber = debugInfo->lineNumber;
-        TuiRef* keyRef = initUnknownTypeRefWithHumanReadableString(s, endptr, this, debugInfo);
+        TuiRef* keyRef = TuiRef::initUnknownTypeRefWithHumanReadableString(s, endptr, this, debugInfo);
         
         s = tuiSkipToNextChar(*endptr, debugInfo, true);
         
@@ -531,22 +491,15 @@ public://functions
         
         if(operatorOr || operatorAnd || *s == ',' || *s == '\n' || *s == '}' || *s == ']' || *s == ')' || *s == '(' || (TuiExpressionOperatorsSet.count(*s) != 0 && (*s != '=' || *(s + 1) == '=')))
         {
-            
-            /*bool keyWasFunctionCall = false;
-            if(keyRef->type() == Tui_ref_type_STRING)
-            {
-                if(((TuiString*)keyRef)->isValidFunctionString)
-                {
-                    keyWasFunctionCall = true;
-                }
-            }*/
-            
             debugInfo->lineNumber = keyStartLineNumber;
+            TuiTokenMap tokenMap;
+            std::map<uint32_t, TuiRef*> locals;
             TuiRef* newKeyRef = recursivelyLoadValue(keyStartS,
                                                 endptr,
                                                     nullptr,
                                                 nullptr,
                                                 this,
+                                                     &tokenMap, &locals,
                                                 debugInfo,
                                                      Tui_operator_level_default,
                                                 true);
@@ -598,17 +551,19 @@ public://functions
             else if(!((TuiString*)keyRef)->allowAsVariableName)
             {
                 ((TuiString*)keyRef)->allowAsVariableName = true; //required hack to support json with "x": quoted keys
-                //((TuiString*)keyRef)->varNames.push_back(((TuiString*)keyRef)->value);
                 
                 ((TuiString*)keyRef)->vars.resize(((TuiString*)keyRef)->vars.size() + 1);
                 ((TuiString*)keyRef)->vars[((TuiString*)keyRef)->vars.size() - 1].type = Tui_var_token_type_string;
                 ((TuiString*)keyRef)->vars[((TuiString*)keyRef)->vars.size() - 1].varName = ((TuiString*)keyRef)->value;
             }
             
-            TuiRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, nullptr, this, debugInfo, Tui_operator_level_default, true);
+            TuiTokenMap tokenMap;
+            std::map<uint32_t, TuiRef*> locals;
+            
+            TuiRef* valueRef = recursivelyLoadValue(s, endptr, nullptr, nullptr, this, &tokenMap, &locals, debugInfo, Tui_operator_level_default, true);
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
                 
-            recursivelySetVariable(((TuiString*)keyRef), valueRef, debugInfo);
+            recursivelySetVariable(((TuiString*)keyRef), valueRef, this, &tokenMap, &locals, debugInfo);
             
             bool success = true;
             
@@ -665,7 +620,7 @@ public://functions
     }
     
     
-    static TuiTable* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr) {
+    static TuiTable* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr) {
         
         TuiTable* table = new TuiTable(parent);
         

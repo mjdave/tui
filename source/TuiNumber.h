@@ -15,7 +15,7 @@ public: //members
     double value;
 
 public://functions
-    TuiNumber(double value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    TuiNumber(double value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
     virtual ~TuiNumber() {};
     
     virtual TuiNumber* copy()
@@ -26,7 +26,7 @@ public://functions
         value = ((TuiNumber*)other)->value;
     };
     
-    static TuiNumber* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
+    static TuiNumber* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
         const char* s = str;
         
         double value = strtod(s, endptr);
@@ -60,7 +60,7 @@ public: //members
     bool value;
 
 public://functions
-    TuiBool(bool value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    TuiBool(bool value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
     virtual ~TuiBool() {};
     
     virtual TuiBool* copy()
@@ -71,7 +71,7 @@ public://functions
         value = ((TuiBool*)other)->value;
     };
     
-    static TuiBool* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
+    static TuiBool* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
         const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == 't' && *(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e' )
@@ -109,7 +109,7 @@ public: //members
     dvec2 value;
 
 public://functions
-    TuiVec2(dvec2 value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    TuiVec2(dvec2 value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
     virtual ~TuiVec2() {};
     virtual TuiVec2* copy()
     {
@@ -119,17 +119,19 @@ public://functions
         value = ((TuiVec2*)other)->value;
     };
     
-    static TuiVec2* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
+    static TuiVec2* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
         const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '2' && *(s + 4) == '(')
         {
             s+= 5;
+            TuiTokenMap tokenMap;
+            std::map<uint32_t, TuiRef*> locals;
             
             double values[2] = {0.0,0.0};
             for(int i = 0; i < 2; i++)
             {
-                TuiRef* loadedValue = TuiRef::loadValue(s, endptr, nullptr, (TuiTable*)parent, debugInfo, false);
+                TuiRef* loadedValue = TuiRef::loadValue(s, endptr, nullptr, (TuiTable*)parent, &tokenMap, &locals, debugInfo, false);
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
@@ -191,7 +193,7 @@ public: //members
     dvec3 value;
 
 public://functions
-    TuiVec3(dvec3 value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    TuiVec3(dvec3 value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
     virtual ~TuiVec3() {};
     virtual TuiVec3* copy()
     {
@@ -201,17 +203,19 @@ public://functions
         value = ((TuiVec3*)other)->value;
     };
     
-    static TuiVec3* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
+    static TuiVec3* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
         const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '3' && *(s + 4) == '(')
         {
             s+= 5;
             
+            TuiTokenMap tokenMap;
+            std::map<uint32_t, TuiRef*> locals;
             double values[3] = {0.0,0.0,0.0};
             for(int i = 0; i < 3; i++)
             {
-                TuiRef* loadedValue = TuiRef::loadValue(s, endptr, nullptr, (TuiTable*)parent, debugInfo, false);
+                TuiRef* loadedValue = TuiRef::loadValue(s, endptr, nullptr, (TuiTable*)parent, &tokenMap, &locals, debugInfo, false);
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
@@ -273,7 +277,7 @@ public: //members
     dvec4 value;
 
 public://functions
-    TuiVec4(dvec4 value_, TuiRef* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    TuiVec4(dvec4 value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
     virtual ~TuiVec4() {};
     virtual TuiVec4* copy()
     {
@@ -283,17 +287,19 @@ public://functions
         value = ((TuiVec4*)other)->value;
     };
     
-    static TuiVec4* initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) {
+    static TuiVec4* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
         const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '4' && *(s + 4) == '(')
         {
             s+= 5;
             
+            TuiTokenMap tokenMap;
+            std::map<uint32_t, TuiRef*> locals;
             double values[4] = {0.0,0.0,0.0,0.0};
             for(int i = 0; i < 4; i++)
             {
-                TuiRef* loadedValue = TuiRef::loadValue(s, endptr, nullptr, (TuiTable*)parent, debugInfo, false);
+                TuiRef* loadedValue = TuiRef::loadValue(s, endptr, nullptr, (TuiTable*)parent, &tokenMap, &locals, debugInfo, false);
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {

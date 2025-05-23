@@ -7,7 +7,7 @@
 bool TuiFunction::recursivelySerializeExpression(const char* str,
                                                  char** endptr,
                                                  TuiExpression* expression,
-                                                 TuiRef* parent,
+                                                 TuiTable* parent,
                                                  TuiTokenMap* tokenMap,
                                                  TuiDebugInfo* debugInfo,
                                                  int operatorLevel,
@@ -28,7 +28,7 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
     }
     else
     {
-        tokenStartPos = expression->tokens.size();
+        tokenStartPos = (int)expression->tokens.size();
         
         if(*s == '!')
         {
@@ -50,7 +50,7 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
         }
         else
         {
-            TuiRef* leftValue = TuiTable::initUnknownTypeRefWithHumanReadableString(s, endptr, parent, debugInfo);
+            TuiRef* leftValue = TuiRef::initUnknownTypeRefWithHumanReadableString(s, endptr, parent, debugInfo);
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
             
             if(leftValue->type() == Tui_ref_type_STRING)
@@ -68,8 +68,8 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
                     {
                         leftVarToken = tokenMap->tokenIndex++;
                         tokenMap->tokensByVarNames[varString->value] = leftVarToken;
-                        
-                        TuiRef* newValueRef = parent->recursivelyFindVariable(varString, debugInfo, true);
+                        std::map<uint32_t, TuiRef*> locals;
+                        TuiRef* newValueRef = parent->recursivelyFindVariable(varString, true, parent, tokenMap, &locals, debugInfo);
                         if(newValueRef)
                         {
                             tokenMap->refsByToken[leftVarToken] = newValueRef;
@@ -322,7 +322,7 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
     return complete;
 }
 
-TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endptr, TuiRef* parent,  TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo) //entry point is after 'for'
+TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endptr, TuiTable* parent,  TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo) //entry point is after 'for'
 {
     const char* s = str;
     if(*s == '(')
@@ -335,7 +335,7 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
     forStatement->lineNumber = debugInfo->lineNumber;
     forStatement->expression = new TuiExpression();
     
-    TuiString* varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    TuiString* varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_serializeExpressions, tokenMap);
     s = tuiSkipToNextChar(*endptr, debugInfo);
     
     if(varNameRef && varNameRef->allowAsVariableName)
@@ -372,7 +372,7 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
                 s++;
                 s = tuiSkipToNextChar(s, debugInfo);
                 
-                TuiString* newValueNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+                TuiString* newValueNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_serializeExpressions, tokenMap);
                 s = tuiSkipToNextChar(*endptr, debugInfo);
                 
                 forStatement->varName = newValueNameRef;
@@ -449,7 +449,7 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
         //todo this is c/p from below. Should be a factored out
         const char* varNameStartS = s; //rewind if we find a function
         int keyStartLineNumber = debugInfo->lineNumber;
-        varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_serializeExpressions, tokenMap);
         s = tuiSkipToNextChar(*endptr, debugInfo);
         
         if(varNameRef)
@@ -536,7 +536,7 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
     return forStatement;
 }
 
-bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo, std::vector<TuiStatement*>* statements)
+bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiTable* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo, std::vector<TuiStatement*>* statements)
 {
     const char* s = str;
     if(*s != '{')
@@ -696,7 +696,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* 
             break;
         }
         
-        TuiString* varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        TuiString* varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_serializeExpressions, tokenMap);
         
         if(varNameRef)
         {
@@ -781,7 +781,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiRef* 
     return true;
 }
 
-TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** endptr, TuiRef* parent, TuiDebugInfo* debugInfo) //assumes that '(' is currently in str
+TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) //assumes that '(' is currently in str
 {
     const char* s = str;
     if(*s == 'f'
@@ -861,7 +861,7 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
 }
 
 
-TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenPos, TuiRef* result, TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo)
+TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenPos, TuiRef* result, TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>* locals, TuiDebugInfo* debugInfo)
 {
     uint32_t token = expression->tokens[*tokenPos];
     if(token == Tui_token_end)
@@ -1432,9 +1432,9 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenPos
     else
     {
         TuiRef* foundValue = nullptr;
-        if(locals.count(token) != 0)
+        if(locals->count(token) != 0)
         {
-            foundValue = locals[token];
+            foundValue = locals->at(token);
         }
         else if(tokenMap->refsByToken.count(token) != 0)
         {
@@ -1461,7 +1461,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenPos
     return nullptr;
 }
 
-TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo)
+TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>* locals, TuiDebugInfo* debugInfo)
 {
     debugInfo->lineNumber = statement->lineNumber;
     switch(statement->type)
@@ -1490,21 +1490,21 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
         case Tui_statement_type_VAR_ASSIGN:
         {
             TuiRef* existingValue = nullptr;
-            if(locals.count(statement->varToken) != 0)
+            if(locals->count(statement->varToken) != 0)
             {
-                existingValue = locals[statement->varToken];
+                existingValue = locals->at(statement->varToken);
             }
             else if(functionState->objectsByStringKey.count(statement->varName->value) != 0)
             {
                 existingValue = functionState->objectsByStringKey[statement->varName->value];
-                locals[statement->varToken] = existingValue;
+                (*locals)[statement->varToken] = existingValue;
             }
             else
             {
-                existingValue = functionState->recursivelyFindVariable(statement->varName, debugInfo, false);
+                existingValue = functionState->recursivelyFindVariable(statement->varName, false, functionState, tokenMap, locals, debugInfo);
                 if(existingValue)
                 {
-                    locals[statement->varToken] = existingValue;
+                    (*locals)[statement->varToken] = existingValue;
                 }
             }
             
@@ -1515,7 +1515,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
                 tokenMap->refsByToken[statement->varToken] = result;
                 functionState->objectsByStringKey[statement->varName->value] = result;
                 result->retain();
-                locals[statement->varToken] = result;
+                (*locals)[statement->varToken] = result;
                 
             }//else it updated the existing value
             
@@ -1537,7 +1537,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
         {
             TuiForStatement* forStatement = (TuiForStatement*)statement;
             
-            uint32_t tokenIndex = 0;
             TuiTable* containerObject = nullptr; //only used in for(object in table)
             
             if(forStatement->continueExpression)
@@ -1549,7 +1548,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
                     tokenMap->refsByToken[forStatement->varToken] = result;
                     functionState->objectsByStringKey[forStatement->varName->value] = result;
                     result->retain();
-                    locals[forStatement->varToken] = result;
+                    (*locals)[forStatement->varToken] = result;
                 }
                 else
                 {
@@ -1588,7 +1587,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
                     if(forStatement->indexOrKeyToken != 0)
                     {
                         indexNumber = new TuiNumber(0);
-                        locals[forStatement->indexOrKeyToken] = indexNumber;
+                        (*locals)[forStatement->indexOrKeyToken] = indexNumber;
                     }
                     
                     int i = 0;
@@ -1598,7 +1597,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
                         {
                             indexNumber->value = i++;
                         }
-                        locals[forStatement->varToken] = object;
+                        (*locals)[forStatement->varToken] = object;
                         
                         TuiRef* runResult = runStatementArray(forStatement->statements, result, functionState, parent, tokenMap, locals, debugInfo);
                         
@@ -1620,7 +1619,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
                     if(forStatement->indexOrKeyToken != 0)
                     {
                         keyString = new TuiString("");
-                        locals[forStatement->indexOrKeyToken] = keyString;
+                        (*locals)[forStatement->indexOrKeyToken] = keyString;
                     }
                     
                     for(auto& kv : containerObject->objectsByStringKey)
@@ -1629,7 +1628,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
                         {
                             keyString->value = kv.first;
                         }
-                        locals[forStatement->varToken] = kv.second;
+                        (*locals)[forStatement->varToken] = kv.second;
                         
                         TuiRef* runResult = runStatementArray(forStatement->statements, result, functionState, parent, tokenMap, locals, debugInfo);
                         
@@ -1746,7 +1745,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
 }
 
     
-TuiRef* TuiFunction::runStatementArray(std::vector<TuiStatement*>& statements_,  TuiRef* result,  TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>& locals, TuiDebugInfo* debugInfo) //static
+TuiRef* TuiFunction::runStatementArray(std::vector<TuiStatement*>& statements_,  TuiRef* result,  TuiTable* functionState, TuiTable* parent, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>* locals, TuiDebugInfo* debugInfo) //static
 {
     for(TuiStatement* statement : statements_)
     {
@@ -1761,13 +1760,13 @@ TuiRef* TuiFunction::runStatementArray(std::vector<TuiStatement*>& statements_, 
 }
 
     
-TuiFunction::TuiFunction(TuiRef* parent_)
+TuiFunction::TuiFunction(TuiTable* parent_)
 :TuiRef(parent_)
 {
 }
 
 
-TuiFunction::TuiFunction(std::function<TuiRef*(TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> func_, TuiRef* parent_)
+TuiFunction::TuiFunction(std::function<TuiRef*(TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> func_, TuiTable* parent_)
 :TuiRef(parent_)
 {
     func = func_;
@@ -1816,27 +1815,10 @@ TuiRef* TuiFunction::call(TuiTable* args, TuiTable* callLocationState, TuiRef* e
         }
         
         
-        TuiRef* result = runStatementArray(statements,  existingResult,  currentCallState, (TuiTable*)parent, &tokenMap, locals, &debugInfo);
+        TuiRef* result = runStatementArray(statements,  existingResult,  currentCallState, parent, &tokenMap, &locals, &debugInfo);
         //currentCallState->debugLog();
         currentCallState->release();
         
         return result;
     }
-}
-
-//todo what's going on here
-
-TuiRef* TuiFunction::recursivelyFindVariable(TuiString* variableName, TuiDebugInfo* debugInfo, bool searchParents, int varStartIndex)
-{
-    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to get a variable from within a child function");
-    return nullptr;
-    //return currentCallState->recursivelyFindVariable(variableName, debugInfo, varStartIndex);
-}
-
-
-bool TuiFunction::recursivelySetVariable(TuiString* variableName, TuiRef* value, TuiDebugInfo* debugInfo, int varStartIndex)
-{
-    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to set variable within a child function");
-    return false;
-   // return currentCallState->recursivelySetVariable(variableName, value, debugInfo, varStartIndex);
 }
