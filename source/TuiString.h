@@ -58,7 +58,7 @@ public://functions
             {
                 if(token.expression)
                 {
-                    delete token.expression;
+                    delete token.expression; //todo will crash if assign() has been called on a string that has expressions
                 }
             }
         }
@@ -68,11 +68,11 @@ public://functions
     {
         return new TuiString(value, parent);
     }
-    virtual void assign(TuiString* other) {
-        value = other->value;
-        allowAsVariableName = other->allowAsVariableName;
-        isValidFunctionString = other->isValidFunctionString;
-        vars = other->vars;
+    virtual void assign(TuiRef* other) { //todo will crash if assign() has been called on a string that has expressions
+        value = ((TuiString*)other)->value;
+        allowAsVariableName = ((TuiString*)other)->allowAsVariableName;
+        isValidFunctionString = ((TuiString*)other)->isValidFunctionString;
+        vars = ((TuiString*)other)->vars;
     };
     
     static TuiString* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, uint32_t variableLoadType, TuiTokenMap* tokenMap = nullptr) {

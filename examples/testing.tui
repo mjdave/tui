@@ -31,16 +31,11 @@
 
 testFunc()*/
 
-for(i=1,i>0,i++)
+testAssign = function()
 {
-    print("hello")
-    /*input = readValue()
+    input = "a"
+    input = "b"
     print(input)
-    if(input == "test")
-    {
-        print("test")
-    }*/
-
-    print(readValue())
-    
 }
+
+testAssign()

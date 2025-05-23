@@ -110,7 +110,7 @@ TuiTable* TuiRef::createRootTable()
     
     // print(msg1, msg2, msg3, ...) print values, args are concatenated together
     TuiFunction* printFunction = new TuiFunction([](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        if(args->arrayObjects.size() > 0)
+        if(args && args->arrayObjects.size() > 0)
         {
             std::string printString = "";
             for(TuiRef* arg : args->arrayObjects)
