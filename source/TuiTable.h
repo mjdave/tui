@@ -585,13 +585,23 @@ public://functions
             }
             else if(*s != '\0')
             {
+                if(!valueRef)
+                {
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "nil valueRef");
+                    keyRef->release();
+                    return false;
+                }
                 if(valueRef->type() == Tui_ref_type_STRING && *s == '(')
                 {
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call non-existent function:%s", ((TuiString*)valueRef)->value.c_str());
+                    keyRef->release();
+                    return false;
                 }
                 else
                 {
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ',' or newline after '=' or ':' assignment. unexpected character loading table:%c", *s);
+                    keyRef->release();
+                    return false;
                 }
                 success = false;
             }
