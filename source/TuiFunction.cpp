@@ -1694,10 +1694,10 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
         case Tui_statement_type_IF:
         {
             TuiIfStatement* currentSatement = (TuiIfStatement*)statement;
-            uint32_t tokenPos = 0;
             
             while(currentSatement)
             {
+                uint32_t tokenPos = 0;
                 TuiRef* expressionResult = runExpression(currentSatement->expression, &tokenPos, nullptr, functionState, parent, tokenMap, locals, debugInfo);
                 
                 bool expressionPass = true;
