@@ -302,7 +302,7 @@ TuiRef* TuiRef::load(const std::string& filename, TuiTable* parent) {
     return nullptr;
 }
 
-TuiRef* TuiRef::runScriptFile(const std::string& filename, bool debugLogging, TuiTable* parent)
+TuiRef* TuiRef::runScriptFile(const std::string& filename, TuiTable* parent, TuiRef** resultRef)
 {
     std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
     TuiDebugInfo debugInfo;
@@ -317,17 +317,8 @@ TuiRef* TuiRef::runScriptFile(const std::string& filename, bool debugLogging, Tu
         in.close();
         const char* cString = contents.c_str();
         char* endPtr;
-        TuiRef* resultRef = nullptr;
-        TuiRef* table = TuiRef::load(cString, &endPtr, parent, &debugInfo, &resultRef);
-        if(table)
-        {
-            if(debugLogging)
-            {
-                table->debugLog();
-            }
-            table->release();
-        }
-        return resultRef;
+        TuiRef* table = TuiRef::load(cString, &endPtr, parent, &debugInfo, resultRef);
+        return table;
     }
     else
     {
@@ -712,7 +703,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
             TuiRef* newValueRef = parentTable->recursivelyFindVariable((TuiString*)rightValue, true, parentTable, tokenMap, locals, debugInfo);
             if(newValueRef)
             {
-                delete rightValue;
+                rightValue->release();
                 rightValue = newValueRef->copy();
             }
             else

@@ -596,7 +596,7 @@ public://functions
                 success = false;
             }
             
-            delete keyRef;
+            keyRef->release();
             keyRef = nullptr;
             
             if(valueRef)
@@ -610,7 +610,7 @@ public://functions
         else if(*s != '\0')
         {
             TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
-            delete keyRef;
+            keyRef->release();
             return false;
         }
             
@@ -633,7 +633,7 @@ public://functions
         else
         {
             TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
-            delete table;
+            table->release();
             return nullptr;
         }
             
