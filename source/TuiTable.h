@@ -1017,7 +1017,12 @@ public://functions
         ref->release();
     }
     
-    
+    void setFunction(const std::string& key, std::function<TuiRef*(TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> value)
+    {
+        TuiFunction* ref = new TuiFunction(value, this);
+        set(key, ref);
+        ref->release();
+    }
     
     void* getUserData(const std::string& key)
     {
