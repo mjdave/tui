@@ -26,17 +26,6 @@ public://functions
         value = ((TuiNumber*)other)->value;
     };
     
-    static TuiNumber* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
-        const char* s = str;
-        
-        double value = strtod(s, endptr);
-        
-        s = tuiSkipToNextChar(*endptr, debugInfo, true);
-        *endptr = (char*)s;
-        
-        TuiNumber* number = new TuiNumber(value, parent);
-        return number;
-    }
     
     virtual uint8_t type() { return Tui_ref_type_NUMBER; }
     virtual std::string getTypeName() {return "number";}
@@ -125,13 +114,12 @@ public://functions
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '2' && *(s + 4) == '(')
         {
             s+= 5;
-            TuiTokenMap tokenMap;
-            std::map<uint32_t, TuiRef*> locals;
+            s = tuiSkipToNextChar(s, debugInfo);
             
             double values[2] = {0.0,0.0};
             for(int i = 0; i < 2; i++)
             {
-                TuiRef* loadedValue = TuiRef::loadValue(s, endptr, nullptr, (TuiTable*)parent, &tokenMap, &locals, debugInfo, false);
+                TuiRef* loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, (TuiTable*)parent, debugInfo);
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
@@ -209,19 +197,17 @@ public://functions
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '3' && *(s + 4) == '(')
         {
             s+= 5;
+            s = tuiSkipToNextChar(s, debugInfo);
             
-            TuiTokenMap tokenMap;
-            std::map<uint32_t, TuiRef*> locals;
             double values[3] = {0.0,0.0,0.0};
             for(int i = 0; i < 3; i++)
             {
-                TuiRef* loadedValue = TuiRef::loadValue(s, endptr, nullptr, (TuiTable*)parent, &tokenMap, &locals, debugInfo, false);
+                TuiRef* loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, (TuiTable*)parent, debugInfo);
+                s = tuiSkipToNextChar(*endptr, debugInfo, true);
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "uninitialized or non-number value in vec3 constructor:%c", *s);
-                    s = tuiSkipToNextChar(s, debugInfo);
-                    *endptr = (char*)s;
                     if(loadedValue)
                     {
                         loadedValue->release();
@@ -232,14 +218,15 @@ public://functions
                 values[i] = ((TuiNumber*)loadedValue)->value;
                 loadedValue->release();
                 
-                s = tuiSkipToNextChar(*endptr, debugInfo, true);
                 if(*s == ',' || *s == '\n')
                 {
                     s++;
+                    s = tuiSkipToNextChar(s, debugInfo, true);
                 }
                 else if(*s == ')' || *s == '\0')
                 {
                     s++;
+                    s = tuiSkipToNextChar(s, debugInfo, true);
                     break;
                 }
                 else
@@ -249,7 +236,6 @@ public://functions
                 }
             }
             
-            s = tuiSkipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
             return new TuiVec3(dvec3(values[0], values[1], values[2]), parent);
@@ -293,13 +279,12 @@ public://functions
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '4' && *(s + 4) == '(')
         {
             s+= 5;
+            s = tuiSkipToNextChar(s, debugInfo);
             
-            TuiTokenMap tokenMap;
-            std::map<uint32_t, TuiRef*> locals;
             double values[4] = {0.0,0.0,0.0,0.0};
             for(int i = 0; i < 4; i++)
             {
-                TuiRef* loadedValue = TuiRef::loadValue(s, endptr, nullptr, (TuiTable*)parent, &tokenMap, &locals, debugInfo, false);
+                TuiRef* loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, (TuiTable*)parent, debugInfo);
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {

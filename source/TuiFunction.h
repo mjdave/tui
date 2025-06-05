@@ -60,7 +60,12 @@ public: //class functions
     
     virtual bool boolValue() {return true;}
     
-    TuiRef* call(TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo);
+    TuiRef* call(TuiTable* args,
+                 TuiTable* state,
+                 TuiRef* existingResult,
+                 std::map<uint32_t, TuiRef*>* locals,
+                 TuiDebugInfo* callingDebugInfo,
+                 TuiRef** createdStateTable = nullptr);
     //void call(TuiTable* args, std::function<void(TuiRef*)> callback); //todo async
     
     

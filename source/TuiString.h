@@ -75,7 +75,8 @@ public://functions
         vars = ((TuiString*)other)->vars;
     };
     
-    static TuiString* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, uint32_t variableLoadType, TuiTokenMap* tokenMap = nullptr) {
+    
+    /*static TuiString* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, uint32_t variableLoadType, TuiTokenMap* tokenMap = nullptr) {
         const char* s = str;
         
         TuiString* mjString = new TuiString("", parent);
@@ -91,6 +92,7 @@ public://functions
         }
         
         std::string currentVarName = "";
+        const char* currentVarNameS = s;
         
         for(;; s++)
         {
@@ -225,6 +227,7 @@ public://functions
                     }
                     expressionResult->release();
                     currentVarName = "";
+                    currentVarNameS = s;
                     
                 }
                 else if(tokenMap)
@@ -248,15 +251,129 @@ public://functions
             }
             else if(*s == '(')
             {
-                if(!escaped && mjString->allowAsVariableName)
+                if(variableLoadType == Tui_variable_load_type_runExpressions)
                 {
-                    mjString->isValidFunctionString = true;
-                    break;
+                    std::map<uint32_t, TuiRef*> locals;
+                    TuiRef* expressionResult = TuiRef::recursivelyLoadValue(currentVarNameS,
+                                                                            endptr,
+                                                                            nullptr,
+                                                                            nullptr,
+                                                                            parent, tokenMap, &locals,
+                                                                            debugInfo,
+                                                                            Tui_operator_level_default,
+                                                                            true);
+                    if(expressionResult->type() == Tui_ref_type_NUMBER)
+                    {
+                        mjString->vars.resize(mjString->vars.size() + 1);
+                        mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_arrayIndex;
+                        mjString->vars[mjString->vars.size() - 1].arrayOrSetIndex = ((TuiNumber*)expressionResult)->value;
+                        mjString->value += Tui::string_format("%d]",(int)(((TuiNumber*)expressionResult)->value));
+                    }
+                    else if(expressionResult->type() == Tui_ref_type_STRING)
+                    {
+                        mjString->vars.resize(mjString->vars.size() + 1);
+                        mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_string;
+                        mjString->vars[mjString->vars.size() - 1].varName = ((TuiString*)expressionResult)->value;
+                        mjString->value += (((TuiString*)expressionResult)->value + "]");
+                    }
+                    
+                    s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                    
+                    currentVarName = "";
+                    currentVarNameS = s;
+                    
+                    **mjString->value += *s;
+                    while(1)
+                    {
+                        s++;
+                        s = tuiSkipToNextChar(s, debugInfo);
+                        if(*s == ')')
+                        {
+                            break;
+                        }
+                        
+                        std::map<uint32_t, TuiRef*> locals;
+                        TuiRef* expressionResult = TuiRef::recursivelyLoadValue(s,
+                                                                                endptr,
+                                                                                nullptr,
+                                                                                nullptr,
+                                                                                parent, tokenMap, &locals,
+                                                                                debugInfo,
+                                                                                Tui_operator_level_default,
+                                                                                true);
+                        s = tuiSkipToNextChar(*endptr, debugInfo);
+                        if(*s == ')')
+                        {
+                            break;
+                        }
+                        s++; //']'
+                        
+                        if(expressionResult->type() == Tui_ref_type_NUMBER)
+                        {
+                            mjString->vars.resize(mjString->vars.size() + 1);
+                            mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_arrayIndex;
+                            mjString->vars[mjString->vars.size() - 1].arrayOrSetIndex = ((TuiNumber*)expressionResult)->value;
+                            mjString->value += Tui::string_format("%d]",(int)(((TuiNumber*)expressionResult)->value));
+                        }
+                        else if(expressionResult->type() == Tui_ref_type_STRING)
+                        {
+                            mjString->vars.resize(mjString->vars.size() + 1);
+                            mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_string;
+                            mjString->vars[mjString->vars.size() - 1].varName = ((TuiString*)expressionResult)->value;
+                            mjString->value += (((TuiString*)expressionResult)->value + "]");
+                        }
+                        expressionResult->release();
+                        currentVarName = "";
+                    }**
+                    
                 }
                 else
                 {
-                    mjString->value += *s;
+                    if(!escaped && mjString->allowAsVariableName)
+                    {
+                        mjString->isValidFunctionString = true;
+                        break;
+                    }
+                    else
+                    {
+                        mjString->value += *s;
+                    }
                 }
+                
+                **else if(tokenMap)
+                {
+                    TuiExpression* expression = new TuiExpression();
+                    
+                    mjString->vars.resize(mjString->vars.size() + 1);
+                    mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_expression;
+                    mjString->vars[mjString->vars.size() - 1].expression = expression;
+                
+                    TuiFunction::recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, Tui_operator_level_default);
+                    
+                    s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                    if(*s == ']')
+                    {
+                        s++;
+                        s = tuiSkipToNextChar(s, debugInfo, true);
+                    }
+                }**
+                **if(variableLoadType == Tui_variable_load_type_runExpressions)
+                {
+                    
+                   // TuiRef* newKeyRef = TuiRef::loadVariableIfAvailable(originalString, nullptr, s, endptr, parentTable, tokenMap, locals, debugInfo);
+                }
+                else
+                {
+                    if(!escaped && mjString->allowAsVariableName)
+                    {
+                        mjString->isValidFunctionString = true;
+                        break;
+                    }
+                    else
+                    {
+                        mjString->value += *s;
+                    }
+                }**
             }
             else if(!escaped && !singleQuote && !doubleQuote &&
                     (isspace(*s) || *s == ',' || *s == '\n' || *s == ')' || *s == ']' || TuiExpressionOperatorsSet.count(*s) != 0))
@@ -318,7 +435,7 @@ public://functions
         
         
         return mjString;
-    }
+    }*/
     
     /*virtual uint64_t generateHash() {
         uint32_t hash;

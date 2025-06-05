@@ -160,7 +160,7 @@ inline bool checkSymbolNameComplete(const char* str)
 class TuiRef {
     
 public: //static functions
-    static TuiRef* initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo);
+    //static TuiRef* initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, uint32_t variableLoadType, TuiTokenMap* tokenMap = nullptr);
     static TuiTable* createRootTable(); //adds the built in functions 'print', 'require' etc.
     
     static TuiRef* load(const std::string& filename, TuiTable* parent = createRootTable()); //public method to read from human readable file/string data. supply nullptr as last argument to prvent root table from loading
@@ -171,47 +171,31 @@ public: //static functions
     
     //static TuiRef* initWithBinaryData(void* data); //todo
     //static TuiRef* initWithBinaryFile(const std::string& filePath);  //todo
-    static TuiRef* initWithHumanReadableString(const std::string& stringData, TuiTable* parent) {return new TuiRef(parent);} //internal, loads a single value/expression
+   // static TuiRef* initWithHumanReadableString(const std::string& stringData, TuiTable* parent) {return new TuiRef(parent);} //internal, loads a single value/expression
     //static TuiRef* initWithHumanReadableFile(const std::string& filePath);
     
     
+    // recursivelyLoadValue2() runs expressions and calls loadValue for each value eg: x * 4 + foo(a.b)
+    static TuiRef* loadExpression(const char* str,
+                                  char** endptr,
+                                  TuiRef* existingValue,
+                                  TuiRef* leftValue,
+                                  TuiTable* parentTable,
+                                  TuiDebugInfo* debugInfo,
+                                  int operatorLevel = Tui_operator_level_default);
     
-    static TuiRef* loadVariableIfAvailable(TuiString* variableName,
-                                           TuiRef* existingValue,
-                                           const char* str,
-                                           char** endptr,
-                                           TuiTable* parentTable,
-                                           TuiTokenMap* tokenMap,
-                                           std::map<uint32_t,TuiRef*>* locals,
-                                           TuiDebugInfo* debugInfo);
-
-    static bool setVariable(TuiString* variableName,
-                            TuiRef* value,
-                            TuiTable* parentTable,
-                            TuiTokenMap* tokenMap,
-                            std::map<uint32_t,TuiRef*>* locals,
-                            TuiDebugInfo* debugInfo);
-
-    static TuiRef* recursivelyLoadValue(const char* str,
-                                        char** endptr,
-                                        TuiRef* existingValue,
-                                        TuiRef* leftValue,
-                                        TuiTable* parentTable,
-                                        TuiTokenMap* tokenMap,
-                                        std::map<uint32_t,TuiRef*>* locals,
-                                        TuiDebugInfo* debugInfo,
-                                        int operatorLevel,
-                                        bool allowNonVarStrings);
-    
-    //loadValue calls initUnknownTypeRefWithHumanReadableString, and if it is a string, it calls TuiRef::loadVariableIfAvailable which also will call it if it is a function.
+    // loadValue() is low level, call directly for table keys, but via recursivelyLoadValue2 for values.
+    // parses a single variable name and returns the result eg: foo.bar().array[1+2].x
     static TuiRef* loadValue(const char* str,
-                             char** endptr,
-                             TuiRef* existingValue,
-                             TuiTable* parentTable,
-                             TuiTokenMap* tokenMap,
-                             std::map<uint32_t,TuiRef*>* locals,
-                             TuiDebugInfo* debugInfo,
-                             bool allowNonVarStrings);
+                              char** endptr,
+                              TuiRef* existingValue,
+                              TuiTable* parentTable,
+                              TuiDebugInfo* debugInfo,
+                              
+                              //below are only passed if we are setting a key, giving the caller quick access to the parent to set the value for an uninitialized variable
+                              TuiRef** onSetIfNilFoundEnclosingRef = nullptr,
+                              std::string* onSetIfNilFoundKey = nullptr,
+                              uint32_t* onSetIfNilFoundIndex = nullptr);
     
     static TuiBool* logicalNot(TuiRef* value);
     
@@ -263,20 +247,26 @@ public://functions
 
 };
 
-class TuiUserData : public TuiRef { //todo TuiUserData is not fully implemented or tested
+class TuiUserData : public TuiRef {
 public:
     void* value;
+    TuiTable* members = nullptr;
 
 public:
-    TuiUserData(void* value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
-    virtual ~TuiUserData() {};
+    TuiUserData(void* value_, TuiTable* parent_ = nullptr);
+    virtual ~TuiUserData();
     virtual TuiUserData* copy() {return new TuiUserData(value, parent);};
+    virtual void assign(TuiRef* other) {
+        value = ((TuiUserData*)other)->value;
+    };
     
     virtual uint8_t type() { return Tui_ref_type_USERDATA; }
     virtual std::string getTypeName() {return "userData";}
     virtual std::string getStringValue() {
         return Tui::string_format("%p", value);
     }
+    virtual bool boolValue() {return value != nullptr;}
+    virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_USERDATA && ((TuiUserData*)other)->value == value;}
 
 private:
     

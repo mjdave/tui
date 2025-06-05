@@ -4,71 +4,6 @@
 #include "TuiTable.h"
 #include "TuiNumber.h"
 
-TuiRef* TuiRef::initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo)
-{
-    const char* s = tuiSkipToNextChar(str, debugInfo);
-    
-    if(isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(*(s + 1))))
-    {
-        return TuiNumber::initWithHumanReadableString(s, endptr, parent, debugInfo);
-    }
-    
-    TuiFunction* functionRef = TuiFunction::initWithHumanReadableString(str, endptr, parent, debugInfo);
-    if(functionRef)
-    {
-        return functionRef;
-    }
-    
-    TuiBool* boolRef = TuiBool::initWithHumanReadableString(str, endptr, parent, debugInfo);
-    if(boolRef)
-    {
-        return boolRef;
-    }
-    
-    TuiVec2* vec2Ref = TuiVec2::initWithHumanReadableString(str, endptr, parent, debugInfo);
-    if(vec2Ref)
-    {
-        return vec2Ref;
-    }
-    
-    TuiVec3* vec3Ref = TuiVec3::initWithHumanReadableString(str, endptr, parent, debugInfo);
-    if(vec3Ref)
-    {
-        return vec3Ref;
-    }
-    
-    TuiVec4* vec4Ref = TuiVec4::initWithHumanReadableString(str, endptr, parent, debugInfo);
-    if(vec4Ref)
-    {
-        return vec4Ref;
-    }
-    
-    if(*s == 'n'
-        && *(s + 1) == 'i'
-        && *(s + 2) == 'l')
-    {
-        s+=3;
-        *endptr = (char*)s;
-        return new TuiRef(parent);
-    }
-    else if(*s == 'n'
-            && *(s + 1) == 'u'
-            && *(s + 2) == 'l'
-            && *(s + 3) == 'l')
-    {
-        s+=4;
-        *endptr = (char*)s;
-        return new TuiRef(parent);
-    }
-    else if(*s == '{' || *s == '[')
-    {
-        return TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
-    }
-    
-    return TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_runExpressions);
-}
-
-
 TuiTable* TuiRef::createRootTable()
 {
     TuiTable* rootTable = new TuiTable(nullptr);
@@ -126,7 +61,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    //readValue() reads input from the command line, serializing just the first value, doesn't (shouldn't!) call functions or load variables
+    //readValue() reads input from the command line, serializing just the first value, will call functions and load variables
     rootTable->setFunction("readValue", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         std::string stringValue;
         std::getline(std::cin, stringValue);
@@ -136,7 +71,7 @@ TuiTable* TuiRef::createRootTable()
         const char* cString = stringValue.c_str();
         char* endPtr;
         
-        TuiRef* result = TuiRef::initUnknownTypeRefWithHumanReadableString(cString, &endPtr, state, &debugInfo);
+        TuiRef* result = TuiRef::loadValue(cString, &endPtr, nullptr, state, callingDebugInfo);
         
         return result;
     });
@@ -365,7 +300,380 @@ TuiRef* TuiRef::load(const char* str, char** endptr, TuiTable* parent, TuiDebugI
     return table;
 }
 
-TuiRef* TuiRef::loadVariableIfAvailable(TuiString* variableName, TuiRef* existingValue, const char* str, char** endptr, TuiTable* parentTable, TuiTokenMap* tokenMap, std::map<uint32_t, TuiRef*>* locals, TuiDebugInfo* debugInfo)
+// parses a single token and returns the result eg: foo, bar(), array, [1+2], x, 42
+static TuiRef* loadSingleValueInternal(const char* str,
+                                       char** endptr,
+                                       TuiRef* existingValue,
+                                       TuiRef* parentRef,
+                                       TuiDebugInfo* debugInfo,
+                                       
+                                       std::string* onSetKey, //watch out, using the existance of this var to allow "x":5 json quoted key names only. For values, a quoted string is not a valid variable name
+                                       uint32_t* onSetIndex) //index todo
+{
+    const char* s = str;
+    
+    TuiTable* parent = (TuiTable*)parentRef;
+    if(parentRef->type() != Tui_ref_type_TABLE)
+    {
+        TuiError("Unimplemented");
+    }
+    
+    if(isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(*(s + 1))))
+    {
+        double value = strtod(s, endptr);
+        if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
+        {
+            ((TuiNumber*)existingValue)->value = value;
+            return nullptr;
+        }
+        TuiNumber* number = new TuiNumber(value, parent);
+        return number;
+    }
+    
+    //todo pull out these functions, set existing values correctly
+    TuiFunction* functionRef = TuiFunction::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    if(functionRef)
+    {
+        return functionRef;
+    }
+    
+    TuiBool* boolRef = TuiBool::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    if(boolRef)
+    {
+        return boolRef;
+    }
+    
+    TuiVec2* vec2Ref = TuiVec2::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    if(vec2Ref)
+    {
+        return vec2Ref;
+    }
+    
+    TuiVec3* vec3Ref = TuiVec3::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    if(vec3Ref)
+    {
+        return vec3Ref;
+    }
+    
+    TuiVec4* vec4Ref = TuiVec4::initWithHumanReadableString(s, endptr, parent, debugInfo);
+    if(vec4Ref)
+    {
+        return vec4Ref;
+    }
+    
+    if(*s == 'n'
+        && *(s + 1) == 'i'
+        && *(s + 2) == 'l')
+    {
+        s+=3;
+        s = tuiSkipToNextChar(s, debugInfo, true);
+        *endptr = (char*)s;
+        
+        return new TuiRef(parent);
+    }
+    else if(*s == 'n'
+            && *(s + 1) == 'u'
+            && *(s + 2) == 'l'
+            && *(s + 3) == 'l')
+    {
+        s+=4;
+        s = tuiSkipToNextChar(s, debugInfo, true);
+        *endptr = (char*)s;
+        return new TuiRef(parent);
+    }
+    else if(*s == '{' || *s == '[') //watch out [ might be a json array, or accessing array element
+    {
+        return TuiRef::load(s, endptr, parent, debugInfo);
+    }
+    
+    std::string stringBuffer;
+    
+    bool singleQuote = false;
+    bool doubleQuote = false;
+    bool escaped = false;
+    bool foundSpace = false;
+    
+    bool allowAsVariableName = true;
+    bool isFunctionCall = false;
+    
+    
+    for(;; s++)
+    {
+        if(*s == '\0')
+        {
+            break;
+        }
+        else if(*s == '\'')
+        {
+            if(!escaped && !doubleQuote)
+            {
+                if(singleQuote)
+                {
+                    singleQuote = false;
+                    s++;
+                    break;
+                }
+                else
+                {
+                    if(stringBuffer.empty())
+                    {
+                        singleQuote = true;
+                        allowAsVariableName = false;
+                    }
+                }
+            }
+            else
+            {
+                stringBuffer += *s;
+            }
+        }
+        else if(*s == '"')
+        {
+            if(!escaped && !singleQuote)
+            {
+                if(doubleQuote)
+                {
+                    doubleQuote = false;
+                    s++;
+                    break;
+                }
+                else
+                {
+                    if(stringBuffer.empty())
+                    {
+                        doubleQuote = true;
+                        if(!onSetKey) //watch out, using the existance of this var to allow "x":5 json quoted key names only. For values, a quoted string is not a valid variable name
+                        {
+                            allowAsVariableName = false;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                stringBuffer += *s;
+            }
+        }
+        else if(*s == '\\')
+        {
+            if(!escaped)
+            {
+                escaped = true;
+            }
+            else
+            {
+                escaped = false;
+                stringBuffer += *s;
+            }
+        }
+        else if(*s == '.' && allowAsVariableName && !escaped)
+        {
+            if(*(s+1) == '.') // .. syntax eg. ..foo.x
+            {
+                TuiRef* result = parent;
+                while(*(s + 1) == '.')
+                {
+                    s++;
+                    if(!result->parent || result->parent->type() != Tui_ref_type_TABLE)
+                    {
+                        TuiError("Unimplemented"); //this might be a userdata's member table or a custom type or something?
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found for '..' variable");
+                        return nullptr;
+                    }
+                    
+                    result = result->parent;
+                }
+                
+                s = tuiSkipToNextChar(s, debugInfo, true);
+                *endptr = (char*)s;
+                
+                result->retain();
+                
+                return result;
+                
+                //tokenize example
+                /*s++;
+                 mjString->vars.resize(mjString->vars.size() + 1);
+                 mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_parent;
+                 mjString->value += "..";
+                 while(*(s+1) == '.')
+                 {
+                 s++;
+                 mjString->vars.resize(mjString->vars.size() + 1);
+                 mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_parent;
+                 mjString->value += ".";
+                 }*/
+            }
+            else
+            {
+                break;
+            }
+        }
+        else if(*s == '(' && allowAsVariableName && !escaped && !singleQuote && !doubleQuote && !stringBuffer.empty())
+        {
+            isFunctionCall = true;
+            break;
+        }
+        else if(*s == '[' && allowAsVariableName && !escaped) //not sure about this one
+        {
+            break;
+        }
+        else if(!escaped && !singleQuote && !doubleQuote &&
+                (isspace(*s) || *s == ',' || *s == '\n' || *s == ')' || *s == ']' || TuiExpressionOperatorsSet.count(*s) != 0))
+        {
+            if(*s == '\n')
+            {
+                break;
+            }
+            if(!isspace(*s))
+            {
+                break;
+            }
+            else
+            {
+                foundSpace = true;
+            }
+        }
+        else if(!escaped && !singleQuote && !doubleQuote &&
+                s == str && //start of string
+                ((*s == 'o' && *(s + 1) == 'r' && checkSymbolNameComplete(s + 2)) ||
+                 (*s == 'a' && *(s + 1) == 'n' && *(s + 2) == 'd' && checkSymbolNameComplete(s + 3))))
+        {
+            break;
+        }
+        else
+        {
+            //todo check for tables, numbers etc here on first chracter only
+            
+            if(foundSpace)
+            {
+                break;
+            }
+            stringBuffer += *s;
+            escaped = false;
+        }
+        
+    }
+    
+    s = tuiSkipToNextChar(s, debugInfo, true);
+    *endptr = (char*)s;
+    
+    if(allowAsVariableName)
+    {
+        TuiRef* resultRef = nullptr;
+        if(parent->objectsByStringKey.count(stringBuffer) != 0)
+        {
+            resultRef = parent->objectsByStringKey[stringBuffer];
+        }
+        
+        while(!resultRef && parent->parent)
+        {
+            parent = parent->parent;
+            if(parent->objectsByStringKey.count(stringBuffer) != 0)
+            {
+                resultRef = parent->objectsByStringKey[stringBuffer];
+            }
+        }
+        
+        if(resultRef)
+        {
+            if(isFunctionCall)
+            {
+                TuiTable* argsArrayTable = TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
+                s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                *endptr = (char*)s;
+                std::map<uint32_t, TuiRef*> functionLocals;
+                resultRef = ((TuiFunction*)resultRef)->call(argsArrayTable, parent, existingValue, &functionLocals, debugInfo);
+                if(argsArrayTable)
+                {
+                    argsArrayTable->release();
+                }
+            }
+            else
+            {
+                resultRef->retain();
+            }
+            
+            return resultRef;
+        }
+        
+    }
+    
+    if(onSetKey)
+    {
+        *onSetKey = stringBuffer;
+    }
+    
+    if(!stringBuffer.empty())
+    {
+        TuiString* tuiString = new TuiString(stringBuffer, parent);
+        return tuiString;
+    }
+    
+    return nullptr;
+}
+
+// parses a variable chain and returns the result eg: foo.bar().array[1+2].x
+// optionally stores the enclosing ref and the final variable name if found
+TuiRef* TuiRef::loadValue(const char* str,
+                           char** endptr,
+                           TuiRef* existingValue,
+                           TuiTable* parentTable,
+                           TuiDebugInfo* debugInfo,
+                           
+                           //below are only passed if there is a chance we are finding a key in order to set its value, giving the caller quick access to the parent to set the value for an uninitialized variable
+                           TuiRef** onSetEnclosingRef,
+                           std::string* onSetKey,
+                           uint32_t* onSetIndex) //index todo
+{
+    const char* s = str;
+    
+    TuiRef* parentValue = nullptr;
+    TuiRef* result = nullptr;
+    
+    while(1)
+    {
+        result = loadSingleValueInternal(s, endptr, existingValue, (parentValue ? parentValue : parentTable), debugInfo, onSetKey, onSetIndex);
+        s = *endptr;//tuiSkipToNextChar(*endptr, debugInfo, true);
+        
+        if(*s == '.')
+        {
+            if(parentValue)
+            {
+                parentValue->release();
+            }
+            parentValue = result;
+            s++;
+        }
+        else if(*s == '[')
+        {
+            //todo not sure if this will be needed
+        }
+        else
+        {
+            break;
+        }
+    }
+    
+    
+    if(onSetEnclosingRef)
+    {
+        *onSetEnclosingRef = (parentValue ? parentValue : parentTable);
+    }
+    
+    return result;
+}
+
+
+/*
+TuiRef* TuiRef::loadVariableIfAvailable(TuiString* variableName,
+                                        TuiRef* existingValue,
+                                        const char* str,
+                                        char** endptr,
+                                        TuiTable* parentTable,
+                                        TuiTokenMap* tokenMap,
+                                        std::map<uint32_t,TuiRef*>* locals,
+                                        TuiDebugInfo* debugInfo)
 {
     if(variableName->allowAsVariableName && parentTable)
     {
@@ -385,7 +693,8 @@ TuiRef* TuiRef::loadVariableIfAvailable(TuiString* variableName, TuiRef* existin
                     TuiTable* argsArrayTable = TuiTable::initWithHumanReadableString(s, endptr, parentTable, debugInfo);
                     s = tuiSkipToNextChar(*endptr, debugInfo, true);
                     
-                    TuiRef* result = ((TuiFunction*)newValueRef)->call(argsArrayTable, parentTable, existingValue, debugInfo);
+                    std::map<uint32_t, TuiRef*> functionLocals;
+                    TuiRef* result = ((TuiFunction*)newValueRef)->call(argsArrayTable, parentTable, existingValue, &functionLocals, debugInfo);
                     *endptr = (char*)s;
                     
                     return result;
@@ -404,23 +713,12 @@ TuiRef* TuiRef::loadVariableIfAvailable(TuiString* variableName, TuiRef* existin
     if(variableName->isValidFunctionString)
     {
         TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to call missing function: %s()", variableName->value.c_str());
-        const char* s = tuiSkipToNextChar(*endptr, debugInfo, true);
-        if(*s == '(')
-        {
-            s++;
-            s = tuiSkipToNextChar(s, debugInfo);
-            if(*s == ')')
-            {
-                s++;
-                s = tuiSkipToNextChar(s, debugInfo, true);
-            }
-        }
-        *endptr = (char*)s;
+        return nullptr;
     }
     return nullptr;
 }
 
-TuiRef* TuiRef::loadValue(const char* str,
+TuiRef* TuiRef::loadValueOld(const char* str,
                           char** endptr,
                           TuiRef* existingValue,
                           TuiTable* parentTable,
@@ -431,7 +729,7 @@ TuiRef* TuiRef::loadValue(const char* str,
 {
     const char* s = str;
     
-    TuiRef* valueRef = TuiRef::initUnknownTypeRefWithHumanReadableString(s, endptr, parentTable, debugInfo);
+    TuiRef* valueRef = TuiRef::initUnknownTypeRefWithHumanReadableString(s, endptr, parentTable, debugInfo, Tui_variable_load_type_runExpressions);
     s = tuiSkipToNextChar(*endptr, debugInfo, true);
     
     if(valueRef->type() == Tui_ref_type_STRING)
@@ -464,7 +762,7 @@ TuiRef* TuiRef::loadValue(const char* str,
     
     *endptr = (char*)s;
     return valueRef;
-}
+}*/
 
 
 TuiBool* TuiRef::logicalNot(TuiRef* value)
@@ -472,16 +770,14 @@ TuiBool* TuiRef::logicalNot(TuiRef* value)
     return new TuiBool(!value || !value->boolValue());
 }
 
-TuiRef* TuiRef::recursivelyLoadValue(const char* str,
+
+TuiRef* TuiRef::loadExpression(const char* str,
                                      char** endptr,
                                      TuiRef* existingValue,
                                      TuiRef* leftValue,
                                      TuiTable* parentTable,
-                                     TuiTokenMap* tokenMap,
-                                     std::map<uint32_t,TuiRef*>* locals,
                                      TuiDebugInfo* debugInfo,
-                                     int operatorLevel,
-                                     bool allowNonVarStrings)
+                                     int operatorLevel)
 {
     const char* s = str;
     
@@ -492,7 +788,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         {
             s++;
             s = tuiSkipToNextChar(s, debugInfo, true);
-            TuiRef* rightValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, tokenMap, locals, debugInfo, Tui_operator_level_not, allowNonVarStrings);
+            TuiRef* rightValue = TuiRef::loadExpression(s, endptr, existingValue, nullptr, parentTable, debugInfo, Tui_operator_level_not);
             if(!rightValue)
             {
                 rightValue = existingValue;
@@ -506,7 +802,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         {
             s++;
             s = tuiSkipToNextChar(s, debugInfo, true);
-            leftValue = TuiRef::recursivelyLoadValue(s, endptr, existingValue, nullptr, parentTable, tokenMap, locals, debugInfo, Tui_operator_level_default, allowNonVarStrings);
+            leftValue = TuiRef::loadExpression(s, endptr, existingValue, nullptr, parentTable, debugInfo, Tui_operator_level_default);
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
             if(*s != ')')
             {
@@ -518,13 +814,17 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
         }
         else
         {
-            leftValue = TuiRef::loadValue(s, endptr, existingValue, parentTable, tokenMap, locals, debugInfo, allowNonVarStrings);
+            leftValue = TuiRef::loadValue(s, endptr, existingValue, parentTable, debugInfo);
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
         }
         
         if(!leftValue)
         {
             leftValue = existingValue;
+        }
+        else
+        {
+            existingValue = nullptr;
         }
         
         
@@ -642,7 +942,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
                 {
                     if(TuiExpressionOperatorsToLevelMap[*s] >= operatorLevel)//operatorLevel == 0 || *s == '*' || *s == '/')
                     {
-                        result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, tokenMap, locals, debugInfo, operatorLevel, allowNonVarStrings);
+                        result = TuiRef::loadExpression(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel);
                         s = tuiSkipToNextChar(*endptr, debugInfo, true);
                     }
                 }
@@ -652,7 +952,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
                     bool newOperatorAnd = (*s == 'a' && *(s + 1) == 'n' && *(s + 2) == 'd' && checkSymbolNameComplete(s + 3));
                     if(newOperatorOr || newOperatorAnd)
                     {
-                        result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, tokenMap, locals, debugInfo, operatorLevel, allowNonVarStrings);
+                        result = TuiRef::loadExpression(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel);
                         s = tuiSkipToNextChar(*endptr, debugInfo, true);
                     }
                 }
@@ -668,10 +968,11 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     
     int newOperatorLevel = TuiExpressionOperatorsToLevelMap[operatorChar];
     
-    TuiRef* rightValue = recursivelyLoadValue(s, endptr, nullptr, nullptr, parentTable, tokenMap, locals, debugInfo, newOperatorLevel, true);
+    TuiRef* rightValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parentTable, debugInfo, newOperatorLevel);
     s = tuiSkipToNextChar(*endptr, debugInfo, true);
     
-    if(rightValue->type() == Tui_ref_type_STRING)
+    //todo we gonna need this
+    /*if(rightValue->type() == Tui_ref_type_STRING)
     {
         if(((TuiString*)rightValue)->allowAsVariableName)
         {
@@ -686,7 +987,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
                 TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Running expression with uninitialized variable:%s", ((TuiString*)rightValue)->value.c_str());
             }
         }
-    }
+    }*/
     
     
     if(operatorChar == '=')
@@ -1039,7 +1340,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
             int newOperatorLevel = TuiExpressionOperatorsToLevelMap[*s];
             if(newOperatorLevel >= operatorLevel)
             {
-                result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, tokenMap, locals, debugInfo, operatorLevel, allowNonVarStrings);
+                result = TuiRef::loadExpression(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel);
                 s = tuiSkipToNextChar(*endptr, debugInfo, true);
             }
         }
@@ -1049,7 +1350,7 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
             bool newOperatorAnd = (*s == 'a' && *(s + 1) == 'n' && *(s + 2) == 'd' && checkSymbolNameComplete(s + 3));
             if(newOperatorOr || newOperatorAnd)
             {
-                result = recursivelyLoadValue(s, endptr, existingValue, result, parentTable, tokenMap, locals, debugInfo, operatorLevel, allowNonVarStrings);
+                result = TuiRef::loadExpression(s, endptr, existingValue, result, parentTable, debugInfo, operatorLevel);
                 s = tuiSkipToNextChar(*endptr, debugInfo, true);
             }
         }
@@ -1062,3 +1363,20 @@ TuiRef* TuiRef::recursivelyLoadValue(const char* str,
     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid expression");
     return nullptr;
 }
+
+
+/************************************************  TuiUserData methods *****************************************************/
+
+TuiUserData::TuiUserData(void* value_, TuiTable* parent_)
+: TuiRef(parent_)
+{
+    value = value_;
+}
+
+TuiUserData::~TuiUserData()
+{
+    if(members)
+    {
+        members->release();
+    }
+};

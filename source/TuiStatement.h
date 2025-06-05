@@ -43,6 +43,7 @@ enum {
     Tui_token_divideInPlace,
     Tui_token_or,
     Tui_token_and,
+    Tui_token_tableConstruct,
     Tui_token_VAR_START_INDEX
 };
 
@@ -52,14 +53,15 @@ enum {
     Tui_statement_type_VAR_ASSIGN,
     Tui_statement_type_FUNCTION_CALL,
     Tui_statement_type_IF,
-    Tui_statement_type_FOR,
+    Tui_statement_type_FOR
 };
 
 
 struct TuiTokenMap {
     uint32_t tokenIndex = Tui_token_VAR_START_INDEX;
     std::map<uint32_t, TuiRef*> refsByToken;
-    std::map<std::string, uint32_t> tokensByVarNames;
+    std::map<std::string, uint32_t> readWriteTokensByVarNames;
+    std::map<std::string, uint32_t> readOnlyTokensByVarNames;
 };
 
 struct TuiExpression {

@@ -48,9 +48,36 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
             s++; //')'
             s = tuiSkipToNextChar(s, debugInfo, true);
         }
+        else if(*s == '{') // serialize table constructor
+        {
+            expression->tokens.insert(expression->tokens.begin() + tokenStartPos, Tui_token_tableConstruct);
+            TuiFunction* constructorFunction = new TuiFunction(parent);
+            uint32_t constructorFunctionToken = tokenMap->tokenIndex++;
+            expression->tokens.push_back(constructorFunctionToken);
+            tokenMap->refsByToken[constructorFunctionToken] = constructorFunction;
+            //tokenMap->tokensByVarNames[varString->value] = leftVarToken;
+            
+            constructorFunction->tokenMap.tokenIndex = tokenMap->tokenIndex + 1;
+            constructorFunction->tokenMap.readOnlyTokensByVarNames = tokenMap->readOnlyTokensByVarNames;
+            for(auto& varNameAndToken : tokenMap->readWriteTokensByVarNames)
+            {
+                constructorFunction->tokenMap.readOnlyTokensByVarNames[varNameAndToken.first] = varNameAndToken.second;
+            }
+            
+            
+            TuiFunction::serializeFunctionBody(s, endptr, parent, &constructorFunction->tokenMap, debugInfo, &constructorFunction->statements);
+            
+            s = tuiSkipToNextChar(*endptr, debugInfo);
+            
+        }
+        else if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && (*(s + 3) == '2' || *(s + 3) == '3' || *(s + 3) == '4'))
+        {
+            TuiError("Unimplemented");
+            //todo
+        }
         else
         {
-            TuiRef* leftValue = TuiRef::initUnknownTypeRefWithHumanReadableString(s, endptr, parent, debugInfo);
+            TuiRef* leftValue = nullptr;//todo  = TuiRef::initUnknownTypeRefWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_serializeExpressions, tokenMap);
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
             
             if(leftValue->type() == Tui_ref_type_STRING)
@@ -60,16 +87,20 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
                 {
                     uint32_t leftVarToken = 0;
                     
-                    if(tokenMap->tokensByVarNames.count(varString->value) != 0)
+                    if(tokenMap->readWriteTokensByVarNames.count(varString->value) != 0)
                     {
-                        leftVarToken = tokenMap->tokensByVarNames[varString->value];
+                        leftVarToken = tokenMap->readWriteTokensByVarNames[varString->value];
+                    }
+                    else if(tokenMap->readOnlyTokensByVarNames.count(varString->value) != 0)
+                    {
+                        leftVarToken = tokenMap->readOnlyTokensByVarNames[varString->value];
                     }
                     else
                     {
                         leftVarToken = tokenMap->tokenIndex++;
-                        tokenMap->tokensByVarNames[varString->value] = leftVarToken;
+                        tokenMap->readOnlyTokensByVarNames[varString->value] = leftVarToken;
                         std::map<uint32_t, TuiRef*> locals;
-                        TuiRef* newValueRef = parent->recursivelyFindVariable(varString, true, parent, tokenMap, &locals, debugInfo);
+                        TuiRef* newValueRef = nullptr;//todo  = parent->recursivelyFindVariable(varString, true, parent, tokenMap, &locals, debugInfo);
                         if(newValueRef)
                         {
                             tokenMap->refsByToken[leftVarToken] = newValueRef;
@@ -335,21 +366,21 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
     forStatement->lineNumber = debugInfo->lineNumber;
     forStatement->expression = new TuiExpression();
     
-    TuiString* varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_serializeExpressions, tokenMap);
+    TuiString* varNameRef = nullptr;//todo TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_serializeExpressions, tokenMap);
     s = tuiSkipToNextChar(*endptr, debugInfo);
     
     if(varNameRef && varNameRef->allowAsVariableName)
     {
         forStatement->varName = varNameRef;
         
-        if(tokenMap->tokensByVarNames.count(varNameRef->value) != 0)
+        if(tokenMap->readWriteTokensByVarNames.count(varNameRef->value) != 0)
         {
-            forStatement->varToken = tokenMap->tokensByVarNames[varNameRef->value];
+            forStatement->varToken = tokenMap->readWriteTokensByVarNames[varNameRef->value];
         }
         else
         {
             forStatement->varToken = tokenMap->tokenIndex++;
-            tokenMap->tokensByVarNames[varNameRef->value] = forStatement->varToken;
+            tokenMap->readWriteTokensByVarNames[varNameRef->value] = forStatement->varToken;
         }
         
         if(*s == '=')
@@ -372,20 +403,20 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
                 s++;
                 s = tuiSkipToNextChar(s, debugInfo);
                 
-                TuiString* newValueNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_serializeExpressions, tokenMap);
+                TuiString* newValueNameRef = nullptr;//todo  = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_serializeExpressions, tokenMap);
                 s = tuiSkipToNextChar(*endptr, debugInfo);
                 
                 forStatement->varName = newValueNameRef;
                 varNameRef = forStatement->varName;
                 
-                if(tokenMap->tokensByVarNames.count(newValueNameRef->value) != 0)
+                if(tokenMap->readWriteTokensByVarNames.count(newValueNameRef->value) != 0)
                 {
-                    forStatement->varToken = tokenMap->tokensByVarNames[newValueNameRef->value];
+                    forStatement->varToken = tokenMap->readWriteTokensByVarNames[newValueNameRef->value];
                 }
                 else
                 {
                     forStatement->varToken = tokenMap->tokenIndex++;
-                    tokenMap->tokensByVarNames[newValueNameRef->value] = forStatement->varToken;
+                    tokenMap->readWriteTokensByVarNames[newValueNameRef->value] = forStatement->varToken;
                 }
             }
             
@@ -449,7 +480,7 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
         //todo this is c/p from below. Should be a factored out
         const char* varNameStartS = s; //rewind if we find a function
         int keyStartLineNumber = debugInfo->lineNumber;
-        varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_serializeExpressions, tokenMap);
+        varNameRef  = nullptr;//todo = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_serializeExpressions, tokenMap);
         s = tuiSkipToNextChar(*endptr, debugInfo);
         
         if(varNameRef)
@@ -499,14 +530,14 @@ TuiForStatement* TuiFunction::serializeForStatement(const char* str, char** endp
                     s = tuiSkipToNextChar(*endptr, debugInfo, true);
                     
                     
-                    if(tokenMap->tokensByVarNames.count(varNameRef->value) != 0)
+                    if(tokenMap->readWriteTokensByVarNames.count(varNameRef->value) != 0)
                     {
-                        incrementStatement->varToken = tokenMap->tokensByVarNames[varNameRef->value];
+                        incrementStatement->varToken = tokenMap->readWriteTokensByVarNames[varNameRef->value];
                     }
                     else
                     {
                         incrementStatement->varToken = tokenMap->tokenIndex++;
-                        tokenMap->tokensByVarNames[varNameRef->value] = incrementStatement->varToken;
+                        tokenMap->readWriteTokensByVarNames[varNameRef->value] = incrementStatement->varToken;
                     }
                 }
                 else
@@ -696,7 +727,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiTable
             break;
         }
         
-        TuiString* varNameRef = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_serializeExpressions, tokenMap);
+        TuiString* varNameRef = nullptr;//todo  = TuiString::initWithHumanReadableString(s, endptr, parent, debugInfo, Tui_variable_load_type_serializeExpressions, tokenMap);
         
         if(varNameRef)
         {
@@ -753,14 +784,14 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiTable
                     s = tuiSkipToNextChar(*endptr, debugInfo);
                     
                     
-                    if(tokenMap->tokensByVarNames.count(varNameRef->value) != 0)
+                    if(tokenMap->readWriteTokensByVarNames.count(varNameRef->value) != 0)
                     {
-                        statement->varToken = tokenMap->tokensByVarNames[varNameRef->value];
+                        statement->varToken = tokenMap->readWriteTokensByVarNames[varNameRef->value];
                     }
                     else
                     {
                         statement->varToken = tokenMap->tokenIndex++;
-                        tokenMap->tokensByVarNames[varNameRef->value] = statement->varToken;
+                        tokenMap->readWriteTokensByVarNames[varNameRef->value] = statement->varToken;
                     }
                     statements->push_back(statement);
                     
@@ -902,7 +933,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenPos
                     (*tokenPos)++;
                 }
                 
-                TuiRef* functionResult = ((TuiFunction*)functionVar)->call(args, functionState, result, debugInfo);
+                std::map<uint32_t, TuiRef*> functionLocals;
+                TuiRef* functionResult = ((TuiFunction*)functionVar)->call(args, functionState, result, &functionLocals, debugInfo);
                 if(args)
                 {
                     args->release();
@@ -915,6 +947,65 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenPos
                 else
                 {
                     return functionResult;
+                }
+                
+            }
+                break;
+            case Tui_token_tableConstruct:
+            {
+                (*tokenPos)++;
+                TuiFunction* functionVar = (TuiFunction*)runExpression(expression, tokenPos, nullptr, functionState, parent, tokenMap, locals, debugInfo);
+                if(!functionVar)
+                {
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected function");
+                    return nullptr;
+                }
+                (*tokenPos)++;
+                
+                std::map<uint32_t, TuiRef*> functionLocals;
+                for(auto& varNameAndToken : functionVar->tokenMap.readOnlyTokensByVarNames)
+                {
+                    uint32_t writeToken = varNameAndToken.second;
+                    
+                    if(functionVar->tokenMap.refsByToken.count(writeToken) == 0)
+                    {
+                       // tokenMap->readWriteTokensByVarNames
+                        
+                        uint32_t readToken = 0;
+                        
+                        const std::string& varName = varNameAndToken.first;
+                        if(tokenMap->readWriteTokensByVarNames.count(varName) != 0)
+                        {
+                            readToken = tokenMap->readWriteTokensByVarNames[varName];
+                        }
+                        else if(tokenMap->readOnlyTokensByVarNames.count(varName) != 0)
+                        {
+                            readToken = tokenMap->readOnlyTokensByVarNames[varName];
+                        }
+                        
+                        if(readToken)
+                        {
+                            functionLocals[writeToken] = tokenMap->refsByToken[readToken];
+                        }
+                        else
+                        {
+                            TuiError("expected token");
+                        }
+                        
+                        //functionLocals[writeToken] = functionVar->tokenMap.refsByToken[token];
+                    }
+                }
+                
+                TuiRef* tableResultRef = nullptr;
+                ((TuiFunction*)functionVar)->call(nullptr, functionState, result, &functionLocals, debugInfo, &tableResultRef);
+                
+                if(result && result->type() == tableResultRef->type())
+                {
+                    result->assign(tableResultRef);
+                }
+                else
+                {
+                    return tableResultRef;
                 }
                 
             }
@@ -1445,6 +1536,15 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression, uint32_t* tokenPos
             foundValue = tokenMap->refsByToken[token];
         }
         
+       /* if(!foundValue) //nah, we should have added it to locals already
+        {
+            //foundValue = functionState->recursivelyFindVariable(statement->varName, true, functionState, tokenMap, locals, debugInfo);
+            if(foundValue)
+            {
+                (*locals)[token] = foundValue;
+            }
+        }*/
+        
         if(foundValue && foundValue->type() != Tui_ref_type_NIL)
         {
             if(result && result->type() == foundValue->type())
@@ -1505,7 +1605,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement, TuiRef* result, TuiTa
             }
             else
             {
-                existingValue = functionState->recursivelyFindVariable(statement->varName, false, functionState, tokenMap, locals, debugInfo);
+                existingValue = nullptr;//todo  = functionState->recursivelyFindVariable(statement->varName, true, functionState, tokenMap, locals, debugInfo);
                 if(existingValue)
                 {
                     (*locals)[statement->varToken] = existingValue;
@@ -1784,44 +1884,73 @@ TuiFunction::~TuiFunction()
     }
 }
 
-TuiRef* TuiFunction::call(TuiTable* args, TuiTable* callLocationState, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)
+TuiRef* TuiFunction::call(TuiTable* args,
+                          TuiTable* callLocationState,
+                          TuiRef* existingResult,
+                          std::map<uint32_t, TuiRef*>* locals,
+                          TuiDebugInfo* callingDebugInfo,
+                          TuiRef** createdStateTable)
 {
     if(func)
     {
-        TuiTable* currentCallState = new TuiTable(parent);
+        TuiTable* currentCallState = new TuiTable(callLocationState);
         TuiRef* result = func(args, currentCallState, existingResult, callingDebugInfo);
-        currentCallState->release();
+        if(createdStateTable)
+        {
+            *createdStateTable = currentCallState;
+        }
+        else
+        {
+            currentCallState->release();
+        }
         return result;
     }
     else
     {
-        TuiTable* currentCallState = new TuiTable(parent);
-        std::map<uint32_t, TuiRef*> locals;
+        TuiTable* currentCallState = new TuiTable(callLocationState);
         
-        int i = 0;
-        int maxArgs = (int)argNames.size();
-        for(TuiRef* arg : args->arrayObjects)
+        if(args)
         {
-            if(i >= maxArgs)
+            int i = 0;
+            int maxArgs = (int)argNames.size();
+            for(TuiRef* arg : args->arrayObjects)
             {
-                TuiParseWarn(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function. ignoring:%s", arg->getDebugString().c_str());
-                continue;
+                if(i >= maxArgs)
+                {
+                    TuiParseWarn(debugInfo.fileName.c_str(), 0, "Too many arguments supplied to function. ignoring:%s", arg->getDebugString().c_str());
+                    continue;
+                }
+                const std::string& argName = argNames[i];
+                currentCallState->objectsByStringKey[argName] = arg;
+                arg->retain();
+                if(tokenMap.readWriteTokensByVarNames.count(argName) != 0)
+                {
+                    (*locals)[tokenMap.readWriteTokensByVarNames[argName]] = arg;
+                }
+                else
+                {
+                    uint32_t argToken = tokenMap.tokenIndex++;
+                    tokenMap.readWriteTokensByVarNames[argName] = argToken;
+                    tokenMap.refsByToken[argToken] = arg;
+                }
+                
+                i++;
             }
-            const std::string& argName = argNames[i];
-            currentCallState->objectsByStringKey[argName] = arg;
-            arg->retain();
-            if(tokenMap.tokensByVarNames.count(argName) != 0)
-            {
-                locals[tokenMap.tokensByVarNames[argName]] = arg;
-            }
-            
-            i++;
         }
         
+        //todo set parent args as locals
         
-        TuiRef* result = runStatementArray(statements,  existingResult,  currentCallState, parent, &tokenMap, &locals, &debugInfo);
+        
+        TuiRef* result = runStatementArray(statements,  existingResult,  currentCallState, parent, &tokenMap, locals, &debugInfo);
         //currentCallState->debugLog();
-        currentCallState->release();
+        if(createdStateTable)
+        {
+            *createdStateTable = currentCallState;
+        }
+        else
+        {
+            currentCallState->release();
+        }
         
         return result;
     }
