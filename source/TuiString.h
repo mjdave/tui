@@ -13,34 +13,14 @@
 #include "TuiFunction.h"
 
 enum {
-    Tui_var_token_type_undefined = 0,
-    Tui_var_token_type_string,
-    Tui_var_token_type_parent,
-    Tui_var_token_type_arrayIndex,
-    Tui_var_token_type_setIndex,
-    Tui_var_token_type_expression
-};
-
-
-enum {
     Tui_variable_load_type_ignore = 0, //variables will not be loaded into the vars member, treated as a simple string
     Tui_variable_load_type_serializeExpressions, //variable tokens are stored, will serialize an expression if hitting variable[getIndex()] Must pass a tokenMap
     Tui_variable_load_type_runExpressions //variable tokens are stored, will immediately run an expression if hitting variable[getIndex()]
 };
 
-struct TuiVarToken {
-    uint32_t type = Tui_var_token_type_undefined;
-    uint32_t arrayOrSetIndex;
-    std::string varName;
-    TuiExpression* expression = nullptr;
-};
-
 class TuiString : public TuiRef {
 public: //members
     std::string value;
-    bool allowAsVariableName = true; // this is set to false if it finds a quoted string when loaded via readable string
-    bool isValidFunctionString = false; // optimization
-    std::vector<TuiVarToken> vars; // optimization, finds look ups of sub-tables on load
 
 public://functions
     
@@ -51,18 +31,7 @@ public://functions
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_STRING && ((TuiString*)other)->value == value;}
     
     TuiString(const std::string& value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
-    virtual ~TuiString() {
-        if(allowAsVariableName)
-        {
-            for(TuiVarToken& token : vars)
-            {
-                if(token.expression)
-                {
-                    delete token.expression; //todo will crash if assign() has been called on a string that has expressions
-                }
-            }
-        }
-    };
+    virtual ~TuiString() {};
     
     virtual TuiString* copy()
     {
@@ -70,9 +39,6 @@ public://functions
     }
     virtual void assign(TuiRef* other) { //todo will crash if assign() has been called on a string that has expressions
         value = ((TuiString*)other)->value;
-        allowAsVariableName = ((TuiString*)other)->allowAsVariableName;
-        isValidFunctionString = ((TuiString*)other)->isValidFunctionString;
-        vars = ((TuiString*)other)->vars;
     };
     
     

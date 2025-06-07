@@ -44,6 +44,13 @@ enum {
     Tui_token_or,
     Tui_token_and,
     Tui_token_tableConstruct,
+    Tui_token_childByStringKey,
+    
+    Tui_token_childByArrayIndex, //24
+    Tui_token_varName,
+    Tui_token_true,
+    Tui_token_false,
+    
     Tui_token_VAR_START_INDEX
 };
 
@@ -56,23 +63,26 @@ enum {
     Tui_statement_type_FOR
 };
 
-
-struct TuiTokenMap {
-    uint32_t tokenIndex = Tui_token_VAR_START_INDEX;
-    std::map<uint32_t, TuiRef*> refsByToken;
-    std::map<std::string, uint32_t> readWriteTokensByVarNames;
-    std::map<std::string, uint32_t> readOnlyTokensByVarNames;
-};
-
 struct TuiExpression {
     std::vector<uint32_t> tokens;
 };
+
+struct TuiTokenMap {
+    uint32_t tokenIndex = Tui_token_VAR_START_INDEX;
+    std::map<uint32_t, TuiRef*> refsByToken; //var names and constants. Captures are not stored here, they are to be loaded when the function is called
+    
+    std::map<std::string, uint32_t> capturedTokensByVarName;
+    
+    //std::map<std::string, uint32_t> readWriteTokensByVarNames;
+    //std::map<std::string, uint32_t> readOnlyTokensByVarNames;
+};
+
 
 class TuiStatement {
 public: //members
     uint32_t lineNumber;
     uint32_t type;
-    TuiString* varName = nullptr;
+    //TuiString* varName = nullptr;
     uint32_t varToken = 0;
     TuiExpression* expression = nullptr;
     

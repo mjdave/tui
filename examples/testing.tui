@@ -1,7 +1,9 @@
-
-testFunc = function()
-{
-    print("hello")
+testTable = {
+    "zero",
+    "one",
+    "two",
+    "four",
+    "five"
 }
-
-testFunc()
+table.insert(testTable, 3, "three")
+print(testTable)

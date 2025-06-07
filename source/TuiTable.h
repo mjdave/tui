@@ -174,6 +174,7 @@ public://functions
         return nullptr;
     }*/
     
+    /*
     virtual bool recursivelySetVariable(TuiString* variableName, TuiRef* value, TuiTable* functionState, TuiTokenMap* tokenMap,
                                         std::map<uint32_t,TuiRef*>* locals,
                                         TuiDebugInfo* debugInfo, int varStartIndex = 0)
@@ -259,7 +260,7 @@ public://functions
         }
         
         return false;
-    }
+    }*/
     
     bool addHumanReadableKeyValuePair(const char* str, char** endptr, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr) {
         const char* s = tuiSkipToNextChar(str, debugInfo);
@@ -275,7 +276,10 @@ public://functions
             s = tuiSkipToNextChar(s, debugInfo);
             if(*s == '}')
             {
-                *resultRef = new TuiRef(this);
+                if(resultRef)
+                {
+                    *resultRef = new TuiRef(this);
+                }
                 s++;
                 s = tuiSkipToNextChar(s, debugInfo, true);
                 *endptr = (char*)s;
@@ -283,19 +287,30 @@ public://functions
             }
             else
             {
-                TuiTokenMap tokenMap;
-                std::map<uint32_t, TuiRef*> locals;
                 
-                //todo
-                /* *resultRef = recursivelyLoadValue(s,
-                                                     endptr,
-                                                  nullptr,
-                                                     nullptr,
-                                                     this,
-                                                  &tokenMap, &locals,
-                                                     debugInfo,
-                                                  Tui_operator_level_default,
-                                                  true);*/
+                TuiRef* valueRef = TuiRef::loadExpression(s,
+                                                          endptr,
+                                                          nullptr,
+                                                          nullptr,
+                                                          this,
+                                                          debugInfo);
+                
+                if(resultRef)
+                {
+                    if(valueRef)
+                    {
+                        *resultRef = valueRef;
+                    }
+                    else
+                    {
+                        *resultRef = new TuiRef(this);
+                    }
+                }
+                else
+                {
+                    valueRef->release();
+                }
+                
                 s = tuiSkipToNextChar(*endptr, debugInfo, true);
                 *endptr = (char*)s;
                 return false;
@@ -317,7 +332,8 @@ public://functions
             s = tuiSkipToNextChar(*endptr, debugInfo, false);
             
             std::map<uint32_t, TuiRef*> locals;
-            TuiRef* result = TuiFunction::runStatement(statement, nullptr, this, (TuiTable*)parent, &tokenMap, &locals, debugInfo);
+            TuiError("todo");
+            TuiRef* result = nullptr;//TuiFunction::runStatement(statement, nullptr, this, (TuiTable*)parent, &tokenMap, &locals, debugInfo);
             
             if(result)
             {
@@ -519,8 +535,6 @@ public://functions
         //const char* keyStartS = s;
        // int keyStartLineNumber = debugInfo->lineNumber;
         
-        TuiTokenMap tokenMap;
-        std::map<uint32_t, TuiRef*> locals;
         TuiRef* enclosingRef = nullptr;
         std::string finalKey = "";
         uint32_t finalIndex = 0;

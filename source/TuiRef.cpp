@@ -212,7 +212,7 @@ TuiRef* TuiRef::load(const std::string& filename, TuiTable* parent) {
     return nullptr;
 }
 
-TuiRef* TuiRef::runScriptFile(const std::string& filename, TuiTable* parent, TuiRef** resultRef)
+TuiRef* TuiRef::runScriptFile(const std::string& filename, TuiTable* parent)
 {
     std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
     TuiDebugInfo debugInfo;
@@ -227,8 +227,9 @@ TuiRef* TuiRef::runScriptFile(const std::string& filename, TuiTable* parent, Tui
         in.close();
         const char* cString = contents.c_str();
         char* endPtr;
-        TuiRef* table = TuiRef::load(cString, &endPtr, parent, &debugInfo, resultRef);
-        return table;
+        TuiRef* resultRef = nullptr;
+        TuiRef::load(cString, &endPtr, parent, &debugInfo, &resultRef);
+        return resultRef;
     }
     else
     {
@@ -466,7 +467,12 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 stringBuffer += *s;
             }
         }
-        else if(*s == '.' && allowAsVariableName && !escaped)
+        else if(escaped || singleQuote || doubleQuote)
+        {
+            stringBuffer += *s;
+            escaped = false;
+        }
+        else if(*s == '.' && allowAsVariableName)
         {
             if(*(s+1) == '.') // .. syntax eg. ..foo.x
             {
@@ -490,36 +496,22 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 result->retain();
                 
                 return result;
-                
-                //tokenize example
-                /*s++;
-                 mjString->vars.resize(mjString->vars.size() + 1);
-                 mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_parent;
-                 mjString->value += "..";
-                 while(*(s+1) == '.')
-                 {
-                 s++;
-                 mjString->vars.resize(mjString->vars.size() + 1);
-                 mjString->vars[mjString->vars.size() - 1].type = Tui_var_token_type_parent;
-                 mjString->value += ".";
-                 }*/
             }
             else
             {
                 break;
             }
         }
-        else if(*s == '(' && allowAsVariableName && !escaped && !singleQuote && !doubleQuote && !stringBuffer.empty())
+        else if(*s == '(' && allowAsVariableName && !stringBuffer.empty())
         {
             isFunctionCall = true;
             break;
         }
-        else if(*s == '[' && allowAsVariableName && !escaped) //not sure about this one
+        else if(*s == '[' && allowAsVariableName) //not sure about this one
         {
             break;
         }
-        else if(!escaped && !singleQuote && !doubleQuote &&
-                (isspace(*s) || *s == ',' || *s == '\n' || *s == ')' || *s == ']' || TuiExpressionOperatorsSet.count(*s) != 0))
+        else if(isspace(*s) || *s == ',' || *s == '\n' || *s == ')' || *s == ']' || TuiExpressionOperatorsSet.count(*s) != 0)
         {
             if(*s == '\n')
             {
@@ -534,8 +526,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 foundSpace = true;
             }
         }
-        else if(!escaped && !singleQuote && !doubleQuote &&
-                s == str && //start of string
+        else if(s == str && //start of string
                 ((*s == 'o' && *(s + 1) == 'r' && checkSymbolNameComplete(s + 2)) ||
                  (*s == 'a' && *(s + 1) == 'n' && *(s + 2) == 'd' && checkSymbolNameComplete(s + 3))))
         {
@@ -566,12 +557,13 @@ static TuiRef* loadSingleValueInternal(const char* str,
             resultRef = parent->objectsByStringKey[stringBuffer];
         }
         
-        while(!resultRef && parent->parent)
+        TuiTable* searchTable = parent;
+        while(!resultRef && searchTable->parent)
         {
-            parent = parent->parent;
-            if(parent->objectsByStringKey.count(stringBuffer) != 0)
+            searchTable = searchTable->parent;
+            if(searchTable->objectsByStringKey.count(stringBuffer) != 0)
             {
-                resultRef = parent->objectsByStringKey[stringBuffer];
+                resultRef = searchTable->objectsByStringKey[stringBuffer];
             }
         }
         
@@ -582,8 +574,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 TuiTable* argsArrayTable = TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
                 s = tuiSkipToNextChar(*endptr, debugInfo, true);
                 *endptr = (char*)s;
-                std::map<uint32_t, TuiRef*> functionLocals;
-                resultRef = ((TuiFunction*)resultRef)->call(argsArrayTable, parent, existingValue, &functionLocals, debugInfo);
+                resultRef = ((TuiFunction*)resultRef)->call(argsArrayTable, parent, existingValue, debugInfo);
                 if(argsArrayTable)
                 {
                     argsArrayTable->release();
@@ -603,8 +594,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
     {
         *onSetKey = stringBuffer;
     }
-    
-    if(!stringBuffer.empty())
+    else if(!stringBuffer.empty())
     {
         TuiString* tuiString = new TuiString(stringBuffer, parent);
         return tuiString;
@@ -633,7 +623,7 @@ TuiRef* TuiRef::loadValue(const char* str,
     
     while(1)
     {
-        result = loadSingleValueInternal(s, endptr, existingValue, (parentValue ? parentValue : parentTable), debugInfo, onSetKey, onSetIndex);
+        result = loadSingleValueInternal(s, endptr, existingValue, parentTable, debugInfo, onSetKey, onSetIndex);
         s = *endptr;//tuiSkipToNextChar(*endptr, debugInfo, true);
         
         if(*s == '.')
@@ -821,13 +811,8 @@ TuiRef* TuiRef::loadExpression(const char* str,
         if(!leftValue)
         {
             leftValue = existingValue;
+            leftValue->retain();
         }
-        else
-        {
-            existingValue = nullptr;
-        }
-        
-        
     }
     
     char operatorChar = *s;
@@ -989,22 +974,55 @@ TuiRef* TuiRef::loadExpression(const char* str,
         }
     }*/
     
+    bool existingValueWasAssigned = false;
     
     if(operatorChar == '=')
     {
-        result = new TuiBool(leftValue->isEqual(rightValue));
+        if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
+        {
+            ((TuiBool*)existingValue)->value = leftValue->isEqual(rightValue);
+            existingValueWasAssigned = true;
+        }
+        else
+        {
+            result = new TuiBool(leftValue->isEqual(rightValue));
+        }
     }
     else if(operatorChar == '!')
     {
-        result = new TuiBool(!leftValue->isEqual(rightValue));
+        if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
+        {
+            ((TuiBool*)existingValue)->value = !leftValue->isEqual(rightValue);
+            existingValueWasAssigned = true;
+        }
+        else
+        {
+            result = new TuiBool(!leftValue->isEqual(rightValue));
+        }
     }
     else if(operatorOr)
     {
-        result = new TuiBool(leftValue->boolValue() || rightValue->boolValue());
+        if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
+        {
+            ((TuiBool*)existingValue)->value = leftValue->boolValue() || rightValue->boolValue();
+            existingValueWasAssigned = true;
+        }
+        else
+        {
+            result = new TuiBool(leftValue->boolValue() || rightValue->boolValue());
+        }
     }
     else if(operatorAnd)
     {
-        result = new TuiBool(leftValue->boolValue() && rightValue->boolValue());
+        if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
+        {
+            ((TuiBool*)existingValue)->value = leftValue->boolValue() && rightValue->boolValue();
+            existingValueWasAssigned = true;
+        }
+        else
+        {
+            result = new TuiBool(leftValue->boolValue() && rightValue->boolValue());
+        }
     }
     else
     {
@@ -1020,11 +1038,19 @@ TuiRef* TuiRef::loadExpression(const char* str,
                         if(secondOperatorChar == '=')
                         {
                             ((TuiNumber*)leftValue)->value += ((TuiNumber*)rightValue)->value;
-                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array
+                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array //todo this is a waste of an allocate
                         }
                         else
                         {
-                            result = new TuiNumber(((TuiNumber*)leftValue)->value + ((TuiNumber*)rightValue)->value);
+                            if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
+                            {
+                                ((TuiNumber*)existingValue)->value = ((TuiNumber*)leftValue)->value + ((TuiNumber*)rightValue)->value;
+                                existingValueWasAssigned = true;
+                            }
+                            else
+                            {
+                                result = new TuiNumber(((TuiNumber*)leftValue)->value + ((TuiNumber*)rightValue)->value);
+                            }
                         }
                     }
                         break;
@@ -1033,11 +1059,19 @@ TuiRef* TuiRef::loadExpression(const char* str,
                         if(secondOperatorChar == '=')
                         {
                             ((TuiNumber*)leftValue)->value -= ((TuiNumber*)rightValue)->value;
-                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array
+                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array //todo no need to allocate this
                         }
                         else
                         {
-                            result = new TuiNumber(((TuiNumber*)leftValue)->value - ((TuiNumber*)rightValue)->value);
+                            if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
+                            {
+                                ((TuiNumber*)existingValue)->value = ((TuiNumber*)leftValue)->value - ((TuiNumber*)rightValue)->value;
+                                existingValueWasAssigned = true;
+                            }
+                            else
+                            {
+                                result = new TuiNumber(((TuiNumber*)leftValue)->value - ((TuiNumber*)rightValue)->value);
+                            }
                         }
                     }
                         break;
@@ -1050,7 +1084,15 @@ TuiRef* TuiRef::loadExpression(const char* str,
                         }
                         else
                         {
-                            result = new TuiNumber(((TuiNumber*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                            if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
+                            {
+                                ((TuiNumber*)existingValue)->value = ((TuiNumber*)leftValue)->value * ((TuiNumber*)rightValue)->value;
+                                existingValueWasAssigned = true;
+                            }
+                            else
+                            {
+                                result = new TuiNumber(((TuiNumber*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                            }
                         }
                     }
                         break;
@@ -1063,7 +1105,15 @@ TuiRef* TuiRef::loadExpression(const char* str,
                         }
                         else
                         {
-                            result = new TuiNumber(((TuiNumber*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                            if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
+                            {
+                                ((TuiNumber*)existingValue)->value = ((TuiNumber*)leftValue)->value / ((TuiNumber*)rightValue)->value;
+                                existingValueWasAssigned = true;
+                            }
+                            else
+                            {
+                                result = new TuiNumber(((TuiNumber*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                            }
                         }
                     }
                         break;
@@ -1071,11 +1121,27 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     {
                         if(secondOperatorChar == '=')
                         {
-                            result = new TuiBool(((TuiNumber*)leftValue)->value >= ((TuiNumber*)rightValue)->value);
+                            if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
+                            {
+                                ((TuiBool*)existingValue)->value = ((TuiNumber*)leftValue)->value >= ((TuiNumber*)rightValue)->value;
+                                existingValueWasAssigned = true;
+                            }
+                            else
+                            {
+                                result = new TuiBool(((TuiNumber*)leftValue)->value >= ((TuiNumber*)rightValue)->value);
+                            }
                         }
                         else
                         {
-                            result = new TuiBool(((TuiNumber*)leftValue)->value > ((TuiNumber*)rightValue)->value);
+                            if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
+                            {
+                                ((TuiBool*)existingValue)->value = ((TuiNumber*)leftValue)->value > ((TuiNumber*)rightValue)->value;
+                                existingValueWasAssigned = true;
+                            }
+                            else
+                            {
+                                result = new TuiBool(((TuiNumber*)leftValue)->value > ((TuiNumber*)rightValue)->value);
+                            }
                         }
                     }
                         break;
@@ -1083,11 +1149,27 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     {
                         if(secondOperatorChar == '=')
                         {
-                            result = new TuiBool(((TuiNumber*)leftValue)->value <= ((TuiNumber*)rightValue)->value);
+                            if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
+                            {
+                                ((TuiBool*)existingValue)->value = ((TuiNumber*)leftValue)->value <= ((TuiNumber*)rightValue)->value;
+                                existingValueWasAssigned = true;
+                            }
+                            else
+                            {
+                                result = new TuiBool(((TuiNumber*)leftValue)->value <= ((TuiNumber*)rightValue)->value);
+                            }
                         }
                         else
                         {
-                            result = new TuiBool(((TuiNumber*)leftValue)->value < ((TuiNumber*)rightValue)->value);
+                            if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
+                            {
+                                ((TuiBool*)existingValue)->value = ((TuiNumber*)leftValue)->value < ((TuiNumber*)rightValue)->value;
+                                existingValueWasAssigned = true;
+                            }
+                            else
+                            {
+                                result = new TuiBool(((TuiNumber*)leftValue)->value < ((TuiNumber*)rightValue)->value);
+                            }
                         }
                     }
                         break;
@@ -1102,12 +1184,28 @@ TuiRef* TuiRef::loadExpression(const char* str,
                 {
                     case '*':
                     {
-                        result = new TuiVec2(dvec2(((TuiNumber*)leftValue)->value) * ((TuiVec2*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
+                        {
+                            ((TuiVec2*)existingValue)->value = ((TuiVec2*)rightValue)->value * ((TuiNumber*)leftValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec2(((TuiVec2*)rightValue)->value * ((TuiNumber*)leftValue)->value);
+                        }
                     }
                         break;
                     case '/':
                     {
-                        result = new TuiVec2(dvec2(((TuiNumber*)leftValue)->value) / ((TuiVec2*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
+                        {
+                            ((TuiVec2*)existingValue)->value = ((TuiVec2*)rightValue)->value / ((TuiNumber*)leftValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec2(((TuiVec2*)rightValue)->value / ((TuiNumber*)leftValue)->value);
+                        }
                     }
                         break;
                     default:
@@ -1121,12 +1219,28 @@ TuiRef* TuiRef::loadExpression(const char* str,
                 {
                     case '*':
                     {
-                        result = new TuiVec3(dvec3(((TuiNumber*)leftValue)->value) * ((TuiVec3*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
+                        {
+                            ((TuiVec3*)existingValue)->value = ((TuiVec3*)rightValue)->value * ((TuiNumber*)leftValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec3(((TuiVec3*)rightValue)->value * ((TuiNumber*)leftValue)->value);
+                        }
                     }
                         break;
                     case '/':
                     {
-                        result = new TuiVec3(dvec3(((TuiNumber*)leftValue)->value) / ((TuiVec3*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
+                        {
+                            ((TuiVec3*)existingValue)->value = ((TuiVec3*)rightValue)->value / ((TuiNumber*)leftValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec3(((TuiVec3*)rightValue)->value / ((TuiNumber*)leftValue)->value);
+                        }
                     }
                         break;
                     default:
@@ -1140,12 +1254,28 @@ TuiRef* TuiRef::loadExpression(const char* str,
                 {
                     case '*':
                     {
-                        result = new TuiVec4(dvec4(((TuiNumber*)leftValue)->value) * ((TuiVec4*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
+                        {
+                            ((TuiVec4*)existingValue)->value = ((TuiVec4*)rightValue)->value * ((TuiNumber*)leftValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec4(((TuiVec4*)rightValue)->value * ((TuiNumber*)leftValue)->value);
+                        }
                     }
                         break;
                     case '/':
                     {
-                        result = new TuiVec4(dvec4(((TuiNumber*)leftValue)->value) / ((TuiVec4*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
+                        {
+                            ((TuiVec4*)existingValue)->value = ((TuiVec4*)rightValue)->value / ((TuiNumber*)leftValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec4(((TuiVec4*)rightValue)->value / ((TuiNumber*)leftValue)->value);
+                        }
                     }
                         break;
                     default:
@@ -1162,12 +1292,28 @@ TuiRef* TuiRef::loadExpression(const char* str,
                 {
                     case '*':
                     {
-                        result = new TuiVec2(((TuiVec2*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
+                        {
+                            ((TuiVec2*)existingValue)->value = ((TuiVec2*)leftValue)->value * ((TuiNumber*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec2(((TuiVec2*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                        }
                     }
                         break;
                     case '/':
                     {
-                        result = new TuiVec2(((TuiVec2*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
+                        {
+                            ((TuiVec2*)existingValue)->value = ((TuiVec2*)leftValue)->value / ((TuiNumber*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec2(((TuiVec2*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                        }
                     }
                         break;
                     default:
@@ -1181,22 +1327,54 @@ TuiRef* TuiRef::loadExpression(const char* str,
                 {
                     case '+':
                     {
-                        result = new TuiVec2(((TuiVec2*)leftValue)->value + ((TuiVec2*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
+                        {
+                            ((TuiVec2*)existingValue)->value = ((TuiVec2*)leftValue)->value + ((TuiVec2*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec2(((TuiVec2*)leftValue)->value + ((TuiVec2*)rightValue)->value);
+                        }
                     }
                         break;
                     case '-':
                     {
-                        result = new TuiVec2(((TuiVec2*)leftValue)->value - ((TuiVec2*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
+                        {
+                            ((TuiVec2*)existingValue)->value = ((TuiVec2*)leftValue)->value - ((TuiVec2*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec2(((TuiVec2*)leftValue)->value - ((TuiVec2*)rightValue)->value);
+                        }
                     }
                         break;
                     case '*':
                     {
-                        result = new TuiVec2(((TuiVec2*)leftValue)->value * ((TuiVec2*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
+                        {
+                            ((TuiVec2*)existingValue)->value = ((TuiVec2*)leftValue)->value * ((TuiVec2*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec2(((TuiVec2*)leftValue)->value * ((TuiVec2*)rightValue)->value);
+                        }
                     }
                         break;
                     case '/':
                     {
-                        result = new TuiVec2(((TuiVec2*)leftValue)->value / ((TuiVec2*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
+                        {
+                            ((TuiVec2*)existingValue)->value = ((TuiVec2*)leftValue)->value / ((TuiVec2*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec2(((TuiVec2*)leftValue)->value / ((TuiVec2*)rightValue)->value);
+                        }
                     }
                         break;
                     default:
@@ -1213,12 +1391,28 @@ TuiRef* TuiRef::loadExpression(const char* str,
                 {
                     case '*':
                     {
-                        result = new TuiVec3(((TuiVec3*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
+                        {
+                            ((TuiVec3*)existingValue)->value = ((TuiVec3*)leftValue)->value * ((TuiNumber*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec3(((TuiVec3*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                        }
                     }
                         break;
                     case '/':
                     {
-                        result = new TuiVec3(((TuiVec3*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
+                        {
+                            ((TuiVec3*)existingValue)->value = ((TuiVec3*)leftValue)->value / ((TuiNumber*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec3(((TuiVec3*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                        }
                     }
                         break;
                     default:
@@ -1232,22 +1426,54 @@ TuiRef* TuiRef::loadExpression(const char* str,
                 {
                     case '+':
                     {
-                        result = new TuiVec3(((TuiVec3*)leftValue)->value + ((TuiVec3*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
+                        {
+                            ((TuiVec3*)existingValue)->value = ((TuiVec3*)leftValue)->value + ((TuiVec3*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec3(((TuiVec3*)leftValue)->value + ((TuiVec3*)rightValue)->value);
+                        }
                     }
                         break;
                     case '-':
                     {
-                        result = new TuiVec3(((TuiVec3*)leftValue)->value - ((TuiVec3*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
+                        {
+                            ((TuiVec3*)existingValue)->value = ((TuiVec3*)leftValue)->value - ((TuiVec3*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec3(((TuiVec3*)leftValue)->value - ((TuiVec3*)rightValue)->value);
+                        }
                     }
                         break;
                     case '*':
                     {
-                        result = new TuiVec3(((TuiVec3*)leftValue)->value * ((TuiVec3*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
+                        {
+                            ((TuiVec3*)existingValue)->value = ((TuiVec3*)leftValue)->value * ((TuiVec3*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec3(((TuiVec3*)leftValue)->value * ((TuiVec3*)rightValue)->value);
+                        }
                     }
                         break;
                     case '/':
                     {
-                        result = new TuiVec3(((TuiVec3*)leftValue)->value / ((TuiVec3*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
+                        {
+                            ((TuiVec3*)existingValue)->value = ((TuiVec3*)leftValue)->value / ((TuiVec3*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec3(((TuiVec3*)leftValue)->value / ((TuiVec3*)rightValue)->value);
+                        }
                     }
                         break;
                     default:
@@ -1264,12 +1490,28 @@ TuiRef* TuiRef::loadExpression(const char* str,
                 {
                     case '*':
                     {
-                        result = new TuiVec4(((TuiVec4*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
+                        {
+                            ((TuiVec4*)existingValue)->value = ((TuiVec4*)leftValue)->value * ((TuiNumber*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec4(((TuiVec4*)leftValue)->value * ((TuiNumber*)rightValue)->value);
+                        }
                     }
                         break;
                     case '/':
                     {
-                        result = new TuiVec4(((TuiVec4*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
+                        {
+                            ((TuiVec4*)existingValue)->value = ((TuiVec4*)leftValue)->value / ((TuiNumber*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec4(((TuiVec4*)leftValue)->value / ((TuiNumber*)rightValue)->value);
+                        }
                     }
                         break;
                     default:
@@ -1283,22 +1525,54 @@ TuiRef* TuiRef::loadExpression(const char* str,
                 {
                     case '+':
                     {
-                        result = new TuiVec4(((TuiVec4*)leftValue)->value + ((TuiVec4*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
+                        {
+                            ((TuiVec4*)existingValue)->value = ((TuiVec4*)leftValue)->value + ((TuiVec4*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec4(((TuiVec4*)leftValue)->value + ((TuiVec4*)rightValue)->value);
+                        }
                     }
                         break;
                     case '-':
                     {
-                        result = new TuiVec4(((TuiVec4*)leftValue)->value - ((TuiVec4*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
+                        {
+                            ((TuiVec4*)existingValue)->value = ((TuiVec4*)leftValue)->value - ((TuiVec4*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec4(((TuiVec4*)leftValue)->value - ((TuiVec4*)rightValue)->value);
+                        }
                     }
                         break;
                     case '*':
                     {
-                        result = new TuiVec4(((TuiVec4*)leftValue)->value * ((TuiVec4*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
+                        {
+                            ((TuiVec4*)existingValue)->value = ((TuiVec4*)leftValue)->value * ((TuiVec4*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec4(((TuiVec4*)leftValue)->value * ((TuiVec4*)rightValue)->value);
+                        }
                     }
                         break;
                     case '/':
                     {
-                        result = new TuiVec4(((TuiVec4*)leftValue)->value / ((TuiVec4*)rightValue)->value);
+                        if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
+                        {
+                            ((TuiVec4*)existingValue)->value = ((TuiVec4*)leftValue)->value / ((TuiVec4*)rightValue)->value;
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiVec4(((TuiVec4*)leftValue)->value / ((TuiVec4*)rightValue)->value);
+                        }
                     }
                         break;
                     default:
@@ -1315,7 +1589,23 @@ TuiRef* TuiRef::loadExpression(const char* str,
                 {
                     case '+':
                     {
-                        result = new TuiString(((TuiString*)leftValue)->value + ((TuiString*)rightValue)->value);
+                        if(secondOperatorChar == '=')
+                        {
+                            ((TuiString*)leftValue)->value += ((TuiString*)rightValue)->value;
+                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array //todo this is a waste of an allocate
+                        }
+                        else
+                        {
+                            if(existingValue && existingValue->type() == Tui_ref_type_STRING)
+                            {
+                                ((TuiString*)existingValue)->value = ((TuiString*)leftValue)->value + ((TuiString*)rightValue)->value;
+                                existingValueWasAssigned = true;
+                            }
+                            else
+                            {
+                                result = new TuiString(((TuiString*)leftValue)->value + ((TuiString*)rightValue)->value);
+                            }
+                        }
                     }
                         break;
                     default:
@@ -1330,7 +1620,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
         }
     }
     
-    if(result)
+    if(result || existingValueWasAssigned)
     {
         leftValue->release();
         rightValue->release();

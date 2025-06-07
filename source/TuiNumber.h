@@ -85,7 +85,14 @@ public://functions
         return (value ? "true" : "false");
     }
     virtual bool boolValue() {return value;}
-    virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_BOOL && ((TuiBool*)other)->value == value;}
+    virtual bool isEqual(TuiRef* other)
+    {
+        /*if(!other)
+        {
+            return false;
+        }*/
+        return other->type() == Tui_ref_type_BOOL && ((TuiBool*)other)->value == value;
+    }
 
 private:
     
@@ -120,26 +127,25 @@ public://functions
             for(int i = 0; i < 2; i++)
             {
                 TuiRef* loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, (TuiTable*)parent, debugInfo);
+                s = tuiSkipToNextChar(*endptr, debugInfo);
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "uninitialized or non-number value in vec2 constructor:%c", *s);
-                    s = tuiSkipToNextChar(s, debugInfo);
-                    *endptr = (char*)s;
                     if(loadedValue)
                     {
                         loadedValue->release();
                     }
-                    break;
+                    return nullptr;
                 }
                 
                 values[i] = ((TuiNumber*)loadedValue)->value;
                 loadedValue->release();
                 
-                s = tuiSkipToNextChar(*endptr, debugInfo, true);
-                if(*s == ',' || *s == '\n')
+                if(*s == ',')
                 {
                     s++;
+                    s = tuiSkipToNextChar(s, debugInfo);
                 }
                 else if(*s == ')' || *s == '\0')
                 {
@@ -149,7 +155,7 @@ public://functions
                 else
                 {
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec2:%c", *s);
-                    break;
+                    return nullptr;
                 }
             }
             
@@ -203,7 +209,7 @@ public://functions
             for(int i = 0; i < 3; i++)
             {
                 TuiRef* loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, (TuiTable*)parent, debugInfo);
-                s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                s = tuiSkipToNextChar(*endptr, debugInfo);
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
@@ -212,16 +218,16 @@ public://functions
                     {
                         loadedValue->release();
                     }
-                    break;
+                    return nullptr;
                 }
                 
                 values[i] = ((TuiNumber*)loadedValue)->value;
                 loadedValue->release();
                 
-                if(*s == ',' || *s == '\n')
+                if(*s == ',')
                 {
                     s++;
-                    s = tuiSkipToNextChar(s, debugInfo, true);
+                    s = tuiSkipToNextChar(s, debugInfo);
                 }
                 else if(*s == ')' || *s == '\0')
                 {
@@ -232,7 +238,7 @@ public://functions
                 else
                 {
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec3:%c", *s);
-                    break;
+                    return nullptr;
                 }
             }
             
@@ -285,26 +291,25 @@ public://functions
             for(int i = 0; i < 4; i++)
             {
                 TuiRef* loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, (TuiTable*)parent, debugInfo);
+                s = tuiSkipToNextChar(*endptr, debugInfo);
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "uninitialized or non-number value in vec4 constructor:%c", *s);
-                    s = tuiSkipToNextChar(s, debugInfo);
-                    *endptr = (char*)s;
                     if(loadedValue)
                     {
                         loadedValue->release();
                     }
-                    break;
+                    return nullptr;
                 }
                 
                 values[i] = ((TuiNumber*)loadedValue)->value;
                 loadedValue->release();
                 
-                s = tuiSkipToNextChar(*endptr, debugInfo, true);
-                if(*s == ',' || *s == '\n')
+                if(*s == ',')
                 {
                     s++;
+                    s = tuiSkipToNextChar(s, debugInfo);
                 }
                 else if(*s == ')' || *s == '\0')
                 {
@@ -314,7 +319,7 @@ public://functions
                 else
                 {
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec4:%c", *s);
-                    break;
+                    return nullptr;
                 }
             }
             
