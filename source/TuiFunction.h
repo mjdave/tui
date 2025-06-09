@@ -33,6 +33,7 @@ public: //static functions
                                                TuiTokenMap* tokenMap,
                                                TuiDebugInfo* debugInfo,
                                                int operatorLevel,
+                                               std::string* setKey = nullptr,
                                                uint32_t subExpressionTokenStartPos = UINT32_MAX);
     
     static bool serializeFunctionBody(const char* str,
@@ -42,11 +43,12 @@ public: //static functions
                                       TuiDebugInfo* debugInfo,
                                       std::vector<TuiStatement*>* statements);
     
-    static TuiForStatement* serializeForStatement(const char* str,
+    static TuiStatement* serializeForStatement(const char* str,
                                                   char** endptr,
                                                   TuiTable* parent,
                                                   TuiTokenMap* tokenMap,
                                                   TuiDebugInfo* debugInfo);
+    
     
     
     static TuiRef* runExpression(TuiExpression* expression,

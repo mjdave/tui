@@ -1,9 +1,2 @@
-testTable = {
-    "zero",
-    "one",
-    "two",
-    "four",
-    "five"
-}
-table.insert(testTable, 3, "three")
-print(testTable)
+value = false
+print(!value)

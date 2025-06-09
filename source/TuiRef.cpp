@@ -147,17 +147,7 @@ TuiTable* TuiRef::createRootTable()
                 int addIndex = ((TuiNumber*)indexObject)->value;
                 TuiRef* addObject = args->arrayObjects[2];
                 
-                if(addIndex < ((TuiTable*)tableRef)->arrayObjects.size())
-                {
-                    addObject->retain();
-                    ((TuiTable*)tableRef)->arrayObjects.insert(((TuiTable*)tableRef)->arrayObjects.begin() + addIndex, addObject);
-                }
-                else if(addObject && addObject->type() != Tui_ref_type_NIL)
-                {
-                    ((TuiTable*)tableRef)->arrayObjects.resize(addIndex + 1);
-                    addObject->retain();
-                    ((TuiTable*)tableRef)->arrayObjects[addIndex] = addObject;
-                }
+                ((TuiTable*)tableRef)->insert(addIndex, addObject);
                 
             }
             else
@@ -306,10 +296,11 @@ static TuiRef* loadSingleValueInternal(const char* str,
                                        char** endptr,
                                        TuiRef* existingValue,
                                        TuiRef* parentRef,
+                                       TuiRef* varChainParent,
                                        TuiDebugInfo* debugInfo,
                                        
                                        std::string* onSetKey, //watch out, using the existance of this var to allow "x":5 json quoted key names only. For values, a quoted string is not a valid variable name
-                                       uint32_t* onSetIndex) //index todo
+                                       int* onSetIndex) //index todo
 {
     const char* s = str;
     
@@ -319,72 +310,167 @@ static TuiRef* loadSingleValueInternal(const char* str,
         TuiError("Unimplemented");
     }
     
-    if(isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(*(s + 1))))
+    if(!varChainParent)
     {
-        double value = strtod(s, endptr);
-        if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
+        if(*s == '(')
         {
-            ((TuiNumber*)existingValue)->value = value;
-            return nullptr;
+            TuiRef* result = TuiRef::loadExpression(s,
+                                                    endptr,
+                                                    existingValue,
+                                                 nullptr,
+                                                    parent,
+                                                 debugInfo,
+                                                    Tui_operator_level_default);
+            return result;
         }
-        TuiNumber* number = new TuiNumber(value, parent);
-        return number;
-    }
-    
-    //todo pull out these functions, set existing values correctly
-    TuiFunction* functionRef = TuiFunction::initWithHumanReadableString(s, endptr, parent, debugInfo);
-    if(functionRef)
-    {
-        return functionRef;
-    }
-    
-    TuiBool* boolRef = TuiBool::initWithHumanReadableString(s, endptr, parent, debugInfo);
-    if(boolRef)
-    {
-        return boolRef;
-    }
-    
-    TuiVec2* vec2Ref = TuiVec2::initWithHumanReadableString(s, endptr, parent, debugInfo);
-    if(vec2Ref)
-    {
-        return vec2Ref;
-    }
-    
-    TuiVec3* vec3Ref = TuiVec3::initWithHumanReadableString(s, endptr, parent, debugInfo);
-    if(vec3Ref)
-    {
-        return vec3Ref;
-    }
-    
-    TuiVec4* vec4Ref = TuiVec4::initWithHumanReadableString(s, endptr, parent, debugInfo);
-    if(vec4Ref)
-    {
-        return vec4Ref;
-    }
-    
-    if(*s == 'n'
-        && *(s + 1) == 'i'
-        && *(s + 2) == 'l')
-    {
-        s+=3;
-        s = tuiSkipToNextChar(s, debugInfo, true);
-        *endptr = (char*)s;
+        if(*s == '!')
+        {
+            s++;
+            s = tuiSkipToNextChar(s, debugInfo);
+            TuiRef* result = loadSingleValueInternal(s,
+                                                     endptr,
+                                                     nullptr,
+                                                     parent,
+                                                     nullptr,
+                                                     debugInfo,
+                                                     nullptr,
+                                                     nullptr);
+            if(result)
+            {
+                bool newValue = !result->boolValue();
+                result->release();
+                if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
+                {
+                    ((TuiBool*)existingValue)->value = newValue;
+                    return nullptr;
+                }
+                
+                return new TuiBool(newValue);
+            }
+            return new TuiBool(true);
+        }
         
-        return new TuiRef(parent);
+        if(isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(*(s + 1))))
+        {
+            double value = strtod(s, endptr);
+            if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
+            {
+                ((TuiNumber*)existingValue)->value = value;
+                return nullptr;
+            }
+            TuiNumber* number = new TuiNumber(value, parent);
+            return number;
+        }
+        
+        //todo pull out these functions, set existing values correctly
+        TuiFunction* functionRef = TuiFunction::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        if(functionRef)
+        {
+            return functionRef;
+        }
+        
+        TuiBool* boolRef = TuiBool::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        if(boolRef)
+        {
+            return boolRef;
+        }
+        
+        TuiVec2* vec2Ref = TuiVec2::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        if(vec2Ref)
+        {
+            return vec2Ref;
+        }
+        
+        TuiVec3* vec3Ref = TuiVec3::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        if(vec3Ref)
+        {
+            return vec3Ref;
+        }
+        
+        TuiVec4* vec4Ref = TuiVec4::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        if(vec4Ref)
+        {
+            return vec4Ref;
+        }
+        
+        if(*s == 'n'
+           && *(s + 1) == 'i'
+           && *(s + 2) == 'l')
+        {
+            s+=3;
+            s = tuiSkipToNextChar(s, debugInfo, true);
+            *endptr = (char*)s;
+            
+            return new TuiRef(parent);
+        }
+        else if(*s == 'n'
+                && *(s + 1) == 'u'
+                && *(s + 2) == 'l'
+                && *(s + 3) == 'l')
+        {
+            s+=4;
+            s = tuiSkipToNextChar(s, debugInfo, true);
+            *endptr = (char*)s;
+            return new TuiRef(parent);
+        }
+        else if(*s == '{' || *s == '[') //watch out [ might be a json array, or accessing array element
+        {
+            return TuiRef::load(s, endptr, parent, debugInfo);
+        }
     }
-    else if(*s == 'n'
-            && *(s + 1) == 'u'
-            && *(s + 2) == 'l'
-            && *(s + 3) == 'l')
+    else // varChainParent != nullptr
     {
-        s+=4;
-        s = tuiSkipToNextChar(s, debugInfo, true);
-        *endptr = (char*)s;
-        return new TuiRef(parent);
-    }
-    else if(*s == '{' || *s == '[') //watch out [ might be a json array, or accessing array element
-    {
-        return TuiRef::load(s, endptr, parent, debugInfo);
+        if(*s == '[')
+        {
+            s++;
+            s = tuiSkipToNextChar(s, debugInfo);
+            TuiRef* index = TuiRef::loadExpression(s,
+                                                    endptr,
+                                                    nullptr,
+                                                 nullptr,
+                                                    parent,
+                                                 debugInfo,
+                                                    Tui_operator_level_default);
+            
+            s = tuiSkipToNextChar(*endptr, debugInfo);
+            s++; //']'
+            *endptr = (char*)s;
+            
+            if(!index || index->type() != Tui_ref_type_NUMBER)
+            {
+                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid table index:%s", (index ? index->getDebugString().c_str() : "nil"));
+                return nullptr;
+            }
+            
+            if(varChainParent->type() != Tui_ref_type_TABLE)
+            {
+                TuiError("Unimplemented");
+            }
+            
+            int indexValue = ((TuiNumber*)index)->value;
+            index->release();
+            
+            if(onSetIndex)
+            {
+                *onSetIndex = indexValue;
+            }
+            
+            if(indexValue < 0 || indexValue >= ((TuiTable*)varChainParent)->arrayObjects.size())
+            {
+                if(!*onSetIndex)
+                {
+                    TuiParseWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Table index:%d beyond bounds:%d", indexValue, (int)((TuiTable*)varChainParent)->arrayObjects.size());
+                }
+                return new TuiRef(parent);
+            }
+            
+            TuiRef* result = ((TuiTable*)varChainParent)->arrayObjects[indexValue];
+            if(result)
+            {
+                result->retain();
+            }
+            return result;
+        }
     }
     
     std::string stringBuffer;
@@ -552,12 +638,13 @@ static TuiRef* loadSingleValueInternal(const char* str,
     if(allowAsVariableName)
     {
         TuiRef* resultRef = nullptr;
-        if(parent->objectsByStringKey.count(stringBuffer) != 0)
+        TuiTable* searchTable = (varChainParent ? (TuiTable*)varChainParent :  parent); //todo if this is not a table eg userdata
+        
+        if(searchTable->objectsByStringKey.count(stringBuffer) != 0)
         {
-            resultRef = parent->objectsByStringKey[stringBuffer];
+            resultRef = searchTable->objectsByStringKey[stringBuffer];
         }
         
-        TuiTable* searchTable = parent;
         while(!resultRef && searchTable->parent)
         {
             searchTable = searchTable->parent;
@@ -587,6 +674,10 @@ static TuiRef* loadSingleValueInternal(const char* str,
             
             return resultRef;
         }
+        else if(isFunctionCall)
+        {
+            TuiParseWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call missing function:%s", stringBuffer.c_str());
+        }
         
     }
     
@@ -614,30 +705,34 @@ TuiRef* TuiRef::loadValue(const char* str,
                            //below are only passed if there is a chance we are finding a key in order to set its value, giving the caller quick access to the parent to set the value for an uninitialized variable
                            TuiRef** onSetEnclosingRef,
                            std::string* onSetKey,
-                           uint32_t* onSetIndex) //index todo
+                           int* onSetIndex) //index todo
 {
     const char* s = str;
     
-    TuiRef* parentValue = nullptr;
+    TuiRef* varChainParent = nullptr;
     TuiRef* result = nullptr;
     
     while(1)
     {
-        result = loadSingleValueInternal(s, endptr, existingValue, parentTable, debugInfo, onSetKey, onSetIndex);
+        result = loadSingleValueInternal(s, endptr, existingValue, parentTable, varChainParent, debugInfo, onSetKey, onSetIndex);
         s = *endptr;//tuiSkipToNextChar(*endptr, debugInfo, true);
         
         if(*s == '.')
         {
-            if(parentValue)
+            if(varChainParent)
             {
-                parentValue->release();
+                varChainParent->release();
             }
-            parentValue = result;
+            varChainParent = result;
             s++;
         }
         else if(*s == '[')
         {
-            //todo not sure if this will be needed
+            if(varChainParent)
+            {
+                varChainParent->release();
+            }
+            varChainParent = result;
         }
         else
         {
@@ -648,7 +743,7 @@ TuiRef* TuiRef::loadValue(const char* str,
     
     if(onSetEnclosingRef)
     {
-        *onSetEnclosingRef = (parentValue ? parentValue : parentTable);
+        *onSetEnclosingRef = (varChainParent ? varChainParent : parentTable);
     }
     
     return result;
@@ -853,10 +948,10 @@ TuiRef* TuiRef::loadExpression(const char* str,
         {
             s = tuiSkipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
-            if(existingValue)
+            /*if(existingValue)
             {
                 return nullptr;
-            }
+            }*/
             return leftValue;
         }
     }

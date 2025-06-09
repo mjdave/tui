@@ -50,17 +50,22 @@ enum {
     Tui_token_varName,
     Tui_token_true,
     Tui_token_false,
+    Tui_token_forCollectionLoopKeyValue,
+    Tui_token_forCollectionLoopValues,
     
     Tui_token_VAR_START_INDEX
 };
 
 enum {
-    Tui_statement_type_RETURN = 0,
-    Tui_statement_type_RETURN_EXPRESSION,
-    Tui_statement_type_VAR_ASSIGN,
-    Tui_statement_type_FUNCTION_CALL,
-    Tui_statement_type_IF,
-    Tui_statement_type_FOR
+    Tui_statement_type_return = 0,
+    Tui_statement_type_returnExpression,
+    Tui_statement_type_varAssign,
+    Tui_statement_type_varModify, // += ++ etc
+    Tui_statement_type_functionCall,
+    Tui_statement_type_if,
+    Tui_statement_type_forExpressions, // for(i = 0, i < 5, i++)
+    Tui_statement_type_forKeyedValues, // for(indexOrKey, object in table)
+    Tui_statement_type_forValues, // for(object in table)
 };
 
 struct TuiExpression {
@@ -82,8 +87,8 @@ class TuiStatement {
 public: //members
     uint32_t lineNumber;
     uint32_t type;
-    //TuiString* varName = nullptr;
-    uint32_t varToken = 0;
+    std::string varName; //only stored for var assign statements
+    //uint32_t varToken = 0;
     TuiExpression* expression = nullptr;
     
 public://functions
@@ -95,21 +100,25 @@ class TuiIfStatement : public TuiStatement {
 public://functions
     std::vector<TuiStatement*> statements;
     TuiIfStatement* elseIfStatement = nullptr;
-    TuiIfStatement() : TuiStatement(Tui_statement_type_IF) {}
+    TuiIfStatement() : TuiStatement(Tui_statement_type_if) {}
 };
 
 
-class TuiForStatement : public TuiStatement {
+class TuiForExpressionsStatement : public TuiStatement { // for(i = 0, i < 5, i++)
 public://functions
     std::vector<TuiStatement*> statements;
-    TuiExpression* continueExpression = nullptr;
-    TuiStatement* incrementStatement = nullptr;
+    TuiStatement* initialStatement = nullptr; //todo cleanup
+    TuiExpression* continueExpression = nullptr; //todo cleanup
+    TuiStatement* incrementStatement = nullptr; //todo cleanup
     
-    TuiString* indexOrKeyName = nullptr; //todo leaks
-    uint32_t indexOrKeyToken = 0;
-    
-    
-    TuiForStatement() : TuiStatement(Tui_statement_type_FOR) {}
+    TuiForExpressionsStatement() : TuiStatement(Tui_statement_type_forExpressions) {}
+};
+
+
+class TuiForContainerLoopStatement : public TuiStatement { // for(object in table)
+public://functions
+    std::vector<TuiStatement*> statements;
+    TuiForContainerLoopStatement(uint32_t type_) : TuiStatement(type_) {}
 };
 
 

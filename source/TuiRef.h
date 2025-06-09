@@ -195,7 +195,7 @@ public: //static functions
                               //below are only passed if we are setting a key, giving the caller quick access to the parent to set the value for an uninitialized variable
                               TuiRef** onSetIfNilFoundEnclosingRef = nullptr,
                               std::string* onSetIfNilFoundKey = nullptr,
-                              uint32_t* onSetIfNilFoundIndex = nullptr);
+                              int* onSetIfNilFoundIndex = nullptr);
     
     static TuiBool* logicalNot(TuiRef* value);
     

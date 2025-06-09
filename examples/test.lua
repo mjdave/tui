@@ -1,26 +1,10 @@
-local a = 0
-for i = 1, 10000000 do
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
-    a = a + i
+local function factorial(n)
+  local x = 1
+  for i = 2, n do
+    x = x + i
+  end
+  return x
 end
 
-print(a)
+local result = factorial(100000000)
+print(result)

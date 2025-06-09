@@ -2,7 +2,7 @@ testCommon = require("tests/testCommon.tui")
 assert = testCommon.assert
 
 emptyTable = {}
-#print(emptyTable[2] == nil)
+assert(emptyTable[2] == nil, "emptyTable[2] == nil")
 
 testAdd = function(a,b)
 {
@@ -67,9 +67,9 @@ notEqualFailTest = 4 != 4
 assert(notEqualFailTest == false, "notEqualFailTest == false")
 
 assert(testAdd(2,8) == 10, "testAdd(2,8) == 10")
-#assert((2 + 8) == 10, "(2 + 8) == 10")
+assert((2 + 8) == 10, "(2 + 8) == 10")
 assert(testSub(20,varTen) == 10, "testSub(20,varTen) == 10")
-#assert((20 - varTen) == 10, "(20 - 10) == 10")
+assert((20 - varTen) == 10, "(20 - 10) == 10")
 assert(testMult(5,5) == 25, "testMult(5,5) == 25")
 assert(testDivide(100,10) == 10, "testDivide(100,10) == 10")
 assert(testGreaterThan(100,10), "testGreaterThan(100,10)")
@@ -123,13 +123,13 @@ testTable = {
 }
 table.insert(testTable, 3, "three")
 print(testTable)
-#assert(testTable[3] == "three", "testTable[3] == three")
-#testTable[2] = 2.0
-#assert(testTable[2] == 2, "testTable[2] == 2")
+assert(testTable[3] == "three", "testTable[3] == three")
+testTable[2] = 2.0
+assert(testTable[2] == 2, "testTable[2] == 2")
 
-#testTable[7] = "seven"
-#assert(testTable[7] == "seven", "testTable[7] == seven")
-#assert(testTable[6] == nil, "testTable[6] == nil")
+testTable[7] = "seven"
+assert(testTable[7] == "seven", "testTable[7] == seven")
+assert(testTable[6] == nil, "testTable[6] == nil")
 
 print(testTable)
 

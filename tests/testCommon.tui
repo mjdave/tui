@@ -1,30 +1,29 @@
+
+passCount = 0
+failCount = 0
+
+assert = function(pass, info)
 {
-    passCount = 0
-    failCount = 0
-
-    assert = function(pass, info)
+    if(pass)
     {
-        if(pass)
-        {
-            passCount++
-        }
-        else
-        {
-            failCount++
-            print("test fail! ", info)
-        }
+        passCount++
     }
-
-    printResult = function()
+    else
     {
-        if(failCount > 0)
-        {
-            print("tests failed! ", passCount, " tests passed, ", failCount, " tests failed.")
-        }
-        else
-        {
-            print("All ", passCount, " tests passed!")
-        }
+        failCount++
+        print("test fail! ", info)
     }
-
 }
+
+printResult = function()
+{
+    if(failCount > 0)
+    {
+        print("tests failed! ", passCount, " tests passed, ", failCount, " tests failed.")
+    }
+    else
+    {
+        print("All ", passCount, " tests passed!")
+    }
+}
+

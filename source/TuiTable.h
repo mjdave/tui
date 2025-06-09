@@ -19,6 +19,7 @@ public:
     std::vector<TuiRef*> arrayObjects; // these members are public for ease/speed of iteration, but it's often best to use the get/set methods instead
     std::map<uint32_t, TuiRef*> objectsByNumberKey;
     std::map<std::string, TuiRef*> objectsByStringKey;
+    std::map<TuiRef*, std::string> stringKeysByObject; //no bad idea
     
 private: //members
 
@@ -331,9 +332,40 @@ public://functions
             }
             s = tuiSkipToNextChar(*endptr, debugInfo, false);
             
-            std::map<uint32_t, TuiRef*> locals;
-            TuiError("todo");
-            TuiRef* result = nullptr;//TuiFunction::runStatement(statement, nullptr, this, (TuiTable*)parent, &tokenMap, &locals, debugInfo);
+            //std::map<uint32_t, TuiRef*> locals;
+            //TuiError("todo");
+            //TuiRef* result = nullptr;//TuiFunction::runStatement(statement, nullptr, this, (TuiTable*)parent, &tokenMap, &locals, debugInfo);
+            
+            std::map<uint32_t, TuiRef*> captures; //collected at the start, retained, need to release
+            std::map<uint32_t, TuiRef*> locals; //added to as variables are created, pointing to variables that are within this table, including the args. need to release
+            
+            for(auto& varNameAndToken : tokenMap.capturedTokensByVarName)
+            {
+                if(objectsByStringKey.count(varNameAndToken.first) != 0) //it's an arg
+                {
+                    TuiRef* var = objectsByStringKey[varNameAndToken.first];
+                    var->retain();//todo release this
+                    locals[varNameAndToken.second] = var;
+                }
+                else
+                {
+                    TuiTable* parentRef = parent;
+                    while(parentRef)
+                    {
+                        if(parentRef->objectsByStringKey.count(varNameAndToken.first) != 0)
+                        {
+                            TuiRef* var = parentRef->objectsByStringKey[varNameAndToken.first];
+                            var->retain();//todo release this
+                            captures[varNameAndToken.second] = var;
+                            break;
+                        }
+                        parentRef = parentRef->parent;
+                    }
+                    
+                }
+            }
+            
+            TuiRef* result = TuiFunction::runStatement(statement,  nullptr,  this, parent, &tokenMap, &locals, &captures, debugInfo);
             
             if(result)
             {
@@ -537,7 +569,7 @@ public://functions
         
         TuiRef* enclosingRef = nullptr;
         std::string finalKey = "";
-        uint32_t finalIndex = 0;
+        int finalIndex = -1;
         
         TuiRef* existingObjectRef = loadValue(s,
                                     endptr,
@@ -570,7 +602,19 @@ public://functions
                 {
                     if(!finalKey.empty())
                     {
+                        if(enclosingRef->type() != Tui_ref_type_TABLE)
+                        {
+                            TuiError("Unimplemented");
+                        }
                         ((TuiTable*)enclosingRef)->set(finalKey, valueRef);
+                    }
+                    else if(finalIndex >= 0)
+                    {
+                        if(enclosingRef->type() != Tui_ref_type_TABLE)
+                        {
+                            TuiError("Unimplemented");
+                        }
+                        ((TuiTable*)enclosingRef)->replace(finalIndex, valueRef);
                     }
                 }
             }
@@ -580,7 +624,19 @@ public://functions
                 {
                     if(!finalKey.empty())
                     {
+                        if(enclosingRef->type() != Tui_ref_type_TABLE)
+                        {
+                            TuiError("Unimplemented");
+                        }
                         ((TuiTable*)enclosingRef)->set(finalKey, valueRef);
+                    }
+                    else if(finalIndex >= 0)
+                    {
+                        if(enclosingRef->type() != Tui_ref_type_TABLE)
+                        {
+                            TuiError("Unimplemented");
+                        }
+                        ((TuiTable*)enclosingRef)->replace(finalIndex, valueRef);
                     }
                 }
                 else
@@ -592,6 +648,14 @@ public://functions
                             TuiError("Unimplemented");
                         }
                         ((TuiTable*)enclosingRef)->set(finalKey, nullptr);
+                    }
+                    else if(finalIndex >= 0)
+                    {
+                        if(enclosingRef->type() != Tui_ref_type_TABLE)
+                        {
+                            TuiError("Unimplemented");
+                        }
+                        ((TuiTable*)enclosingRef)->replace(finalIndex, valueRef);
                     }
                 }
             }
@@ -1009,6 +1073,7 @@ public://functions
                 return;
             }
             
+            stringKeysByObject.erase(oldValue);
             oldValue->release();
             
             if(!value || value->type() == Tui_ref_type_NIL)
@@ -1021,7 +1086,13 @@ public://functions
         {
             value->retain();
             objectsByStringKey[key] = value;
+            stringKeysByObject[value] = key;
         }
+    }
+    
+    void replaceObject(TuiRef* existingRef, TuiRef* newRef)
+    {
+        
     }
     
     void set(uint32_t key, TuiRef* value)
@@ -1053,6 +1124,40 @@ public://functions
     {
         value->retain();
         arrayObjects.push_back(value);
+    }
+    
+    void insert(int insertIndex, TuiRef* value)
+    {
+        value->retain();
+        if(insertIndex < arrayObjects.size())
+        {
+            arrayObjects.insert(arrayObjects.begin() + insertIndex, value);
+        }
+        else if(value && value->type() != Tui_ref_type_NIL)
+        {
+            arrayObjects.resize(insertIndex + 1);
+            arrayObjects[insertIndex] = value;
+        }
+    }
+    
+    
+    void replace(int replaceIndex, TuiRef* value)
+    {
+        value->retain();
+        if(replaceIndex < arrayObjects.size())
+        {
+            TuiRef* existing = arrayObjects[replaceIndex];
+            if(existing)
+            {
+                existing->release();
+            }
+            arrayObjects[replaceIndex] = value;
+        }
+        else if(value && value->type() != Tui_ref_type_NIL)
+        {
+            arrayObjects.resize(replaceIndex + 1);
+            arrayObjects[replaceIndex] = value;
+        }
     }
     
     bool hasKey(const std::string& key)
