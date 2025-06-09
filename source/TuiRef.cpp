@@ -226,7 +226,6 @@ TuiRef* TuiRef::runScriptFile(const std::string& filename, TuiTable* parent)
         TuiError("File not found in TuiRef::runScriptFile at:%s", filename.c_str());
     }
     return nullptr;
-    //TuiRef** resultRef
 }
 
 TuiRef* TuiRef::load(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef) {
@@ -234,8 +233,6 @@ TuiRef* TuiRef::load(const char* str, char** endptr, TuiTable* parent, TuiDebugI
     TuiTable* table = new TuiTable(parent);
     
     const char* s = tuiSkipToNextChar(str, debugInfo);
-    
-    //uint32_t integerIndex = 0;
     
     bool foundOpeningBracket = false;
     
@@ -560,8 +557,9 @@ static TuiRef* loadSingleValueInternal(const char* str,
         }
         else if(*s == '.' && allowAsVariableName)
         {
-            if(*(s+1) == '.') // .. syntax eg. ..foo.x
+            if(*(s+1) == '.') // .. syntax eg. ..foo.x //todo
             {
+                TuiError("Unimplemented");
                 TuiRef* result = parent;
                 while(*(s + 1) == '.')
                 {
@@ -620,8 +618,6 @@ static TuiRef* loadSingleValueInternal(const char* str,
         }
         else
         {
-            //todo check for tables, numbers etc here on first chracter only
-            
             if(foundSpace)
             {
                 break;
@@ -638,6 +634,10 @@ static TuiRef* loadSingleValueInternal(const char* str,
     if(allowAsVariableName)
     {
         TuiRef* resultRef = nullptr;
+        if(varChainParent && varChainParent->type() != Tui_ref_type_TABLE)
+        {
+            TuiError("Unimplemented");
+        }
         TuiTable* searchTable = (varChainParent ? (TuiTable*)varChainParent :  parent); //todo if this is not a table eg userdata
         
         if(searchTable->objectsByStringKey.count(stringBuffer) != 0)
@@ -715,7 +715,7 @@ TuiRef* TuiRef::loadValue(const char* str,
     while(1)
     {
         result = loadSingleValueInternal(s, endptr, existingValue, parentTable, varChainParent, debugInfo, onSetKey, onSetIndex);
-        s = *endptr;//tuiSkipToNextChar(*endptr, debugInfo, true);
+        s = *endptr;
         
         if(*s == '.')
         {
@@ -748,107 +748,6 @@ TuiRef* TuiRef::loadValue(const char* str,
     
     return result;
 }
-
-
-/*
-TuiRef* TuiRef::loadVariableIfAvailable(TuiString* variableName,
-                                        TuiRef* existingValue,
-                                        const char* str,
-                                        char** endptr,
-                                        TuiTable* parentTable,
-                                        TuiTokenMap* tokenMap,
-                                        std::map<uint32_t,TuiRef*>* locals,
-                                        TuiDebugInfo* debugInfo)
-{
-    if(variableName->allowAsVariableName && parentTable)
-    {
-        TuiRef* newValueRef = parentTable->recursivelyFindVariable(variableName, true, parentTable, tokenMap, locals, debugInfo);
-        if(newValueRef)
-        {
-            if(newValueRef->type() == Tui_ref_type_TABLE)
-            {
-                newValueRef->retain();
-                return newValueRef;
-            }
-            else if(newValueRef->type() == Tui_ref_type_FUNCTION)
-            {
-                if(variableName->isValidFunctionString)
-                {
-                    const char* s = str;
-                    TuiTable* argsArrayTable = TuiTable::initWithHumanReadableString(s, endptr, parentTable, debugInfo);
-                    s = tuiSkipToNextChar(*endptr, debugInfo, true);
-                    
-                    std::map<uint32_t, TuiRef*> functionLocals;
-                    TuiRef* result = ((TuiFunction*)newValueRef)->call(argsArrayTable, parentTable, existingValue, &functionLocals, debugInfo);
-                    *endptr = (char*)s;
-                    
-                    return result;
-                }
-                newValueRef->retain();
-                return newValueRef;
-            }
-            else
-            {
-                //newValueRef = newValueRef->copy();
-                newValueRef->retain();
-                return newValueRef;
-            }
-        }
-    }
-    if(variableName->isValidFunctionString)
-    {
-        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to call missing function: %s()", variableName->value.c_str());
-        return nullptr;
-    }
-    return nullptr;
-}
-
-TuiRef* TuiRef::loadValueOld(const char* str,
-                          char** endptr,
-                          TuiRef* existingValue,
-                          TuiTable* parentTable,
-                          TuiTokenMap* tokenMap,
-                          std::map<uint32_t,TuiRef*>* locals,
-                          TuiDebugInfo* debugInfo,
-                          bool allowNonVarStrings)
-{
-    const char* s = str;
-    
-    TuiRef* valueRef = TuiRef::initUnknownTypeRefWithHumanReadableString(s, endptr, parentTable, debugInfo, Tui_variable_load_type_runExpressions);
-    s = tuiSkipToNextChar(*endptr, debugInfo, true);
-    
-    if(valueRef->type() == Tui_ref_type_STRING)
-    {
-        TuiString* originalString = (TuiString*)valueRef;
-        TuiRef* newValueRef = TuiRef::loadVariableIfAvailable(originalString, nullptr, s, endptr, parentTable, tokenMap, locals, debugInfo);
-        
-        s = tuiSkipToNextChar(*endptr, debugInfo, true);
-        
-        if(newValueRef)
-        {
-            originalString->release();
-            valueRef = newValueRef;
-        }
-        else if(originalString->isValidFunctionString)
-        {
-            originalString->release();
-            *endptr = (char*)s;
-            return nullptr;
-        }
-        else if(!allowNonVarStrings || originalString->allowAsVariableName)
-        {
-            TuiParseWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Uninitialized variable:%s", originalString->value.c_str());
-            originalString->release();
-            *endptr = (char*)s;
-            return new TuiRef();
-        }
-        
-    }
-    
-    *endptr = (char*)s;
-    return valueRef;
-}*/
-
 
 TuiBool* TuiRef::logicalNot(TuiRef* value)
 {
@@ -948,10 +847,6 @@ TuiRef* TuiRef::loadExpression(const char* str,
         {
             s = tuiSkipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
-            /*if(existingValue)
-            {
-                return nullptr;
-            }*/
             return leftValue;
         }
     }
@@ -1050,24 +945,6 @@ TuiRef* TuiRef::loadExpression(const char* str,
     
     TuiRef* rightValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parentTable, debugInfo, newOperatorLevel);
     s = tuiSkipToNextChar(*endptr, debugInfo, true);
-    
-    //todo we gonna need this
-    /*if(rightValue->type() == Tui_ref_type_STRING)
-    {
-        if(((TuiString*)rightValue)->allowAsVariableName)
-        {
-            TuiRef* newValueRef = parentTable->recursivelyFindVariable((TuiString*)rightValue, true, parentTable, tokenMap, locals, debugInfo);
-            if(newValueRef)
-            {
-                rightValue->release();
-                rightValue = newValueRef->copy();
-            }
-            else
-            {
-                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Running expression with uninitialized variable:%s", ((TuiString*)rightValue)->value.c_str());
-            }
-        }
-    }*/
     
     bool existingValueWasAssigned = false;
     

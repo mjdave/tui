@@ -1,6 +1,9 @@
 #ifndef TuiStatement_h
 #define TuiStatement_h
 
+#include <vector>
+#include <string>
+
 /*#include <stdio.h>
 #include <string>
 #include <set>
@@ -44,7 +47,7 @@ enum {
     Tui_token_or,
     Tui_token_and,
     Tui_token_tableConstruct,
-    Tui_token_childByStringKey,
+    Tui_token_childByStringKey, //unused
     
     Tui_token_childByArrayIndex, //24
     Tui_token_varName,
@@ -75,11 +78,7 @@ struct TuiExpression {
 struct TuiTokenMap {
     uint32_t tokenIndex = Tui_token_VAR_START_INDEX;
     std::map<uint32_t, TuiRef*> refsByToken; //var names and constants. Captures are not stored here, they are to be loaded when the function is called
-    
     std::map<std::string, uint32_t> capturedTokensByVarName;
-    
-    //std::map<std::string, uint32_t> readWriteTokensByVarNames;
-    //std::map<std::string, uint32_t> readOnlyTokensByVarNames;
 };
 
 
@@ -88,7 +87,6 @@ public: //members
     uint32_t lineNumber;
     uint32_t type;
     std::string varName; //only stored for var assign statements
-    //uint32_t varToken = 0;
     TuiExpression* expression = nullptr;
     
 public://functions

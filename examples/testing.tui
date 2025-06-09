@@ -1,2 +1,15 @@
-value = false
-print(!value)
+testTable = {
+    cake = "banana",
+    location = "flipout",
+    kid = "max",
+}
+
+for(v in testTable)
+{
+    print("value: " v)
+}
+
+for(k,v in testTable)
+{
+    print("key: ", k, " value: " v)
+}
