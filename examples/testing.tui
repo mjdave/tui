@@ -1,15 +1,64 @@
+
+/*table = {
+    subValue = 20
+    subTable = {
+        subValue = 30 // creates a new local table.subTable.subValue with the value 30
+        
+        ..subValue = value // this assigns 10 to the parent subValue (previously 20)
+    }
+}*/
+
 testTable = {
-    cake = "banana",
-    location = "flipout",
-    kid = "max",
+    "zero",
+    "one",
+    "two",
+    "four",
+    "five"
 }
+table.insert(testTable, 3, "three")
+print(testTable)
+testTable[2] = 2.0
+print("after:", testTable)
+print("testTable[2] == 2:", testTable[2] == 2)
 
-for(v in testTable)
-{
-    print("value: " v)
-}
 
-for(k,v in testTable)
-{
-    print("key: ", k, " value: " v)
+testTable[7] = "seven"
+print("testTable[7] == seven:", testTable[7] == "seven")
+print("testTable[6] == nil:", testTable[6] == nil)
+
+print("table:", testTable)
+
+print("this should be nil:", shoe)
+
+
+
+/*
+value = 10
+table = {
+    subValue = 20
+    subTable = {
+        subValue = 30 // creates a new local table.subTable.subValue with the value 30
+        
+        ..subValue = value // this assigns 10 to the parent subValue (previously 20)
+        
+        enclosingTable = .. // we can store the parent table '..' in a local variable
+        enclosingTable.subValue = value // achieves the same as '..subValue = value'.
+        enclosingTable = nil // otherwise we create a circular loop and will hang if we try to log or iterate this table!
+        
+        ...value = 20 // we can go up multiple levels by adding dots, this modifies the variable created at the top level on the first line
+        
+        testValue = 1
+        
+        testFunction = function(valueToSet) { // the same rules apply for functions
+            ..testValue = value + 1 // 21 the first time, 101 the second, remember we can always *read* the higher level variables directly
+            ....value = valueToSet // 4 dots this time to modify
+        }
+
+        testFunction(100)
+    }
+    
+    outsideFunc = subTable.testFunction // we can grab a reference to that subTable's function and call it directly here
+    outsideFunc(200) // ..value is now 200. '....value' still works, because we find variables relative to where the function was defined, not where it is called
+    thisFuncDoesntExist() // error examples/scope.tui:27:attempt to call missing function: thisFuncDoesntExist()
 }
+*/

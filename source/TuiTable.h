@@ -176,11 +176,11 @@ public://functions
             bool expressionPass = true;
             
             TuiRef* expressionResult = TuiRef::loadExpression(s,
-                                                             endptr,
-                                                             nullptr, //existing
-                                                             nullptr, //leftValue
-                                                             this, //parent
-                                                             debugInfo);
+                                                              endptr,
+                                                              nullptr, //existing
+                                                              nullptr, //leftValue
+                                                              this, //parent
+                                                              debugInfo);
             s = tuiSkipToNextChar(*endptr, debugInfo);
             if(expressionResult)
             {
@@ -360,13 +360,14 @@ public://functions
         int finalIndex = -1;
         
         TuiRef* existingObjectRef = loadValue(s,
-                                    endptr,
-                                    nullptr,
-                                    this,
-                                    debugInfo,
-                                    &enclosingRef,
-                                    &finalKey,
-                                    &finalIndex);
+                                              endptr,
+                                              nullptr,
+                                              this,
+                                              debugInfo,
+                                              true,
+                                              &enclosingRef,
+                                              &finalKey,
+                                              &finalIndex);
         
         s = tuiSkipToNextChar(*endptr, debugInfo, true);
         if((*s == '=' && *(s + 1) != '=') || *s == ':')
@@ -487,23 +488,20 @@ public://functions
                 //todo memory problems in here
                 TuiRef* leftValue = existingObjectRef;
                 
-                if(!leftValue)
+                if(!leftValue && !finalKey.empty())
                 {
-                    if(!finalKey.empty())
-                    {
-                        leftValue = new TuiString(finalKey, this);
-                    }
+                    leftValue = new TuiString(finalKey);
                 }
                 
                 TuiRef* valueRef = leftValue;
                 if(valueRef)
                 {
                     valueRef = TuiRef::loadExpression(s,
-                                                              endptr,
-                                                              nullptr,
-                                                              leftValue,
-                                                              this,
-                                                              debugInfo);
+                                                      endptr,
+                                                      nullptr,
+                                                      leftValue,
+                                                      this,
+                                                      debugInfo);
                     
                     if(!valueRef)
                     {

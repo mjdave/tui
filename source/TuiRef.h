@@ -175,27 +175,29 @@ public: //static functions
     //static TuiRef* initWithHumanReadableFile(const std::string& filePath);
     
     
-    // recursivelyLoadValue2() runs expressions and calls loadValue for each value eg: x * 4 + foo(a.b)
     static TuiRef* loadExpression(const char* str,
                                   char** endptr,
                                   TuiRef* existingValue,
                                   TuiRef* leftValue,
                                   TuiTable* parentTable,
                                   TuiDebugInfo* debugInfo,
-                                  int operatorLevel = Tui_operator_level_default);
+                                  int operatorLevel = Tui_operator_level_default,
+                                  bool allowQuotedStringsAsVariableNames = false); //this is a hack to allow quoted strings as variable names for keys only. This is specifically required to load json files, but applies for all table keys
     
-    // loadValue() is low level, call directly for table keys, but via recursivelyLoadValue2 for values.
-    // parses a single variable name and returns the result eg: foo.bar().array[1+2].x
+    // parses a variable chain and returns the result eg: foo.bar().array[1+2].x
+    // optionally stores the enclosing ref and the final variable name if found
+    // call directly for table keys, but via loadExpression for values.
     static TuiRef* loadValue(const char* str,
-                              char** endptr,
-                              TuiRef* existingValue,
-                              TuiTable* parentTable,
-                              TuiDebugInfo* debugInfo,
-                              
-                              //below are only passed if we are setting a key, giving the caller quick access to the parent to set the value for an uninitialized variable
-                              TuiRef** onSetIfNilFoundEnclosingRef = nullptr,
-                              std::string* onSetIfNilFoundKey = nullptr,
-                              int* onSetIfNilFoundIndex = nullptr);
+                             char** endptr,
+                             TuiRef* existingValue,
+                             TuiTable* parentTable,
+                             TuiDebugInfo* debugInfo,
+                             bool allowQuotedStringsAsVariableNames,//this is a hack to allow quoted strings as variable names for keys only. This is specifically required to load json files, but applies for all table keys
+                             
+                             //below are only passed if we are setting a key, giving the caller quick access to the parent to set the value for an uninitialized variable
+                             TuiRef** onSetIfNilFoundEnclosingRef = nullptr,
+                             std::string* onSetIfNilFoundKey = nullptr,
+                             int* onSetIfNilFoundIndex = nullptr);
     
     static TuiBool* logicalNot(TuiRef* value);
     

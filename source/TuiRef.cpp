@@ -71,7 +71,7 @@ TuiTable* TuiRef::createRootTable()
         const char* cString = stringValue.c_str();
         char* endPtr;
         
-        TuiRef* result = TuiRef::loadValue(cString, &endPtr, nullptr, state, callingDebugInfo);
+        TuiRef* result = TuiRef::loadValue(cString, &endPtr, nullptr, state, callingDebugInfo, false);
         
         return result;
     });
@@ -295,6 +295,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                                        TuiRef* parentRef,
                                        TuiRef* varChainParent,
                                        TuiDebugInfo* debugInfo,
+                                       bool allowQuotedStringsAsVariableNames,
                                        
                                        std::string* onSetKey, //watch out, using the existance of this var to allow "x":5 json quoted key names only. For values, a quoted string is not a valid variable name
                                        int* onSetIndex) //index todo
@@ -316,8 +317,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                                                     existingValue,
                                                  nullptr,
                                                     parent,
-                                                 debugInfo,
-                                                    Tui_operator_level_default);
+                                                 debugInfo);
             return result;
         }
         if(*s == '!')
@@ -330,6 +330,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                                                      parent,
                                                      nullptr,
                                                      debugInfo,
+                                                     allowQuotedStringsAsVariableNames,
                                                      nullptr,
                                                      nullptr);
             if(result)
@@ -422,12 +423,11 @@ static TuiRef* loadSingleValueInternal(const char* str,
             s++;
             s = tuiSkipToNextChar(s, debugInfo);
             TuiRef* index = TuiRef::loadExpression(s,
-                                                    endptr,
-                                                    nullptr,
-                                                 nullptr,
-                                                    parent,
-                                                 debugInfo,
-                                                    Tui_operator_level_default);
+                                                   endptr,
+                                                   nullptr,
+                                                   nullptr,
+                                                   parent,
+                                                   debugInfo);
             
             s = tuiSkipToNextChar(*endptr, debugInfo);
             s++; //']'
@@ -454,7 +454,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
             
             if(indexValue < 0 || indexValue >= ((TuiTable*)varChainParent)->arrayObjects.size())
             {
-                if(!*onSetIndex)
+                if(!onSetIndex)
                 {
                     TuiParseWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Table index:%d beyond bounds:%d", indexValue, (int)((TuiTable*)varChainParent)->arrayObjects.size());
                 }
@@ -502,7 +502,10 @@ static TuiRef* loadSingleValueInternal(const char* str,
                     if(stringBuffer.empty())
                     {
                         singleQuote = true;
-                        allowAsVariableName = false;
+                        if(!allowQuotedStringsAsVariableNames)
+                        {
+                            allowAsVariableName = false;
+                        }
                     }
                 }
             }
@@ -526,7 +529,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                     if(stringBuffer.empty())
                     {
                         doubleQuote = true;
-                        if(!onSetKey) //watch out, using the existance of this var to allow "x":5 json quoted key names only. For values, a quoted string is not a valid variable name
+                        if(!allowQuotedStringsAsVariableNames)
                         {
                             allowAsVariableName = false;
                         }
@@ -588,6 +591,8 @@ static TuiRef* loadSingleValueInternal(const char* str,
         }
         else if(*s == '(' && allowAsVariableName && !stringBuffer.empty())
         {
+            s++;
+            s = tuiSkipToNextChar(s, debugInfo);
             isFunctionCall = true;
             break;
         }
@@ -631,8 +636,14 @@ static TuiRef* loadSingleValueInternal(const char* str,
     s = tuiSkipToNextChar(s, debugInfo, true);
     *endptr = (char*)s;
     
+    
     if(allowAsVariableName)
     {
+        if(onSetKey)
+        {
+            *onSetKey = stringBuffer;
+        }
+        
         TuiRef* resultRef = nullptr;
         if(varChainParent && varChainParent->type() != Tui_ref_type_TABLE)
         {
@@ -658,8 +669,35 @@ static TuiRef* loadSingleValueInternal(const char* str,
         {
             if(isFunctionCall)
             {
-                TuiTable* argsArrayTable = TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
-                s = tuiSkipToNextChar(*endptr, debugInfo, true);
+                TuiTable* argsArrayTable = new TuiTable(parent);//TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
+                
+                while(*s != ')')
+                {
+                    TuiRef* valueRef = TuiRef::loadExpression(s,
+                                                              endptr,
+                                                              nullptr,
+                                                              nullptr,
+                                                              argsArrayTable,
+                                                              debugInfo);
+                    if(!valueRef)
+                    {
+                        valueRef = new TuiRef();
+                    }
+                    
+                    argsArrayTable->arrayObjects.push_back(valueRef);
+                    
+                    s = tuiSkipToNextChar(*endptr, debugInfo);
+                    if(*s == ',')
+                    {
+                        s++;
+                        s = tuiSkipToNextChar(s, debugInfo);
+                    }
+                    
+                }
+                
+                s++; //')'
+                
+                s = tuiSkipToNextChar(s, debugInfo, true);
                 *endptr = (char*)s;
                 resultRef = ((TuiFunction*)resultRef)->call(argsArrayTable, parent, existingValue, debugInfo);
                 if(argsArrayTable)
@@ -678,14 +716,10 @@ static TuiRef* loadSingleValueInternal(const char* str,
         {
             TuiParseWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call missing function:%s", stringBuffer.c_str());
         }
-        
+        return nullptr;
     }
     
-    if(onSetKey)
-    {
-        *onSetKey = stringBuffer;
-    }
-    else if(!stringBuffer.empty())
+    if(!stringBuffer.empty())
     {
         TuiString* tuiString = new TuiString(stringBuffer, parent);
         return tuiString;
@@ -697,15 +731,16 @@ static TuiRef* loadSingleValueInternal(const char* str,
 // parses a variable chain and returns the result eg: foo.bar().array[1+2].x
 // optionally stores the enclosing ref and the final variable name if found
 TuiRef* TuiRef::loadValue(const char* str,
-                           char** endptr,
-                           TuiRef* existingValue,
-                           TuiTable* parentTable,
-                           TuiDebugInfo* debugInfo,
-                           
-                           //below are only passed if there is a chance we are finding a key in order to set its value, giving the caller quick access to the parent to set the value for an uninitialized variable
-                           TuiRef** onSetEnclosingRef,
-                           std::string* onSetKey,
-                           int* onSetIndex) //index todo
+                          char** endptr,
+                          TuiRef* existingValue,
+                          TuiTable* parentTable,
+                          TuiDebugInfo* debugInfo,
+                          bool allowQuotedStringsAsVariableNames,
+                          
+                          //below are only passed if there is a chance we are finding a key in order to set its value, giving the caller quick access to the parent to set the value for an uninitialized variable
+                          TuiRef** onSetEnclosingRef,
+                          std::string* onSetKey,
+                          int* onSetIndex) //index todo
 {
     const char* s = str;
     
@@ -714,7 +749,7 @@ TuiRef* TuiRef::loadValue(const char* str,
     
     while(1)
     {
-        result = loadSingleValueInternal(s, endptr, existingValue, parentTable, varChainParent, debugInfo, onSetKey, onSetIndex);
+        result = loadSingleValueInternal(s, endptr, existingValue, parentTable, varChainParent, debugInfo, allowQuotedStringsAsVariableNames, onSetKey, onSetIndex);
         s = *endptr;
         
         if(*s == '.')
@@ -738,6 +773,16 @@ TuiRef* TuiRef::loadValue(const char* str,
         {
             break;
         }
+        
+        //if we have another value, these are now invalid, we don't want to send one of them back
+        if(onSetKey)
+        {
+            *onSetKey = "";
+        }
+        if(onSetIndex)
+        {
+            *onSetIndex = -1;
+        }
     }
     
     
@@ -756,12 +801,13 @@ TuiBool* TuiRef::logicalNot(TuiRef* value)
 
 
 TuiRef* TuiRef::loadExpression(const char* str,
-                                     char** endptr,
-                                     TuiRef* existingValue,
-                                     TuiRef* leftValue,
-                                     TuiTable* parentTable,
-                                     TuiDebugInfo* debugInfo,
-                                     int operatorLevel)
+                               char** endptr,
+                               TuiRef* existingValue,
+                               TuiRef* leftValue,
+                               TuiTable* parentTable,
+                               TuiDebugInfo* debugInfo,
+                               int operatorLevel,
+                               bool allowQuotedStringsAsVariableNames)// this is a hack to allow quoted strings as variable names for keys only, and is only observed for this purpose (ie only simple var names via the call to loadValue below).
 {
     const char* s = str;
     
@@ -798,14 +844,17 @@ TuiRef* TuiRef::loadExpression(const char* str,
         }
         else
         {
-            leftValue = TuiRef::loadValue(s, endptr, existingValue, parentTable, debugInfo);
+            leftValue = TuiRef::loadValue(s, endptr, existingValue, parentTable, debugInfo, allowQuotedStringsAsVariableNames);
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
         }
         
         if(!leftValue)
         {
             leftValue = existingValue;
-            leftValue->retain();
+            if(!leftValue)
+            {
+                leftValue = new TuiRef(parentTable);
+            }
         }
     }
     
