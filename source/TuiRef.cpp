@@ -62,7 +62,8 @@ TuiTable* TuiRef::createRootTable()
     });
     
     //readValue() reads input from the command line, serializing just the first value, will call functions and load variables
-    rootTable->setFunction("readValue", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    rootTable->setFunction("readValue",
+                           [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         std::string stringValue;
         std::getline(std::cin, stringValue);
         
@@ -71,7 +72,23 @@ TuiTable* TuiRef::createRootTable()
         const char* cString = stringValue.c_str();
         char* endPtr;
         
-        TuiRef* result = TuiRef::loadValue(cString, &endPtr, nullptr, state, callingDebugInfo, false);
+        TuiRef* enclosingRef = nullptr;
+        std::string finalKey = "";
+        int finalIndex = -1;
+        
+        TuiRef* result = TuiRef::loadValue(cString,
+                                           &endPtr,
+                                           nullptr,
+                                           state,
+                                           callingDebugInfo,
+                                           false,
+                                           &enclosingRef,
+                                           &finalKey,
+                                           &finalIndex);
+        if(!result && !finalKey.empty())
+        {
+            result = new TuiString(finalKey);
+        }
         
         return result;
     });
