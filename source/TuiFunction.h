@@ -16,6 +16,10 @@
 class TuiTable;
 class TuiString;
 
+struct TuiFunctionCallData {
+    std::map<uint32_t, TuiRef*> locals; //need to release
+};
+
 
 class TuiFunction : public TuiRef {
     
@@ -53,30 +57,25 @@ public: //static functions
     static TuiRef* runExpression(TuiExpression* expression,
                                  uint32_t* tokenPos,
                                  TuiRef* result,
-                                 TuiTable* functionState,
                                  TuiTable* parent,
                                  TuiTokenMap* tokenMap,
-                                 std::map<uint32_t, TuiRef*>* locals,
-                                 std::map<uint32_t, TuiRef*>* captures,
+                                 TuiFunctionCallData* callData,
                                  TuiDebugInfo* debugInfo,
-                                 TuiRef* assignNewLocal = nullptr);
+                                 std::string* setKey = nullptr,
+                                 TuiRef** enclosingSetRef = nullptr);
     
     static TuiRef* runStatement(TuiStatement* statement,
                                 TuiRef* result,
-                                TuiTable* functionState,
                                 TuiTable* parent,
                                 TuiTokenMap* tokenMap,
-                                std::map<uint32_t, TuiRef*>* locals,
-                                std::map<uint32_t, TuiRef*>* captures,
+                                TuiFunctionCallData* callData,
                                 TuiDebugInfo* debugInfo);
     
     static TuiRef* runStatementArray(std::vector<TuiStatement*>& statements,
                                      TuiRef* result,
-                                     TuiTable* functionState,
                                      TuiTable* parent,
                                      TuiTokenMap* tokenMap,
-                                     std::map<uint32_t,TuiRef*>* locals,
-                                     std::map<uint32_t, TuiRef*>* captures,
+                                     TuiFunctionCallData* callData,
                                      TuiDebugInfo* debugInfo);
 
 public: //class members
@@ -110,8 +109,7 @@ public: //class functions
     TuiRef* call(TuiTable* args,
                  TuiTable* state,
                  TuiRef* existingResult,
-                 TuiDebugInfo* callingDebugInfo,
-                 TuiRef** createdStateTable = nullptr);
+                 TuiDebugInfo* callingDebugInfo);
     //void call(TuiTable* args, std::function<void(TuiRef*)> callback); //todo async
     
     

@@ -36,7 +36,7 @@ example = {
     print("would you like to see an example of user input?")
     value = readValue()
 
-    if (value == "yes")
+    if(value == "yes" or value == "ok")
     {
         print("ok thanks! I hope you find tui useful.")
     }

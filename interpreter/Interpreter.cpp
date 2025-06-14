@@ -1,30 +1,41 @@
 
 #include "Interpreter.h"
 
+enum {
+    TUI_RUN_MODE_RUN_ARGS = 0,
+    TUI_RUN_MODE_RUN_ALL_TESTS,
+    TUI_RUN_MODE_INTERNAL_TESTING
+};
+
+static const int tuiRunMode = TUI_RUN_MODE_RUN_ALL_TESTS;
+
 Interpreter::Interpreter(std::vector<std::string>& args)
 {
-    //TuiRef* debugRef = TuiRef::load(Tui::getResourcePath("examples/testing.tui"));
-   // TuiRef* debugRef = TuiRef::runScriptFile("examples/scope.tui");
-    //debugRef->debugLog();
-    
-    for(auto& arg : args)
+    if(tuiRunMode == TUI_RUN_MODE_RUN_ARGS)
     {
-        TuiRef* scriptRunResult = TuiRef::runScriptFile(Tui::getResourcePath(arg));
+        for(auto& arg : args)
+        {
+            TuiRef* scriptRunResult = TuiRef::runScriptFile(Tui::getResourcePath(arg));
+            if(scriptRunResult)
+            {
+                scriptRunResult->debugLog();
+            }
+        }
+    }
+    else if(tuiRunMode == TUI_RUN_MODE_INTERNAL_TESTING)
+    {
+        TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/testing.tui");
         if(scriptRunResult)
         {
             scriptRunResult->debugLog();
         }
     }
-    
-    //TuiRef* scriptRunResult = TuiRef::runScriptFile("tests/tests.tui");
-    //TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/scope.tui");
-    //TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/functionExpressions.tui");
-    //TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/simpleScript.tui");
-    //TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/functionsAndIfStatements.tui");
-    //TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/mathsAndExpressions.tui");
-   // TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/testing.tui");
-    /*if(scriptRunResult)
+    else if(tuiRunMode == TUI_RUN_MODE_RUN_ALL_TESTS)
     {
-        scriptRunResult->debugLog();
-    }*/
+        TuiRef* scriptRunResult = TuiRef::runScriptFile("tests/tests.tui");
+        if(scriptRunResult)
+        {
+            scriptRunResult->debugLog();
+        }
+    }
 }

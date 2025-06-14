@@ -127,36 +127,50 @@ public://functions
             }
             s = tuiSkipToNextChar(*endptr, debugInfo, false);
             
-            std::map<uint32_t, TuiRef*> captures; //collected at the start, retained, need to release
-            std::map<uint32_t, TuiRef*> locals; //added to as variables are created, pointing to variables that are within this table, including the args. need to release
+            
+            // the code below up until calling the statement is very similar to TuiFunction::call()
+            // changes made here should probably be made there or it all could be factored out.
+            TuiFunctionCallData callData;
             
             for(auto& varNameAndToken : tokenMap.capturedTokensByVarName)
             {
-                if(objectsByStringKey.count(varNameAndToken.first) != 0) //it's an arg
+                TuiTable* parentRef = this;
+                while(parentRef)
                 {
-                    TuiRef* var = objectsByStringKey[varNameAndToken.first];
-                    var->retain();//todo release this
-                    locals[varNameAndToken.second] = var;
-                }
-                else
-                {
-                    TuiTable* parentRef = parent;
-                    while(parentRef)
+                    if(parentRef->objectsByStringKey.count(varNameAndToken.first) != 0)
                     {
-                        if(parentRef->objectsByStringKey.count(varNameAndToken.first) != 0)
-                        {
-                            TuiRef* var = parentRef->objectsByStringKey[varNameAndToken.first];
-                            var->retain();//todo release this
-                            captures[varNameAndToken.second] = var;
-                            break;
-                        }
-                        parentRef = parentRef->parent;
+                        TuiRef* var = parentRef->objectsByStringKey[varNameAndToken.first];
+                        var->retain();//todo release this
+                        callData.locals[varNameAndToken.second] = var;
+                        break;
                     }
-                    
+                    parentRef = parentRef->parent;
                 }
             }
             
-            TuiRef* result = TuiFunction::runStatement(statement,  nullptr,  this, parent, &tokenMap, &locals, &captures, debugInfo);
+            
+            for(auto& parentDepthAndToken : tokenMap.capturedParentTokensByDepthCount)
+            {
+                if(callData.locals.count(parentDepthAndToken.first) == 0)
+                {
+                    TuiTable* parentRef = parent->parent;
+                    for(int i = 1; parentRef && i <= parentDepthAndToken.first; i++)
+                    {
+                        if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
+                        {
+                            uint32_t token = tokenMap.capturedParentTokensByDepthCount[i];
+                            if(callData.locals.count(token) == 0)
+                            {
+                                parentRef->retain();//todo release this
+                                callData.locals[token] = parentRef;
+                            }
+                        }
+                        parentRef = parentRef->parent;
+                    }
+                }
+            }
+            
+            TuiRef* result = TuiFunction::runStatement(statement,  nullptr, parent, &tokenMap, &callData, debugInfo);
             
             if(result)
             {
@@ -358,7 +372,9 @@ public://functions
         TuiRef* enclosingRef = nullptr;
         std::string finalKey = "";
         int finalIndex = -1;
+        bool accessedParentVariable = false;
         
+        //todo should this be released?
         TuiRef* existingObjectRef = loadValue(s,
                                               endptr,
                                               nullptr,
@@ -367,13 +383,19 @@ public://functions
                                               true,
                                               &enclosingRef,
                                               &finalKey,
-                                              &finalIndex);
+                                              &finalIndex,
+                                              &accessedParentVariable);
         
         s = tuiSkipToNextChar(*endptr, debugInfo, true);
         if((*s == '=' && *(s + 1) != '=') || *s == ':')
         {
             s++;
             s = tuiSkipToNextChar(s, debugInfo);
+            
+            if(accessedParentVariable)
+            {
+                existingObjectRef = nullptr;
+            }
             
             TuiRef* valueRef = TuiRef::loadExpression(s,
                                                       endptr,

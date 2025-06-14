@@ -87,10 +87,10 @@ public://functions
     virtual bool boolValue() {return value;}
     virtual bool isEqual(TuiRef* other)
     {
-        /*if(!other)
+        if(!other)
         {
-            return false;
-        }*/
+            return !value;
+        }
         return other->type() == Tui_ref_type_BOOL && ((TuiBool*)other)->value == value;
     }
 

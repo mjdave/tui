@@ -197,7 +197,8 @@ public: //static functions
                              //below are only passed if we are setting a key, giving the caller quick access to the parent to set the value for an uninitialized variable
                              TuiRef** onSetIfNilFoundEnclosingRef = nullptr,
                              std::string* onSetIfNilFoundKey = nullptr,
-                             int* onSetIfNilFoundIndex = nullptr);
+                             int* onSetIfNilFoundIndex = nullptr, //index todo
+                             bool* accessedParentVariable = nullptr);
     
     static TuiBool* logicalNot(TuiRef* value);
     
@@ -215,7 +216,9 @@ public://functions
     void retain() {refCount++;}
     virtual TuiRef* copy() {return new TuiRef(parent);};
     virtual void assign(TuiRef* other) {};
-    virtual bool isEqual(TuiRef* other) {return true;}
+    virtual bool isEqual(TuiRef* other) {
+        return (!other || other->type() == Tui_ref_type_NIL);
+    }
     
     
     virtual uint8_t type() { return Tui_ref_type_NIL; }

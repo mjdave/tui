@@ -315,7 +315,8 @@ static TuiRef* loadSingleValueInternal(const char* str,
                                        bool allowQuotedStringsAsVariableNames,
                                        
                                        std::string* onSetKey, //watch out, using the existance of this var to allow "x":5 json quoted key names only. For values, a quoted string is not a valid variable name
-                                       int* onSetIndex) //index todo
+                                       int* onSetIndex, //index todo
+                                       bool* accessedParentVariable)
 {
     const char* s = str;
     
@@ -348,8 +349,10 @@ static TuiRef* loadSingleValueInternal(const char* str,
                                                      nullptr,
                                                      debugInfo,
                                                      allowQuotedStringsAsVariableNames,
+                                                     
                                                      nullptr,
-                                                     nullptr);
+                                                     nullptr,
+                                                     accessedParentVariable);
             if(result)
             {
                 bool newValue = !result->boolValue();
@@ -579,7 +582,6 @@ static TuiRef* loadSingleValueInternal(const char* str,
         {
             if(*(s+1) == '.') // .. syntax eg. ..foo.x //todo
             {
-                TuiError("Unimplemented");
                 TuiRef* result = parent;
                 while(*(s + 1) == '.')
                 {
@@ -656,7 +658,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
     
     if(allowAsVariableName)
     {
-        if(onSetKey)
+        if(onSetKey && !isFunctionCall) // !isFunctionCall prevents {func()} from adding 'func' to an array, bit of a hack
         {
             *onSetKey = stringBuffer;
         }
@@ -678,6 +680,10 @@ static TuiRef* loadSingleValueInternal(const char* str,
             searchTable = searchTable->parent;
             if(searchTable->objectsByStringKey.count(stringBuffer) != 0)
             {
+                if(accessedParentVariable)
+                {
+                    *accessedParentVariable = true;
+                }
                 resultRef = searchTable->objectsByStringKey[stringBuffer];
             }
         }
@@ -694,7 +700,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                                                               endptr,
                                                               nullptr,
                                                               nullptr,
-                                                              argsArrayTable,
+                                                              parent,
                                                               debugInfo);
                     if(!valueRef)
                     {
@@ -757,7 +763,8 @@ TuiRef* TuiRef::loadValue(const char* str,
                           //below are only passed if there is a chance we are finding a key in order to set its value, giving the caller quick access to the parent to set the value for an uninitialized variable
                           TuiRef** onSetEnclosingRef,
                           std::string* onSetKey,
-                          int* onSetIndex) //index todo
+                          int* onSetIndex, //index todo
+                          bool* accessedParentVariable)
 {
     const char* s = str;
     
@@ -766,7 +773,7 @@ TuiRef* TuiRef::loadValue(const char* str,
     
     while(1)
     {
-        result = loadSingleValueInternal(s, endptr, existingValue, parentTable, varChainParent, debugInfo, allowQuotedStringsAsVariableNames, onSetKey, onSetIndex);
+        result = loadSingleValueInternal(s, endptr, existingValue, parentTable, varChainParent, debugInfo, allowQuotedStringsAsVariableNames, onSetKey, onSetIndex, accessedParentVariable);
         s = *endptr;
         
         if(*s == '.')

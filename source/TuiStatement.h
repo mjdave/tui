@@ -47,9 +47,10 @@ enum {
     Tui_token_or,
     Tui_token_and,
     Tui_token_tableConstruct,
-    Tui_token_childByStringKey, //unused
+    Tui_token_varChain,
     
-    Tui_token_childByArrayIndex, //24
+    Tui_token_childByString, //24
+    Tui_token_childByArrayIndex,
     Tui_token_varName,
     Tui_token_true,
     Tui_token_false,
@@ -79,6 +80,9 @@ struct TuiTokenMap {
     uint32_t tokenIndex = Tui_token_VAR_START_INDEX;
     std::map<uint32_t, TuiRef*> refsByToken; //var names and constants. Captures are not stored here, they are to be loaded when the function is called
     std::map<std::string, uint32_t> capturedTokensByVarName;
+    std::map<std::string, uint32_t> localTokensByVarName;
+    //std::map<uint32_t, std::string> localVarNamesByToken;
+    std::map<int, uint32_t> capturedParentTokensByDepthCount;
 };
 
 

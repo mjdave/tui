@@ -240,38 +240,4 @@ orAndFunction = function()
 
 orAndFunction()
 
-#test5 = testInnerTable.test4 + 1
-#test6 = 3 * 2
-#test7 = 14 / 2
-#test8 = test7 + test3 - 2
-#test9 = test7 * test2 - test5
-#test10 = testInnerTable.test4 + test2 * test3
-#test11 = 1 + 2 * 3 * 4 - 5 * 4 + 12 / 2
-#test12 = (1 + 2) * 4
-#
-#testDave27 = 3 * ((1 + 2) * 3)
-#test14 = 7.5 + (6.5 * 2 - 6.5)
-#test15 = 1/2 + 1.0 / 2.0 + 13.5 + test1/test2
-#
-#testVec2_1_2 = vec2(2,4) / 2.0
-#testVec2_1_4 = vec2(0.5,2) * 2
-#testVec2_1_4b = 2 * vec2(0.5,2)
-#testVec2_4_6 = vec2(1,2) + vec2(3,4)
-#testVec2_2_6 = vec2(1,2) * vec2(2,3)
-#
-#testVec3_1_2_3 = vec3(2,4,6) / 2.0
-#testVec3_1_4_8 = vec3(0.5,2,4.0) * 2
-#testVec3_1_4_0p246 = 2 * vec3(0.5,2,0.123)
-#testVec3_4_6_8 = vec3(1,2,3) + vec3(3,4,5)
-#testVec3_2_6_9 = vec3(1,2,3) * vec3(2,3,3)
-#
-#testVec4_1_2_3_4 = vec4(2,4,6,8) / 2.0
-#testVec4_1_4_8_16 = vec4(0.5,2,4.0,8) * 2
-#testVec4_1_4_0p246_8 = 2 * vec4(0.5,2,0.123,4)
-#testVec4_4_6_8_10 = vec4(1,2,3,4) + vec4(3,4,5,6)
-#testVec4_2_6_9_12 = vec4(1,2,3,4) * vec4(2,3,3,3)
-
-
-################################################
-
 testCommon.printResult()

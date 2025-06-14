@@ -5,10 +5,7 @@ table = {
         subValue = 30 // creates a new local table.subTable.subValue with the value 30
         
         ..subValue = value // this assigns 10 to the parent subValue (previously 20)
-        
-        enclosingTable = .. // we can store the parent table '..' in a local variable
-        enclosingTable.subValue = value // achieves the same as '..subValue = value'.
-        enclosingTable = nil // otherwise we create a circular loop and will hang if we try to log or iterate this table!
+        print(..subValue)
         
         ...value = 20 // we can go up multiple levels by adding dots, this modifies the variable created at the top level on the first line
         
@@ -20,26 +17,23 @@ table = {
         }
 
         testFunction(100)
+
     }
     
     outsideFunc = subTable.testFunction // we can grab a reference to that subTable's function and call it directly here
     outsideFunc(200) // ..value is now 200. '....value' still works, because we find variables relative to where the function was defined, not where it is called
-    thisFuncDoesntExist() // error examples/scope.tui:27:attempt to call missing function: thisFuncDoesntExist()
 }
 
+print(table)
+
 #result:
-#error examples/scope.tui:27:attempt to call missing function: thisFuncDoesntExist()
+#10
 #{
-#    "table" = {
-#        function,
-#        "outsideFunc" = function,
-#        "subTable" = {
-#            function,
-#            "subValue" = 30,
-#            "testFunction" = function,
-#            "testValue" = 101,
-#        },
-#        "subValue" = 10,
+#    "outsideFunc" = function,
+#    "subTable" = {
+#        "subValue" = 30,
+#        "testFunction" = function,
+#        "testValue" = 101,
 #    },
-#    "value" = 200,
+#    "subValue" = 200,
 #}
