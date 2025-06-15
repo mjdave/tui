@@ -1,5 +1,6 @@
 testCommon = require("tests/testCommon.tui")
 assert = testCommon.assert
+getLineNumber = debug.getLineNumber
 
 emptyTable = {}
 assert(emptyTable[2] == nil, "emptyTable[2] == nil")
@@ -239,5 +240,39 @@ orAndFunction = function()
 }
 
 orAndFunction()
+
+chainTable = {
+    sub = {
+        x = "a"
+        func = function()
+        {
+            return "b"
+        }
+
+        varFunc = function(var)
+        {
+            return var
+        }
+    }
+}
+
+testVarChains = function()
+{
+    assert(chainTable.sub.varFunc("d") == "d", getLineNumber())
+    assert("d" == chainTable.sub.varFunc("d") , getLineNumber())
+
+    assert(chainTable.sub.x == "a", getLineNumber())
+    chainTable.sub.x = "c"
+    assert(chainTable.sub.x == "c", getLineNumber())
+    readVar = chainTable.sub.x
+    assert(readVar == "c", getLineNumber())
+    readVar = "d"
+    assert(readVar == "d", getLineNumber())
+    assert(chainTable.sub.x == "c", getLineNumber())
+
+    assert(chainTable.sub.func() == "b", getLineNumber())
+}
+
+testVarChains()
 
 testCommon.printResult()

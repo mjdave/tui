@@ -95,13 +95,13 @@ void serializeValue(const char* str,
         {
             break;
         }
-        else if(*s == '.')
+        else if(*s == '.' || *s == '(')
         {
-            if(*(s+1) == '.') // .. syntax eg. ..var
+            if(*(s+1) == '.' && *s != '(') // .. syntax eg. ..var
             {
                 if(hasFoundInitialValue)
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "..' may only be used at the start of a variable chain or as a standalone var eg. ..var or .., not var..");
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "'..' may only be used at the start of a variable chain or as a standalone var eg. ..var or .., not var..");
                     break;
                 }
                 hasFoundInitialValue = true;
@@ -132,8 +132,103 @@ void serializeValue(const char* str,
             }
             else
             {
-                //todo access child
-                break;
+                if(!stringBuffer.empty())
+                {
+                    uint32_t varToken = 0;
+                    if(singleQuote || doubleQuote)
+                    {
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unable to chain a quoted string");
+                    }
+                    else
+                    {
+                        if(hasFoundInitialValue)
+                        {
+                            if(!varChainStarted)
+                            {
+                                expression->tokens.insert(expression->tokens.begin() + tokenStartPos, Tui_token_varChain); //note tokenStartPos to place before all other tokens
+                                tokenPos++;
+                                varChainStarted = true;
+                            }
+                            
+                            TuiString* stringConstant = new TuiString(stringBuffer, parent);
+                            uint32_t stringConstantToken = tokenMap->tokenIndex++;
+                            varToken = stringConstantToken;
+                            tokenMap->refsByToken[stringConstantToken] = stringConstant;
+                            expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_childByString);
+                            expression->tokens.insert(expression->tokens.begin() + tokenPos++, stringConstantToken); //note if this is a function, the function token gets placed just before this, see below
+                            if(foundVarName)
+                            {
+                                *foundVarName = stringBuffer;
+                            }
+                        }
+                        else
+                        {
+                            hasFoundInitialValue = true;
+                            if(tokenMap->localTokensByVarName.count(stringBuffer) != 0)
+                            {
+                                varToken = tokenMap->localTokensByVarName[stringBuffer];
+                                expression->tokens.insert(expression->tokens.begin() + tokenPos++, varToken);
+                                if(foundVarName)
+                                {
+                                    *foundVarName = stringBuffer;
+                                }
+                            }
+                            else if(tokenMap->capturedTokensByVarName.count(stringBuffer) != 0)
+                            {
+                                varToken = tokenMap->capturedTokensByVarName[stringBuffer];
+                                expression->tokens.insert(expression->tokens.begin() + tokenPos++, varToken);
+                                if(foundVarName)
+                                {
+                                    *foundVarName = stringBuffer;
+                                }
+                                
+                                if(foundVarWasCapture)
+                                {
+                                    *foundVarWasCapture = true;
+                                }
+                            }
+                            else
+                            {
+                                varToken = tokenMap->tokenIndex++;
+                                expression->tokens.insert(expression->tokens.begin() + tokenPos++, varToken);
+                                tokenMap->capturedTokensByVarName[stringBuffer] = varToken;
+                                if(foundVarName)
+                                {
+                                    *foundVarName = stringBuffer;
+                                }
+                                
+                                if(foundVarWasCapture)
+                                {
+                                    *foundVarWasCapture = true;
+                                }
+                            }
+                        }
+                    }
+                    
+                    stringBuffer = "";
+                    
+                    if(*s == '(')
+                    {
+                        s++;
+                        
+                        expression->tokens.insert(expression->tokens.begin() + tokenPos - 1, Tui_token_functionCall);
+                        tokenPos++;
+                        
+                        while(*s != ')' && *s != '\0')
+                        {
+                            if(*s == ',')
+                            {
+                                s++;
+                                s = tuiSkipToNextChar(s, debugInfo);
+                            }
+                            TuiFunction::recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, Tui_operator_level_default);
+                            s = tuiSkipToNextChar(*endptr, debugInfo);
+                        }
+                        
+                        expression->tokens.push_back(Tui_token_end);
+                        tokenPos++;
+                    }
+                }
             }
         }
         else if(*s == '[') //to access array elements
@@ -171,70 +266,10 @@ void serializeValue(const char* str,
              }*/
             
             
-            TuiFunction::serializeFunctionBody(s, endptr, parent, &constructorFunction->tokenMap, debugInfo, &constructorFunction->statements);
+            //TuiFunction::serializeFunctionBody(s, endptr, parent, &constructorFunction->tokenMap, debugInfo, &constructorFunction->statements);
             
-            s = tuiSkipToNextChar(*endptr, debugInfo);
+            //s = tuiSkipToNextChar(*endptr, debugInfo);
             
-        }
-        else if(*s == '(')
-        {
-            s++;
-            
-            if(stringBuffer.empty())
-            {
-                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected '(' at start of value");
-                return;
-            }
-            
-            uint32_t varToken = 0;
-            
-            if(!hasFoundInitialValue)
-            {
-                hasFoundInitialValue = true;
-                
-                if(tokenMap->localTokensByVarName.count(stringBuffer) != 0)
-                {
-                    varToken = tokenMap->localTokensByVarName[stringBuffer];
-                }
-                else if(tokenMap->capturedTokensByVarName.count(stringBuffer) != 0)
-                {
-                    varToken = tokenMap->capturedTokensByVarName[stringBuffer];
-                    if(foundVarWasCapture)
-                    {
-                        *foundVarWasCapture = true;
-                    }
-                }
-                else
-                {
-                    varToken = tokenMap->tokenIndex++;
-                    tokenMap->capturedTokensByVarName[stringBuffer] = varToken;
-                    if(foundVarWasCapture)
-                    {
-                        *foundVarWasCapture = true;
-                    }
-                }
-            }
-            else
-            {
-                TuiError("error");
-            }
-            
-            expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_functionCall);
-            expression->tokens.insert(expression->tokens.begin() + tokenPos++, varToken);
-            
-            while(*s != ')' && *s != '\0')
-            {
-                if(*s == ',')
-                {
-                    s++;
-                }
-                TuiFunction::recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, Tui_operator_level_default);
-                s = tuiSkipToNextChar(*endptr, debugInfo, true);
-            }
-            
-            stringBuffer = "";
-            
-            expression->tokens.push_back(Tui_token_end);
         }
         else
         {
@@ -622,7 +657,8 @@ static TuiStatement* serializeBasicStatement(const char* str,
                                              TuiTable* parent,
                                              TuiTokenMap* tokenMap,
                                              TuiDebugInfo* debugInfo,
-                                             TuiExpression* optionalPreloadedExpression = nullptr,
+                                             bool sharesParentScope,
+                                             TuiExpression* optionalPreloadedExpression = nullptr, //only sent through for the initial statement in a for loop
                                              std::string* preloadedSetKey = nullptr)
 {
     const char* s = str;
@@ -640,6 +676,7 @@ static TuiStatement* serializeBasicStatement(const char* str,
     
     if(expression->tokens[0] == Tui_token_functionCall)
     {
+        //TuiError("todo");
         statement = new TuiStatement(Tui_statement_type_functionCall);
         statement->lineNumber = debugInfo->lineNumber;
         statement->expression = expression;
@@ -649,7 +686,7 @@ static TuiStatement* serializeBasicStatement(const char* str,
         if(*s == '=' && *(s + 1) != '=') // standard x = y assignment
         {
             uint32_t variableTokenToAddToLocals = 0;
-            if(wasLocalCapture && parent->objectsByStringKey.count(localSetKey) == 0)
+            if(wasLocalCapture && (!sharesParentScope || parent->objectsByStringKey.count(localSetKey) == 0) && expression->tokens[0] != Tui_token_varChain) //this doesn't work, we don't store these here
             {
                 expression->tokens.clear(); //remove parent capture. assumes a few things
                 
@@ -708,7 +745,12 @@ static TuiStatement* serializeBasicStatement(const char* str,
     return statement;
 }
 
-TuiStatement* TuiFunction::serializeForStatement(const char* str, char** endptr, TuiTable* parent,  TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo) //entry point is after 'for'
+TuiStatement* TuiFunction::serializeForStatement(const char* str,
+                                                 char** endptr,
+                                                 TuiTable* parent,
+                                                 TuiTokenMap* tokenMap,
+                                                 TuiDebugInfo* debugInfo,
+                                                 bool sharesParentScope) //entry point is after 'for'
 {
     const char* s = str;
     if(*s == '(')
@@ -742,7 +784,7 @@ TuiStatement* TuiFunction::serializeForStatement(const char* str, char** endptr,
         forStatement->lineNumber = debugInfo->lineNumber;
         if(!skipInitializationStatement)
         {
-            forStatement->initialStatement = serializeBasicStatement(s, endptr, parent, tokenMap, debugInfo, expression, &setKey);
+            forStatement->initialStatement = serializeBasicStatement(s, endptr, parent, tokenMap, debugInfo, sharesParentScope, expression, &setKey);
             s = tuiSkipToNextChar(*endptr, debugInfo);
         }
         s++; // ','
@@ -754,12 +796,12 @@ TuiStatement* TuiFunction::serializeForStatement(const char* str, char** endptr,
         s++; // ','
         s = tuiSkipToNextChar(s, debugInfo);
         
-        forStatement->incrementStatement = serializeBasicStatement(s, endptr, parent, tokenMap, debugInfo);
+        forStatement->incrementStatement = serializeBasicStatement(s, endptr, parent, tokenMap, debugInfo, sharesParentScope);
         s = tuiSkipToNextChar(*endptr, debugInfo);
         s++; // ')'
         s = tuiSkipToNextChar(s, debugInfo);
         
-        bool success = serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, &forStatement->statements);
+        bool success = serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, sharesParentScope, &forStatement->statements);
         if(!success)
         {
             return nullptr;
@@ -813,7 +855,7 @@ TuiStatement* TuiFunction::serializeForStatement(const char* str, char** endptr,
         s++; // ')'
         s = tuiSkipToNextChar(s, debugInfo);
         
-        bool success = serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, &forStatement->statements);
+        bool success = serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, sharesParentScope, &forStatement->statements);
         if(!success)
         {
             return nullptr;
@@ -826,7 +868,13 @@ TuiStatement* TuiFunction::serializeForStatement(const char* str, char** endptr,
 }
 
 
-bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiTable* parent, TuiTokenMap* tokenMap, TuiDebugInfo* debugInfo, std::vector<TuiStatement*>* statements)
+bool TuiFunction::serializeFunctionBody(const char* str,
+                                        char** endptr,
+                                        TuiTable* parent,
+                                        TuiTokenMap* tokenMap,
+                                        TuiDebugInfo* debugInfo,
+                                        bool sharesParentScope,
+                                        std::vector<TuiStatement*>* statements)
 {
     const char* s = str;
     if(*s != '{')
@@ -851,7 +899,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiTable
             s+=3;
             s = tuiSkipToNextChar(s, debugInfo);
             
-            TuiStatement* statement = TuiFunction::serializeForStatement(s, endptr, parent, tokenMap, debugInfo);
+            TuiStatement* statement = TuiFunction::serializeForStatement(s, endptr, parent, tokenMap, debugInfo, sharesParentScope);
             if(!statement)
             {
                 return false;
@@ -879,7 +927,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiTable
                 s = tuiSkipToNextChar(s, debugInfo);
             }
             
-            bool success = serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, &statement->statements);
+            bool success = serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, true, &statement->statements);
             if(!success)
             {
                 return false;
@@ -899,7 +947,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiTable
                         currentStatement->elseIfStatement = new TuiIfStatement();
                         currentStatement->elseIfStatement->lineNumber = debugInfo->lineNumber;
                         
-                        bool success = serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, &currentStatement->elseIfStatement->statements);
+                        bool success = serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, true, &currentStatement->elseIfStatement->statements);
                         if(!success)
                         {
                             return false;
@@ -925,7 +973,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiTable
                             s = tuiSkipToNextChar(s, debugInfo);
                         }
                         
-                        bool success = serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, &currentStatement->elseIfStatement->statements);
+                        bool success = serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, true, &currentStatement->elseIfStatement->statements);
                         if(!success)
                         {
                             return false;
@@ -988,7 +1036,7 @@ bool TuiFunction::serializeFunctionBody(const char* str, char** endptr, TuiTable
             break;
         }
         
-        TuiStatement* statement = serializeBasicStatement(s, endptr, parent, tokenMap, debugInfo);
+        TuiStatement* statement = serializeBasicStatement(s, endptr, parent, tokenMap, debugInfo, sharesParentScope);
         statements->push_back(statement);
         
         s = *endptr;
@@ -1063,7 +1111,7 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
             s = tuiSkipToNextChar(s, debugInfo);
         }
         
-        bool success = serializeFunctionBody(s, endptr, parent, &mjFunction->tokenMap, debugInfo, &mjFunction->statements);
+        bool success = serializeFunctionBody(s, endptr, parent, &mjFunction->tokenMap, debugInfo, false, &mjFunction->statements);
         if(!success)
         {
             delete mjFunction;
@@ -1122,27 +1170,28 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     args = new TuiTable(parent);
                     arg->retain();
                     args->arrayObjects.push_back(arg);
-                }
-                
-                (*tokenPos)++;
-                
-                while(expression->tokens[*tokenPos] != Tui_token_end)
-                {
-                    arg = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, enclosingSetRef);
-                    if(!arg)
-                    {
-                        arg = new TuiRef(parent);
-                    }
-                    else
-                    {
-                        arg->retain();
-                    }
-                    
-                    args->arrayObjects.push_back(arg);
                     
                     (*tokenPos)++;
+                    
+                    while(expression->tokens[*tokenPos] != Tui_token_end)
+                    {
+                        arg = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, enclosingSetRef);
+                        if(!arg)
+                        {
+                            arg = new TuiRef(parent);
+                        }
+                        else
+                        {
+                            arg->retain();
+                        }
+                        
+                        args->arrayObjects.push_back(arg);
+                        
+                        (*tokenPos)++;
+                    }
+                    (*tokenPos)++;
                 }
-                (*tokenPos)++;
+                
                 
                 TuiRef* functionResult = ((TuiFunction*)functionVar)->call(args, parent, result, debugInfo);
                 if(args)
@@ -1380,18 +1429,21 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_varChain:
             {
                 (*tokenPos)++;
-                
                 TuiRef* chainParent = nullptr;
                 TuiRef* chainResult = parent;
-                while(expression->tokens[*tokenPos] != Tui_token_end)
+                while(1)
                 {
                     if(chainResult->type() != Tui_ref_type_TABLE)
                     {
-                        TuiError("Unimplemented");
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected table");
                     }
                     chainParent = chainResult;
                     chainResult = runExpression(expression, tokenPos, result, (TuiTable*)chainResult, tokenMap, callData, debugInfo, setKey, enclosingSetRef);
                     (*tokenPos)++;
+                    if(expression->tokens[*tokenPos] == Tui_token_end)
+                    {
+                        break;
+                    }
                 }
                 
                 if(enclosingSetRef)
@@ -1405,6 +1457,14 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_childByString:
             {
                 (*tokenPos)++;
+                bool isFunctionCall = false;
+                if(expression->tokens[*tokenPos] == Tui_token_functionCall)
+                {
+                    isFunctionCall = true;
+                    (*tokenPos)++;
+                }
+                
+                
                 TuiRef* keyConstant = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, enclosingSetRef);
                 if(keyConstant->type() != Tui_ref_type_STRING)
                 {
@@ -1416,19 +1476,77 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 {
                     TuiRef* child = parent->objectsByStringKey[((TuiString*)keyConstant)->value];
                     
-                    if(enclosingSetRef)
+                    if(isFunctionCall)
                     {
-                        *enclosingSetRef = parent;
-                        *setKey = ((TuiString*)keyConstant)->value;
-                    }
-                    
-                    if(result && result->type() == child->type())
-                    {
-                        result->assign(child);
+                        if(!child || child->type() != Tui_ref_type_FUNCTION)
+                        {
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected function");
+                            return nullptr;
+                        }
+                        
+                        TuiTable* args = nullptr;
+                        (*tokenPos)++;
+                        TuiRef* arg = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, enclosingSetRef);
+                        
+                        if(arg)
+                        {
+                            args = new TuiTable(parent);
+                            arg->retain();
+                            args->arrayObjects.push_back(arg);
+                            
+                            (*tokenPos)++;
+                            
+                            while(expression->tokens[*tokenPos] != Tui_token_end)
+                            {
+                                arg = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, enclosingSetRef);
+                                if(!arg)
+                                {
+                                    arg = new TuiRef(parent);
+                                }
+                                else
+                                {
+                                    arg->retain();
+                                }
+                                
+                                args->arrayObjects.push_back(arg);
+                                
+                                (*tokenPos)++;
+                            }
+                        }
+                        
+                        
+                        TuiRef* functionResult = ((TuiFunction*)child)->call(args, parent, result, debugInfo);
+                        if(args)
+                        {
+                            args->release();
+                        }
+                        
+                        if(result && result->type() == functionResult->type())
+                        {
+                            result->assign(functionResult);
+                        }
+                        else
+                        {
+                            return functionResult;
+                        }
                     }
                     else
                     {
-                        return child;
+                        // todo maybe ++
+                        if(enclosingSetRef)
+                        {
+                            *enclosingSetRef = parent;
+                            *setKey = ((TuiString*)keyConstant)->value;
+                        }
+                        
+                        if(result && result->type() == child->type())
+                        {
+                            result->assign(child);
+                        }
+                        else
+                        {
+                            return child;
+                        }
                     }
                 }
                 return nullptr;
@@ -1968,7 +2086,9 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 }
                 else
                 {
+                    newValue = newValue->copy();
                     parent->set(statement->varName, newValue); //set a new local
+                    newValue->release();
                 }
                     
                 uint32_t token = 0;

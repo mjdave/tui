@@ -120,7 +120,7 @@ public://functions
             
             TuiTokenMap tokenMap;
             
-            TuiStatement* statement = TuiFunction::serializeForStatement(s, endptr, this, &tokenMap, debugInfo);
+            TuiStatement* statement = TuiFunction::serializeForStatement(s, endptr, this, &tokenMap, debugInfo, true);
             if(!statement)
             {
                 return false;

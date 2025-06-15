@@ -44,13 +44,15 @@ public: //static functions
                                       TuiTable* parent,
                                       TuiTokenMap* tokenMap,
                                       TuiDebugInfo* debugInfo,
+                                      bool sharesParentScope,
                                       std::vector<TuiStatement*>* statements);
     
     static TuiStatement* serializeForStatement(const char* str,
                                                   char** endptr,
                                                   TuiTable* parent,
                                                   TuiTokenMap* tokenMap,
-                                                  TuiDebugInfo* debugInfo);
+                                                  TuiDebugInfo* debugInfo,
+                                               bool sharesParentScope);
     
     
     
