@@ -37,6 +37,7 @@ public: //static functions
                                                TuiDebugInfo* debugInfo,
                                                int operatorLevel,
                                                std::string* setKey = nullptr,
+                                               int* setIndex = nullptr,
                                                uint32_t subExpressionTokenStartPos = UINT32_MAX);
     
     static bool serializeFunctionBody(const char* str,
@@ -64,6 +65,7 @@ public: //static functions
                                  TuiFunctionCallData* callData,
                                  TuiDebugInfo* debugInfo,
                                  std::string* setKey = nullptr,
+                                 int* setIndex = nullptr,
                                  TuiRef** enclosingSetRef = nullptr);
     
     static TuiRef* runStatement(TuiStatement* statement,

@@ -2,84 +2,17 @@ testCommon = require("tests/testCommon.tui")
 assert = testCommon.assert
 getLineNumber = debug.getLineNumber
 
-chainTable = {
-    sub = {
-        x = "a"
-        func = function()
-        {
-            return "b"
-        }
-
-        varFunc = function(var)
-        {
-            return var
-        }
-    }
+testArray = {
+    "zero",
+    "one",
+    "two",
 }
 
-testVarChains = function()
+testArrayFunc = function()
 {
-    assert(chainTable.sub.varFunc("d") == "d", debug.getLineNumber())
-    assert("d" == chainTable.sub.varFunc("d") , getLineNumber())
-
-    assert(chainTable.sub.x == "a", getLineNumber())
-    chainTable.sub.x = "c"
-    assert(chainTable.sub.x == "c", getLineNumber())
-    readVar = chainTable.sub.x
-    assert(readVar == "c", getLineNumber())
-    readVar = "d"
-    assert(readVar == "d", getLineNumber())
-    assert(chainTable.sub.x == "c", getLineNumber())
-
-    assert(chainTable.sub.func() == "b", getLineNumber())
+    testArray[2] = "giraffe"
+    print(testArray[2])
+    assert(testArray[2], "giraffe")
 }
 
-testVarChains()
-
-
-/*testCommon = require("tests/testCommon.tui")
-assert = testCommon.assert
-getLineNumber = debug.getLineNumber
-
-scopeA = "a"
-testScopeFunction = function()
-{
-    assert(scopeA == "a", getLineNumber())
-    scopeA = "b"
-    assert(scopeA == "b", getLineNumber())
-    print(scopeA)
-    print(..scopeA)
-    assert(..scopeA == "b", getLineNumber())
-}
-
-testScopeFunction()*/
-
-
-/*testCommon = require("tests/testCommon.tui")
-assert = testCommon.assert
-
-array = {1,2,3,4,5}
-sum = 0
-for(object in array)
-{
-    sum = sum + object
-}
-assert(sum == 15, "for array loop")
-
-sum = 0
-for(index,object in array)
-{
-    sum = sum + object + index
-}
-assert(sum == 25, "for array index loop")
-
-
-scopeA = "a"
-testScopeFunction = function()
-{
-    scopeA = "b"
-    print(scopeA)
-    print(..scopeA)
-}
-
-testScopeFunction()*/
+testArrayFunc()

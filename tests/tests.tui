@@ -275,4 +275,51 @@ testVarChains = function()
 
 testVarChains()
 
+scopeA = "a"
+testScopeFunction = function()
+{
+    assert(scopeA == "a", getLineNumber())
+    scopeA = "b"
+    assert(scopeA == "b", getLineNumber())
+    assert(..scopeA == "a", getLineNumber())
+}
+
+testScopeFunction()
+
+testArray = {
+    "zero",
+    "one",
+    "two",
+    {
+        "rock",
+        "paper",
+        function()
+        {
+            return "scissors"
+        }
+    }
+}
+
+testArrayFunc = function()
+{
+    two = testArray[1+1]
+    assert(two == "two", getLineNumber())
+    assert(testArray[1+1] == "two", getLineNumber())
+    assert(testArray[3][1] == "paper", getLineNumber())
+    assert(testArray[3][2]() == "scissors", getLineNumber())
+
+    two = 1
+    two++
+    assert(two == 2, getLineNumber())
+    two+=2
+    assert(two == 4, getLineNumber())
+
+    testArray[2] = "giraffe"
+    assert(testArray[2] == "giraffe", getLineNumber())
+}
+
+testArrayFunc()
+
+
+
 testCommon.printResult()
