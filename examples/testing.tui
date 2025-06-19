@@ -2,51 +2,32 @@ testCommon = require("tests/testCommon.tui")
 assert = testCommon.assert
 getLineNumber = debug.getLineNumber
 
-testVar = "a"
-testFunc = function()
+testTableConstructorFunc = function()
 {
-    innerFunc = function()
-    {
-        innerInnerFunc = function()
+    constructedTable = {
+        numberSixty = 57 + 3
+        func = function(val)
         {
-            ....testVar = "b"
-            print(testVar)
+            if(val == 0)
+            {
+                return "hello"
+            }
+            else
+            {
+                return "goodbye"
+            }
         }
-        print("before 1:", testVar)
-        innerInnerFunc()
-        print("after 1:", testVar)
+        "zero",
+        "one",
+        "two"
     }
-    print("before 2:", testVar)
-    innerFunc()
-    print("after 2:", testVar)
+
+    return constructedTable
 }
-testFunc()
 
-print(testVar)
-assert(testVar == "b", getLineNumber())
-
-#testTableConstructorFunc = function()
-#{
-#    constructedTable = {
-#        #value = "text"
-#        #numberSixty = 57 + 3
-#        func = function(val)
-#        {
-#            if(val == 0)
-#            {
-#                return "hello"
-#            }
-#            else
-#            {
-#                return "goodbye"
-#            }
-#        }
-#    }
-#
-#    return constructedTable
-#}
-#
-#constructedTableLocal = testTableConstructorFunc()
-#print(constructedTableLocal)
-#
+constructedTableLocal = testTableConstructorFunc()
+assert(constructedTableLocal.func(0) == "hello", getLineNumber())
+assert(constructedTableLocal.func(1) == "goodbye", getLineNumber())
+assert(constructedTableLocal[1] == "one", getLineNumber())
+assert(constructedTableLocal.numberSixty == 60, getLineNumber())
 

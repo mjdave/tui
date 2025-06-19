@@ -320,6 +320,53 @@ testArrayFunc = function()
 
 testArrayFunc()
 
+testVar = "a"
+testFunc = function()
+{
+    innerTable = {
+        innerFunc = function()
+        {
+            innerInnerFunc = function()
+            {
+                .....testVar = "b"
+            }
+            innerInnerFunc()
+        }
+        innerFunc()
+    }
+}
+testFunc()
+assert(testVar == "b", getLineNumber())
+
+testTableConstructorFunc = function()
+{
+    constructedTable = {
+        numberSixty = 57 + 3
+        func = function(val)
+        {
+            if(val == 0)
+            {
+                return "hello"
+            }
+            else
+            {
+                return "goodbye"
+            }
+        }
+        "zero",
+        "one",
+        "two"
+    }
+
+    return constructedTable
+}
+
+constructedTableLocal = testTableConstructorFunc()
+assert(constructedTableLocal.func(0) == "hello", getLineNumber())
+assert(constructedTableLocal.func(1) == "goodbye", getLineNumber())
+assert(constructedTableLocal[1] == "one", getLineNumber())
+assert(constructedTableLocal.numberSixty == 60, getLineNumber())
+
 
 
 testCommon.printResult()

@@ -92,7 +92,7 @@ void serializeValue(const char* str,
             stringBuffer += *s;
             escaped = false;
         }
-        else if(*s == '#' || *s == '\n' || *s == ',' || isspace(*s) || *s == ')' || *s == ']' || TuiExpressionOperatorsSet.count(*s) != 0)
+        else if(*s == '#' || *s == '\n' || *s == ',' || isspace(*s) || *s == ')' || *s == '}' || *s == ']' || TuiExpressionOperatorsSet.count(*s) != 0)
         {
             break;
         }
@@ -278,7 +278,9 @@ void serializeValue(const char* str,
             tokenMap->refsByToken[constructorFunctionToken] = constructorFunction;
             
             constructorFunction->tokenMap.tokenIndex = tokenMap->tokenIndex + 1;
-            bool success = TuiFunction::serializeFunctionBody(s, endptr, parent, &constructorFunction->tokenMap, debugInfo, true, &constructorFunction->statements);
+            
+            TuiTable* subParent = new TuiTable(parent);
+            bool success = TuiFunction::serializeFunctionBody(s, endptr, subParent, &constructorFunction->tokenMap, debugInfo, true, &constructorFunction->statements);
             if(!success)
             {
                 return;
@@ -742,7 +744,12 @@ static TuiStatement* serializeBasicStatement(const char* str,
     }
     else
     {
-        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected '=' variable assignment or function call");
+        TuiFunction::recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, Tui_operator_level_default, nullptr, nullptr, 0);
+        statement = new TuiStatement(Tui_statement_type_value);
+        s = tuiSkipToNextChar(*endptr, debugInfo, true);
+        
+        statement->lineNumber = debugInfo->lineNumber;
+        statement->expression = expression;
     }
     
     *endptr = (char*)s;
@@ -2069,6 +2076,18 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             runExpression(statement->expression, &tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
         }
             break;
+        case Tui_statement_type_value:
+        {
+            uint32_t tokenPos = 0;
+            TuiRef* newResult = runExpression(statement->expression, &tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
+            if(newResult)
+            {
+                TuiRef* copiedResult = newResult->copy();
+                parent->arrayObjects.push_back(copiedResult);
+                newResult->release();
+            }
+        }
+            break;
         case Tui_statement_type_varAssign:
         {
             uint32_t tokenPos = 0;
@@ -2435,7 +2454,7 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
         }
     }
     
-    TuiTable* functionStateTable = new TuiTable(parent);
+    TuiTable* functionStateTable = new TuiTable(state);
     
     TuiRef* result = runStatementArray(statements,  existingResult, functionStateTable, &tokenMap, &callData, &debugInfo);
     if(result)

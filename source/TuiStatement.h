@@ -58,13 +58,14 @@ enum {
     Tui_token_forCollectionLoopValues,
     Tui_token_functionDeclaration,
     
-    Tui_token_VAR_START_INDEX
+    Tui_token_VAR_START_INDEX //32
 };
 
 enum {
     Tui_statement_type_return = 0,
     Tui_statement_type_returnExpression,
-    Tui_statement_type_varAssign,
+    Tui_statement_type_varAssign, // x = expression assignment
+    Tui_statement_type_value, // expression result will be added to arrayObjects
     Tui_statement_type_varModify, // += ++ etc
     Tui_statement_type_functionCall,
     Tui_statement_type_if,
