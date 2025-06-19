@@ -51,9 +51,9 @@ public://functions
         }
     };
     
-    virtual TuiTable* copy()
+    virtual TuiTable* copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables and functions are treated like pointers
     {
-        TuiError("TuiTable copy() unimplemented");
+        retain();
         return this;
     }
 

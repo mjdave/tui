@@ -113,7 +113,7 @@ TuiTable* TuiRef::createRootTable()
         {
             return new TuiString(args->arrayObjects[0]->getTypeName());
         }
-        return nullptr;
+        return new TuiString("nil");
     });
     
     //************

@@ -27,7 +27,7 @@ public: //static functions
     static TuiFunction* initWithHumanReadableString(const char* str,
                                                     char** endptr,
                                                     TuiTable* parent,
-                                                    TuiDebugInfo* debugInfo);
+                                                    TuiDebugInfo* debugInfo, bool createStateSubTable = false);
     
     static bool recursivelySerializeExpression(const char* str,
                                                char** endptr,
@@ -97,9 +97,10 @@ public: //class functions
     TuiFunction(std::function<TuiRef*(TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> func_, TuiTable* parent_);
     virtual ~TuiFunction();
     
-    virtual TuiFunction* copy()
+    virtual TuiFunction* copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables and functions are treated like pointers
     {
-        return new TuiFunction(parent);
+        retain();
+        return this;
     }
     
     
@@ -114,6 +115,11 @@ public: //class functions
                  TuiTable* state,
                  TuiRef* existingResult,
                  TuiDebugInfo* callingDebugInfo);
+    
+    TuiRef* runTableConstruct(TuiTable* state,
+                 TuiRef* existingResult,
+                 TuiDebugInfo* callingDebugInfo);
+    
     //void call(TuiTable* args, std::function<void(TuiRef*)> callback); //todo async
     
     

@@ -7,7 +7,7 @@ enum {
     TUI_RUN_MODE_INTERNAL_TESTING
 };
 
-static const int tuiRunMode = TUI_RUN_MODE_RUN_ARGS;
+static const int tuiRunMode = TUI_RUN_MODE_RUN_ALL_TESTS;
 
 Interpreter::Interpreter(std::vector<std::string>& args)
 {

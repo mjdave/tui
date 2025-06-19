@@ -56,6 +56,7 @@ enum {
     Tui_token_false,
     Tui_token_forCollectionLoopKeyValue,
     Tui_token_forCollectionLoopValues,
+    Tui_token_functionDeclaration,
     
     Tui_token_VAR_START_INDEX
 };
