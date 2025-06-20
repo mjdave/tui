@@ -118,8 +118,8 @@ clear()                 // clears the console when run from a command line
 require(path)   // loads the given tui file, path is relative to the tui binary (for now)
 type()          // returns the type name of the given object, eg. 'table', 'string', 'number', 'vec4', 'bool'
 
-debug.getLineNumber()           // returns the line number in the current script file
 debug.getFileName()             // returns the current script file name or debug identifier string
+debug.getLineNumber()           // returns the line number in the current script file
 
 table.insert(table, index, value)   // insert into an array, specifying the index
 table.insert(table,value)           // to add to the end of an array

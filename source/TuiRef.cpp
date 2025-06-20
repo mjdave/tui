@@ -124,15 +124,16 @@ TuiTable* TuiRef::createRootTable()
     debugTable->release();
     
     
+    //debug.getFileName() returns the current script file name or debug identifier string
+    debugTable->setFunction("getFileName", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        return new TuiString(callingDebugInfo->fileName);
+    });
+    
     //debug.getLineNumber() returns the line number in the current script file
     debugTable->setFunction("getLineNumber", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         return new TuiNumber(callingDebugInfo->lineNumber);
     });
     
-    //debug.getFileName() returns the current script file name or debug identifier string
-    debugTable->setFunction("getFileName", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        return new TuiString(callingDebugInfo->fileName);
-    });
     
     //************
     //table
@@ -171,7 +172,7 @@ TuiTable* TuiRef::createRootTable()
             {
                 TuiRef* addObject = args->arrayObjects[1];
                 addObject->retain();
-                args->arrayObjects.push_back(addObject);
+                ((TuiTable*)tableRef)->arrayObjects.push_back(addObject);
             }
         }
         else

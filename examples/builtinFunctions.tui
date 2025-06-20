@@ -1,23 +1,51 @@
+randomValue = random(1.0)           // provides a floating point value between 0 and max (default 1.0)
+print("randomValue:", randomValue)
 
-numA = random(8)
-print("numA:", numA)
-print("random(8):", random(8))
-print("random(8):", random(8))
-print("random(8):", random(8))
-print("random(8):", random(8))
+randomIntValue = randomInt(100)     // provides an integer from 0 to (max - 1) with a default of 2.
+print("randomIntValue:", randomIntValue)
 
-random(8)
-random(8)
-random(8)
+numberType = type(randomIntValue)   // returns the type name of the given object, eg. 'table', 'string', 'number', 'vec4', 'bool'
+print("numberType:", numberType)
 
+fileName = debug.getFileName()      // returns the current script file name or debug identifier string
+print("fileName:", fileName)
 
-random(8.5)
-random(8.5)
-random(8.5)
+lineNumber = debug.getLineNumber()  // returns the line number in the current script file
+print("lineNumber:", lineNumber)
 
-random()
-random()
-random()
+testTable = {}
 
+table.insert(testTable, 3, "three")   // insert into an array, specifying the index
+print("testTable:", testTable)
+print("object at index 3:", testTable[3])
 
-print("Hello World!")
+table.insert(testTable,"four")           // to add to the end of an array
+print("testTable after adding four:", testTable)
+
+// also available, but not demonstrated in this example are:
+//
+//  print(msg1, msg2, ...)  // print values, args are concatenated together
+//  readValue()             // reads input from the command line, serializing just the first value, doesn't (shouldn't!) call functions or load variables
+//  clear()                 // clears the console when run from a command line
+//  require(path)           // loads the given tui file, path is relative to the tui binary (for now)
+
+// example output:
+// randomValue:0.16663468310918411
+// randomIntValue:62
+// numberType:number
+// fileName:examples/testing.tui
+// lineNumber:13
+// testTable:{
+//     nil,
+//     nil,
+//     nil,
+//     three,
+// }
+// object at index 3:three
+// testTable after adding four:{
+//     nil,
+//     nil,
+//     nil,
+//     three,
+//     four,
+// }
