@@ -58,7 +58,11 @@ enum {
     Tui_token_forCollectionLoopValues,
     Tui_token_functionDeclaration,
     
-    Tui_token_VAR_START_INDEX //32
+    Tui_token_vec2, //32
+    Tui_token_vec3,
+    Tui_token_vec4,
+    
+    Tui_token_VAR_START_INDEX
 };
 
 enum {
@@ -83,7 +87,6 @@ struct TuiTokenMap {
     std::map<uint32_t, TuiRef*> refsByToken; //var names and constants. Captures are not stored here, they are to be loaded when the function is called
     std::map<std::string, uint32_t> capturedTokensByVarName;
     std::map<std::string, uint32_t> localTokensByVarName;
-    //std::map<uint32_t, std::string> localVarNamesByToken;
     std::map<int, uint32_t> capturedParentTokensByDepthCount;
 };
 

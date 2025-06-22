@@ -367,6 +367,29 @@ assert(constructedTableLocal.func(1) == "goodbye", getLineNumber())
 assert(constructedTableLocal[1] == "one", getLineNumber())
 assert(constructedTableLocal.numberSixty == 60, getLineNumber())
 
+testVecs = function()
+{
+    a = vec2(1,2)
+    a.x = 2
+    a.y = 3
 
+    b = vec3(1,2,3)
+    b.x = 2
+    b.y = 3
+    b.z = a.x * b.x
+
+    c = vec4(1,2,3,4)
+    c.x = 2
+    c.y = 3
+    c.z = 4
+    c.w = 5
+
+    assert(c.w == 5, getLineNumber())
+    assert(a == vec2(2,3), getLineNumber())
+    assert(b == vec3(2,3,4), getLineNumber())
+    assert(c == vec4(2,3,4,5), getLineNumber())
+}
+
+testVecs()
 
 testCommon.printResult()

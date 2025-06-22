@@ -234,21 +234,12 @@ void serializeValue(const char* str,
                 {
                     s++;
                     
-                    
                     if(!varChainStarted)
                     {
                         expression->tokens.insert(expression->tokens.begin() + tokenStartPos, Tui_token_varChain); //note tokenStartPos to place before all other tokens
                         tokenPos++;
                         varChainStarted = true;
                     }
-                    
-                    /*double value = strtod(s, endptr);
-                    s = tuiSkipToNextChar(*endptr, debugInfo);
-                    s++; //]
-                    s = tuiSkipToNextChar(s, debugInfo);
-                    TuiNumber* number = new TuiNumber(value, parent);
-                    uint32_t constantNumberToken = tokenMap->tokenIndex++;
-                    tokenMap->refsByToken[constantNumberToken] = number;*/
                     expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_childByArrayIndex);
                     TuiFunction::recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, Tui_operator_level_default);
                     tokenPos = (int)expression->tokens.size();
@@ -286,21 +277,99 @@ void serializeValue(const char* str,
                 return;
             }
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
-            //s++; // '}'
-            //s = tuiSkipToNextChar(s, debugInfo);
         }
         else
         {
+            bool foundBuiltInType = false;
+            
+            if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 4) == '(')
+            {
+                int vecCount = 0;
+                switch(*(s + 3))
+                {
+                    case '2':
+                    {
+                        vecCount = 2;
+                        expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_vec2);
+                    }
+                        break;
+                    case '3':
+                    {
+                        vecCount = 3;
+                        expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_vec3);
+                    }
+                        break;
+                    case '4':
+                    {
+                        vecCount = 4;
+                        expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_vec4);
+                    }
+                        break;
+                }
+                
+                if(vecCount > 0)
+                {
+                    foundBuiltInType = true;
+                    
+                    s+= 5;
+                    s = tuiSkipToNextChar(s, debugInfo);
+                    
+                    
+                    tokenPos++;
+                    
+                    int argCount = 0;
+                    while(*s != ')' && *s != '\0' && argCount < vecCount)
+                    {
+                        if(*s == ',')
+                        {
+                            s++;
+                            s = tuiSkipToNextChar(s, debugInfo);
+                        }
+                        TuiFunction::recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, Tui_operator_level_default);
+                        s = tuiSkipToNextChar(*endptr, debugInfo);
+                        argCount++;
+                    }
+                }
+            }
+            
             TuiFunction* functionRef = TuiFunction::initWithHumanReadableString(s, endptr, parent, debugInfo, true);
             if(functionRef)
             {
+                foundBuiltInType = true;
                 expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_functionDeclaration);
                 uint32_t functionToken = tokenMap->tokenIndex++;
                 expression->tokens.insert(expression->tokens.begin() + tokenPos++, functionToken);
                 tokenMap->refsByToken[functionToken] = functionRef;
                 s = tuiSkipToNextChar(*endptr, debugInfo, true);
             }
-            else
+            
+            //todo maybe?
+            /*
+             
+             if(*s == 'n'
+                && *(s + 1) == 'i'
+                && *(s + 2) == 'l')
+             {
+                 s+=3;
+                 s = tuiSkipToNextChar(s, debugInfo, true);
+                 *endptr = (char*)s;
+                 
+                 return new TuiRef(parent);
+             }
+             else if(*s == 'n'
+                     && *(s + 1) == 'u'
+                     && *(s + 2) == 'l'
+                     && *(s + 3) == 'l')
+             {
+                 s+=4;
+                 s = tuiSkipToNextChar(s, debugInfo, true);
+                 *endptr = (char*)s;
+                 return new TuiRef(parent);
+             }
+             */
+            
+            
+            if(!foundBuiltInType)
             {
                 stringBuffer += *s;
             }
@@ -449,12 +518,6 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
             serializeValue(s, endptr, expression, parent, tokenMap, tokenStartPos, debugInfo, setKey);
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
         }
-        /*
-        else if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && (*(s + 3) == '2' || *(s + 3) == '3' || *(s + 3) == '4'))
-        {
-            TuiError("Unimplemented");
-            //todo elsewhere
-        }*/
     }
         
     char operatorChar = *s;
@@ -1219,6 +1282,109 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 
             }
                 break;
+            case Tui_token_vec2:
+            case Tui_token_vec3:
+            case Tui_token_vec4:
+            {
+                (*tokenPos)++;
+                
+                TuiRef* x = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                (*tokenPos)++;
+                
+                if(!x || x->type() != Tui_ref_type_NUMBER)
+                {
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "x component expected number, got:%s", (x ? x->getDebugString().c_str() : "nil"));
+                    return nullptr;
+                }
+                
+                TuiRef* y = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                (*tokenPos)++;
+                
+                if(!y || y->type() != Tui_ref_type_NUMBER)
+                {
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "y component expected number, got:%s", (y ? y->getDebugString().c_str() : "nil"));
+                    return nullptr;
+                }
+                
+                switch (token) {
+                    case Tui_token_vec2:
+                        {
+                            if(result && result->type() == Tui_ref_type_VEC2)
+                            {
+                                ((TuiVec2*)result)->value.x = ((TuiNumber*)x)->value;
+                                ((TuiVec2*)result)->value.y = ((TuiNumber*)y)->value;
+                            }
+                            else
+                            {
+                                TuiVec2* newResultVec = new TuiVec2(dvec2(((TuiNumber*)x)->value, ((TuiNumber*)y)->value));
+                                x->release();
+                                y->release();
+                                return newResultVec;
+                            }
+                        }
+                        break;
+                    case Tui_token_vec3:
+                    case Tui_token_vec4:
+                        {
+                            TuiRef* z = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                            (*tokenPos)++;
+                            
+                            if(!z || z->type() != Tui_ref_type_NUMBER)
+                            {
+                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "z component expected number, got:%s", (z ? z->getDebugString().c_str() : "nil"));
+                                return nullptr;
+                            }
+                            
+                            if(token == Tui_token_vec3)
+                            {
+                                if(result && result->type() == Tui_ref_type_VEC3)
+                                {
+                                    ((TuiVec3*)result)->value.x = ((TuiNumber*)x)->value;
+                                    ((TuiVec3*)result)->value.y = ((TuiNumber*)y)->value;
+                                    ((TuiVec3*)result)->value.z = ((TuiNumber*)z)->value;
+                                }
+                                else
+                                {
+                                    TuiVec3* newResultVec = new TuiVec3(dvec3(((TuiNumber*)x)->value, ((TuiNumber*)y)->value, ((TuiNumber*)z)->value));
+                                    x->release();
+                                    y->release();
+                                    z->release();
+                                    return newResultVec;
+                                }
+                            }
+                            else
+                            {
+                                TuiRef* w = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                                (*tokenPos)++;
+                                
+                                if(!w || w->type() != Tui_ref_type_NUMBER)
+                                {
+                                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "w component expected number, got:%s", (w ? w->getDebugString().c_str() : "nil"));
+                                    return nullptr;
+                                }
+                                if(result && result->type() == Tui_ref_type_VEC4)
+                                {
+                                    ((TuiVec4*)result)->value.x = ((TuiNumber*)x)->value;
+                                    ((TuiVec4*)result)->value.y = ((TuiNumber*)y)->value;
+                                    ((TuiVec4*)result)->value.z = ((TuiNumber*)z)->value;
+                                    ((TuiVec4*)result)->value.w = ((TuiNumber*)w)->value;
+                                }
+                                else
+                                {
+                                    TuiVec4* newResultVec = new TuiVec4(dvec4(((TuiNumber*)x)->value, ((TuiNumber*)y)->value, ((TuiNumber*)z)->value, ((TuiNumber*)w)->value));
+                                    x->release();
+                                    y->release();
+                                    z->release();
+                                    w->release();
+                                    return newResultVec;
+                                }
+                            }
+                        }
+                        break;
+                }
+                
+            }
+                break;
             case Tui_token_tableConstruct:
             {
                 (*tokenPos)++;
@@ -1422,20 +1588,217 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 (*tokenPos)++;
                 TuiRef* chainParent = nullptr;
                 TuiRef* chainResult = parent;
+                TuiRef* keyConstant = nullptr;
+                
                 while(1)
                 {
-                    if(chainResult->type() != Tui_ref_type_TABLE)
+                    switch(chainResult->type())
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected table");
+                        case Tui_ref_type_TABLE:
+                        {
+                            chainParent = chainResult;
+                            chainResult = runExpression(expression, tokenPos, result, (TuiTable*)chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                        }
+                            break;
+                        case Tui_ref_type_VEC2:
+                        {
+                            (*tokenPos)++;
+                            keyConstant = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                        }
+                            break;
+                        case Tui_ref_type_VEC3:
+                        {
+                            (*tokenPos)++;
+                            keyConstant = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                        }
+                            break;
+                        case Tui_ref_type_VEC4:
+                        {
+                            (*tokenPos)++;
+                            keyConstant = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                        }
+                            break;
+                        default:
+                        {
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "no '.' syntax supported for type:%s", parent->getTypeName().c_str());
+                            return nullptr;
+                        }
+                            break;
                     }
-                    chainParent = chainResult;
-                    chainResult = runExpression(expression, tokenPos, result, (TuiTable*)chainResult, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                    
                     (*tokenPos)++;
                     if(expression->tokens[*tokenPos] == Tui_token_end)
                     {
                         break;
                     }
                 }
+                
+                if(keyConstant && chainResult->type() != Tui_ref_type_TABLE)
+                {
+                    if(enclosingSetRef)
+                    {
+                        *enclosingSetRef = chainResult;
+                        *setKey = ((TuiString*)keyConstant)->value; //assumptions
+                    }
+                    
+                    switch(chainResult->type())
+                    {
+                        case Tui_ref_type_VEC2:
+                        {
+                            switch(((TuiString*)keyConstant)->value[0])
+                            {
+                                case 'x':
+                                {
+                                    if(result && result->type() == Tui_ref_type_NUMBER)
+                                    {
+                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.x;
+                                        return nullptr;
+                                    }
+                                    else if(!enclosingSetRef)
+                                    {
+                                        return new TuiNumber(((TuiVec2*)chainResult)->value.x);
+                                    }
+                                    return nullptr;
+                                }
+                                    break;
+                                case 'y':
+                                {
+                                    if(result && result->type() == Tui_ref_type_NUMBER)
+                                    {
+                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.y;
+                                        return nullptr;
+                                    }
+                                    else if(!enclosingSetRef)
+                                    {
+                                        return new TuiNumber(((TuiVec2*)chainResult)->value.y);
+                                    }
+                                    return nullptr;
+                                }
+                                    break;
+                            }
+                        }
+                            break;
+                        case Tui_ref_type_VEC3:
+                        {
+                            switch(((TuiString*)keyConstant)->value[0])
+                            {
+                                case 'x':
+                                {
+                                    if(result && result->type() == Tui_ref_type_NUMBER)
+                                    {
+                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.x;
+                                        return nullptr;
+                                    }
+                                    else if(!enclosingSetRef)
+                                    {
+                                        return new TuiNumber(((TuiVec3*)chainResult)->value.x);
+                                    }
+                                    return nullptr;
+                                }
+                                    break;
+                                case 'y':
+                                {
+                                    if(result && result->type() == Tui_ref_type_NUMBER)
+                                    {
+                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.y;
+                                        return nullptr;
+                                    }
+                                    else if(!enclosingSetRef)
+                                    {
+                                        return new TuiNumber(((TuiVec3*)chainResult)->value.y);
+                                    }
+                                    return nullptr;
+                                }
+                                    break;
+                                case 'z':
+                                {
+                                    if(result && result->type() == Tui_ref_type_NUMBER)
+                                    {
+                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.z;
+                                        return nullptr;
+                                    }
+                                    else if(!enclosingSetRef)
+                                    {
+                                        return new TuiNumber(((TuiVec3*)chainResult)->value.z);
+                                    }
+                                    return nullptr;
+                                }
+                                    break;
+                            }
+                        }
+                            break;
+                        case Tui_ref_type_VEC4:
+                        {
+                            switch(((TuiString*)keyConstant)->value[0])
+                            {
+                                case 'x':
+                                {
+                                    if(result && result->type() == Tui_ref_type_NUMBER)
+                                    {
+                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.x;
+                                        return nullptr;
+                                    }
+                                    else if(!enclosingSetRef)
+                                    {
+                                        return new TuiNumber(((TuiVec3*)chainResult)->value.x);
+                                    }
+                                    return nullptr;
+                                }
+                                    break;
+                                case 'y':
+                                {
+                                    if(result && result->type() == Tui_ref_type_NUMBER)
+                                    {
+                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.y;
+                                        return nullptr;
+                                    }
+                                    else if(!enclosingSetRef)
+                                    {
+                                        return new TuiNumber(((TuiVec3*)chainResult)->value.y);
+                                    }
+                                    return nullptr;
+                                }
+                                    break;
+                                case 'z':
+                                {
+                                    if(result && result->type() == Tui_ref_type_NUMBER)
+                                    {
+                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.z;
+                                        return nullptr;
+                                    }
+                                    else if(!enclosingSetRef)
+                                    {
+                                        return new TuiNumber(((TuiVec3*)chainResult)->value.z);
+                                    }
+                                    return nullptr;
+                                }
+                                    break;
+                                case 'w':
+                                {
+                                    if(result && result->type() == Tui_ref_type_NUMBER)
+                                    {
+                                        ((TuiNumber*)result)->value = ((TuiVec4*)chainResult)->value.w;
+                                        return nullptr;
+                                    }
+                                    else if(!enclosingSetRef)
+                                    {
+                                        return new TuiNumber(((TuiVec4*)chainResult)->value.w);
+                                    }
+                                    return nullptr;
+                                }
+                                    break;
+                            }
+                        }
+                            break;
+                        default:
+                        {
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "no '.' syntax supported for type:%s", parent->getTypeName().c_str());
+                            return nullptr;
+                        }
+                            break;
+                    }
+                }
+                
                 
                 if(enclosingSetRef)
                 {
@@ -1472,6 +1835,25 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     {
                         child = parent->objectsByStringKey[((TuiString*)keyConstant)->value];
                     }
+                    
+                    /*
+                     switch(parent->type())
+                     {
+                         case Tui_ref_type_TABLE:
+                         {
+                             if(parent->objectsByStringKey.count(((TuiString*)keyConstant)->value) != 0)
+                             {
+                                 child = parent->objectsByStringKey[((TuiString*)keyConstant)->value];
+                             }
+                         }
+                             break;
+                         default:
+                         {
+                             TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "no '.' syntax supported for type:%s", parent->getTypeName().c_str());
+                             return nullptr;
+                         }
+                             break;
+                     }*/
                 }
                 else
                 {
@@ -2106,12 +2488,80 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             {
                 if(enclosingSetRef)
                 {
-                    if(enclosingSetRef->type() != Tui_ref_type_TABLE)
+                    switch(enclosingSetRef->type())
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected table object, got:%s", (enclosingSetRef ? enclosingSetRef->getDebugString().c_str() : "nil"));
-                        return nullptr;
+                        case Tui_ref_type_TABLE:
+                        {
+                            ((TuiTable*)enclosingSetRef)->set(statement->varName, newValue);
+                        }
+                            break;
+                        case Tui_ref_type_VEC2:
+                        {
+                            if(newValue->type() != Tui_ref_type_NUMBER)
+                            {
+                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number when assigning vector sub-value, got:%s", (newValue ? newValue->getDebugString().c_str() : "nil"));
+                            }
+                            switch(setKey[0])
+                            {
+                                case 'x':
+                                    ((TuiVec2*)enclosingSetRef)->value.x = ((TuiNumber*)newValue)->value;
+                                    break;
+                                case 'y':
+                                    ((TuiVec2*)enclosingSetRef)->value.y = ((TuiNumber*)newValue)->value;
+                                    break;
+                            }
+                        }
+                            break;
+                        case Tui_ref_type_VEC3:
+                        {
+                            if(newValue->type() != Tui_ref_type_NUMBER)
+                            {
+                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number when assigning vector sub-value, got:%s", (newValue ? newValue->getDebugString().c_str() : "nil"));
+                            }
+                            switch(setKey[0])
+                            {
+                                case 'x':
+                                    ((TuiVec3*)enclosingSetRef)->value.x = ((TuiNumber*)newValue)->value;
+                                    break;
+                                case 'y':
+                                    ((TuiVec3*)enclosingSetRef)->value.y = ((TuiNumber*)newValue)->value;
+                                    break;
+                                case 'z':
+                                    ((TuiVec3*)enclosingSetRef)->value.z = ((TuiNumber*)newValue)->value;
+                                    break;
+                            }
+                        }
+                            break;
+                        case Tui_ref_type_VEC4:
+                        {
+                            if(newValue->type() != Tui_ref_type_NUMBER)
+                            {
+                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number when assigning vector sub-value, got:%s", (newValue ? newValue->getDebugString().c_str() : "nil"));
+                            }
+                            switch(setKey[0])
+                            {
+                                case 'x':
+                                    ((TuiVec4*)enclosingSetRef)->value.x = ((TuiNumber*)newValue)->value;
+                                    break;
+                                case 'y':
+                                    ((TuiVec4*)enclosingSetRef)->value.y = ((TuiNumber*)newValue)->value;
+                                    break;
+                                case 'z':
+                                    ((TuiVec4*)enclosingSetRef)->value.z = ((TuiNumber*)newValue)->value;
+                                    break;
+                                case 'w':
+                                    ((TuiVec4*)enclosingSetRef)->value.w = ((TuiNumber*)newValue)->value;
+                                    break;
+                            }
+                        }
+                            break;
+                        default:
+                        {
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected table or vec object when accessing sub-value, got:%s", (enclosingSetRef ? enclosingSetRef->getDebugString().c_str() : "nil"));
+                            return nullptr;
+                        }
+                            break;
                     }
-                    ((TuiTable*)enclosingSetRef)->set(statement->varName, newValue);
                 }
                 else
                 {
