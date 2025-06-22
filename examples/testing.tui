@@ -2,27 +2,30 @@ testCommon = require("tests/testCommon.tui")
 assert = testCommon.assert
 getLineNumber = debug.getLineNumber
 
-testVecs = function()
-{
-    a = vec2(1,2)
-    a.x = 2
-    a.y = 3
-
-    b = vec3(1,2,3)
-    b.x = 2
-    b.y = 3
-    b.z = a.x * b.x
-
-    c = vec4(1,2,3,4)
-    c.x = 2
-    c.y = 3
-    c.z = 4
-    c.w = 5
-
-    assert(c.w == 5, getLineNumber())
-    assert(a == vec2(2,3), getLineNumber())
-    assert(b == vec3(2,3,4), getLineNumber())
-    assert(c == vec4(2,3,4,5), getLineNumber())
+inPlaceTestTable = {
+    posa = vec2(10,20)
+    posb = vec3(10,20,30)
+    posc = vec4(10,20,20,40)
 }
 
-testVecs()
+testInPlace = function()
+{
+    inPlaceTestTable.posa.x++
+    inPlaceTestTable.posa.y += 10
+    assert(inPlaceTestTable.posa == vec2(11,30), getLineNumber())
+
+    inPlaceTestTable.posb.x--
+    inPlaceTestTable.posb.y -= 10
+    inPlaceTestTable.posb.z *= 2
+
+    print(inPlaceTestTable)
+
+    assert(inPlaceTestTable.posb == vec3(9,10,60), "hello")
+
+    inPlaceTestTable.posc.x += inPlaceTestTable.posa.x
+    inPlaceTestTable.posc.w /= 2
+
+    assert(inPlaceTestTable.posc == vec4(20,20,20,20), getLineNumber()) // this intentionally fails
+}
+
+testInPlace()

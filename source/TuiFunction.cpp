@@ -1287,9 +1287,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_vec4:
             {
                 (*tokenPos)++;
-                
                 TuiRef* x = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
-                (*tokenPos)++;
                 
                 if(!x || x->type() != Tui_ref_type_NUMBER)
                 {
@@ -1297,8 +1295,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     return nullptr;
                 }
                 
-                TuiRef* y = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
                 (*tokenPos)++;
+                TuiRef* y = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
                 
                 if(!y || y->type() != Tui_ref_type_NUMBER)
                 {
@@ -1326,8 +1324,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     case Tui_token_vec3:
                     case Tui_token_vec4:
                         {
-                            TuiRef* z = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
                             (*tokenPos)++;
+                            TuiRef* z = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
                             
                             if(!z || z->type() != Tui_ref_type_NUMBER)
                             {
@@ -1354,8 +1352,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             }
                             else
                             {
-                                TuiRef* w = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
                                 (*tokenPos)++;
+                                TuiRef* w = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
                                 
                                 if(!w || w->type() != Tui_ref_type_NUMBER)
                                 {
@@ -2016,19 +2014,331 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             }
                 break;
             case Tui_token_add:
-            case Tui_token_addInPlace:
-            case Tui_token_increment:
             case Tui_token_subtract:
             case Tui_token_multiply:
-            case Tui_token_multiplyInPlace:
             case Tui_token_divide:
+            case Tui_token_increment:
+            case Tui_token_decrement:
+            case Tui_token_addInPlace:
+            case Tui_token_subtractInPlace:
+            case Tui_token_multiplyInPlace:
             case Tui_token_divideInPlace:
             {
                 (*tokenPos)++;
-                TuiRef* leftResult = runExpression(expression, tokenPos, result, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                
+                std::string inPlaceSetKey;
+                TuiRef* inPlaceEnclosingSetRef = nullptr;
+                
+                TuiRef* leftResult;
+                if(token <= Tui_token_multiply) //covers Tui_token_add, Tui_token_subtract, Tui_token_divide
+                {
+                    leftResult = runExpression(expression, tokenPos, result, parent, tokenMap, callData, debugInfo);
+                }
+                else
+                {
+                    leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, &inPlaceSetKey, nullptr, &inPlaceEnclosingSetRef);
+                }
+                
                 if(!leftResult)
                 {
-                    leftResult = result;
+                    if(inPlaceEnclosingSetRef)
+                    {
+                        TuiRef* rightResult = nullptr;
+                        if(token != Tui_token_increment && token != Tui_token_decrement)
+                        {
+                            (*tokenPos)++;
+                            rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
+                            if(rightResult->type() != Tui_ref_type_NUMBER)
+                            {
+                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
+                                return nullptr;
+                            }
+                        }
+                        
+                        switch(inPlaceEnclosingSetRef->type())
+                        {
+                            case Tui_ref_type_VEC2:
+                            {
+                                switch (token)
+                                {
+                                    case Tui_token_increment:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec2*)inPlaceEnclosingSetRef)->value.x++;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec2*)inPlaceEnclosingSetRef)->value.y++;
+                                                break;
+                                        }
+                                        break;
+                                    case Tui_token_decrement:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec2*)inPlaceEnclosingSetRef)->value.x--;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec2*)inPlaceEnclosingSetRef)->value.y--;
+                                                break;
+                                        }
+                                        break;
+                                    case Tui_token_addInPlace:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec2*)inPlaceEnclosingSetRef)->value.x += ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec2*)inPlaceEnclosingSetRef)->value.y += ((TuiNumber*)rightResult)->value;
+                                                break;
+                                        }
+                                        break;
+                                    case Tui_token_subtractInPlace:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec2*)inPlaceEnclosingSetRef)->value.x -= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec2*)inPlaceEnclosingSetRef)->value.y -= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                        }
+                                    break;
+                                    case Tui_token_multiplyInPlace:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec2*)inPlaceEnclosingSetRef)->value.x *= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec2*)inPlaceEnclosingSetRef)->value.y *= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                        }
+                                    break;
+                                    case Tui_token_divideInPlace:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec2*)inPlaceEnclosingSetRef)->value.x /= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec2*)inPlaceEnclosingSetRef)->value.y /= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                        }
+                                    break;
+                                };
+                            }
+                                break;
+                            case Tui_ref_type_VEC3:
+                            {
+                                switch (token)
+                                {
+                                    case Tui_token_increment:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.x++;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.y++;
+                                                break;
+                                            case 'z':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.z++;
+                                                break;
+                                        }
+                                        break;
+                                    case Tui_token_decrement:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.x--;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.y--;
+                                                break;
+                                            case 'z':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.z--;
+                                                break;
+                                        }
+                                        break;
+                                    case Tui_token_addInPlace:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.x += ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.y += ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'z':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.z += ((TuiNumber*)rightResult)->value;
+                                                break;
+                                        }
+                                        break;
+                                    case Tui_token_subtractInPlace:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.x -= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.y -= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'z':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.z -= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                        }
+                                    break;
+                                    case Tui_token_multiplyInPlace:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.x *= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.y *= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'z':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.z *= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                        }
+                                    break;
+                                    case Tui_token_divideInPlace:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.x /= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.y /= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'z':
+                                                ((TuiVec3*)inPlaceEnclosingSetRef)->value.z /= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                        }
+                                    break;
+                                };
+                            }
+                                break;
+                            case Tui_ref_type_VEC4:
+                            {
+                                switch (token)
+                                {
+                                    case Tui_token_increment:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.x++;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.y++;
+                                                break;
+                                            case 'z':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.z++;
+                                                break;
+                                            case 'w':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.w++;
+                                                break;
+                                        }
+                                        break;
+                                    case Tui_token_decrement:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.x--;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.y--;
+                                                break;
+                                            case 'z':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.z--;
+                                                break;
+                                            case 'w':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.w--;
+                                                break;
+                                        }
+                                        break;
+                                    case Tui_token_addInPlace:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.x += ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.y += ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'z':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.z += ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'w':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.w += ((TuiNumber*)rightResult)->value;
+                                                break;
+                                        }
+                                        break;
+                                    case Tui_token_subtractInPlace:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.x -= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.y -= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'z':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.z -= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'w':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.w -= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                        }
+                                    break;
+                                    case Tui_token_multiplyInPlace:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.x *= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.y *= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'z':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.z *= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'w':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.w *= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                        }
+                                    break;
+                                    case Tui_token_divideInPlace:
+                                        switch(inPlaceSetKey[0])
+                                        {
+                                            case 'x':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.x /= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'y':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.y /= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'z':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.z /= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                            case 'w':
+                                                ((TuiVec4*)inPlaceEnclosingSetRef)->value.w /= ((TuiNumber*)rightResult)->value;
+                                                break;
+                                        }
+                                    break;
+                                };
+                            }
+                                break;
+                        }
+                        
+                        return nullptr;
+                    }
+                    else
+                    {
+                        leftResult = result;
+                    }
+                    
                 }
                 
                 uint32_t leftType = leftResult->type();
@@ -2042,7 +2352,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         else
                         {
                             (*tokenPos)++;
-                            TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                            TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
                             if(!rightResult)
                             {
                                 rightResult = result;
