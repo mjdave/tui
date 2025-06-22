@@ -18,8 +18,8 @@ class TuiString;
 class TuiRef;
 class TuiBool;
 
-#define TuiParseError(__fileName__, __lineNumber__, fmt__, ...) TuiLog("error %s:%d:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
-#define TuiParseWarn(__fileName__, __lineNumber__, fmt__, ...) TuiLog("warning %s:%d:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
+#define TuiParseError(__fileName__, __lineNumber__, fmt__, ...) TuiLog("\nfile:%s:%d\nError:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
+#define TuiParseWarn(__fileName__, __lineNumber__, fmt__, ...) TuiLog("\nfile:%s:%d\nWarning:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
 
 enum {
     Tui_ref_type_NIL = 0,
