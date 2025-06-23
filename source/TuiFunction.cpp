@@ -1619,11 +1619,11 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     
                     (*tokenPos)++;
                     
-                    if(!chainResult)
+                    /*if(!chainResult) //this catches false positives. A function call foo.bar() maybe returns no result, but has done its job
                     {
                         TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to use '.' syntax on nil value");
                         return nullptr;
-                    }
+                    }*/
                     
                     if(expression->tokens[*tokenPos] == Tui_token_end)
                     {

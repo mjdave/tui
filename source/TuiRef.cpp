@@ -182,6 +182,26 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
+    //table.count(table) count of array objects
+    tableTable->setFunction("count", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() >= 1)
+        {
+            TuiRef* tableRef = args->arrayObjects[0];
+            if(tableRef->type() != Tui_ref_type_TABLE)
+            {
+                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.count expected table for first argument");
+                return nullptr;
+            }
+            
+            return new TuiNumber(((TuiTable*)tableRef)->arrayObjects.size());
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.count expected table argument");
+        }
+        return nullptr;
+    });
+    
     
     return rootTable;
 }
