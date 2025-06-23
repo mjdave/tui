@@ -122,7 +122,7 @@ debug.getFileName()             // returns the current script file name or debug
 debug.getLineNumber()           // returns the line number in the current script file
 
 table.count(table)                  // count of array objects
-table.insert(table, index, value)   // insert into an array, specifying the index. nil objects are added to fill any gaps before this index. objects after this index are shifted
+table.insert(table, index, value)   // insert into an array, specifying the index. Will be filled with nil objects < index. Objects >= index are shifted
 table.insert(table,value)           // add to the end of an array
 
 ```
