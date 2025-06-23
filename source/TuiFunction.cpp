@@ -1396,14 +1396,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 
                 TuiRef* functionResult = ((TuiFunction*)functionVar)->runTableConstruct(parent, result, debugInfo);
                 
-                if(result && result->type() == functionResult->type())
-                {
-                    result->assign(functionResult);
-                }
-                else
-                {
-                    return functionResult;
-                }
+                return functionResult;
             }
                 break;
             case Tui_token_functionDeclaration:
@@ -2718,13 +2711,15 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
         if(callData->locals.count(token) != 0)
         {
             foundValue = callData->locals[token];
+            foundValue->retain();
         }
         else if(tokenMap->refsByToken.count(token) != 0)
         {
             foundValue = tokenMap->refsByToken[token];
+            foundValue->retain();
         }
         
-        if(foundValue && foundValue->type() != Tui_ref_type_NIL)
+        if(foundValue)
         {
             if(result && result->type() == foundValue->type())
             {
@@ -3191,7 +3186,7 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
     {
         if(callData.locals.count(varNameAndToken.second) == 0)
         {
-            TuiTable* parentRef = parent;
+            TuiTable* parentRef = state;
             while(parentRef)
             {
                 if(parentRef->objectsByStringKey.count(varNameAndToken.first) != 0)
@@ -3210,7 +3205,7 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
     {
         if(callData.locals.count(parentDepthAndToken.first) == 0)
         {
-            TuiTable* parentRef = parent;
+            TuiTable* parentRef = state;
             for(int i = 1; parentRef && i <= parentDepthAndToken.first; i++)
             {
                 if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
