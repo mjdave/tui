@@ -2,13 +2,12 @@
 #assert = testCommon.assert
 #getLineNumber = debug.getLineNumber
 
-blocksView = {
-    addSubview = function(tab)
-    {
-        print(tab)
-    }
+testMath = function()
+{
+    print(math.pi)
+    print(math.sin(0.5))
+    print(math.sqrt(16))
+    print(math.max(6893,-3693))
 }
 
-blocksView.addSubview({
-    foo = 5
-})
+testMath()

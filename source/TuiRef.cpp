@@ -117,22 +117,168 @@ TuiTable* TuiRef::createRootTable()
     });
     
     //************
-    //debug
+    //math
     //************
-    TuiTable* debugTable = new TuiTable(rootTable);
-    rootTable->set("debug", debugTable);
-    debugTable->release();
+    TuiTable* mathTable = new TuiTable(rootTable);
+    rootTable->set("math", mathTable);
+    mathTable->release();
     
     
-    //debug.getFileName() returns the current script file name or debug identifier string
-    debugTable->setFunction("getFileName", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        return new TuiString(callingDebugInfo->fileName);
+    mathTable->setFunction("sin", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(sin(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.sin expected number");
+        return nullptr;
     });
     
-    //debug.getLineNumber() returns the line number in the current script file
-    debugTable->setFunction("getLineNumber", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        return new TuiNumber(callingDebugInfo->lineNumber);
+    mathTable->setFunction("cos", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(cos(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.cos expected number");
+        return nullptr;
     });
+    
+    mathTable->setFunction("tan", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(tan(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.tan expected number");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("asin", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(asin(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.asin expected number");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("acos", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(acos(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.acos expected number");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("atan", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(atan(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.atan expected number");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("atan2", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(atan2(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.atan2 expected 2 numbers");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("sqrt", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(sqrt(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.sqrt expected number");
+        return nullptr;
+    });
+    
+    
+    mathTable->setFunction("exp", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(exp(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.exp expected number");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("log", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(log(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.log expected number");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("log10", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(log10(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.log10 expected number");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("floor", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(floor(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.floor expected number");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("ceil", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(ceil(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.ceil expected number");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("abs", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(abs(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.abs expected number");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("fmod", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(fmod(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.fmod expected 2 numbers");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("max", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(max(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.fmod expected 2 numbers");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("min", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(min(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.fmod expected 2 numbers");
+        return nullptr;
+    });
+    
+    mathTable->setDouble("pi", M_PI);
     
     
     //************
@@ -202,6 +348,24 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
+    
+    //************
+    //debug
+    //************
+    TuiTable* debugTable = new TuiTable(rootTable);
+    rootTable->set("debug", debugTable);
+    debugTable->release();
+    
+    
+    //debug.getFileName() returns the current script file name or debug identifier string
+    debugTable->setFunction("getFileName", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        return new TuiString(callingDebugInfo->fileName);
+    });
+    
+    //debug.getLineNumber() returns the line number in the current script file
+    debugTable->setFunction("getLineNumber", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        return new TuiNumber(callingDebugInfo->lineNumber);
+    });
     
     return rootTable;
 }
