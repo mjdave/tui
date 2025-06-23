@@ -1625,6 +1625,13 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     }
                     
                     (*tokenPos)++;
+                    
+                    if(!chainResult)
+                    {
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to use '.' syntax on nil value");
+                        return nullptr;
+                    }
+                    
                     if(expression->tokens[*tokenPos] == Tui_token_end)
                     {
                         break;
@@ -2341,6 +2348,12 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     
                 }
                 
+                if(!leftResult)
+                {
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "invalid value");
+                    return nullptr;
+                }
+                
                 uint32_t leftType = leftResult->type();
                 switch (leftType) {
                     case Tui_ref_type_NUMBER:
@@ -2685,7 +2698,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         
                     default:
                     {
-                        TuiError("Unimplemented");
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "invalid value");
                     }
                         break;
                 }
