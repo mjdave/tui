@@ -1,31 +1,14 @@
-testCommon = require("tests/testCommon.tui")
-assert = testCommon.assert
-getLineNumber = debug.getLineNumber
+#testCommon = require("tests/testCommon.tui")
+#assert = testCommon.assert
+#getLineNumber = debug.getLineNumber
 
-inPlaceTestTable = {
-    posa = vec2(10,20)
-    posb = vec3(10,20,30)
-    posc = vec4(10,20,20,40)
+blocksView = {
+    addSubview = function(tab)
+    {
+        print(tab)
+    }
 }
 
-testInPlace = function()
-{
-    inPlaceTestTable.posa.x++
-    inPlaceTestTable.posa.y += 10
-    assert(inPlaceTestTable.posa == vec2(11,30), getLineNumber())
-
-    inPlaceTestTable.posb.x--
-    inPlaceTestTable.posb.y -= 10
-    inPlaceTestTable.posb.z *= 2
-
-    print(inPlaceTestTable)
-
-    assert(inPlaceTestTable.posb == vec3(9,10,60), "hello")
-
-    inPlaceTestTable.posc.x += inPlaceTestTable.posa.x
-    inPlaceTestTable.posc.w /= 2
-
-    assert(inPlaceTestTable.posc == vec4(20,20,20,20), getLineNumber()) // this intentionally fails
-}
-
-testInPlace()
+blocksView.addSubview({
+    foo = 5
+})

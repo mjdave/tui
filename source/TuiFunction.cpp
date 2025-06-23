@@ -247,6 +247,10 @@ void serializeValue(const char* str,
                 }
             }
         }
+        else if(!stringBuffer.empty())
+        {
+            stringBuffer += *s;
+        }
         else if(isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(*(s + 1))))
         {
             double value = strtod(s, endptr);
@@ -504,6 +508,15 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
             expression->tokens.push_back(Tui_token_end);
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
         }
+        else if(*s == '-')
+        {
+            s++;
+            s = tuiSkipToNextChar(s, debugInfo, true);
+            expression->tokens.push_back(Tui_token_negate);
+            recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, Tui_operator_level_not);
+            expression->tokens.push_back(Tui_token_end);
+            s = tuiSkipToNextChar(*endptr, debugInfo, true);
+        }
         else if(*s == '(')
         {
             s++;
@@ -546,6 +559,7 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
         
         if(TuiExpressionOperatorsToLevelMap[operatorChar] <= operatorLevel)
         {
+            *endptr = (char*)s;
             return false; //not complete
         }
     }
@@ -1552,6 +1566,70 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 else
                 {
                     TuiError("expected Tui_token_end");
+                }
+                return TuiRef::logicalNot(leftResult);
+            }
+                break;
+            case Tui_token_negate:
+            {
+                (*tokenPos)++;
+                TuiRef* leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                if(expression->tokens[*tokenPos+1] == Tui_token_end)
+                {
+                    (*tokenPos)++; //Tui_token_end
+                }
+                else
+                {
+                    TuiError("expected Tui_token_end");
+                }
+                
+                if(!leftResult)
+                {
+                    TuiError("expected value");
+                    return nullptr;
+                }
+                
+                switch (leftResult->type()) {
+                    case Tui_ref_type_NUMBER:
+                    {
+                        if(result && result->type() == Tui_ref_type_NUMBER)
+                        {
+                            ((TuiNumber*)result)->value = -((TuiNumber*)leftResult)->value;
+                        }
+                        return new TuiNumber(-((TuiNumber*)leftResult)->value);
+                    }
+                        break;
+                    case Tui_ref_type_VEC2:
+                    {
+                        if(result && result->type() == Tui_ref_type_VEC2)
+                        {
+                            ((TuiVec2*)result)->value = -((TuiVec2*)leftResult)->value;
+                        }
+                        return new TuiVec2(-((TuiVec2*)leftResult)->value);
+                    }
+                        break;
+                    case Tui_ref_type_VEC3:
+                    {
+                        if(result && result->type() == Tui_ref_type_VEC3)
+                        {
+                            ((TuiVec3*)result)->value = -((TuiVec3*)leftResult)->value;
+                        }
+                        return new TuiVec3(-((TuiVec3*)leftResult)->value);
+                    }
+                        break;
+                    case Tui_ref_type_VEC4:
+                    {
+                        if(result && result->type() == Tui_ref_type_VEC4)
+                        {
+                            ((TuiVec4*)result)->value = -((TuiVec4*)leftResult)->value;
+                        }
+                        return new TuiVec4(-((TuiVec4*)leftResult)->value);
+                    }
+                        break;
+                        
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number or vector, got:%s", (leftResult ? leftResult->getDebugString().c_str() : "nil"));
+                        break;
                 }
                 return TuiRef::logicalNot(leftResult);
             }

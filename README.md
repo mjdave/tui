@@ -121,8 +121,9 @@ type()          // returns the type name of the given object, eg. 'table', 'stri
 debug.getFileName()             // returns the current script file name or debug identifier string
 debug.getLineNumber()           // returns the line number in the current script file
 
-table.insert(table, index, value)   // insert into an array, specifying the index
-table.insert(table,value)           // to add to the end of an array
+table.count(table)                  // count of array objects
+table.insert(table, index, value)   // insert into an array, specifying the index. nil objects are added to fill any gaps before this index. objects after this index are shifted
+table.insert(table,value)           // add to the end of an array
 
 ```
 

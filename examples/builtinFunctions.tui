@@ -22,6 +22,9 @@ print("object at index 3:", testTable[3])
 table.insert(testTable,"four")           // to add to the end of an array
 print("testTable after adding four:", testTable)
 
+tableCount = table.count(testTable) //count of array objects
+print("tableCount3:", tableCount)
+
 // also available, but not demonstrated in this example are:
 //
 //  print(msg1, msg2, ...)  // print values, args are concatenated together
