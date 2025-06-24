@@ -604,7 +604,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
             s = tuiSkipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
-            return new TuiRef(parent);
+            return TUI_NIL;
         }
         else if(*s == 'n'
                 && *(s + 1) == 'u'
@@ -614,7 +614,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
             s+=4;
             s = tuiSkipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
-            return new TuiRef(parent);
+            return TUI_NIL;
         }
         else if(*s == '{' || *s == '[') //watch out [ might be a json array, or accessing array element
         {
@@ -663,7 +663,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 {
                     TuiParseWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Table index:%d beyond bounds:%d", indexValue, (int)((TuiTable*)varChainParent)->arrayObjects.size());
                 }
-                return new TuiRef(parent);
+                return TUI_NIL;
             }
             
             TuiRef* result = ((TuiTable*)varChainParent)->arrayObjects[indexValue];
@@ -889,7 +889,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                                                               debugInfo);
                     if(!valueRef)
                     {
-                        valueRef = new TuiRef();
+                        valueRef = TUI_NIL;
                     }
                     
                     argsArrayTable->arrayObjects.push_back(valueRef);
@@ -1062,7 +1062,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
             leftValue = existingValue;
             if(!leftValue)
             {
-                leftValue = new TuiRef(parentTable);
+                leftValue = TUI_NIL;
             }
         }
     }
@@ -1142,13 +1142,13 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     case '+':
                     {
                         ((TuiNumber*)leftValue)->value++;
-                        result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array
+                        result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array
                     }
                         break;
                     case '-':
                     {
                         ((TuiNumber*)leftValue)->value--;
-                        result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array
+                        result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array
                     }
                         break;
                     default:
@@ -1268,7 +1268,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                         if(secondOperatorChar == '=')
                         {
                             ((TuiNumber*)leftValue)->value += ((TuiNumber*)rightValue)->value;
-                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array //todo this is a waste of an allocate
+                            result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array //todo this is a waste of an allocate
                         }
                         else
                         {
@@ -1289,7 +1289,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                         if(secondOperatorChar == '=')
                         {
                             ((TuiNumber*)leftValue)->value -= ((TuiNumber*)rightValue)->value;
-                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array //todo no need to allocate this
+                            result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array //todo no need to allocate this
                         }
                         else
                         {
@@ -1310,7 +1310,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                         if(secondOperatorChar == '=')
                         {
                             ((TuiNumber*)leftValue)->value *= ((TuiNumber*)rightValue)->value;
-                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array
+                            result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array
                         }
                         else
                         {
@@ -1331,7 +1331,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                         if(secondOperatorChar == '=')
                         {
                             ((TuiNumber*)leftValue)->value /= ((TuiNumber*)rightValue)->value;
-                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array
+                            result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array
                         }
                         else
                         {
@@ -1822,7 +1822,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                         if(secondOperatorChar == '=')
                         {
                             ((TuiString*)leftValue)->value += ((TuiString*)rightValue)->value;
-                            result = new TuiRef(); //return a nil ref, otherwise the key is addded to an array //todo this is a waste of an allocate
+                            result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array //todo this is a waste of an allocate
                         }
                         else
                         {
@@ -1892,11 +1892,3 @@ TuiUserData::TuiUserData(void* value_, TuiTable* parent_)
 {
     value = value_;
 }
-
-TuiUserData::~TuiUserData()
-{
-    if(members)
-    {
-        members->release();
-    }
-};

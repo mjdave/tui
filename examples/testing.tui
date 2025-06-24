@@ -1,13 +1,41 @@
-#testCommon = require("tests/testCommon.tui")
-#assert = testCommon.assert
-#getLineNumber = debug.getLineNumber
+testCommon = require("tests/testCommon.tui")
+assert = testCommon.assert
+getLineNumber = debug.getLineNumber
 
-testMath = function()
-{
-    print(math.pi)
-    print(math.sin(0.5))
-    print(math.sqrt(16))
-    print(math.max(6893,-3693))
+testTable = {
+    "zero",
+    "one",
+    "two",
+    "four",
+    "five"
 }
+table.insert(testTable, 3, "three")
+print(testTable)
+assert(testTable[3] == "three", "testTable[3] == three")
+testTable[2] = 2.0
+assert(testTable[2] == 2, "testTable[2] == 2")
 
-testMath()
+testTable[7] = "seven"
+assert(testTable[7] == "seven", "testTable[7] == seven")
+assert(testTable[6] == nil, "testTable[6] == nil")
+
+print(testTable)
+
+notTrue = !true
+assert(notTrue == false, "notTrue == false")
+
+
+array = {1,2,3,4,5}
+sum = 0
+for(object in array)
+{
+    sum = sum + object
+}
+assert(sum == 15, "for array loop")
+
+sum = 0
+for(index,object in array)
+{
+    sum = sum + object + index
+}
+assert(sum == 25, "for array index loop")

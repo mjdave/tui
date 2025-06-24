@@ -18,7 +18,7 @@ public://functions
     TuiNumber(double value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
     virtual ~TuiNumber() {};
     
-    virtual TuiNumber* copy()
+    virtual TuiRef* copy()
     {
         return new TuiNumber(value, parent);
     }
@@ -52,7 +52,7 @@ public://functions
     TuiBool(bool value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
     virtual ~TuiBool() {};
     
-    virtual TuiBool* copy()
+    virtual TuiRef* copy()
     {
         return new TuiBool(value, parent);
     }
@@ -107,7 +107,7 @@ public: //members
 public://functions
     TuiVec2(dvec2 value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
     virtual ~TuiVec2() {};
-    virtual TuiVec2* copy()
+    virtual TuiRef* copy()
     {
         return new TuiVec2(value, parent);
     }
@@ -189,7 +189,7 @@ public: //members
 public://functions
     TuiVec3(dvec3 value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
     virtual ~TuiVec3() {};
-    virtual TuiVec3* copy()
+    virtual TuiRef* copy()
     {
         return new TuiVec3(value, parent);
     }
@@ -271,7 +271,7 @@ public: //members
 public://functions
     TuiVec4(dvec4 value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
     virtual ~TuiVec4() {};
-    virtual TuiVec4* copy()
+    virtual TuiRef* copy()
     {
         return new TuiVec4(value, parent);
     }

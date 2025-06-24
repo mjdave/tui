@@ -97,7 +97,7 @@ public: //class functions
     TuiFunction(std::function<TuiRef*(TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> func_, TuiTable* parent_);
     virtual ~TuiFunction();
     
-    virtual TuiFunction* copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables and functions are treated like pointers
+    virtual TuiRef* copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
         retain();
         return this;

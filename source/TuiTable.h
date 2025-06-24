@@ -51,7 +51,7 @@ public://functions
         }
     };
     
-    virtual TuiTable* copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables and functions are treated like pointers
+    virtual TuiRef* copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
         retain();
         return this;
@@ -74,7 +74,7 @@ public://functions
             {
                 if(resultRef)
                 {
-                    *resultRef = new TuiRef(this);
+                    *resultRef = TUI_NIL;
                 }
                 s++;
                 s = tuiSkipToNextChar(s, debugInfo, true);
@@ -99,7 +99,7 @@ public://functions
                     }
                     else
                     {
-                        *resultRef = new TuiRef(this);
+                        *resultRef = TUI_NIL;
                     }
                 }
                 else

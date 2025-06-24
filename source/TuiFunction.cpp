@@ -358,7 +358,7 @@ void serializeValue(const char* str,
                  s = tuiSkipToNextChar(s, debugInfo, true);
                  *endptr = (char*)s;
                  
-                 return new TuiRef(parent);
+                 return TUI_NIL;
              }
              else if(*s == 'n'
                      && *(s + 1) == 'u'
@@ -368,7 +368,7 @@ void serializeValue(const char* str,
                  s+=4;
                  s = tuiSkipToNextChar(s, debugInfo, true);
                  *endptr = (char*)s;
-                 return new TuiRef(parent);
+                 return TUI_NIL;
              }
              */
             
@@ -1254,7 +1254,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 if(arg)
                 {
                     args = new TuiTable(parent);
-                    arg->retain();
                     args->arrayObjects.push_back(arg);
                     
                     (*tokenPos)++;
@@ -1264,11 +1263,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         arg = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
                         if(!arg)
                         {
-                            arg = new TuiRef(parent);
-                        }
-                        else
-                        {
-                            arg->retain();
+                            arg = TUI_NIL;
                         }
                         
                         args->arrayObjects.push_back(arg);
@@ -1284,6 +1279,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 {
                     args->release();
                 }
+                
+                functionVar->release();
                 
                 if(result && result->type() == functionResult->type())
                 {
@@ -1325,6 +1322,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             {
                                 ((TuiVec2*)result)->value.x = ((TuiNumber*)x)->value;
                                 ((TuiVec2*)result)->value.y = ((TuiNumber*)y)->value;
+                                x->release();
+                                y->release();
                             }
                             else
                             {
@@ -1354,6 +1353,9 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                     ((TuiVec3*)result)->value.x = ((TuiNumber*)x)->value;
                                     ((TuiVec3*)result)->value.y = ((TuiNumber*)y)->value;
                                     ((TuiVec3*)result)->value.z = ((TuiNumber*)z)->value;
+                                    x->release();
+                                    y->release();
+                                    z->release();
                                 }
                                 else
                                 {
@@ -1380,6 +1382,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                     ((TuiVec4*)result)->value.y = ((TuiNumber*)y)->value;
                                     ((TuiVec4*)result)->value.z = ((TuiNumber*)z)->value;
                                     ((TuiVec4*)result)->value.w = ((TuiNumber*)w)->value;
+                                    x->release();
+                                    y->release();
+                                    z->release();
+                                    w->release();
                                 }
                                 else
                                 {
@@ -1409,6 +1415,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 (*tokenPos)++;
                 
                 TuiRef* functionResult = ((TuiFunction*)functionVar)->runTableConstruct(parent, result, debugInfo);
+                functionVar->release();
                 
                 return functionResult;
             }
@@ -1426,6 +1433,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 if(result && result->type() == functionVar->type())
                 {
                     result->assign(functionVar);
+                    functionVar->release();
                 }
                 else
                 {
@@ -1449,15 +1457,30 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     else
                     {
                         ((TuiBool*)result)->value = leftResult->isEqual(rightResult);
+                        leftResult->release();
                     }
+                    rightResult->release();
                 }
                 else
                 {
                     if(!leftResult)
                     {
-                        return new TuiBool(!rightResult || rightResult->type() == Tui_ref_type_NIL);
+                        bool boolResult = !rightResult || rightResult->type() == Tui_ref_type_NIL;
+                        if(rightResult)
+                        {
+                            rightResult->release();
+                        }
+                        return new TuiBool(boolResult);
                     }
-                    return new TuiBool(leftResult->isEqual(rightResult));
+                    
+                    bool boolResult = leftResult->isEqual(rightResult);
+                    if(rightResult)
+                    {
+                        rightResult->release();
+                    }
+                    leftResult->release();
+                    
+                    return new TuiBool(boolResult);
                 }
             }
                 break;
@@ -1666,7 +1689,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         case Tui_ref_type_TABLE:
                         {
                             chainParent = chainResult;
-                            chainResult = runExpression(expression, tokenPos, result, (TuiTable*)chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                            chainResult = runExpression(expression, tokenPos, nullptr, (TuiTable*)chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
                         }
                             break;
                         case Tui_ref_type_VEC2:
@@ -1976,7 +1999,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             arg = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
                             if(!arg)
                             {
-                                arg = new TuiRef(parent);
+                                arg = TUI_NIL;
                             }
                             else
                             {
@@ -2020,6 +2043,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     }
                     else
                     {
+                        child->retain();
                         return child;
                     }
                 }
@@ -2934,7 +2958,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
         
         if(foundValue)
         {
-            if(result && result->type() == foundValue->type())
+            if(result && result->type() == foundValue->type())// maybe? && (result->type() != Tui_ref_type_TABLE && result->type() != Tui_ref_type_FUNCTION))
             {
                 result->assign(foundValue);
             }
@@ -2945,7 +2969,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
         }
         else
         {
-            return new TuiRef(parent);
+            return TUI_NIL;
         }
     }
     
@@ -2964,7 +2988,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
     {
         case Tui_statement_type_return:
         {
-            return new TuiRef(parent);
+            return TUI_NIL;
         }
             break;
         case Tui_statement_type_returnExpression:
@@ -2980,7 +3004,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             {
                 return result;
             }
-            return new TuiRef(parent);
+            return TUI_NIL;
         }
             break;
         case Tui_statement_type_varModify:
@@ -3096,9 +3120,10 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 }
                 else
                 {
-                    newValue = newValue->copy();
-                    parent->set(statement->varName, newValue); //set a new local
+                    TuiRef* copiedValue = newValue->copy();
+                    parent->set(statement->varName, copiedValue); //set a new local
                     newValue->release();
+                    newValue = copiedValue;
                 }
                     
                 uint32_t token = 0;
@@ -3117,19 +3142,22 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     prevValue = callData->locals[token];
                 }
                 
-                if(newValue)
+                if(newValue != prevValue)
                 {
-                    newValue->retain();
-                    callData->locals[token] = newValue;
-                }
-                else
-                {
-                    callData->locals.erase(token);
-                }
-                
-                if(prevValue)
-                {
-                    prevValue->release();
+                    if(newValue)
+                    {
+                        newValue->retain();
+                        callData->locals[token] = newValue;
+                    }
+                    else
+                    {
+                        callData->locals.erase(token);
+                    }
+                    
+                    if(prevValue)
+                    {
+                        prevValue->release();
+                    }
                 }
             }
         }
@@ -3299,6 +3327,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 if(expressionResult)
                 {
                     expressionPass = expressionResult->boolValue();
+                    expressionResult->release();
                 }
                 
                 if(expressionPass)

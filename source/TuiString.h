@@ -24,7 +24,7 @@ public://functions
     TuiString(const std::string& value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
     virtual ~TuiString() {};
     
-    virtual TuiString* copy()
+    virtual TuiRef* copy()
     {
         return new TuiString(value, parent);
     }

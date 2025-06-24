@@ -22,7 +22,8 @@ class TuiBool;
 #define TuiParseWarn(__fileName__, __lineNumber__, fmt__, ...) TuiLog("\nfile:%s:%d\nWarning:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
 
 enum {
-    Tui_ref_type_NIL = 0,
+    Tui_ref_type_UNDEFINED = 0,
+    Tui_ref_type_NIL,
     Tui_ref_type_TABLE,
     Tui_ref_type_NUMBER,
     Tui_ref_type_STRING,
@@ -204,7 +205,7 @@ public: //static functions
     
 public: //members
     TuiTable* parent = nullptr; //this is only stored by tables and functions, variables don't use it currently.
-    uint8_t refCount = 1;
+    uint32_t refCount = 1;
 
 public://functions
     TuiRef(TuiTable* parent_ = nullptr) {parent = parent_;}
@@ -212,17 +213,17 @@ public://functions
     virtual ~TuiRef() {}
     
     
-    void release() {refCount--; if(refCount == 0) { delete this;}}
-    void retain() {refCount++;}
-    virtual TuiRef* copy() {return new TuiRef(parent);};
+    virtual void release() {refCount--; if(refCount == 0) {delete this;}}
+    virtual void retain() {refCount++;}
+    virtual TuiRef* copy() = 0;
     virtual void assign(TuiRef* other) {};
     virtual bool isEqual(TuiRef* other) {
         return (!other || other->type() == Tui_ref_type_NIL);
     }
     
     
-    virtual uint8_t type() { return Tui_ref_type_NIL; }
-    virtual std::string getTypeName() {return "nil";}
+    virtual uint8_t type() { return Tui_ref_type_UNDEFINED; }
+    virtual std::string getTypeName() {return "undefined";}
     
     virtual bool boolValue() {return false;}
     
@@ -236,7 +237,7 @@ public://functions
         TuiLog("%s", getDebugString().c_str());
     }
     
-    virtual std::string getStringValue() {return "nil";}
+    virtual std::string getStringValue() {return "undefined";}
     virtual std::string getDebugStringValue() {return getStringValue() ;}
     
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) {
@@ -252,15 +253,47 @@ public://functions
 
 };
 
+
+class TuiNil : public TuiRef {
+
+public:
+    TuiNil() {}
+    virtual ~TuiNil() {}
+    virtual TuiRef* copy() {return this;}
+    virtual void assign(TuiRef* other) {
+        TuiError("attempt to assign value to nil");
+    };
+    
+    virtual void release() {}
+    virtual void retain() {}
+    
+    virtual uint8_t type() { return Tui_ref_type_NIL; }
+    virtual std::string getTypeName() {return "nil";}
+    virtual std::string getStringValue() {return "nil";}
+    virtual bool boolValue() {return false;}
+    virtual bool isEqual(TuiRef* other) {return (!other || other == this);}
+
+private:
+    
+private:
+};
+
+static TuiNil* TUI_NIL = new TuiNil();
+
 class TuiUserData : public TuiRef {
 public:
     void* value;
-    TuiTable* members = nullptr;
 
 public:
     TuiUserData(void* value_, TuiTable* parent_ = nullptr);
-    virtual ~TuiUserData();
-    virtual TuiUserData* copy() {return new TuiUserData(value, parent);};
+    virtual ~TuiUserData() {}
+    
+    virtual TuiRef* copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
+    {
+        retain();
+        return this;
+    }
+    
     virtual void assign(TuiRef* other) {
         value = ((TuiUserData*)other)->value;
     };
