@@ -18,6 +18,8 @@ class TuiString;
 class TuiRef;
 class TuiBool;
 
+#define DEBUG_CHECK_FOR_OVER_RELEASE 0
+
 #define TuiParseError(__fileName__, __lineNumber__, fmt__, ...) TuiLog("\nfile:%s:%d\nError:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
 #define TuiParseWarn(__fileName__, __lineNumber__, fmt__, ...) TuiLog("\nfile:%s:%d\nWarning:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
 
@@ -205,7 +207,11 @@ public: //static functions
     
 public: //members
     TuiTable* parent = nullptr; //this is only stored by tables and functions, variables don't use it currently.
+#if DEBUG_CHECK_FOR_OVER_RELEASE
+    uint32_t refCount = 2;
+#else
     uint32_t refCount = 1;
+#endif
 
 public://functions
     TuiRef(TuiTable* parent_ = nullptr) {parent = parent_;}
@@ -213,7 +219,13 @@ public://functions
     virtual ~TuiRef() {}
     
     
-    virtual void release() {refCount--; if(refCount == 0) {delete this;}}
+    virtual void release() {refCount--; if(refCount == 0) {
+#if DEBUG_CHECK_FOR_OVER_RELEASE
+        TuiError("Over release");
+#else
+    delete this;
+#endif
+    }}
     virtual void retain() {refCount++;
     if(refCount > 50)
     {

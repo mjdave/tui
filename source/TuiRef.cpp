@@ -996,6 +996,12 @@ TuiRef* TuiRef::loadValue(const char* str,
     if(onSetEnclosingRef)
     {
         *onSetEnclosingRef = (varChainParent ? varChainParent : parentTable);
+        (*onSetEnclosingRef)->retain();
+    }
+    
+    if(varChainParent)
+    {
+        varChainParent->release();
     }
     
     return result;
@@ -1025,13 +1031,16 @@ TuiRef* TuiRef::loadExpression(const char* str,
         {
             s++;
             s = tuiSkipToNextChar(s, debugInfo, true);
-            TuiRef* rightValue = TuiRef::loadExpression(s, endptr, existingValue, nullptr, parentTable, debugInfo, Tui_operator_level_not);
-            if(!rightValue)
+            TuiRef* rightValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parentTable, debugInfo, Tui_operator_level_not);
+            if(rightValue)
             {
-                rightValue = existingValue;
+                leftValue = TuiRef::logicalNot(rightValue);
+                rightValue->release();
             }
-            leftValue = TuiRef::logicalNot(rightValue);
-            rightValue->release();
+            else
+            {
+                leftValue = TUI_TRUE;
+            }
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
             
         }
@@ -1062,6 +1071,10 @@ TuiRef* TuiRef::loadExpression(const char* str,
             {
                 leftValue = TUI_NIL;
             }
+            else
+            {
+                leftValue->retain();
+            }
         }
     }
     
@@ -1072,6 +1085,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
         *endptr = (char*)s;
         if(existingValue)
         {
+            leftValue->release();
             return nullptr;
         }
         return leftValue;
@@ -1090,6 +1104,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
             *endptr = (char*)s;
             if(existingValue)
             {
+                leftValue->release();
                 return nullptr;
             }
             return leftValue;
@@ -1191,6 +1206,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
             
             *endptr = (char*)s;
             
+            leftValue->release();
             return result;
         }
     }

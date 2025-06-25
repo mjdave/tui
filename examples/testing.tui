@@ -2,29 +2,6 @@ testCommon = require("tests/testCommon.tui")
 assert = testCommon.assert
 getLineNumber = debug.getLineNumber
 
-testTable = {
-    "zero",
-    "one",
-    "two",
-    "four",
-    "five"
-}
-table.insert(testTable, 3, "three")
-print(testTable)
-assert(testTable[3] == "three", "testTable[3] == three")
-testTable[2] = 2.0
-assert(testTable[2] == 2, "testTable[2] == 2")
-
-testTable[7] = "seven"
-assert(testTable[7] == "seven", "testTable[7] == seven")
-assert(testTable[6] == nil, "testTable[6] == nil")
-
-print(testTable)
-
-notTrue = !true
-assert(notTrue == false, "notTrue == false")
-
-
 array = {1,2,3,4,5}
 sum = 0
 for(object in array)

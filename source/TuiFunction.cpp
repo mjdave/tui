@@ -2039,6 +2039,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         *setKey = ((TuiString*)keyConstant)->value;
                     }
                     
+                    keyConstant->release();
+                    
                     if(result && result->type() == child->type())
                     {
                         result->assign(child);
@@ -2064,7 +2066,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 switch (leftType) {
                     case Tui_ref_type_NUMBER:
                     {
-                        double left = ((TuiNumber*)leftResult)->value;
                         (*tokenPos)++;
                         
                         TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
@@ -2076,16 +2077,36 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         
                         switch (token) {
                             case Tui_token_greaterThan:
-                                return TUI_BOOL(left > ((TuiNumber*)rightResult)->value);
+                            {
+                                TuiBool* returnResult = TUI_BOOL(((TuiNumber*)leftResult)->value > ((TuiNumber*)rightResult)->value);
+                                leftResult->release();
+                                rightResult->release();
+                                return returnResult;
+                            }
                                 break;
                             case Tui_token_lessThan:
-                                return TUI_BOOL(left < ((TuiNumber*)rightResult)->value);
+                            {
+                                TuiBool* returnResult = TUI_BOOL(((TuiNumber*)leftResult)->value < ((TuiNumber*)rightResult)->value);
+                                leftResult->release();
+                                rightResult->release();
+                                return returnResult;
+                            }
                                 break;
                             case Tui_token_greaterEqualTo:
-                                return TUI_BOOL(left >= ((TuiNumber*)rightResult)->value);
+                            {
+                                TuiBool* returnResult = TUI_BOOL(((TuiNumber*)leftResult)->value >= ((TuiNumber*)rightResult)->value);
+                                leftResult->release();
+                                rightResult->release();
+                                return returnResult;
+                            }
                                 break;
                             case Tui_token_lessEqualTo:
-                                return TUI_BOOL(left <= ((TuiNumber*)rightResult)->value);
+                            {
+                                TuiBool* returnResult = TUI_BOOL(((TuiNumber*)leftResult)->value <= ((TuiNumber*)rightResult)->value);
+                                leftResult->release();
+                                rightResult->release();
+                                return returnResult;
+                            }
                                 break;
                         };
                         
@@ -2093,6 +2114,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         break;
                         
                     default:
+                    {
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
+                        return nullptr;
+                    }
                         break;
                 }
             }
@@ -2416,6 +2441,13 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 break;
                         }
                         
+                        if(rightResult)
+                        {
+                            rightResult->release();
+                        }
+                        
+                        inPlaceEnclosingSetRef->release();
+                        
                         return nullptr;
                     }
                     else
@@ -2423,6 +2455,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         leftResult = result;
                     }
                     
+                }
+                else if(inPlaceEnclosingSetRef)
+                {
+                    inPlaceEnclosingSetRef->release();
                 }
                 
                 if(!leftResult)
@@ -2456,27 +2492,18 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             {
                                 switch (token) {
                                     case Tui_token_add:
-                                        ((TuiNumber*)result)->value += ((TuiNumber*)rightResult)->value;
-                                        break;
-                                    case Tui_token_subtract:
-                                        ((TuiNumber*)result)->value -= ((TuiNumber*)rightResult)->value;
-                                        break;
-                                    case Tui_token_multiply:
-                                        ((TuiNumber*)result)->value *= ((TuiNumber*)rightResult)->value;
-                                        break;
-                                    case Tui_token_divide:
-                                        ((TuiNumber*)result)->value /= ((TuiNumber*)rightResult)->value;
-                                        break;
-                                        
                                     case Tui_token_addInPlace:
                                         ((TuiNumber*)result)->value += ((TuiNumber*)rightResult)->value;
                                         break;
+                                    case Tui_token_subtract:
                                     case Tui_token_subtractInPlace:
                                         ((TuiNumber*)result)->value -= ((TuiNumber*)rightResult)->value;
                                         break;
+                                    case Tui_token_multiply:
                                     case Tui_token_multiplyInPlace:
                                         ((TuiNumber*)result)->value *= ((TuiNumber*)rightResult)->value;
                                         break;
+                                    case Tui_token_divide:
                                     case Tui_token_divideInPlace:
                                         ((TuiNumber*)result)->value /= ((TuiNumber*)rightResult)->value;
                                         break;
@@ -2544,12 +2571,13 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         break;
                     case Tui_ref_type_VEC2:
                     {
-                        dvec2 left = ((TuiVec2*)leftResult)->value;
                         (*tokenPos)++;
-                        TuiRef* rightResult = runExpression(expression, tokenPos, result, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                        TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
                         if(!rightResult)
                         {
-                            rightResult = result;
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected value");
+                            leftResult->release();
+                            return nullptr;
                         }
                         
                         
@@ -2560,19 +2588,19 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 switch (token) {
                                     case Tui_token_add:
                                     case Tui_token_addInPlace:
-                                        ((TuiVec2*)result)->value += left;
+                                        ((TuiVec2*)result)->value += ((TuiVec2*)rightResult)->value;
                                         break;
                                     case Tui_token_subtract:
                                     case Tui_token_subtractInPlace:
-                                        ((TuiVec2*)result)->value -= left;
+                                        ((TuiVec2*)result)->value -= ((TuiVec2*)rightResult)->value;
                                         break;
                                     case Tui_token_multiply:
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiVec2*)result)->value *= left;
+                                        ((TuiVec2*)result)->value *= ((TuiVec2*)rightResult)->value;
                                         break;
                                     case Tui_token_divide:
                                     case Tui_token_divideInPlace:
-                                        ((TuiVec2*)result)->value /= left;
+                                        ((TuiVec2*)result)->value /= ((TuiVec2*)rightResult)->value;
                                         break;
                                 };
                             }
@@ -2580,16 +2608,36 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             {
                                 switch (token) {
                                     case Tui_token_add:
-                                        return new TuiVec2(left + ((TuiVec2*)rightResult)->value);
+                                    {
+                                        TuiVec2* returnResult = new TuiVec2(((TuiVec2*)leftResult)->value + ((TuiVec2*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
                                         break;
                                     case Tui_token_subtract:
-                                        return new TuiVec2(left - ((TuiVec2*)rightResult)->value);
+                                    {
+                                        TuiVec2* returnResult = new TuiVec2(((TuiVec2*)leftResult)->value - ((TuiVec2*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
                                         break;
                                     case Tui_token_multiply:
-                                        return new TuiVec2(left * ((TuiVec2*)rightResult)->value);
+                                    {
+                                        TuiVec2* returnResult = new TuiVec2(((TuiVec2*)leftResult)->value * ((TuiVec2*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
                                         break;
                                     case Tui_token_divide:
-                                        return new TuiVec2(left / ((TuiVec2*)rightResult)->value);
+                                    {
+                                        TuiVec2* returnResult = new TuiVec2(((TuiVec2*)leftResult)->value / ((TuiVec2*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
                                         break;
                                         
                                     case Tui_token_addInPlace:
@@ -2605,7 +2653,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         ((TuiVec2*)leftResult)->value /= ((TuiVec2*)rightResult)->value;
                                         break;
                                 }
-                            };
+                            }
                         }
                         else if(rightResult->type() == Tui_ref_type_NUMBER)
                         {
@@ -2613,11 +2661,43 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             {
                                 switch (token) {
                                     case Tui_token_multiply:
+                                    case Tui_token_multiplyInPlace:
                                         ((TuiVec2*)result)->value *= ((TuiNumber*)rightResult)->value;
                                         break;
                                     case Tui_token_divide:
+                                    case Tui_token_divideInPlace:
                                         ((TuiVec2*)result)->value /= ((TuiNumber*)rightResult)->value;
                                         break;
+                                    default:
+                                    {
+                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec2");
+                                        return nullptr;
+                                    }
+                                        break;
+                                };
+                            }
+                            else
+                            {
+                                
+                                switch (token) {
+                                        
+                                    case Tui_token_multiply:
+                                    {
+                                        TuiVec2* returnResult = new TuiVec2(((TuiVec2*)leftResult)->value * ((TuiNumber*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
+                                        break;
+                                    case Tui_token_divide:
+                                    {
+                                        TuiVec2* returnResult = new TuiVec2(((TuiVec2*)leftResult)->value / ((TuiNumber*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
+                                        break;
+                                        
                                     case Tui_token_multiplyInPlace:
                                         ((TuiVec2*)leftResult)->value *= ((TuiNumber*)rightResult)->value;
                                         break;
@@ -2626,24 +2706,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         break;
                                     default:
                                     {
-                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec3");
-                                        return nullptr;
-                                    }
-                                        break;
-                                };
-                            }
-                            else
-                            {
-                                switch (token) {
-                                    case Tui_token_multiply:
-                                        return new TuiVec2(left * ((TuiNumber*)rightResult)->value);
-                                        break;
-                                    case Tui_token_divide:
-                                        return new TuiVec2(left / ((TuiNumber*)rightResult)->value);
-                                        break;
-                                    default:
-                                    {
-                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec3");
+                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec2");
                                         return nullptr;
                                     }
                                         break;
@@ -2656,16 +2719,20 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             return nullptr;
                         }
                         
+                        
+                        rightResult->release();
+                        
                     }
                         break;
                     case Tui_ref_type_VEC3:
                     {
-                        dvec3 left = ((TuiVec3*)leftResult)->value;
                         (*tokenPos)++;
-                        TuiRef* rightResult = runExpression(expression, tokenPos, result, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                        TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
                         if(!rightResult)
                         {
-                            rightResult = result;
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected value");
+                            leftResult->release();
+                            return nullptr;
                         }
                         
                         
@@ -2696,16 +2763,36 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             {
                                 switch (token) {
                                     case Tui_token_add:
-                                        return new TuiVec3(left + ((TuiVec3*)rightResult)->value);
+                                    {
+                                        TuiVec3* returnResult = new TuiVec3(((TuiVec3*)leftResult)->value + ((TuiVec3*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
                                         break;
                                     case Tui_token_subtract:
-                                        return new TuiVec3(left - ((TuiVec3*)rightResult)->value);
+                                    {
+                                        TuiVec3* returnResult = new TuiVec3(((TuiVec3*)leftResult)->value - ((TuiVec3*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
                                         break;
                                     case Tui_token_multiply:
-                                        return new TuiVec3(left * ((TuiVec3*)rightResult)->value);
+                                    {
+                                        TuiVec3* returnResult = new TuiVec3(((TuiVec3*)leftResult)->value * ((TuiVec3*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
                                         break;
                                     case Tui_token_divide:
-                                        return new TuiVec3(left / ((TuiVec3*)rightResult)->value);
+                                    {
+                                        TuiVec3* returnResult = new TuiVec3(((TuiVec3*)leftResult)->value / ((TuiVec3*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
                                         break;
                                         
                                     case Tui_token_addInPlace:
@@ -2720,7 +2807,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                     case Tui_token_divideInPlace:
                                         ((TuiVec3*)leftResult)->value /= ((TuiVec3*)rightResult)->value;
                                         break;
-                                };
+                                }
                             }
                         }
                         else if(rightResult->type() == Tui_ref_type_NUMBER)
@@ -2729,149 +2816,48 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             {
                                 switch (token) {
                                     case Tui_token_multiply:
+                                    case Tui_token_multiplyInPlace:
                                         ((TuiVec3*)result)->value *= ((TuiNumber*)rightResult)->value;
                                         break;
                                     case Tui_token_divide:
+                                    case Tui_token_divideInPlace:
                                         ((TuiVec3*)result)->value /= ((TuiNumber*)rightResult)->value;
                                         break;
+                                    default:
+                                    {
+                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec3");
+                                        return nullptr;
+                                    }
+                                        break;
+                                };
+                            }
+                            else
+                            {
+                                
+                                switch (token) {
+                                        
+                                    case Tui_token_multiply:
+                                    {
+                                        TuiVec3* returnResult = new TuiVec3(((TuiVec3*)leftResult)->value * ((TuiNumber*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
+                                        break;
+                                    case Tui_token_divide:
+                                    {
+                                        TuiVec3* returnResult = new TuiVec3(((TuiVec3*)leftResult)->value / ((TuiNumber*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
+                                        break;
+                                        
                                     case Tui_token_multiplyInPlace:
                                         ((TuiVec3*)leftResult)->value *= ((TuiNumber*)rightResult)->value;
                                         break;
                                     case Tui_token_divideInPlace:
                                         ((TuiVec3*)leftResult)->value /= ((TuiNumber*)rightResult)->value;
-                                        break;
-                                    default:
-                                    {
-                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec3");
-                                        return nullptr;
-                                    }
-                                        break;
-                                };
-                            }
-                            else
-                            {
-                                switch (token) {
-                                    case Tui_token_multiply:
-                                        return new TuiVec3(left * ((TuiNumber*)rightResult)->value);
-                                        break;
-                                    case Tui_token_divide:
-                                        return new TuiVec3(left / ((TuiNumber*)rightResult)->value);
-                                        break;
-                                    default:
-                                    {
-                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec3");
-                                        return nullptr;
-                                    }
-                                        break;
-                                };
-                            }
-                        }
-                        else
-                        {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected vec3 or number");
-                            return nullptr;
-                        }
-                        
-                    }
-                        break;
-                    case Tui_ref_type_VEC4:
-                    {
-                        dvec4 left = ((TuiVec4*)leftResult)->value;
-                        (*tokenPos)++;
-                        TuiRef* rightResult = runExpression(expression, tokenPos, result, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
-                        if(!rightResult)
-                        {
-                            rightResult = result;
-                        }
-                        
-                        
-                        if(rightResult->type() == leftType)
-                        {
-                            if(result && result->type() == leftType)
-                            {
-                                switch (token) {
-                                    case Tui_token_add:
-                                    case Tui_token_addInPlace:
-                                        ((TuiVec4*)result)->value += left;
-                                        break;
-                                    case Tui_token_subtract:
-                                    case Tui_token_subtractInPlace:
-                                        ((TuiVec4*)result)->value -= left;
-                                        break;
-                                    case Tui_token_multiply:
-                                    case Tui_token_multiplyInPlace:
-                                        ((TuiVec4*)result)->value *= left;
-                                        break;
-                                    case Tui_token_divide:
-                                    case Tui_token_divideInPlace:
-                                        ((TuiVec4*)result)->value /= left;
-                                        break;
-                                };
-                            }
-                            else
-                            {
-                                switch (token) {
-                                    case Tui_token_add:
-                                        return new TuiVec4(left + ((TuiVec4*)rightResult)->value);
-                                        break;
-                                    case Tui_token_subtract:
-                                        return new TuiVec4(left - ((TuiVec4*)rightResult)->value);
-                                        break;
-                                    case Tui_token_multiply:
-                                        return new TuiVec4(left * ((TuiVec4*)rightResult)->value);
-                                        break;
-                                    case Tui_token_divide:
-                                        return new TuiVec4(left / ((TuiVec4*)rightResult)->value);
-                                        break;
-                                        
-                                    case Tui_token_addInPlace:
-                                        ((TuiVec4*)leftResult)->value += ((TuiVec4*)rightResult)->value;
-                                        break;
-                                    case Tui_token_subtractInPlace:
-                                        ((TuiVec4*)leftResult)->value -= ((TuiVec4*)rightResult)->value;
-                                        break;
-                                    case Tui_token_multiplyInPlace:
-                                        ((TuiVec4*)leftResult)->value *= ((TuiVec4*)rightResult)->value;
-                                        break;
-                                    case Tui_token_divideInPlace:
-                                        ((TuiVec4*)leftResult)->value /= ((TuiVec4*)rightResult)->value;
-                                        break;
-                                };
-                            }
-                        }
-                        else if(rightResult->type() == Tui_ref_type_NUMBER)
-                        {
-                            if(result && result->type() == leftType)
-                            {
-                                switch (token) {
-                                    case Tui_token_multiply:
-                                        ((TuiVec4*)result)->value *= ((TuiNumber*)rightResult)->value;
-                                        break;
-                                    case Tui_token_divide:
-                                        ((TuiVec4*)result)->value /= ((TuiNumber*)rightResult)->value;
-                                        break;
-                                    case Tui_token_multiplyInPlace:
-                                        ((TuiVec4*)leftResult)->value *= ((TuiNumber*)rightResult)->value;
-                                        break;
-                                    case Tui_token_divideInPlace:
-                                        ((TuiVec4*)leftResult)->value /= ((TuiNumber*)rightResult)->value;
-                                        break;
-                                    default:
-                                    {
-                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec3");
-                                        return nullptr;
-                                    }
-                                        break;
-                                };
-                            }
-                            else
-                            {
-                                switch (token) {
-                                    case Tui_token_multiply:
-                                        return new TuiVec4(left * ((TuiNumber*)rightResult)->value);
-                                        break;
-                                    case Tui_token_divide:
-                                        return new TuiVec4(left / ((TuiNumber*)rightResult)->value);
                                         break;
                                     default:
                                     {
@@ -2887,6 +2873,164 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected vec2 or number");
                             return nullptr;
                         }
+                        
+                        
+                        rightResult->release();
+                        
+                    }
+                        break;
+                    case Tui_ref_type_VEC4:
+                    {
+                        (*tokenPos)++;
+                        TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef);
+                        if(!rightResult)
+                        {
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected value");
+                            leftResult->release();
+                            return nullptr;
+                        }
+                        
+                        
+                        if(rightResult->type() == leftType)
+                        {
+                            if(result && result->type() == leftType)
+                            {
+                                switch (token) {
+                                    case Tui_token_add:
+                                    case Tui_token_addInPlace:
+                                        ((TuiVec4*)result)->value += ((TuiVec4*)rightResult)->value;
+                                        break;
+                                    case Tui_token_subtract:
+                                    case Tui_token_subtractInPlace:
+                                        ((TuiVec4*)result)->value -= ((TuiVec4*)rightResult)->value;
+                                        break;
+                                    case Tui_token_multiply:
+                                    case Tui_token_multiplyInPlace:
+                                        ((TuiVec4*)result)->value *= ((TuiVec4*)rightResult)->value;
+                                        break;
+                                    case Tui_token_divide:
+                                    case Tui_token_divideInPlace:
+                                        ((TuiVec4*)result)->value /= ((TuiVec4*)rightResult)->value;
+                                        break;
+                                };
+                            }
+                            else
+                            {
+                                switch (token) {
+                                    case Tui_token_add:
+                                    {
+                                        TuiVec4* returnResult = new TuiVec4(((TuiVec4*)leftResult)->value + ((TuiVec4*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
+                                        break;
+                                    case Tui_token_subtract:
+                                    {
+                                        TuiVec4* returnResult = new TuiVec4(((TuiVec4*)leftResult)->value - ((TuiVec4*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
+                                        break;
+                                    case Tui_token_multiply:
+                                    {
+                                        TuiVec4* returnResult = new TuiVec4(((TuiVec4*)leftResult)->value * ((TuiVec4*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
+                                        break;
+                                    case Tui_token_divide:
+                                    {
+                                        TuiVec4* returnResult = new TuiVec4(((TuiVec4*)leftResult)->value / ((TuiVec4*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
+                                        break;
+                                        
+                                    case Tui_token_addInPlace:
+                                        ((TuiVec4*)leftResult)->value += ((TuiVec4*)rightResult)->value;
+                                        break;
+                                    case Tui_token_subtractInPlace:
+                                        ((TuiVec4*)leftResult)->value -= ((TuiVec4*)rightResult)->value;
+                                        break;
+                                    case Tui_token_multiplyInPlace:
+                                        ((TuiVec4*)leftResult)->value *= ((TuiVec4*)rightResult)->value;
+                                        break;
+                                    case Tui_token_divideInPlace:
+                                        ((TuiVec4*)leftResult)->value /= ((TuiVec4*)rightResult)->value;
+                                        break;
+                                }
+                            }
+                        }
+                        else if(rightResult->type() == Tui_ref_type_NUMBER)
+                        {
+                            if(result && result->type() == leftType)
+                            {
+                                switch (token) {
+                                    case Tui_token_multiply:
+                                    case Tui_token_multiplyInPlace:
+                                        ((TuiVec4*)result)->value *= ((TuiNumber*)rightResult)->value;
+                                        break;
+                                    case Tui_token_divide:
+                                    case Tui_token_divideInPlace:
+                                        ((TuiVec4*)result)->value /= ((TuiNumber*)rightResult)->value;
+                                        break;
+                                    default:
+                                    {
+                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec4");
+                                        return nullptr;
+                                    }
+                                        break;
+                                };
+                            }
+                            else
+                            {
+                                
+                                switch (token) {
+                                        
+                                    case Tui_token_multiply:
+                                    {
+                                        TuiVec4* returnResult = new TuiVec4(((TuiVec4*)leftResult)->value * ((TuiNumber*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
+                                        break;
+                                    case Tui_token_divide:
+                                    {
+                                        TuiVec4* returnResult = new TuiVec4(((TuiVec4*)leftResult)->value / ((TuiNumber*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        return returnResult;
+                                    }
+                                        break;
+                                        
+                                    case Tui_token_multiplyInPlace:
+                                        ((TuiVec4*)leftResult)->value *= ((TuiNumber*)rightResult)->value;
+                                        break;
+                                    case Tui_token_divideInPlace:
+                                        ((TuiVec4*)leftResult)->value /= ((TuiNumber*)rightResult)->value;
+                                        break;
+                                    default:
+                                    {
+                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec4");
+                                        return nullptr;
+                                    }
+                                        break;
+                                };
+                            }
+                        }
+                        else
+                        {
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected vec4 or number");
+                            return nullptr;
+                        }
+                        
+                        
+                        rightResult->release();
                         
                     }
                         break;
@@ -2965,9 +3109,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
         
         if(foundValue)
         {
-            if(result && result->type() == foundValue->type())// maybe? && (result->type() != Tui_ref_type_TABLE && result->type() != Tui_ref_type_FUNCTION))
+            if(result && result->type() == foundValue->type() && result->type() != Tui_ref_type_BOOL)// maybe? && (result->type() != Tui_ref_type_TABLE && result->type() != Tui_ref_type_FUNCTION))
             {
                 result->assign(foundValue);
+                foundValue->release();
             }
             else
             {
@@ -3124,6 +3269,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                         }
                             break;
                     }
+                    enclosingSetRef->release();
                 }
                 else
                 {
@@ -3153,7 +3299,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 {
                     if(newValue)
                     {
-                        newValue->retain();
                         callData->locals[token] = newValue;
                     }
                     else

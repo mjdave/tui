@@ -475,6 +475,11 @@ public://functions
                 TuiError("Something went wrong");
             }
             
+            if(enclosingRef)
+            {
+                enclosingRef->release();
+                enclosingRef = nullptr;
+            }
             
             if(*s == ',' || *s == '\n')
             {
@@ -502,6 +507,12 @@ public://functions
         }
         else
         {
+            if(enclosingRef)
+            {
+                enclosingRef->release();
+                enclosingRef = nullptr;
+            }
+            
             bool operatorOr = (*s == 'o' && *(s + 1) == 'r' && checkSymbolNameComplete(s + 2));
             bool operatorAnd = (*s == 'a' && *(s + 1) == 'n' && *(s + 2) == 'd' && checkSymbolNameComplete(s + 3));
             
