@@ -981,9 +981,8 @@ public://functions
     
     void setBool(const std::string& key, bool value)
     {
-        TuiBool* ref = new TuiBool(value);
+        TuiBool* ref = TUI_BOOL(value);
         set(key, ref);
-        ref->release();
     }
     
     void setFunction(const std::string& key, std::function<TuiRef*(TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> value)

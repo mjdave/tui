@@ -214,7 +214,12 @@ public://functions
     
     
     virtual void release() {refCount--; if(refCount == 0) {delete this;}}
-    virtual void retain() {refCount++;}
+    virtual void retain() {refCount++;
+    if(refCount > 50)
+    {
+        TuiWarn("object is likely being leaked");
+    }
+    }
     virtual TuiRef* copy() = 0;
     virtual void assign(TuiRef* other) {};
     virtual bool isEqual(TuiRef* other) {
@@ -260,9 +265,7 @@ public:
     TuiNil() {}
     virtual ~TuiNil() {}
     virtual TuiRef* copy() {return this;}
-    virtual void assign(TuiRef* other) {
-        TuiError("attempt to assign value to nil");
-    };
+    virtual void assign(TuiRef* other) {};
     
     virtual void release() {}
     virtual void retain() {}

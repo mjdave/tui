@@ -4,6 +4,10 @@
 #include "TuiTable.h"
 #include "TuiNumber.h"
 
+
+TuiBool* TUI_TRUE = new TuiBool(true);
+TuiBool* TUI_FALSE = new TuiBool(false);
+
 TuiTable* TuiRef::createRootTable()
 {
     TuiTable* rootTable = new TuiTable(nullptr);
@@ -542,15 +546,9 @@ static TuiRef* loadSingleValueInternal(const char* str,
             {
                 bool newValue = !result->boolValue();
                 result->release();
-                if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
-                {
-                    ((TuiBool*)existingValue)->value = newValue;
-                    return nullptr;
-                }
-                
-                return new TuiBool(newValue);
+                return TUI_BOOL(newValue);
             }
-            return new TuiBool(true);
+            return TUI_TRUE;
         }
         
         if(isdigit(*s) || ((*s == '-' || *s == '+') && isdigit(*(s + 1))))
@@ -1005,7 +1003,7 @@ TuiRef* TuiRef::loadValue(const char* str,
 
 TuiBool* TuiRef::logicalNot(TuiRef* value)
 {
-    return new TuiBool(!value || !value->boolValue());
+    return TUI_BOOL(!value || !value->boolValue());
 }
 
 
@@ -1208,51 +1206,19 @@ TuiRef* TuiRef::loadExpression(const char* str,
     
     if(operatorChar == '=')
     {
-        if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
-        {
-            ((TuiBool*)existingValue)->value = leftValue->isEqual(rightValue);
-            existingValueWasAssigned = true;
-        }
-        else
-        {
-            result = new TuiBool(leftValue->isEqual(rightValue));
-        }
+        result = TUI_BOOL(leftValue->isEqual(rightValue));
     }
     else if(operatorChar == '!')
     {
-        if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
-        {
-            ((TuiBool*)existingValue)->value = !leftValue->isEqual(rightValue);
-            existingValueWasAssigned = true;
-        }
-        else
-        {
-            result = new TuiBool(!leftValue->isEqual(rightValue));
-        }
+        result = TUI_BOOL(!leftValue->isEqual(rightValue));
     }
     else if(operatorOr)
     {
-        if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
-        {
-            ((TuiBool*)existingValue)->value = leftValue->boolValue() || rightValue->boolValue();
-            existingValueWasAssigned = true;
-        }
-        else
-        {
-            result = new TuiBool(leftValue->boolValue() || rightValue->boolValue());
-        }
+        result = TUI_BOOL(leftValue->boolValue() || rightValue->boolValue());
     }
     else if(operatorAnd)
     {
-        if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
-        {
-            ((TuiBool*)existingValue)->value = leftValue->boolValue() && rightValue->boolValue();
-            existingValueWasAssigned = true;
-        }
-        else
-        {
-            result = new TuiBool(leftValue->boolValue() && rightValue->boolValue());
-        }
+        result = TUI_BOOL(leftValue->boolValue() && rightValue->boolValue());
     }
     else
     {
@@ -1351,27 +1317,11 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     {
                         if(secondOperatorChar == '=')
                         {
-                            if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
-                            {
-                                ((TuiBool*)existingValue)->value = ((TuiNumber*)leftValue)->value >= ((TuiNumber*)rightValue)->value;
-                                existingValueWasAssigned = true;
-                            }
-                            else
-                            {
-                                result = new TuiBool(((TuiNumber*)leftValue)->value >= ((TuiNumber*)rightValue)->value);
-                            }
+                            result = TUI_BOOL(((TuiNumber*)leftValue)->value >= ((TuiNumber*)rightValue)->value);
                         }
                         else
                         {
-                            if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
-                            {
-                                ((TuiBool*)existingValue)->value = ((TuiNumber*)leftValue)->value > ((TuiNumber*)rightValue)->value;
-                                existingValueWasAssigned = true;
-                            }
-                            else
-                            {
-                                result = new TuiBool(((TuiNumber*)leftValue)->value > ((TuiNumber*)rightValue)->value);
-                            }
+                            result = TUI_BOOL(((TuiNumber*)leftValue)->value > ((TuiNumber*)rightValue)->value);
                         }
                     }
                         break;
@@ -1379,27 +1329,11 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     {
                         if(secondOperatorChar == '=')
                         {
-                            if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
-                            {
-                                ((TuiBool*)existingValue)->value = ((TuiNumber*)leftValue)->value <= ((TuiNumber*)rightValue)->value;
-                                existingValueWasAssigned = true;
-                            }
-                            else
-                            {
-                                result = new TuiBool(((TuiNumber*)leftValue)->value <= ((TuiNumber*)rightValue)->value);
-                            }
+                            result = TUI_BOOL(((TuiNumber*)leftValue)->value <= ((TuiNumber*)rightValue)->value);
                         }
                         else
                         {
-                            if(existingValue && existingValue->type() == Tui_ref_type_BOOL)
-                            {
-                                ((TuiBool*)existingValue)->value = ((TuiNumber*)leftValue)->value < ((TuiNumber*)rightValue)->value;
-                                existingValueWasAssigned = true;
-                            }
-                            else
-                            {
-                                result = new TuiBool(((TuiNumber*)leftValue)->value < ((TuiNumber*)rightValue)->value);
-                            }
+                            result = TUI_BOOL(((TuiNumber*)leftValue)->value < ((TuiNumber*)rightValue)->value);
                         }
                     }
                         break;

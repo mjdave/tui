@@ -44,21 +44,30 @@ private:
 private:
 };
 
+class TuiBool;
+extern TuiBool* TUI_TRUE;
+extern TuiBool* TUI_FALSE;
+
+#define TUI_BOOL(__boolValue__) ((__boolValue__) ? TUI_TRUE : TUI_FALSE)
+
 class TuiBool : public TuiRef {
 public: //members
     bool value;
 
 public://functions
-    TuiBool(bool value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    TuiBool(bool value_) : TuiRef() {value = value_;} //do not use TuiBool directly, use TUI_TRUE and TUI_FALSE
+    
     virtual ~TuiBool() {};
     
     virtual TuiRef* copy()
     {
-        return new TuiBool(value, parent);
+        return this;
     }
     virtual void assign(TuiRef* other) {
-        value = ((TuiBool*)other)->value;
+        TuiError("assign not supported for bool type");
     };
+    virtual void release() {}
+    virtual void retain() {}
     
     static TuiBool* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
         const char* s = tuiSkipToNextChar(str, debugInfo);
@@ -66,14 +75,12 @@ public://functions
         if(*s == 't' && *(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e' )
         {
             *endptr = (char*)(s + 4);
-            TuiBool* number = new TuiBool(true, parent);
-            return number;
+            return TUI_TRUE;
         }
         if(*s == 'f' && *(s + 1) == 'a' && *(s + 2) == 'l' && *(s + 3) == 's' && *(s + 4) == 'e' )
         {
             *endptr = (char*)(s + 5);
-            TuiBool* number = new TuiBool(false, parent);
-            return number;
+            return TUI_FALSE;
         }
         
         return nullptr;
@@ -91,7 +98,7 @@ public://functions
         {
             return !value;
         }
-        return other->type() == Tui_ref_type_BOOL && ((TuiBool*)other)->value == value;
+        return other == this;
     }
 
 private:
