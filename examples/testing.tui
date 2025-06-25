@@ -2,17 +2,13 @@ testCommon = require("tests/testCommon.tui")
 assert = testCommon.assert
 getLineNumber = debug.getLineNumber
 
-array = {1,2,3,4,5}
-sum = 0
-for(object in array)
-{
-    sum = sum + object
-}
-assert(sum == 15, "for array loop")
 
-sum = 0
-for(index,object in array)
+testFunc = function(var)
 {
-    sum = sum + object + index
+    block = 10
+    block = var - block
+    print(block)
 }
-assert(sum == 25, "for array index loop")
+
+testFunc(15)
+testFunc(14)
