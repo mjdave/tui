@@ -380,81 +380,79 @@ void serializeValue(const char* str,
         }
     }
     
-    if(!stringBuffer.empty())
+    
+    if(singleQuote || doubleQuote)
     {
-        if(singleQuote || doubleQuote)
+        TuiString* stringConstant = new TuiString(stringBuffer, parent);
+        uint32_t stringConstantToken = tokenMap->tokenIndex++;
+        tokenMap->refsByToken[stringConstantToken] = stringConstant;
+        expression->tokens.insert(expression->tokens.begin() + tokenPos++, stringConstantToken);
+    }
+    else if(!stringBuffer.empty())
+    {
+        if(hasFoundInitialValue)
         {
+            if(!varChainStarted)
+            {
+                expression->tokens.insert(expression->tokens.begin() + tokenStartPos, Tui_token_varChain); //note tokenStartPos to place before all other tokens
+                tokenPos++;
+                varChainStarted = true;
+            }
             TuiString* stringConstant = new TuiString(stringBuffer, parent);
             uint32_t stringConstantToken = tokenMap->tokenIndex++;
             tokenMap->refsByToken[stringConstantToken] = stringConstant;
+            expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_childByString);
             expression->tokens.insert(expression->tokens.begin() + tokenPos++, stringConstantToken);
+            if(foundVarName)
+            {
+                *foundVarName = stringBuffer;
+            }
         }
         else
         {
-            if(hasFoundInitialValue)
+            //todo use a map
+            if(stringBuffer == "true")
             {
-                if(!varChainStarted)
-                {
-                    expression->tokens.insert(expression->tokens.begin() + tokenStartPos, Tui_token_varChain); //note tokenStartPos to place before all other tokens
-                    tokenPos++;
-                    varChainStarted = true;
-                }
-                TuiString* stringConstant = new TuiString(stringBuffer, parent);
-                uint32_t stringConstantToken = tokenMap->tokenIndex++;
-                tokenMap->refsByToken[stringConstantToken] = stringConstant;
-                expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_childByString);
-                expression->tokens.insert(expression->tokens.begin() + tokenPos++, stringConstantToken);
+                expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_true);
+            }
+            else if(stringBuffer == "false")
+            {
+                expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_false);
+            }
+            else if(tokenMap->localTokensByVarName.count(stringBuffer) != 0)
+            {
+                expression->tokens.insert(expression->tokens.begin() + tokenPos++, tokenMap->localTokensByVarName[stringBuffer]);
                 if(foundVarName)
                 {
                     *foundVarName = stringBuffer;
                 }
             }
+            else if(tokenMap->capturedTokensByVarName.count(stringBuffer) != 0)
+            {
+                expression->tokens.insert(expression->tokens.begin() + tokenPos++, tokenMap->capturedTokensByVarName[stringBuffer]);
+                if(foundVarName)
+                {
+                    *foundVarName = stringBuffer;
+                }
+                
+                if(foundVarWasCapture)
+                {
+                    *foundVarWasCapture = true;
+                }
+            }
             else
             {
-                //todo use a map
-                if(stringBuffer == "true")
+                uint32_t variableToken = tokenMap->tokenIndex++;
+                expression->tokens.insert(expression->tokens.begin() + tokenPos++, variableToken);
+                tokenMap->capturedTokensByVarName[stringBuffer] = variableToken;
+                if(foundVarName)
                 {
-                    expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_true);
+                    *foundVarName = stringBuffer;
                 }
-                else if(stringBuffer == "false")
+                
+                if(foundVarWasCapture)
                 {
-                    expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_false);
-                }
-                else if(tokenMap->localTokensByVarName.count(stringBuffer) != 0)
-                {
-                    expression->tokens.insert(expression->tokens.begin() + tokenPos++, tokenMap->localTokensByVarName[stringBuffer]);
-                    if(foundVarName)
-                    {
-                        *foundVarName = stringBuffer;
-                    }
-                }
-                else if(tokenMap->capturedTokensByVarName.count(stringBuffer) != 0)
-                {
-                    expression->tokens.insert(expression->tokens.begin() + tokenPos++, tokenMap->capturedTokensByVarName[stringBuffer]);
-                    if(foundVarName)
-                    {
-                        *foundVarName = stringBuffer;
-                    }
-                    
-                    if(foundVarWasCapture)
-                    {
-                        *foundVarWasCapture = true;
-                    }
-                }
-                else
-                {
-                    uint32_t variableToken = tokenMap->tokenIndex++;
-                    expression->tokens.insert(expression->tokens.begin() + tokenPos++, variableToken);
-                    tokenMap->capturedTokensByVarName[stringBuffer] = variableToken;
-                    if(foundVarName)
-                    {
-                        *foundVarName = stringBuffer;
-                    }
-                    
-                    if(foundVarWasCapture)
-                    {
-                        *foundVarWasCapture = true;
-                    }
+                    *foundVarWasCapture = true;
                 }
             }
         }
@@ -3100,10 +3098,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         {
                             switch (token) {
                                 case Tui_token_add:
-                                    ((TuiString*)result)->value += ((TuiString*)rightResult)->value;
+                                    ((TuiString*)result)->value = ((TuiString*)leftResult)->value + rightResult->getStringValue();
                                     break;
                                 case Tui_token_addInPlace:
-                                    ((TuiString*)result)->value += ((TuiString*)rightResult)->value;
+                                    ((TuiString*)result)->value += rightResult->getStringValue();
                                     break;
                             };
                         }
@@ -3111,8 +3109,12 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         {
                             switch (token) {
                                 case Tui_token_add:
-                                    return new TuiString(((TuiString*)leftResult)->value + rightResult->getStringValue());
-                                    break;
+                                {
+                                    TuiString* returnResult = new TuiString(((TuiString*)leftResult)->value + rightResult->getStringValue());
+                                    leftResult->release();
+                                    rightResult->release();
+                                    return returnResult;
+                                }
                                 case Tui_token_addInPlace:
                                     ((TuiString*)leftResult)->value += rightResult->getStringValue();
                                     break;
@@ -3122,6 +3124,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                     break;
                             };
                         }
+                        
+                        rightResult->release();
                     }
                         break;
                         
@@ -3321,7 +3325,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                         }
                             break;
                     }
-                    enclosingSetRef->release();
                 }
                 else
                 {
@@ -3364,6 +3367,17 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     }
                 }
             }
+            
+            if(existingValue)
+            {
+                existingValue->release();
+            }
+            
+            if(enclosingSetRef)
+            {
+                enclosingSetRef->release();
+            }
+            
         }
             break;
         case Tui_statement_type_functionCall:

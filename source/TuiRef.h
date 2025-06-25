@@ -20,7 +20,7 @@ class TuiBool;
 
 #define DEBUG_CHECK_FOR_OVER_RELEASE 0
 
-#define TuiParseError(__fileName__, __lineNumber__, fmt__, ...) TuiLog("\nfile:%s:%d\nError:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
+#define TuiParseError(__fileName__, __lineNumber__, fmt__, ...) TuiLog("\nfile:%s:%d\nError:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__); abort();
 #define TuiParseWarn(__fileName__, __lineNumber__, fmt__, ...) TuiLog("\nfile:%s:%d\nWarning:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
 
 enum {

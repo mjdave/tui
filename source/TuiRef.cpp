@@ -1763,35 +1763,32 @@ TuiRef* TuiRef::loadExpression(const char* str,
         }
         else if(leftValue->type() == Tui_ref_type_STRING)
         {
-            if(rightValue->type() == Tui_ref_type_STRING)
+            switch(operatorChar)
             {
-                switch(operatorChar)
+                case '+':
                 {
-                    case '+':
+                    if(secondOperatorChar == '=')
                     {
-                        if(secondOperatorChar == '=')
+                        ((TuiString*)leftValue)->value += rightValue->getStringValue();
+                        result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array //todo this is a waste of an allocate
+                    }
+                    else
+                    {
+                        if(existingValue && existingValue->type() == Tui_ref_type_STRING)
                         {
-                            ((TuiString*)leftValue)->value += ((TuiString*)rightValue)->value;
-                            result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array //todo this is a waste of an allocate
+                            ((TuiString*)existingValue)->value = ((TuiString*)leftValue)->value + rightValue->getStringValue();
+                            existingValueWasAssigned = true;
                         }
                         else
                         {
-                            if(existingValue && existingValue->type() == Tui_ref_type_STRING)
-                            {
-                                ((TuiString*)existingValue)->value = ((TuiString*)leftValue)->value + ((TuiString*)rightValue)->value;
-                                existingValueWasAssigned = true;
-                            }
-                            else
-                            {
-                                result = new TuiString(((TuiString*)leftValue)->value + ((TuiString*)rightValue)->value);
-                            }
+                            result = new TuiString(((TuiString*)leftValue)->value + rightValue->getStringValue());
                         }
                     }
-                        break;
-                    default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
-                        break;
                 }
+                    break;
+                default:
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                    break;
             }
         }
         else
