@@ -3584,6 +3584,10 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                         prevValue->release();
                     }
                 }
+                else
+                {
+                    newValue->release();
+                }
             }
             else if(enclosingSetRef && enclosingSetRef->type() == Tui_ref_type_TABLE)
             {
@@ -3935,10 +3939,6 @@ TuiRef* TuiFunction::call(TuiTable* args,
     if(func)
     {
         TuiRef* result = func(args, parent, existingResult, callingDebugInfo);
-        if(result)
-        {
-            result->retain();
-        }
         return result;
     }
     else
