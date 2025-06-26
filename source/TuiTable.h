@@ -20,6 +20,8 @@ public:
     std::map<uint32_t, TuiRef*> objectsByNumberKey;
     std::map<std::string, TuiRef*> objectsByStringKey;
     
+    std::function<void(TuiRef* table, const std::string& key, TuiRef* value)> onSet;
+    
 private: //members
 
 public://functions
@@ -709,6 +711,11 @@ public://functions
         {
             value->retain();
             objectsByStringKey[key] = value;
+        }
+        
+        if(onSet)
+        {
+            onSet(this, key, value);
         }
     }
     

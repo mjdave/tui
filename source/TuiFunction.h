@@ -66,7 +66,9 @@ public: //static functions
                                  TuiDebugInfo* debugInfo,
                                  std::string* setKey = nullptr,
                                  int* setIndex = nullptr,
-                                 TuiRef** enclosingSetRef = nullptr);
+                                 TuiRef** enclosingSetRef = nullptr,
+                                 std::string* subTypeAccessKey = nullptr,
+                                 TuiRef** subTypeRef = nullptr);
     
     static TuiRef* runStatement(TuiStatement* statement,
                                 TuiRef* result,
