@@ -125,6 +125,28 @@ table.count(table)                  // count of array objects
 table.insert(table, index, value)   // insert into an array, specifying the index. Will be filled with nil objects < index. Objects >= index are shifted
 table.insert(table,value)           // add to the end of an array
 
+math.pi //pi constant
+
+math.sqrt(x)
+math.exp(x)
+math.log(x)
+math.log10(x)
+
+math.floor(x)
+math.ceil(x)
+math.fmod(x)
+math.abs(x)
+math.max(x, y)
+math.min(x, y)
+
+math.sin(x)
+math.cos(x)
+math.tan(x)
+math.asin(x)
+math.acos(x)
+math.atan(x)
+math.atan2(y,x)
+
 ```
 
 ### Supplying custom functions in C++
@@ -132,8 +154,8 @@ table.insert(table,value)           // add to the end of an array
 You can supply your own functions in C++ easily by providing a std::function that takes tables for args and any parent state, and gives you the result, eg. here is the code that adds the print function:
 ```c++
 
-TuiFunction* printFunction = new TuiFunction([rootTable](TuiTable* args, TuiTable* state) {
-    if(args->arrayObjects.size() > 0)
+rootTable->setFunction("print", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    if(args && args->arrayObjects.size() > 0)
     {
         std::string printString = "";
         for(TuiRef* arg : args->arrayObjects)
@@ -143,10 +165,7 @@ TuiFunction* printFunction = new TuiFunction([rootTable](TuiTable* args, TuiTabl
         TuiLog("%s", printString.c_str());
     }
     return nullptr;
-}, rootTable);
-
-rootTable->set("print", printFunction);
-printFunction->release();
+});
 
 ```
 
@@ -220,9 +239,9 @@ baseWidth = nil
 
 ## Performance
 
-As tui parses and immediately runs hand written script code in a single pass, in cases with few loops, it should perform just as well as, or better than the alternatives. 
+As tui parses and immediately runs hand written script code in a single pass, when reading data files or in cases with few loops or functions, it should perform just as well as, or better than the alternatives. 
 
-Where tui will be noticeably slower than lua, is when writing high performance loops and functions. To make up for that it is much easier to call out to your own C++ functions where needed.
+Where tui might be noticeably slower than lua, is when writing high performance loops and functions. To make up for that it is much easier to call out to your own C++ functions where needed.
 
 # Using tui in C++
 
@@ -247,7 +266,7 @@ int main()
 
 ```
 
-With no virtual machine, and no bindings required to access data in C++, all of the data and script state is stored in a public std::map or std::vector under the hood. Scripts and tables are parsed together and are treated the same. Each character is simply parsed one by one in a single phase, with data loaded immediately. Functions and for loops are quickly serialized and called as required.
+With no virtual machine, and no bindings required to access data in C++, all of the data and script state is stored in a public std::map or std::vector under the hood. Scripts and tables are parsed together and are treated the same. Each character is simply parsed one by one in a single phase, with data loaded immediately. Functions and for loops are serialized and run as required.
 
 This means tui can solve two problems. You can use it as a fast and small scripting language, that also happens to have built in serialization support from/to both binary (todo) and human readable data formats.
 
@@ -256,7 +275,7 @@ Or you can use it as a data format and serialization library. Where you might ha
 # What tui is not
 tui is not finished!
 
-It should not be used in production environments yet. Binary formats are not yet implemented, there is a lot of optimization work yet to do, error reporting has a few issues, and there are many missing functions, even to do basic things like inserting into arrays.
+It should not be used in production environments yet. Binary formats are not yet implemented, there is a lot of optimization work yet to do, error reporting has a few issues, and there is still missing functionality.
 
 tui has 'objects', as tables. However there is no concept of 'self/this', and no direct support for inheritance or classes in general. Further OOP support is not planned.
 
