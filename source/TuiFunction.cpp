@@ -3473,7 +3473,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                                     break;
                             }
                             
-                            if(((TuiTable*)enclosingSetRef)->onSet && !setKey.empty())
+                            if(enclosingSetRef && ((TuiTable*)enclosingSetRef)->onSet && !setKey.empty())
                             {
                                 ((TuiTable*)enclosingSetRef)->onSet(enclosingSetRef, setKey, subTypeRef);
                             }
@@ -3526,7 +3526,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                                     break;
                             }
                             
-                            if(((TuiTable*)enclosingSetRef)->onSet && !setKey.empty())
+                            if(enclosingSetRef && ((TuiTable*)enclosingSetRef)->onSet && !setKey.empty())
                             {
                                 ((TuiTable*)enclosingSetRef)->onSet(enclosingSetRef, setKey, subTypeRef);
                             }
