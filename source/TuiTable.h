@@ -419,7 +419,9 @@ public://functions
                         {
                             TuiError("Unimplemented");
                         }
-                        ((TuiTable*)enclosingRef)->set(finalKey, valueRef);
+                        TuiRef* copyRef = valueRef->copy();
+                        ((TuiTable*)enclosingRef)->set(finalKey, copyRef);
+                        copyRef->release();
                     }
                     else if(finalIndex >= 0)
                     {
@@ -427,7 +429,9 @@ public://functions
                         {
                             TuiError("Unimplemented");
                         }
-                        ((TuiTable*)enclosingRef)->replace(finalIndex, valueRef);
+                        TuiRef* copyRef = valueRef->copy();
+                        ((TuiTable*)enclosingRef)->replace(finalIndex, copyRef);
+                        copyRef->release();
                     }
                 }
             }
@@ -481,6 +485,12 @@ public://functions
             {
                 enclosingRef->release();
                 enclosingRef = nullptr;
+            }
+            
+            if(valueRef)
+            {
+                valueRef->release();
+                valueRef = nullptr;
             }
             
             if(*s == ',' || *s == '\n')
