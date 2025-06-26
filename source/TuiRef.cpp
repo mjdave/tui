@@ -714,6 +714,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
             }
             else
             {
+                escaped = false;
                 stringBuffer += *s;
             }
         }
@@ -741,6 +742,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
             }
             else
             {
+                escaped = false;
                 stringBuffer += *s;
             }
         }
