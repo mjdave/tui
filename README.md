@@ -268,9 +268,42 @@ int main()
 
 With no virtual machine, and no bindings required to access data in C++, all of the data and script state is stored in a public std::map or std::vector under the hood. Scripts and tables are parsed together and are treated the same. Each character is simply parsed one by one in a single phase, with data loaded immediately. Functions and for loops are serialized and run as required.
 
-This means tui can solve two problems. You can use it as a fast and small scripting language, that also happens to have built in serialization support from/to both binary (todo) and human readable data formats.
+This means tui can solve two problems. You can use it as a scripting language, that also happens to have built in serialization support from/to both binary (todo) and human readable data formats.
 
-Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other formats for storing and sharing data, tui reads JSON out of the box, while adding a bunch of new features.
+Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other formats for storing and sharing data, tui reads JSON out of the box, with all the power of the scripting language.
+
+# onSet notifications for tables in C++
+
+Instead of implementing get/set bindings strictly as functions, with tui you can use the "onSet" notification to update any derived data on the C++ side when tui state changes. This encorages you to keep as much state as possible in tui objects, in many cases making it faster and easier to serialize and otherwise work with that data.
+
+```c++
+
+void View::init()
+{
+    stateTable = new TuiTable(nullptr);
+    stateTable->onSet = [this](TuiRef* table, const std::string& key, TuiRef* value) {
+        tableKeyChanged(key, value);
+    };
+    stateTable->setVec2("size", size); //this will call tableKeyChanged
+}
+
+void MJView::tableKeyChanged(const std::string& key, TuiRef* value)
+{
+    if(key == "size")
+    {
+        switch (value->type()) {
+            case Tui_ref_type_VEC2:
+                setSize(((TuiVec2*)value)->value);
+                break;
+            default:
+                MJError("Expected vec2");
+                break;
+        }
+    }
+}
+
+
+```
 
 # What tui is not
 tui is not finished!

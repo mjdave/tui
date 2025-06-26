@@ -802,7 +802,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
         {
             break;
         }
-        else if(isspace(*s) || *s == ',' || *s == '\n' || *s == ')' || *s == ']' || TuiExpressionOperatorsSet.count(*s) != 0)
+        else if(isspace(*s) || *s == ',' || *s == '\n' || *s == ')' || *s == ':' || *s == ']' || TuiExpressionOperatorsSet.count(*s) != 0)
         {
             if(*s == '\n')
             {

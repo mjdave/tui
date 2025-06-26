@@ -1,14 +1,14 @@
-testCommon = require("tests/testCommon.tui")
-assert = testCommon.assert
-getLineNumber = debug.getLineNumber
+#testCommon = require("tests/testCommon.tui")
+#assert = testCommon.assert
+#getLineNumber = debug.getLineNumber
 
 
-testFunc = function(var)
 {
-    block = 10
-    block = var - block
-    print(block)
-}
-
-testFunc(15)
-testFunc(14)
+    "ps": [
+        "Mortgage brokers say banks are struggling to keep up with the more active property market - and borrowers are waiting weeks to hear back about their home loan applications.",
+        "BNZ chief economist Mike Jones said earlier this week that about 15 percent more houses were selling than at the same time last year.",
+        "Mortgage adviser Campbell Hastie said bank approval times had reached a \"critical level\" recently. He said most complaints were about the processing time it took for new loans.",
+        "\"However, we're also noticing error rates climbing on maintenance or loan restructuring-related tasks. This causes rework, often a long time after the error was made, and unwinding that error takes time - simple errors caused by workload pressure. It must be said that most of the staff on the adviser teams we deal with are great, but you can sense the pressure they're under.\""
+    ],
+    "caption": "Stylised illustration of house for sale"
+},
