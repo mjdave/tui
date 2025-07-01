@@ -317,11 +317,20 @@ tui will stay small, and won't add a lot of support for built in system function
 There are no bindings for languages other than C++ at present.
 
 # More about the motivations and ideologies behind tui
-This is a one-man project (to start with), my name is Dave Frampton, I made the games Sapiens (C++/Lua) and The Blockheads (Objective C) using my own custom engines.
+
+Most scripting languages run a virtual machine, as this is the best approach for the highest performance running that script code.
+
+However, in many cases we don't really need such high performance from a scripting language. For low complexity operations, the speed that the script loads, and how it handles data is often more important. And at the other end, even with the fastest scripting language, if we are working with the behaviors of hundreds or thousands of complex objects every frame, we are still often best to use C++.
+
+High performance script code is of course very disirable, but the VM can create problems when managing state between the host and the scripting enviornment. Transferring data between the two can be slow, and for the programmer, bindings can often be quite difficult to implement.
+
+Tui is fast enough for all the high level code, all the structure, the stuff you want to be able to change easily. And then when you need the performance, tui makes it easy to pull anything out and run it with C++ instead. Your C++ functions have all the data right there, and you're just a function call away from it being serialized and ready to save or send over a network.
+
+This is a one-man project, though I'm keen for help! My name is Dave Frampton, I made the games Sapiens (C++/Lua) and The Blockheads (Objective C) using my own custom engines.
 
 tui was initially created to serialize and share data in C++ for my games, so it started life as a quick little JSON parser. Very soon though, missing the power of lua, I started adding variables and functions.
 
-I feel tui could be useful for a lot of people for many different purposes. I don't desire to keep it only for myself or to profit from it, and I wouldn't mind some help, so I'm making it open source. 
+I feel tui could be useful for a lot of people for many different purposes. I don't desire to keep it only for myself or to profit from it, so I'm making it open source. 
 
 Hopefully it is useful, and if you find a bug or have a feature request please feel free to open an issue, but please do fork this and send it in new directions too!
 

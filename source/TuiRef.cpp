@@ -851,25 +851,92 @@ static TuiRef* loadSingleValueInternal(const char* str,
         TuiRef* resultRef = nullptr;
         if(varChainParent && varChainParent->type() != Tui_ref_type_TABLE)
         {
-            TuiError("Unimplemented");
+            switch(varChainParent->type())
+            {
+                case Tui_ref_type_VEC2:
+                {
+                    switch(stringBuffer[0])
+                    {
+                        case 'x':
+                            resultRef = new TuiNumber(((TuiVec2*)varChainParent)->value.x);
+                            break;
+                        case 'y':
+                            resultRef = new TuiNumber(((TuiVec2*)varChainParent)->value.y);
+                            break;
+                        default:
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid value");
+                            break;
+                    }
+                }
+                    break;
+                case Tui_ref_type_VEC3:
+                {
+                    switch(stringBuffer[0])
+                    {
+                        case 'x':
+                            resultRef = new TuiNumber(((TuiVec3*)varChainParent)->value.x);
+                            break;
+                        case 'y':
+                            resultRef = new TuiNumber(((TuiVec3*)varChainParent)->value.y);
+                            break;
+                        case 'z':
+                            resultRef = new TuiNumber(((TuiVec3*)varChainParent)->value.z);
+                            break;
+                        default:
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid value");
+                            break;
+                    }
+                }
+                    break;
+                case Tui_ref_type_VEC4:
+                {
+                    switch(stringBuffer[0])
+                    {
+                        case 'x':
+                            resultRef = new TuiNumber(((TuiVec4*)varChainParent)->value.x);
+                            break;
+                        case 'y':
+                            resultRef = new TuiNumber(((TuiVec4*)varChainParent)->value.y);
+                            break;
+                        case 'z':
+                            resultRef = new TuiNumber(((TuiVec4*)varChainParent)->value.z);
+                            break;
+                        case 'w':
+                            resultRef = new TuiNumber(((TuiVec4*)varChainParent)->value.w);
+                            break;
+                        default:
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid value");
+                            break;
+                    }
+                }
+                    break;
+            }
         }
-        TuiTable* searchTable = (varChainParent ? (TuiTable*)varChainParent :  parent); //todo if this is not a table eg userdata
-        
-        if(searchTable->objectsByStringKey.count(stringBuffer) != 0)
+        else
         {
-            resultRef = searchTable->objectsByStringKey[stringBuffer];
-        }
-        
-        while(!resultRef && searchTable->parent)
-        {
-            searchTable = searchTable->parent;
+            TuiTable* searchTable = (varChainParent ? (TuiTable*)varChainParent :  parent); //todo if this is not a table eg userdata
+            
             if(searchTable->objectsByStringKey.count(stringBuffer) != 0)
             {
-                if(accessedParentVariable)
-                {
-                    *accessedParentVariable = true;
-                }
                 resultRef = searchTable->objectsByStringKey[stringBuffer];
+            }
+            
+            while(!resultRef && searchTable->parent)
+            {
+                searchTable = searchTable->parent;
+                if(searchTable->objectsByStringKey.count(stringBuffer) != 0)
+                {
+                    if(accessedParentVariable)
+                    {
+                        *accessedParentVariable = true;
+                    }
+                    resultRef = searchTable->objectsByStringKey[stringBuffer];
+                }
+            }
+            
+            if(resultRef)
+            {
+                resultRef->retain();
             }
         }
         
@@ -907,15 +974,13 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 
                 s = tuiSkipToNextChar(s, debugInfo, true);
                 *endptr = (char*)s;
-                resultRef = ((TuiFunction*)resultRef)->call(argsArrayTable, parent, existingValue, debugInfo);
+                TuiRef* newRef = ((TuiFunction*)resultRef)->call(argsArrayTable, parent, existingValue, debugInfo);
+                resultRef->release();
+                resultRef = newRef;
                 if(argsArrayTable)
                 {
                     argsArrayTable->release();
                 }
-            }
-            else
-            {
-                resultRef->retain();
             }
             
             return resultRef;
