@@ -1610,7 +1610,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number or vector, got:%s", (leftResult ? leftResult->getDebugString().c_str() : "nil"));
                         break;
                 }
-                return TuiRef::logicalNot(leftResult);
+                return nullptr;
             }
                 break;
             case Tui_token_true:

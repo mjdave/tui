@@ -1134,6 +1134,49 @@ TuiRef* TuiRef::loadExpression(const char* str,
             s++;
             s = tuiSkipToNextChar(s, debugInfo, true);
         }
+        else if(*s == '-')
+        {
+            s++;
+            s = tuiSkipToNextChar(s, debugInfo, true);
+            TuiRef* rightValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parentTable, debugInfo, Tui_operator_level_not);
+            if(rightValue)
+            {
+                switch (rightValue->type()) {
+                    case Tui_ref_type_NUMBER:
+                    {
+                        leftValue = new TuiNumber(-((TuiNumber*)rightValue)->value);
+                    }
+                        break;
+                    case Tui_ref_type_VEC2:
+                    {
+                        leftValue = new TuiVec2(-((TuiVec2*)rightValue)->value);
+                    }
+                        break;
+                    case Tui_ref_type_VEC3:
+                    {
+                        leftValue = new TuiVec3(-((TuiVec3*)rightValue)->value);
+                    }
+                        break;
+                    case Tui_ref_type_VEC4:
+                    {
+                        leftValue = new TuiVec4(-((TuiVec4*)rightValue)->value);
+                    }
+                        break;
+                        
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number or vector, got:%s", (rightValue ? rightValue->getDebugString().c_str() : "nil"));
+                        break;
+                }
+                
+                rightValue->release();
+            }
+            else
+            {
+                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number or vector, got:%s", (rightValue ? rightValue->getDebugString().c_str() : "nil"));
+            }
+            s = tuiSkipToNextChar(*endptr, debugInfo, true);
+            
+        }
         else
         {
             leftValue = TuiRef::loadValue(s, endptr, existingValue, parentTable, debugInfo, allowQuotedStringsAsVariableNames);
