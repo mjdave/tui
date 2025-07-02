@@ -269,7 +269,7 @@ TuiTable* TuiRef::createRootTable()
         {
             return new TuiNumber(max(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.fmod expected 2 numbers");
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.max expected 2 numbers");
         return nullptr;
     });
     
@@ -278,7 +278,16 @@ TuiTable* TuiRef::createRootTable()
         {
             return new TuiNumber(min(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.fmod expected 2 numbers");
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.min expected 2 numbers");
+        return nullptr;
+    });
+    
+    mathTable->setFunction("clamp", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 2 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER && args->arrayObjects[2]->type() == Tui_ref_type_NUMBER)
+        {
+            return new TuiNumber(clamp(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value, ((TuiNumber*)args->arrayObjects[2])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.clamp expected 3 numbers");
         return nullptr;
     });
     
