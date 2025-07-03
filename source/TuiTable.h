@@ -582,6 +582,10 @@ public://functions
                 s++;
                 *endptr = (char*)s;
             }
+            else
+            {
+                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
+            }
         }
         
         return true;

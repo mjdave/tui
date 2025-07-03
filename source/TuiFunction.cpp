@@ -899,6 +899,7 @@ TuiStatement* TuiFunction::serializeForStatement(const char* str,
         }
         
         s = tuiSkipToNextChar(*endptr, debugInfo);
+        *endptr = (char*)s;
         
     }
     else // for(object in table) || for(indexOrKey, object in table) || for(object : table) || for(indexOrKey, object : table)
@@ -918,6 +919,7 @@ TuiStatement* TuiFunction::serializeForStatement(const char* str,
             s = tuiSkipToNextChar(s, debugInfo);
             serializeValue(s, endptr, expression, parent, tokenMap, 1, debugInfo, nullptr); //store object var at index 1
             s = tuiSkipToNextChar(*endptr, debugInfo);
+            *endptr = (char*)s;
         }
         else // for(object in table)
         {
@@ -3973,6 +3975,8 @@ TuiRef* TuiFunction::call(TuiTable* args,
     else
     {
         
+        TuiTable* functionStateTable = new TuiTable(parent);
+        
         TuiFunctionCallData callData;
         if(args)
         {
@@ -3990,6 +3994,7 @@ TuiRef* TuiFunction::call(TuiTable* args,
                 {
                     arg->retain();
                     callData.locals[tokenMap.capturedTokensByVarName[argName]] = arg;
+                    functionStateTable->set(argName, arg);
                 }
                 i++;
             }
@@ -4039,7 +4044,6 @@ TuiRef* TuiFunction::call(TuiTable* args,
             }
         }
         
-        TuiTable* functionStateTable = new TuiTable(parent);
         
         TuiRef* result = runStatementArray(statements,  existingResult, functionStateTable, &tokenMap, &callData, &debugInfo);
         
