@@ -63,11 +63,13 @@ static std::set<char> TuiExpressionOperatorsSet = {
     '<',
     '=',
     '!',
+    '%',
 };
 
 static std::map<char, int> TuiExpressionOperatorsToLevelMap = {
     {'*', Tui_operator_level_multiply_divide},
     {'/', Tui_operator_level_multiply_divide},
+    {'%', Tui_operator_level_multiply_divide},
     {'+', Tui_operator_level_addition_subtraction},
     {'-', Tui_operator_level_addition_subtraction},
     {'>', Tui_operator_level_comparison},

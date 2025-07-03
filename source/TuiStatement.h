@@ -29,36 +29,37 @@ enum {
     Tui_token_subtract,
     Tui_token_divide,
     Tui_token_multiply,
-    Tui_token_equalTo,
+    Tui_token_modulo,
     
-    Tui_token_notEqualTo, //8
+    Tui_token_equalTo, //8
+    Tui_token_notEqualTo,
     Tui_token_lessThan,
     Tui_token_greaterThan,
     Tui_token_greaterEqualTo,
     Tui_token_lessEqualTo,
     Tui_token_not,
     Tui_token_increment,
-    Tui_token_decrement,
     
-    Tui_token_addInPlace, //16
+    Tui_token_decrement, //16
+    Tui_token_addInPlace,
     Tui_token_subtractInPlace,
     Tui_token_multiplyInPlace,
     Tui_token_divideInPlace,
     Tui_token_or,
     Tui_token_and,
     Tui_token_tableConstruct,
-    Tui_token_varChain,
     
-    Tui_token_childByString, //24
+    Tui_token_varChain, //24
+    Tui_token_childByString,
     Tui_token_childByArrayIndex,
     Tui_token_varName,
     Tui_token_true,
     Tui_token_false,
     Tui_token_forCollectionLoopKeyValue,
     Tui_token_forCollectionLoopValues,
-    Tui_token_functionDeclaration,
     
-    Tui_token_vec2, //32
+    Tui_token_functionDeclaration, //32
+    Tui_token_vec2,
     Tui_token_vec3,
     Tui_token_vec4,
     Tui_token_negate,
