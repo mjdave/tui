@@ -4000,8 +4000,8 @@ TuiRef* TuiFunction::call(TuiTable* args,
                 {
                     arg->retain();
                     callData.locals[tokenMap.capturedTokensByVarName[argName]] = arg;
-                    functionStateTable->set(argName, arg);
                 }
+                functionStateTable->set(argName, arg);
                 i++;
             }
         }
