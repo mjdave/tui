@@ -759,6 +759,12 @@ static TuiStatement* serializeBasicStatement(const char* str,
     }
     TuiStatement* statement = nullptr;
     
+    if(expression->tokens.empty())
+    {
+        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpcted character:%c", *s);
+        return nullptr;
+    }
+    
     if(expression->tokens[0] == Tui_token_functionCall)
     {
         //TuiError("todo");
@@ -1665,7 +1671,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             break;
                         default:
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "no '.' syntax supported for type:%s", parent->getTypeName().c_str());
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "no '.' syntax supported for type:%s (might also be attempting to call a nil functon)", chainResult->getTypeName().c_str());
                             return nullptr;
                         }
                             break;
