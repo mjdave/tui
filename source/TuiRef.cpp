@@ -996,7 +996,8 @@ static TuiRef* loadSingleValueInternal(const char* str,
         }
         else if(isFunctionCall)
         {
-            TuiParseWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call missing function:%s", stringBuffer.c_str());
+            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call missing function:%s", stringBuffer.c_str());
+            return nullptr;
         }
         return nullptr;
     }
@@ -1445,6 +1446,19 @@ TuiRef* TuiRef::loadExpression(const char* str,
                             {
                                 result = new TuiNumber(((TuiNumber*)leftValue)->value / ((TuiNumber*)rightValue)->value);
                             }
+                        }
+                    }
+                        break;
+                    case '%':
+                    {
+                        if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
+                        {
+                            ((TuiNumber*)existingValue)->value = ((int)((TuiNumber*)leftValue)->value) % ((int)((TuiNumber*)rightValue)->value);
+                            existingValueWasAssigned = true;
+                        }
+                        else
+                        {
+                            result = new TuiNumber(((int)((TuiNumber*)leftValue)->value) % ((int)((TuiNumber*)rightValue)->value));
                         }
                     }
                         break;

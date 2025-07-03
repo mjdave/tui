@@ -660,6 +660,11 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
                 }
             }
                 break;
+            case '%':
+            {
+                expression->tokens.insert(expression->tokens.begin() + tokenStartPos, Tui_token_modulo);
+            }
+                break;
             case '>':
             {
                 if(secondOperatorChar == '=')
@@ -1137,13 +1142,16 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
        && *(s + 5) == 'i'
        && *(s + 6) == 'o'
        && *(s + 7) == 'n'
-       && *(s + 8) == '('
+       && *(tuiSkipToNextChar(s + 8)) == '('
        )
     {
-        s+=9;
-        *endptr = (char*)s;
-        
+        s+=8;
         s = tuiSkipToNextChar(s, debugInfo);
+        s++;
+        //s = tuiSkipToNextChar(s, debugInfo);
+        
+        //*endptr = (char*)s;
+        
         
         if(createStateSubTable)
         {
@@ -2004,6 +2012,11 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 
                 if(!child)
                 {
+                    if(isFunctionCall)
+                    {
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempting to call a nil function");
+                        return nullptr;
+                    }
                     keyConstant->release();
                     return TUI_NIL;
                 }
@@ -2167,6 +2180,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_subtract:
             case Tui_token_multiply:
             case Tui_token_divide:
+            case Tui_token_modulo:
             case Tui_token_increment:
             case Tui_token_decrement:
             case Tui_token_addInPlace:
@@ -2182,7 +2196,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 TuiRef* inPlaceEnclosingSetRef = nullptr;
                 
                 TuiRef* leftResult;
-                if(token <= Tui_token_multiply) //covers Tui_token_add, Tui_token_subtract, Tui_token_divide
+                if(token <= Tui_token_modulo) //covers Tui_token_add, Tui_token_subtract, Tui_token_divide, Tui_token_multiply, Tui_token_modulo
                 {
                     leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
                 }
@@ -2570,6 +2584,9 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                     case Tui_token_divideInPlace:
                                         ((TuiNumber*)result)->value /= ((TuiNumber*)rightResult)->value;
                                         break;
+                                    case Tui_token_modulo:
+                                        ((TuiNumber*)result)->value = ((int)((TuiNumber*)leftResult)->value) % ((int)((TuiNumber*)rightResult)->value);
+                                        break;
                                 };
                             }
                             else
@@ -2614,6 +2631,18 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                     case Tui_token_divide:
                                     {
                                         TuiNumber* returnResult = new TuiNumber(((TuiNumber*)leftResult)->value / ((TuiNumber*)rightResult)->value);
+                                        leftResult->release();
+                                        rightResult->release();
+                                        if(inPlaceEnclosingSetRef)
+                                        {
+                                            inPlaceEnclosingSetRef->release();
+                                        }
+                                        return returnResult;
+                                    }
+                                        break;
+                                    case Tui_token_modulo:
+                                    {
+                                        TuiNumber* returnResult = new TuiNumber(((int)((TuiNumber*)leftResult)->value) % ((int)((TuiNumber*)rightResult)->value));
                                         leftResult->release();
                                         rightResult->release();
                                         if(inPlaceEnclosingSetRef)
