@@ -142,7 +142,7 @@ public://functions
                     if(parentRef->objectsByStringKey.count(varNameAndToken.first) != 0)
                     {
                         TuiRef* var = parentRef->objectsByStringKey[varNameAndToken.first];
-                        var->retain();//todo release this
+                        var->retain();
                         callData.locals[varNameAndToken.second] = var;
                         break;
                     }
@@ -163,7 +163,7 @@ public://functions
                             uint32_t token = tokenMap.capturedParentTokensByDepthCount[i];
                             if(callData.locals.count(token) == 0)
                             {
-                                parentRef->retain();//todo release this
+                                parentRef->retain();
                                 callData.locals[token] = parentRef;
                             }
                         }

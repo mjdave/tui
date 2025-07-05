@@ -49,10 +49,6 @@ enum {
     Tui_operator_level_not
 };
 
-struct TuiDebugInfo {
-    std::string fileName;
-    int lineNumber = 1;
-};
 
 static std::set<char> TuiExpressionOperatorsSet = {
     '*',

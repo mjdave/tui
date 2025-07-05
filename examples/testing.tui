@@ -1,8 +1,30 @@
-#testCommon = require("tests/testCommon.tui")
-#assert = testCommon.assert
-#getLineNumber = debug.getLineNumber
+testCommon = require("tests/testCommon.tui")
+assert = testCommon.assert
+getLineNumber = debug.getLineNumber
 
 
-testVec = vec2(1,2)
-problemVec = vec2(testVec.x, 3)
-print(problemVec)
+testVar = "a"
+print("7:", getLineNumber())
+testFunc = function()
+{
+    innerTable = {
+        innerFunc = function()
+        {
+            innerInnerFunc = function()
+            {
+print("15:", getLineNumber())
+                .....testVar = "b"
+print("17:", getLineNumber())
+            }
+print("19:", getLineNumber())
+            innerInnerFunc()
+print("21:", getLineNumber())
+        }
+print("23:", getLineNumber())
+        innerFunc()
+print("25:", getLineNumber())
+    }
+print("27:", getLineNumber())
+}
+print("29:", getLineNumber())
+testFunc()

@@ -999,6 +999,11 @@ static TuiRef* loadSingleValueInternal(const char* str,
             TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call missing function:%s", stringBuffer.c_str());
             return nullptr;
         }
+        else if(*s == '.')
+        {
+            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to use '.' syntax on nil value:%s", stringBuffer.c_str());
+            return nullptr;
+        }
         return nullptr;
     }
     

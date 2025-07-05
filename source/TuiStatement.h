@@ -92,10 +92,14 @@ struct TuiTokenMap {
     std::map<int, uint32_t> capturedParentTokensByDepthCount;
 };
 
+struct TuiDebugInfo {
+    std::string fileName;
+    int lineNumber = 1;
+};
 
 class TuiStatement {
 public: //members
-    uint32_t lineNumber;
+    TuiDebugInfo debugInfo;
     uint32_t type;
     std::string varName; //only stored for var assign statements
     TuiExpression* expression = nullptr;

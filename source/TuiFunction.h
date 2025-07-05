@@ -27,7 +27,7 @@ public: //static functions
     static TuiFunction* initWithHumanReadableString(const char* str,
                                                     char** endptr,
                                                     TuiTable* parent,
-                                                    TuiDebugInfo* debugInfo, bool createStateSubTable = false);
+                                                    TuiDebugInfo* debugInfo);
     
     static bool recursivelySerializeExpression(const char* str,
                                                char** endptr,
@@ -93,6 +93,7 @@ public: //class members
     
     TuiDebugInfo debugInfo;
     uint32_t functionLineNumber; //save a copy so we can change it in debugInfo, which will save a string copy
+    bool releaseParent = false; //our parent was created with new() so we need to release it. Hack to work around ref counting limitations
     
 public: //class functions
     TuiFunction(TuiTable* parent_);
