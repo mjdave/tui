@@ -21,12 +21,12 @@ public://functions
     virtual bool boolValue() {return !value.empty();}
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_STRING && ((TuiString*)other)->value == value;}
     
-    TuiString(const std::string& value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    TuiString(const std::string& value_) : TuiRef() {value = value_;}
     virtual ~TuiString() {};
     
     virtual TuiRef* copy()
     {
-        return new TuiString(value, parent);
+        return new TuiString(value);
     }
     virtual void assign(TuiRef* other) {
         value = ((TuiString*)other)->value;

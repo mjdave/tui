@@ -15,12 +15,12 @@ public: //members
     double value;
 
 public://functions
-    TuiNumber(double value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    TuiNumber(double value_) : TuiRef() {value = value_;}
     virtual ~TuiNumber() {};
     
     virtual TuiRef* copy()
     {
-        return new TuiNumber(value, parent);
+        return new TuiNumber(value);
     }
     virtual void assign(TuiRef* other) {
         value = ((TuiNumber*)other)->value;
@@ -112,11 +112,11 @@ public: //members
     dvec2 value;
 
 public://functions
-    TuiVec2(dvec2 value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    TuiVec2(dvec2 value_) : TuiRef() {value = value_;}
     virtual ~TuiVec2() {};
     virtual TuiRef* copy()
     {
-        return new TuiVec2(value, parent);
+        return new TuiVec2(value);
     }
     virtual void assign(TuiRef* other) {
         value = ((TuiVec2*)other)->value;
@@ -169,7 +169,7 @@ public://functions
             s = tuiSkipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
-            return new TuiVec2(dvec2(values[0], values[1]), parent);
+            return new TuiVec2(dvec2(values[0], values[1]));
         }
         
         return nullptr;
@@ -194,11 +194,11 @@ public: //members
     dvec3 value;
 
 public://functions
-    TuiVec3(dvec3 value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    TuiVec3(dvec3 value_) : TuiRef() {value = value_;}
     virtual ~TuiVec3() {};
     virtual TuiRef* copy()
     {
-        return new TuiVec3(value, parent);
+        return new TuiVec3(value);
     }
     virtual void assign(TuiRef* other) {
         value = ((TuiVec3*)other)->value;
@@ -251,7 +251,7 @@ public://functions
             
             *endptr = (char*)s;
             
-            return new TuiVec3(dvec3(values[0], values[1], values[2]), parent);
+            return new TuiVec3(dvec3(values[0], values[1], values[2]));
         }
         
         return nullptr;
@@ -276,11 +276,11 @@ public: //members
     dvec4 value;
 
 public://functions
-    TuiVec4(dvec4 value_, TuiTable* parent_ = nullptr) : TuiRef(parent_) {value = value_;}
+    TuiVec4(dvec4 value_) : TuiRef() {value = value_;}
     virtual ~TuiVec4() {};
     virtual TuiRef* copy()
     {
-        return new TuiVec4(value, parent);
+        return new TuiVec4(value);
     }
     virtual void assign(TuiRef* other) {
         value = ((TuiVec4*)other)->value;
@@ -333,7 +333,7 @@ public://functions
             s = tuiSkipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
-            return new TuiVec4(dvec4(values[0], values[1], values[2],  values[3]), parent);
+            return new TuiVec4(dvec4(values[0], values[1], values[2],  values[3]));
         }
         
         return nullptr;

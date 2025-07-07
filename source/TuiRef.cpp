@@ -14,7 +14,7 @@ TuiTable* TuiRef::createRootTable()
     srand((unsigned)time(nullptr));
     
     //random(max) provides a floating point value between 0 and max (default 1.0)
-    rootTable->setFunction("random", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    rootTable->setFunction("random", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0)
         {
             TuiRef* arg = args->arrayObjects[0];
@@ -28,7 +28,7 @@ TuiTable* TuiRef::createRootTable()
     
     
     //randomInt(max) provides an integer from 0 to (max - 1) with a default of 2.
-    rootTable->setFunction("randomInt", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    rootTable->setFunction("randomInt", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0)
         {
             TuiRef* arg = args->arrayObjects[0];
@@ -43,7 +43,7 @@ TuiTable* TuiRef::createRootTable()
     
     
     // print(msg1, msg2, msg3, ...) print values, args are concatenated together
-    rootTable->setFunction("print", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    rootTable->setFunction("print", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 0)
         {
             std::string printString = "";
@@ -57,17 +57,17 @@ TuiTable* TuiRef::createRootTable()
     });
     
     //require(path) loads the given tui file, path is relative to the tui binary (for now)
-    rootTable->setFunction("require", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    rootTable->setFunction("require", [rootTable](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0)
         {
-            return TuiRef::load(Tui::getResourcePath(args->arrayObjects[0]->getStringValue()), state);
+            return TuiRef::load(Tui::getResourcePath(args->arrayObjects[0]->getStringValue()), rootTable);
         }
         return nullptr;
     });
     
     //readValue() reads input from the command line, serializing just the first value, will call functions and load variables
     rootTable->setFunction("readValue",
-                           [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+                           [rootTable](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         std::string stringValue;
         std::getline(std::cin, stringValue);
         
@@ -83,7 +83,7 @@ TuiTable* TuiRef::createRootTable()
         TuiRef* result = TuiRef::loadValue(cString,
                                            &endPtr,
                                            nullptr,
-                                           state,
+                                           rootTable,
                                            callingDebugInfo,
                                            false,
                                            &enclosingRef,
@@ -98,7 +98,7 @@ TuiTable* TuiRef::createRootTable()
     });
     
     //clear() clears the console
-    rootTable->setFunction("clear", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    rootTable->setFunction("clear", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
 #if defined _WIN32
         system("cls");
     //clrscr(); // including header file : conio.h
@@ -112,7 +112,7 @@ TuiTable* TuiRef::createRootTable()
     });
     
     //type() returns the type name of the given object, eg. 'table', 'string', 'number', 'vec4', 'bool'
-    rootTable->setFunction("type", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    rootTable->setFunction("type", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0)
         {
             return new TuiString(args->arrayObjects[0]->getTypeName());
@@ -128,7 +128,7 @@ TuiTable* TuiRef::createRootTable()
     mathTable->release();
     
     
-    mathTable->setFunction("sin", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("sin", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(sin(((TuiNumber*)args->arrayObjects[0])->value));
@@ -137,7 +137,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("cos", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("cos", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(cos(((TuiNumber*)args->arrayObjects[0])->value));
@@ -146,7 +146,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("tan", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("tan", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(tan(((TuiNumber*)args->arrayObjects[0])->value));
@@ -155,7 +155,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("asin", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("asin", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(asin(((TuiNumber*)args->arrayObjects[0])->value));
@@ -164,7 +164,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("acos", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("acos", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(acos(((TuiNumber*)args->arrayObjects[0])->value));
@@ -173,7 +173,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("atan", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("atan", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(atan(((TuiNumber*)args->arrayObjects[0])->value));
@@ -182,7 +182,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("atan2", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("atan2", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(atan2(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
@@ -191,7 +191,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("sqrt", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("sqrt", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(sqrt(((TuiNumber*)args->arrayObjects[0])->value));
@@ -201,7 +201,7 @@ TuiTable* TuiRef::createRootTable()
     });
     
     
-    mathTable->setFunction("exp", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("exp", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(exp(((TuiNumber*)args->arrayObjects[0])->value));
@@ -210,7 +210,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("log", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("log", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(log(((TuiNumber*)args->arrayObjects[0])->value));
@@ -219,7 +219,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("log10", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("log10", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(log10(((TuiNumber*)args->arrayObjects[0])->value));
@@ -228,7 +228,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("floor", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("floor", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(floor(((TuiNumber*)args->arrayObjects[0])->value));
@@ -237,7 +237,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("ceil", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("ceil", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(ceil(((TuiNumber*)args->arrayObjects[0])->value));
@@ -246,7 +246,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("abs", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("abs", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(abs(((TuiNumber*)args->arrayObjects[0])->value));
@@ -255,7 +255,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("fmod", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("fmod", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(fmod(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
@@ -264,7 +264,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("max", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("max", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(max(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
@@ -273,7 +273,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("min", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("min", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(min(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
@@ -282,7 +282,7 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    mathTable->setFunction("clamp", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    mathTable->setFunction("clamp", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 2 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER && args->arrayObjects[2]->type() == Tui_ref_type_NUMBER)
         {
             return new TuiNumber(clamp(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value, ((TuiNumber*)args->arrayObjects[2])->value));
@@ -303,7 +303,7 @@ TuiTable* TuiRef::createRootTable()
     tableTable->release();
     
     //table.insert(table, index, value) to specify the index or table.insert(table,value) to add to the end
-    tableTable->setFunction("insert", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    tableTable->setFunction("insert", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() >= 2)
         {
             TuiRef* tableRef = args->arrayObjects[0];
@@ -342,7 +342,7 @@ TuiTable* TuiRef::createRootTable()
     });
     
     //table.count(table) count of array objects
-    tableTable->setFunction("count", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    tableTable->setFunction("count", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() >= 1)
         {
             TuiRef* tableRef = args->arrayObjects[0];
@@ -371,12 +371,12 @@ TuiTable* TuiRef::createRootTable()
     
     
     //debug.getFileName() returns the current script file name or debug identifier string
-    debugTable->setFunction("getFileName", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    debugTable->setFunction("getFileName", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         return new TuiString(callingDebugInfo->fileName);
     });
     
     //debug.getLineNumber() returns the line number in the current script file
-    debugTable->setFunction("getLineNumber", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    debugTable->setFunction("getLineNumber", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         return new TuiNumber(callingDebugInfo->lineNumber);
     });
     
@@ -568,7 +568,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 ((TuiNumber*)existingValue)->value = value;
                 return nullptr;
             }
-            TuiNumber* number = new TuiNumber(value, parent);
+            TuiNumber* number = new TuiNumber(value);
             return number;
         }
         
@@ -780,14 +780,14 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 while(*(s + 1) == '.')
                 {
                     s++;
-                    if(!result->parent || result->parent->type() != Tui_ref_type_TABLE)
+                    if(result->type() != Tui_ref_type_TABLE)
                     {
                         TuiError("Unimplemented"); //this might be a userdata's member table or a custom type or something?
                         TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found for '..' variable");
                         return nullptr;
                     }
                     
-                    result = result->parent;
+                    result = ((TuiTable*)result)->parentTable;
                 }
                 
                 s = tuiSkipToNextChar(s, debugInfo, true);
@@ -923,16 +923,16 @@ static TuiRef* loadSingleValueInternal(const char* str,
         }
         else
         {
-            TuiTable* searchTable = (varChainParent ? (TuiTable*)varChainParent :  parent); //todo if this is not a table eg userdata
+            TuiTable* searchTable = (varChainParent ? (TuiTable*)varChainParent :  parent);
             
             if(searchTable->objectsByStringKey.count(stringBuffer) != 0)
             {
                 resultRef = searchTable->objectsByStringKey[stringBuffer];
             }
             
-            while(!resultRef && searchTable->parent)
+            while(!resultRef && searchTable->parentTable)
             {
-                searchTable = searchTable->parent;
+                searchTable = searchTable->parentTable;
                 if(searchTable->objectsByStringKey.count(stringBuffer) != 0)
                 {
                     if(accessedParentVariable)
@@ -983,7 +983,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 
                 s = tuiSkipToNextChar(s, debugInfo, true);
                 *endptr = (char*)s;
-                TuiRef* newRef = ((TuiFunction*)resultRef)->call(argsArrayTable, parent, existingValue, debugInfo);
+                TuiRef* newRef = ((TuiFunction*)resultRef)->call(argsArrayTable, existingValue, debugInfo);
                 resultRef->release();
                 resultRef = newRef;
                 if(argsArrayTable)
@@ -1009,7 +1009,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
     
     if(!stringBuffer.empty())
     {
-        TuiString* tuiString = new TuiString(stringBuffer, parent);
+        TuiString* tuiString = new TuiString(stringBuffer);
         return tuiString;
     }
     
@@ -1972,8 +1972,8 @@ TuiRef* TuiRef::loadExpression(const char* str,
 
 /************************************************  TuiUserData methods *****************************************************/
 
-TuiUserData::TuiUserData(void* value_, TuiTable* parent_)
-: TuiRef(parent_)
+TuiUserData::TuiUserData(void* value_)
+: TuiRef()
 {
     value = value_;
 }

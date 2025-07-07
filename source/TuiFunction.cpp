@@ -151,7 +151,7 @@ void serializeValue(const char* str,
                                 varChainStarted = true;
                             }
                             
-                            TuiString* stringConstant = new TuiString(stringBuffer, parent);
+                            TuiString* stringConstant = new TuiString(stringBuffer);
                             uint32_t stringConstantToken = tokenMap->tokenIndex++;
                             varToken = stringConstantToken;
                             tokenMap->refsByToken[stringConstantToken] = stringConstant;
@@ -255,7 +255,7 @@ void serializeValue(const char* str,
         {
             double value = strtod(s, endptr);
             s = tuiSkipToNextChar(*endptr, debugInfo);
-            TuiNumber* number = new TuiNumber(value, parent);
+            TuiNumber* number = new TuiNumber(value);
             uint32_t constantNumberToken = tokenMap->tokenIndex++;
             expression->tokens.insert(expression->tokens.begin() + tokenPos++, constantNumberToken);
             tokenMap->refsByToken[constantNumberToken] = number;
@@ -388,7 +388,7 @@ void serializeValue(const char* str,
     
     if(singleQuote || doubleQuote)
     {
-        TuiString* stringConstant = new TuiString(stringBuffer, parent);
+        TuiString* stringConstant = new TuiString(stringBuffer);
         uint32_t stringConstantToken = tokenMap->tokenIndex++;
         tokenMap->refsByToken[stringConstantToken] = stringConstant;
         expression->tokens.insert(expression->tokens.begin() + tokenPos++, stringConstantToken);
@@ -403,7 +403,7 @@ void serializeValue(const char* str,
                 tokenPos++;
                 varChainStarted = true;
             }
-            TuiString* stringConstant = new TuiString(stringBuffer, parent);
+            TuiString* stringConstant = new TuiString(stringBuffer);
             uint32_t stringConstantToken = tokenMap->tokenIndex++;
             tokenMap->refsByToken[stringConstantToken] = stringConstant;
             expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_childByString);
@@ -1167,10 +1167,9 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
         //*endptr = (char*)s;
         
         
-        parent = new TuiTable(parent);
+        parent = new TuiTable(parent); //todo memeory leak?
         
         TuiFunction* mjFunction = new TuiFunction(parent);
-        mjFunction->releaseParent = true;
         
         mjFunction->debugInfo.fileName = debugInfo->fileName;
         
@@ -1295,7 +1294,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 }
                 
                 
-                TuiRef* functionResult = ((TuiFunction*)functionVar)->call(args, parent, result, debugInfo);
+                TuiRef* functionResult = ((TuiFunction*)functionVar)->call(args, result, debugInfo);
                 if(args)
                 {
                     args->release();
@@ -1450,6 +1449,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected function, got:%s", (functionVar ? functionVar->getDebugString().c_str() : "nil"));
                     return nullptr;
                 }
+                
+                functionVar->parentTable = parent;// experimental, may have side effects
                 
                 if(result && result->type() == functionVar->type())
                 {
@@ -2075,7 +2076,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     }
                     
                     
-                    TuiRef* functionResult = ((TuiFunction*)child)->call(args, parent, result, debugInfo);
+                    TuiRef* functionResult = ((TuiFunction*)child)->call(args, result, debugInfo);
                     if(args)
                     {
                         args->release();
@@ -3886,14 +3887,15 @@ TuiRef* TuiFunction::runStatementArray(std::vector<TuiStatement*>& statements_,
 }
 
     
-TuiFunction::TuiFunction(TuiTable* parent_)
-:TuiRef(parent_)
+TuiFunction::TuiFunction(TuiTable* parentTable_)
+:TuiRef()
 {
+    parentTable = parentTable_;
 }
 
 
-TuiFunction::TuiFunction(std::function<TuiRef*(TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> func_, TuiTable* parent_)
-:TuiRef(parent_)
+TuiFunction::TuiFunction(std::function<TuiRef*(TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> func_)
+:TuiRef()
 {
     func = func_;
 }
@@ -3904,10 +3906,6 @@ TuiFunction::~TuiFunction()
     {
         delete statement;
     }
-    if(releaseParent)
-    {
-        parent->release();
-    }
 }
 
 
@@ -3915,7 +3913,9 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
              TuiRef* existingResult,
              TuiDebugInfo* callingDebugInfo)
 {
+    TuiTable* functionStateTable = new TuiTable(state);
     TuiFunctionCallData callData;
+    callData.functionStateTable = functionStateTable;
     
     // the code below up until calling the statement is very similar to TuiTable for() loop parsing
     // changes made here should probably be made there or it all could be factored out.
@@ -3925,17 +3925,17 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
     {
         if(callData.locals.count(varNameAndToken.second) == 0)
         {
-            TuiTable* parentRef = state;
-            while(parentRef)
+            TuiTable* parentTable = state;
+            while(parentTable)
             {
-                if(parentRef->objectsByStringKey.count(varNameAndToken.first) != 0)
+                if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
                 {
-                    TuiRef* var = parentRef->objectsByStringKey[varNameAndToken.first];
+                    TuiRef* var = parentTable->objectsByStringKey[varNameAndToken.first];
                     var->retain();
                     callData.locals[varNameAndToken.second] = var;
                     break;
                 }
-                parentRef = parentRef->parent;
+                parentTable = parentTable->parentTable;
             }
         }
     }
@@ -3944,24 +3944,23 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
     {
         if(callData.locals.count(parentDepthAndToken.first) == 0)
         {
-            TuiTable* parentRef = state;
-            for(int i = 1; parentRef && i <= parentDepthAndToken.first; i++)
+            TuiTable* parentTable = state;
+            for(int i = 1; parentTable && i <= parentDepthAndToken.first; i++)
             {
                 if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
                 {
                     uint32_t token = tokenMap.capturedParentTokensByDepthCount[i];
                     if(callData.locals.count(token) == 0)
                     {
-                        parentRef->retain();
-                        callData.locals[token] = parentRef;
+                        parentTable->retain();
+                        callData.locals[token] = parentTable;
                     }
                 }
-                parentRef = parentRef->parent;
+                parentTable = parentTable->parentTable;
             }
         }
     }
     
-    TuiTable* functionStateTable = new TuiTable(state);
     
     TuiRef* result = runStatementArray(statements,  existingResult, functionStateTable, &tokenMap, &callData, &debugInfo);
     if(result)
@@ -3978,21 +3977,21 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
 }
 
 TuiRef* TuiFunction::call(TuiTable* args,
-                          TuiTable* callLocationState,
                           TuiRef* existingResult,
                           TuiDebugInfo* callingDebugInfo)
 {
     if(func)
     {
-        TuiRef* result = func(args, parent, existingResult, callingDebugInfo);
+        TuiRef* result = func(args, existingResult, callingDebugInfo);
         return result;
     }
     else
     {
         
-        TuiTable* functionStateTable = new TuiTable(parent);
-        
+        TuiTable* functionStateTable = new TuiTable(parentTable);
         TuiFunctionCallData callData;
+        callData.functionStateTable = functionStateTable;
+        
         if(args)
         {
             int i = 0;
@@ -4023,7 +4022,7 @@ TuiRef* TuiFunction::call(TuiTable* args,
         {
             if(callData.locals.count(varNameAndToken.second) == 0)
             {
-                TuiTable* parentRef = parent;
+                TuiTable* parentRef = parentTable;
                 while(parentRef)
                 {
                     if(parentRef->objectsByStringKey.count(varNameAndToken.first) != 0)
@@ -4031,9 +4030,10 @@ TuiRef* TuiFunction::call(TuiTable* args,
                         TuiRef* var = parentRef->objectsByStringKey[varNameAndToken.first];
                         var->retain();
                         callData.locals[varNameAndToken.second] = var;
+                        //functionStateTable->set(varNameAndToken.second, var);
                         break;
                     }
-                    parentRef = parentRef->parent;
+                    parentRef = parentRef->parentTable;
                 }
             }
         }
@@ -4042,7 +4042,7 @@ TuiRef* TuiFunction::call(TuiTable* args,
         {
             if(callData.locals.count(parentDepthAndToken.first) == 0)
             {
-                TuiTable* parentRef = parent->parent;
+                TuiTable* parentRef = parentTable->parentTable;
                 for(int i = 1; parentRef && i <= parentDepthAndToken.first; i++)
                 {
                     if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
@@ -4054,7 +4054,7 @@ TuiRef* TuiFunction::call(TuiTable* args,
                             callData.locals[token] = parentRef;
                         }
                     }
-                    parentRef = parentRef->parent;
+                    parentRef = parentRef->parentTable;
                 }
             }
         }

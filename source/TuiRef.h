@@ -92,6 +92,10 @@ inline const char* tuiSkipToNextChar(const char* str, TuiDebugInfo* debugInfo = 
                 blockComment = false;
                 s++;
             }
+            else if(debugInfo && *s == '\n')
+            {
+                debugInfo->lineNumber++;
+            }
         }
         else if(*s == '/' && (*(s+1) == '*' || *(s+1) == '/'))
         {
@@ -204,7 +208,6 @@ public: //static functions
     static TuiBool* logicalNot(TuiRef* value);
     
 public: //members
-    TuiTable* parent = nullptr; //this is only stored by tables and functions, variables don't use it currently.
 #if DEBUG_CHECK_FOR_OVER_RELEASE
     uint32_t refCount = 2;
 #else
@@ -212,7 +215,7 @@ public: //members
 #endif
 
 public://functions
-    TuiRef(TuiTable* parent_ = nullptr) {parent = parent_;}
+    TuiRef() {}
     
     virtual ~TuiRef() {}
     
@@ -298,7 +301,7 @@ public:
     void* value;
 
 public:
-    TuiUserData(void* value_, TuiTable* parent_ = nullptr);
+    TuiUserData(void* value_);
     virtual ~TuiUserData() {}
     
     virtual TuiRef* copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers

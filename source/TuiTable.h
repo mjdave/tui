@@ -16,6 +16,8 @@
 
 class TuiTable : public TuiRef {
 public:
+    TuiTable* parentTable = nullptr;
+    
     std::vector<TuiRef*> arrayObjects; // these members are public for ease/speed of iteration, but it's often best to use the get/set methods instead
     std::map<uint32_t, TuiRef*> objectsByNumberKey;
     std::map<std::string, TuiRef*> objectsByStringKey;
@@ -34,7 +36,7 @@ public://functions
     virtual bool boolValue() {return true;}
     virtual bool isEqual(TuiRef* other) {return other == this;}
     
-    TuiTable(TuiTable* parent_) : TuiRef(parent_) {};
+    TuiTable(TuiTable* parentTable_) : TuiRef() {parentTable = parentTable_;}
     virtual ~TuiTable() {
         for(TuiRef* ref : arrayObjects)
         {
@@ -136,17 +138,17 @@ public://functions
             
             for(auto& varNameAndToken : tokenMap.capturedTokensByVarName)
             {
-                TuiTable* parentRef = this;
-                while(parentRef)
+                TuiTable* parentTable = this;
+                while(parentTable)
                 {
-                    if(parentRef->objectsByStringKey.count(varNameAndToken.first) != 0)
+                    if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
                     {
-                        TuiRef* var = parentRef->objectsByStringKey[varNameAndToken.first];
+                        TuiRef* var = parentTable->objectsByStringKey[varNameAndToken.first];
                         var->retain();
                         callData.locals[varNameAndToken.second] = var;
                         break;
                     }
-                    parentRef = parentRef->parent;
+                    parentTable = parentTable->parentTable;
                 }
             }
             
@@ -155,24 +157,24 @@ public://functions
             {
                 if(callData.locals.count(parentDepthAndToken.first) == 0)
                 {
-                    TuiTable* parentRef = parent->parent;
-                    for(int i = 1; parentRef && i <= parentDepthAndToken.first; i++)
+                    TuiTable* parentTable = this->parentTable;
+                    for(int i = 1; parentTable && i <= parentDepthAndToken.first; i++)
                     {
                         if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
                         {
                             uint32_t token = tokenMap.capturedParentTokensByDepthCount[i];
                             if(callData.locals.count(token) == 0)
                             {
-                                parentRef->retain();
-                                callData.locals[token] = parentRef;
+                                parentTable->retain();
+                                callData.locals[token] = parentTable;
                             }
                         }
-                        parentRef = parentRef->parent;
+                        parentTable = parentTable->parentTable;
                     }
                 }
             }
             
-            TuiRef* result = TuiFunction::runStatement(statement,  nullptr, parent, &tokenMap, &callData, debugInfo);
+            TuiRef* result = TuiFunction::runStatement(statement,  nullptr, parentTable, &tokenMap, &callData, debugInfo);
             
             if(result)
             {
@@ -1017,9 +1019,9 @@ public://functions
         set(key, ref);
     }
     
-    void setFunction(const std::string& key, std::function<TuiRef*(TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> value)
+    void setFunction(const std::string& key, std::function<TuiRef*(TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> value)
     {
-        TuiFunction* ref = new TuiFunction(value, this);
+        TuiFunction* ref = new TuiFunction(value);
         set(key, ref);
         ref->release();
     }
