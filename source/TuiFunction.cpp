@@ -1261,7 +1261,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             {
                 (*tokenPos)++;
                 TuiFunction* functionVar = (TuiFunction*)runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
-                if(!functionVar)
+                if(!functionVar || functionVar->type() != Tui_ref_type_FUNCTION)
                 {
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected function, got:%s", (functionVar ? functionVar->getDebugString().c_str() : "nil"));
                     return nullptr;
@@ -1450,6 +1450,11 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     return nullptr;
                 }
                 
+                parent->retain();
+                if(functionVar->parentTable)
+                {
+                    functionVar->parentTable->release();
+                }
                 functionVar->parentTable = parent;// experimental, may have side effects
                 
                 if(result && result->type() == functionVar->type())
@@ -3891,6 +3896,7 @@ TuiFunction::TuiFunction(TuiTable* parentTable_)
 :TuiRef()
 {
     parentTable = parentTable_;
+    parentTable->retain();
 }
 
 
@@ -3905,6 +3911,11 @@ TuiFunction::~TuiFunction()
     for(TuiStatement* statement : statements)
     {
         delete statement;
+    }
+    
+    if(parentTable)
+    {
+        parentTable->release();
     }
 }
 
