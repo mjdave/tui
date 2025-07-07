@@ -56,7 +56,22 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
-    //require(path) loads the given tui file, path is relative to the tui binary (for now)
+    // error(msg1, msg2, msg3, ...) print values, args are concatenated together, calls abort() to exit the program
+    rootTable->setFunction("error", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 0)
+        {
+            std::string printString = "";
+            for(TuiRef* arg : args->arrayObjects)
+            {
+                printString += arg->getDebugStringValue();
+            }
+            TuiError("%s", printString.c_str());
+            abort();
+        }
+        return nullptr;
+    });
+    
+    //require(path) loads the given tui file
     rootTable->setFunction("require", [rootTable](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() > 0)
         {
@@ -337,6 +352,37 @@ TuiTable* TuiRef::createRootTable()
         else
         {
             TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.insert expected 2-3 args.");
+        }
+        return nullptr;
+    });
+    
+    //table.remove(table, index) removes an object from an array, shuffling the rest down. Will exit with an error if index is beyond the bounds of the array
+    tableTable->setFunction("remove", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() >= 2)
+        {
+            TuiRef* tableRef = args->arrayObjects[0];
+            if(tableRef->type() != Tui_ref_type_TABLE)
+            {
+                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.remove expected table for first argument");
+                return nullptr;
+            }
+            
+            TuiRef* indexObject = args->arrayObjects[1];
+            if(indexObject->type() != Tui_ref_type_NUMBER)
+            {
+                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.remove expected index for second argument.");
+                return nullptr;
+            }
+            int removeIndex = ((TuiNumber*)indexObject)->value;
+            
+            if(!((TuiTable*)tableRef)->remove(removeIndex))
+            {
+                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.remove index beyond bounds. index:%d array object count:%d", removeIndex, (int)((TuiTable*)tableRef)->arrayObjects.size());
+            }
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.remove expected table and index.");
         }
         return nullptr;
     });

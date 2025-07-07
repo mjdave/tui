@@ -112,6 +112,7 @@ random(max)             // provides a floating point value between 0 and max (de
 randomInt(max)          // provides an integer from 0 to (max - 1) with a default of 2.
 
 print(msg1, msg2, ...)  // print values, args are concatenated together
+error(msg1, msg2, ...)  // print values, args are concatenated together, calls abort() to exit the program
 readValue()             // reads input from the command line, serializing just the first value, doesn't (shouldn't!) call functions or load variables
 clear()                 // clears the console when run from a command line
 
@@ -124,6 +125,7 @@ debug.getLineNumber()           // returns the line number in the current script
 table.count(table)                  // count of array objects
 table.insert(table, index, value)   // insert into an array, specifying the index. Will be filled with nil objects < index. Objects >= index are shifted
 table.insert(table,value)           // add to the end of an array
+table.remove(table, index)          // removes an object from an array, shuffling the rest down. Will exit with an error if index is beyond the bounds of the array
 
 math.pi //pi constant
 
@@ -155,7 +157,7 @@ math.atan2(y,x)
 You can supply your own functions in C++ easily by providing a std::function that takes tables for args and any parent state, and gives you the result, eg. here is the code that adds the print function:
 ```c++
 
-rootTable->setFunction("print", [](TuiTable* args, TuiTable* state, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+rootTable->setFunction("print", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
     if(args && args->arrayObjects.size() > 0)
     {
         std::string printString = "";
@@ -254,15 +256,15 @@ You can add the files to your c++ project, run a script, and access the output e
 int main()
 {
     TuiTable* table = (TuiTable*)TuiRef::load("config.tui"); // load a JSON-like config file
-    std::string playerName = table->getString("playerName"); //get a string
-    double playDuration = table->getDouble("playDuration"); //get a number
-    table->setDouble("playDuration", playDuration + 1.0); //set a number
-    table->saveToFile("config.tui"); //save in a human readable JSON-like format
-    table->release(); //cleanup
+    std::string playerName = table->getString("playerName"); // get a string
+    double playDuration = table->getDouble("playDuration"); // get a number
+    table->setDouble("playDuration", playDuration + 1.0); // set a number
+    table->saveToFile("config.tui"); // save in a human readable JSON-like format
+    table->release(); // cleanup
 
-    TuiRef* scriptRunResult = TuiRef::runScriptFile("script.tui"); //run a script file
-    scriptRunResult->debugLog(); //print the result
-    scriptRunResult->release(); //cleanup
+    TuiRef* scriptRunResult = TuiRef::runScriptFile("script.tui"); // run a script file
+    scriptRunResult->debugLog(); // print the result
+    scriptRunResult->release(); // cleanup
 }
 
 ```
@@ -285,19 +287,19 @@ void View::init()
     stateTable->onSet = [this](TuiRef* table, const std::string& key, TuiRef* value) {
         tableKeyChanged(key, value);
     };
-    stateTable->setVec2("size", size); //this will call tableKeyChanged
+    stateTable->setVec2("size", size); // this will call tableKeyChanged
 }
 
-void MJView::tableKeyChanged(const std::string& key, TuiRef* value)
+void View::tableKeyChanged(const std::string& key, TuiRef* valueRef)
 {
     if(key == "size")
     {
         switch (value->type()) {
             case Tui_ref_type_VEC2:
-                setSize(((TuiVec2*)value)->value);
+                setSize(((TuiVec2*)valueRef)->value); // value is a dvec2
                 break;
             default:
-                MJError("Expected vec2");
+                error("Expected vec2");
                 break;
         }
     }

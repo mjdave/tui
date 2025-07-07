@@ -781,6 +781,17 @@ public://functions
     }
     
     
+    bool remove(int index)
+    {
+        if(index < 0 || index >= arrayObjects.size())
+        {
+            return false;
+        }
+        arrayObjects[index]->release();
+        arrayObjects.erase(arrayObjects.begin() + index);
+        return true;
+    }
+    
     void replace(int replaceIndex, TuiRef* value)
     {
         value->retain();
