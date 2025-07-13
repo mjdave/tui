@@ -1503,12 +1503,22 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 
                 if(leftResult && leftResult->boolValue())
                 {
+                    leftResult->release();
                     return TUI_TRUE;
                 }
                 else
                 {
+                    if(leftResult)
+                    {
+                        leftResult->release();
+                    }
                     TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
-                    return TUI_BOOL(rightResult && rightResult->boolValue());
+                    TuiBool* returnValue = TUI_BOOL(rightResult && rightResult->boolValue());
+                    if(rightResult)
+                    {
+                        rightResult->release();
+                    }
+                    return returnValue;
                 }
                 
             }
@@ -1521,12 +1531,25 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 
                 if(!leftResult || !leftResult->boolValue())
                 {
+                    if(leftResult)
+                    {
+                        leftResult->release();
+                    }
                     return TUI_FALSE;
                 }
                 else
                 {
+                    leftResult->release();
+                    
                     TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
-                    return TUI_BOOL(rightResult && rightResult->boolValue());
+                    
+                    TuiBool* returnValue = TUI_BOOL(rightResult && rightResult->boolValue());
+                    if(rightResult)
+                    {
+                        rightResult->release();
+                    }
+                    return returnValue;
+                    
                 }
                 
             }
@@ -1540,9 +1563,17 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 
                 if(!leftResult)
                 {
-                    return TUI_BOOL(rightResult && rightResult->type() != Tui_ref_type_NIL);
+                    TuiBool* returnValue = TUI_BOOL(rightResult && rightResult->type() != Tui_ref_type_NIL);
+                    rightResult->release();
+                    return returnValue;
                 }
-                return TUI_BOOL(!leftResult->isEqual(rightResult));
+                TuiBool* returnValue = TUI_BOOL(!leftResult->isEqual(rightResult));
+                leftResult->release();
+                if(rightResult)
+                {
+                    rightResult->release();
+                }
+                return returnValue;
             }
                 break;
             case Tui_token_not:
@@ -1557,7 +1588,9 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 {
                     TuiError("expected Tui_token_end");
                 }
-                return TuiRef::logicalNot(leftResult);
+                TuiBool* returnValue = TuiRef::logicalNot(leftResult);
+                leftResult->release();
+                return returnValue;
             }
                 break;
             case Tui_token_negate:
@@ -2057,7 +2090,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     if(arg)
                     {
                         args = new TuiTable(parent);
-                        arg->retain();
                         args->arrayObjects.push_back(arg);
                         
                         (*tokenPos)++;
