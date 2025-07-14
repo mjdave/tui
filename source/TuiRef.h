@@ -227,11 +227,12 @@ public://functions
     delete this;
 #endif
     }}
-    virtual void retain() {refCount++;
-    if(refCount > 50)
-    {
-        TuiWarn("object is likely being leaked");
-    }
+    virtual TuiRef* retain() {refCount++;
+        if(refCount > 50)
+        {
+            TuiWarn("object is likely being leaked");
+        }
+        return this;
     }
     virtual TuiRef* copy() = 0;
     virtual void assign(TuiRef* other) {};
@@ -281,7 +282,7 @@ public:
     virtual void assign(TuiRef* other) {};
     
     virtual void release() {}
-    virtual void retain() {}
+    virtual TuiRef* retain() {return this;}
     
     virtual uint8_t type() { return Tui_ref_type_NIL; }
     virtual std::string getTypeName() {return "nil";}

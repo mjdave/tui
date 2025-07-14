@@ -66,8 +66,6 @@ public://functions
     virtual void assign(TuiRef* other) {
         TuiError("assign not supported for bool type");
     };
-    virtual void release() {}
-    virtual void retain() {}
     
     static TuiBool* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
         const char* s = tuiSkipToNextChar(str, debugInfo);

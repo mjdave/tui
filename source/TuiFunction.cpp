@@ -4116,3 +4116,37 @@ TuiRef* TuiFunction::call(TuiTable* args,
         return result;
     }
 }
+
+
+TuiRef* TuiFunction::call(const std::string& debugName, TuiRef* arg1, TuiRef* arg2, TuiRef* arg3, TuiRef* arg4) //NOTE!!!! Args will be released. You must retain any args that you wish to use after this call.
+{
+    TuiDebugInfo debugInfo;
+    debugInfo.fileName = debugName;
+    TuiTable* args = nullptr;
+    if(arg1)
+    {
+        args = new TuiTable(nullptr);
+        args->arrayObjects.push_back(arg1);
+        if(arg2)
+        {
+            args->arrayObjects.push_back(arg2);
+            if(arg3)
+            {
+                args->arrayObjects.push_back(arg3);
+                if(arg4)
+                {
+                    args->arrayObjects.push_back(arg4);
+                }
+            }
+        }
+    }
+    
+    TuiRef* result = call(args, nullptr, &debugInfo);
+    
+    if(args)
+    {
+        args->release();
+    }
+    
+    return result;
+}

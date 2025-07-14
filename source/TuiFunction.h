@@ -123,6 +123,8 @@ public: //class functions
                  TuiRef* existingResult,
                  TuiDebugInfo* callingDebugInfo);
     
+    TuiRef* call(const std::string& debugName, TuiRef* arg1 = nullptr, TuiRef* arg2 = nullptr, TuiRef* arg3 = nullptr, TuiRef* arg4 = nullptr); //NOTE!!!! Args will be released. You must retain any args that you wish to use after this call.
+    
     //void call(TuiTable* args, std::function<void(TuiRef*)> callback); //todo async
     
     
