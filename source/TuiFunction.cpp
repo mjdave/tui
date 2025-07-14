@@ -1702,7 +1702,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 chainParent->release();
                             }
                             chainParent = chainResult;
-                            chainResult = runExpression(expression, tokenPos, nullptr, (TuiTable*)chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                            chainResult = runExpression(expression, tokenPos, result, (TuiTable*)chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         }
                             break;
                         case Tui_ref_type_VEC2:
