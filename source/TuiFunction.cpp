@@ -2101,10 +2101,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             {
                                 arg = TUI_NIL;
                             }
-                            else
-                            {
-                                arg->retain();
-                            }
                             
                             args->arrayObjects.push_back(arg);
                             
@@ -4043,7 +4039,7 @@ TuiRef* TuiFunction::call(TuiTable* args,
             {
                 if(i >= maxArgs)
                 {
-                    TuiParseWarn(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "Too many arguments supplied to function. ignoring:%s", arg->getDebugString().c_str());
+                    //TuiParseWarn(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "Too many arguments supplied to function. ignoring:%s", arg->getDebugString().c_str());
                     continue;
                 }
                 const std::string& argName = argNames[i];
