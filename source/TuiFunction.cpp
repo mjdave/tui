@@ -1702,7 +1702,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 chainParent->release();
                             }
                             chainParent = chainResult;
-                            chainResult = runExpression(expression, tokenPos, result, (TuiTable*)chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                            chainResult = runExpression(expression, tokenPos, nullptr, (TuiTable*)chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef); //todo should pass result here
                         }
                             break;
                         case Tui_ref_type_VEC2:
@@ -3618,7 +3618,9 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 }
                 else if(enclosingSetRef)
                 {
-                    ((TuiTable*)enclosingSetRef)->set(statement->varName, newValue);
+                    TuiRef* copiedValue = newValue->copy();
+                    ((TuiTable*)enclosingSetRef)->set(statement->varName, copiedValue);
+                    copiedValue->release();
                 }
                 else
                 {
