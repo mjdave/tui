@@ -1443,28 +1443,31 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_functionDeclaration:
             {
                 (*tokenPos)++;
-                TuiFunction* functionVar = (TuiFunction*)runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
-                if(!functionVar || functionVar->type() != Tui_ref_type_FUNCTION)
+                TuiFunction* baseFunctionVar = (TuiFunction*)runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                if(!baseFunctionVar || baseFunctionVar->type() != Tui_ref_type_FUNCTION)
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected function, got:%s", (functionVar ? functionVar->getDebugString().c_str() : "nil"));
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected function, got:%s", (baseFunctionVar ? baseFunctionVar->getDebugString().c_str() : "nil"));
                     return nullptr;
                 }
                 
-                parent->retain();
-                if(functionVar->parentTable)
-                {
-                    functionVar->parentTable->release();
-                }
-                functionVar->parentTable = parent;// experimental, may have side effects
+                TuiFunction* functionCopy = baseFunctionVar->trueCopy();
+                baseFunctionVar->release();
                 
-                if(result && result->type() == functionVar->type())
+                parent->retain();
+                if(functionCopy->parentTable)
                 {
-                    result->assign(functionVar);
-                    functionVar->release();
+                    functionCopy->parentTable->release();
+                }
+                functionCopy->parentTable = parent;
+                
+                if(result && result->type() == functionCopy->type())
+                {
+                    result->assign(functionCopy);
+                    functionCopy->release();
                 }
                 else
                 {
-                    return functionVar;
+                    return functionCopy;
                 }
             }
                 break;

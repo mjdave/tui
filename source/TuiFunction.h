@@ -107,6 +107,17 @@ public: //class functions
         return this;
     }
     
+    TuiFunction* trueCopy()
+    {
+        TuiFunction* copied = new TuiFunction(parentTable);
+        copied->argNames = argNames;
+        copied->statements = statements;
+        copied->func = func;
+        copied->tokenMap = tokenMap;
+        copied->debugInfo = debugInfo;
+        copied->functionLineNumber = functionLineNumber;
+        return copied;
+    }
     
     virtual uint8_t type() { return Tui_ref_type_FUNCTION; }
     virtual std::string getTypeName() {return "function";}
