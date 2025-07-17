@@ -2066,7 +2066,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 {
                     if(isFunctionCall)
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempting to call a nil function");
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempting to call nil function:%s", (keyConstant ? keyConstant->getDebugString().c_str() : "nil"));
                         return nullptr;
                     }
                     keyConstant->release();
