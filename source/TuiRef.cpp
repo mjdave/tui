@@ -135,6 +135,152 @@ TuiTable* TuiRef::createRootTable()
         return new TuiString("nil");
     });
     
+    
+    //************
+    //string
+    //************
+    TuiTable* stringTable = new TuiTable(rootTable);
+    rootTable->set("string", stringTable);
+    stringTable->release();
+    static const std::set<int> integerChars = {
+        'd','i','o','u','x','X','D','O','U','c','C'
+    };
+    static const std::set<int> floatingPointChars = {
+        'e','E','f','F','g','G','a','A',
+    };
+    
+    stringTable->setFunction("format", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            const char* s = ((TuiString*)args->arrayObjects[0])->value.c_str();
+            //char* endPtr;
+            
+            std::string result = "";
+            int argIndex = 1;
+            
+            std::string currentString = "";
+            bool percentFound = false;
+            bool typeFound = false;
+            
+            bool interpretAsInteger = false;
+            bool interpretAsFloatingPoint = false;
+            bool interpretAsPointer = false;
+            
+            for(;; s++)
+            {
+                if(*s == '\0' || *s == '%')
+                {
+                    if(*s == '%' && *(s + 1) == '%')
+                    {
+                        currentString += *s;
+                        s++;
+                    }
+                    else
+                    {
+                        if(percentFound)
+                        {
+                            if(argIndex >= args->arrayObjects.size())
+                            {
+                                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.format expected at least %d args", argIndex + 1);
+                                break;
+                            }
+                            TuiRef* arg = args->arrayObjects[argIndex++];
+                            if(interpretAsInteger)
+                            {
+                                result += Tui::string_format(currentString, (int)arg->getNumberValue());
+                            }
+                            else if(interpretAsFloatingPoint)
+                            {
+                                result += Tui::string_format(currentString, arg->getNumberValue());
+                            }
+                            else if(interpretAsPointer)
+                            {
+                                result += Tui::string_format(currentString, (arg->type() == Tui_ref_type_USERDATA ? ((void*)((TuiUserData*)arg)->value): (void*)arg));
+                            }
+                            else
+                            {
+                                result += Tui::string_format(currentString, arg->getStringValue().c_str());
+                            }
+                            currentString = "";
+                        }
+                        
+                        if(*s == '%')
+                        {
+                            percentFound = true;
+                            typeFound = false;
+                            interpretAsInteger = false;
+                            interpretAsFloatingPoint = false;
+                            interpretAsPointer = false;
+                            currentString += *s;
+                        }
+                        else
+                        {
+                            result += currentString;
+                            break;
+                        }
+                    }
+                }
+                else if(*s == '\0')
+                {
+                    break;
+                }
+                else
+                {
+                    if(percentFound && !typeFound)
+                    {
+                        if(integerChars.count(*s) != 0)
+                        {
+                            interpretAsInteger = true;
+                            typeFound = true;
+                        }
+                        else if(floatingPointChars.count(*s) != 0)
+                        {
+                            interpretAsFloatingPoint = true;
+                            typeFound = true;
+                        }
+                        else if(*s == 'p')
+                        {
+                            interpretAsPointer = true;
+                            typeFound = true;
+                        }
+                        else if(*s == 'S' || *s == 's')
+                        {
+                            typeFound = true;
+                        }
+                    }
+                    currentString += *s;
+                }
+            }
+            
+            return new TuiString(result);
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.format expected string, args");
+        return nullptr;
+    });
+    
+    stringTable->setFunction("length", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            return new TuiNumber((((TuiString*)args->arrayObjects[0])->value).length());
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.length expected string");
+        return nullptr;
+    });
+    
+    stringTable->setFunction("subString", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
+        {
+            int length = -1;
+            if(args->arrayObjects.size() > 2 && args->arrayObjects[2]->type() == Tui_ref_type_NUMBER)
+            {
+                length = ((TuiNumber*)args->arrayObjects[2])->value;
+            }
+            return new TuiString((((TuiString*)args->arrayObjects[0])->value).substr(((TuiNumber*)args->arrayObjects[1])->value, length));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.length expected string, start index, optional length");
+        return nullptr;
+    });
+    
     //************
     //math
     //************

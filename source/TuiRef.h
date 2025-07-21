@@ -257,6 +257,7 @@ public://functions
     }
     
     virtual std::string getStringValue() {return "undefined";}
+    virtual double getNumberValue() {return 0;}
     virtual std::string getDebugStringValue() {return getStringValue() ;}
     
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) {

@@ -37,6 +37,7 @@ public://functions
         return Tui::string_format("%s", Tui::doubleToString(value).c_str());
     }
     virtual bool boolValue() {return value != 0;}
+    virtual double getNumberValue() {return value;}
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_NUMBER && ((TuiNumber*)other)->value == value;}
 
 private:
@@ -92,6 +93,7 @@ public://functions
         return (value ? "true" : "false");
     }
     virtual bool boolValue() {return value;}
+    virtual double getNumberValue() {return value;}
     virtual bool isEqual(TuiRef* other)
     {
         if(!other)
