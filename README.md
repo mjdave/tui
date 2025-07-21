@@ -2,13 +2,13 @@
 
 tui is a small, cross platform, open source embeddable scripting language and serialization library for C++.
 
-***NOTE: tui is very early in development, it is still likely to have crashes and issues, is not fully optimized or tested, is missing key features, and is generally not ready to be used yet!***
+***NOTE (July 2025): tui is still in the early stages of development, it is not fully optimized and will still contain bugs. It does work pretty well now though, and is actively being used and improved. ***
 
 Created by a solo game developer to be fast, small, and easy to integrate and use, tui combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
 
 tui is dynamically typed, flexible, and lightweight. Data is shared in memory between tui and the host c++ program, allowing high performance data read/writes in both environments.
 
-Compared to a JSON serializer, tui adds a whole scripting language on top! It's also super fast, provides your data in thinly wrapped stl containers (eg std::map, std::vector), and populates the data for the host program to read immediately when parsed.
+Compared to a JSON serializer, tui adds a whole scripting language on top. It's also super fast, provides your data in thinly wrapped stl containers (eg std::map, std::vector), and populates the data for the host program to read immediately when parsed.
 
 Compared to lua, tui is generally slower (up to 10x slower in tight loops), but easier to integrate and bind, and (potentially) faster when sharing data between C++ and the scripting environment. It has a smaller footprint, but less language features, and has good, fast built-in table serialization.
 
@@ -126,6 +126,11 @@ table.count(table)                  // count of array objects
 table.insert(table, index, value)   // insert into an array, specifying the index. Will be filled with nil objects < index. Objects >= index are shifted
 table.insert(table,value)           // add to the end of an array
 table.remove(table, index)          // removes an object from an array, shuffling the rest down. Will exit with an error if index is beyond the bounds of the array
+
+string.length(string)           // returns the number of characters in string
+string.format(string, arg1, arg2, ...)    // works like printf, eg string.format("float:%.2f int:%d hex:%x", 1.2345, 5.78, 127) produces "float:1.23 int:5 hex:7f"
+string.subString(string, pos)               // returns a substring from the chracter at index 'pos' to the end of the string
+string.subString(string, pos, length)       // returns a substring from the chracter at index 'pos' to pos + length or the end of the string, whichever comes first
 
 math.pi //pi constant
 
