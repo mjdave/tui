@@ -2,7 +2,7 @@
 
 tui is a small, cross platform, open source embeddable scripting language and serialization library for C++.
 
-***NOTE (July 2025): tui is still in the early stages of development, it is not fully optimized and will still contain bugs. It does work pretty well now though, and is actively being used and improved. ***
+***NOTE (July 2025): tui is still in the early stages of development, it is not fully optimized and will still contain bugs. It does work pretty well now though, and is actively being used and improved.***
 
 Created by a solo game developer to be fast, small, and easy to integrate and use, tui combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
 

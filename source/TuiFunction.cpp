@@ -267,7 +267,6 @@ void serializeValue(const char* str,
             TuiFunction* constructorFunction = new TuiFunction(parent);
             constructorFunction->debugInfo.fileName = debugInfo->fileName;
             constructorFunction->debugInfo.lineNumber = debugInfo->lineNumber;
-            //todo probably have to store initial lineNumber, then add difference to this parent function's debugInfo
             uint32_t constructorFunctionToken = tokenMap->tokenIndex++;
             expression->tokens.insert(expression->tokens.begin() + tokenPos++, constructorFunctionToken);
             tokenMap->refsByToken[constructorFunctionToken] = constructorFunction;
@@ -415,7 +414,6 @@ void serializeValue(const char* str,
         }
         else
         {
-            //todo use a map
             if(stringBuffer == "true")
             {
                 expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_true);
