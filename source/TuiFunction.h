@@ -138,7 +138,7 @@ public: //class functions
     
     //void call(TuiTable* args, std::function<void(TuiRef*)> callback); //todo async
     
-    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {
         TuiError("TuiFunction does not support binary serialization");
     }

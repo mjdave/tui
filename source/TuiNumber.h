@@ -42,7 +42,7 @@ public://functions
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_NUMBER && ((TuiNumber*)other)->value == value;}
     
     
-    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {
         resizeBufferIfNeeded(buffer, currentOffset, 9);
         buffer[(*currentOffset)++] = Tui_binary_type_NUMBER;
@@ -114,7 +114,7 @@ public://functions
         return other == this;
     }
     
-    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {
         resizeBufferIfNeeded(buffer, currentOffset, 1);
         if(value)
@@ -210,7 +210,7 @@ public://functions
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_VEC2 && ((TuiVec2*)other)->value == value;}
 
     
-    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {
         resizeBufferIfNeeded(buffer, currentOffset, 17);
         buffer[(*currentOffset)++] = Tui_binary_type_VEC2;
@@ -302,7 +302,7 @@ public://functions
     virtual bool boolValue() {return true;}
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_VEC3 && ((TuiVec3*)other)->value == value;}
 
-    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {
         resizeBufferIfNeeded(buffer, currentOffset, 25);
         buffer[(*currentOffset)++] = Tui_binary_type_VEC3;
@@ -396,7 +396,7 @@ public://functions
     virtual bool boolValue() {return true;}
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_VEC4 && ((TuiVec4*)other)->value == value;}
 
-    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {
         resizeBufferIfNeeded(buffer, currentOffset, 33);
         buffer[(*currentOffset)++] = Tui_binary_type_VEC4;

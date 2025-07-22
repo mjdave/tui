@@ -685,7 +685,7 @@ public://functions
     }
     
     
-    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {
         resizeBufferIfNeeded(buffer, currentOffset, 1);
         buffer[(*currentOffset)++] = Tui_binary_type_TABLE;
@@ -693,7 +693,7 @@ public://functions
         
         for(TuiRef* object : arrayObjects)
         {
-            object->serializeBinary(buffer, currentOffset);
+            object->serializeBinaryToBuffer(buffer, currentOffset);
         }
         buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
         
@@ -718,7 +718,7 @@ public://functions
             memcpy(&buffer[(*currentOffset)], keyString.c_str(), keyString.size());
             *currentOffset += keyString.size();
             
-            kv.second->serializeBinary(buffer, currentOffset);
+            kv.second->serializeBinaryToBuffer(buffer, currentOffset);
         }
         buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
     }

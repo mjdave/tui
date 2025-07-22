@@ -37,7 +37,7 @@ public://functions
         value = ((TuiString*)other)->value;
     };
     
-    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {
         resizeBufferIfNeeded(buffer, currentOffset, 5 + (int)value.size());
         buffer[(*currentOffset)++] = Tui_binary_type_STRING;

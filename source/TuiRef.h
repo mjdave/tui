@@ -298,13 +298,13 @@ public://functions
         Tui::writeToFile(filePath, exportString);
     };
     
-    virtual void serializeBinary(std::string& buffer, int* currentOffset) = 0; //buffer may not be set to the correct length
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) = 0; //buffer may not be set to the correct length
     
-    std::string serializeBinary() //use the above for speed, this option is convenient but has slow copies
+    std::string serializeBinary() //use serializeBinaryToBuffer above for speed, this option is convenient but has slow copies
     {
         std::string buffer;
         int length = 0;
-        serializeBinary(buffer, &length);
+        serializeBinaryToBuffer(buffer, &length);
         buffer.resize(length);
         return buffer;
     }
@@ -329,7 +329,7 @@ public:
     virtual bool boolValue() {return false;}
     virtual bool isEqual(TuiRef* other) {return (!other || other == this);}
     
-    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {
         resizeBufferIfNeeded(buffer, currentOffset, 1);
         buffer[(*currentOffset)++] = Tui_binary_type_NIL;
@@ -368,7 +368,7 @@ public:
     virtual bool boolValue() {return value != nullptr;}
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_USERDATA && ((TuiUserData*)other)->value == value;}
     
-    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {
         TuiError("Userdata objects do not support binary serialization");
     }
