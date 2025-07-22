@@ -650,51 +650,30 @@ public://functions
             {
                 debugString += " ";
             }
-            if(object)
-            {
-                object->printHumanReadableString(debugString, indent);
-            }
-            else
-            {
-                debugString += "nil";
-            }
+            object->printHumanReadableString(debugString, indent);
             debugString += ",\n";
         }
         
         for(auto& kv : objectsByNumberKey)
         {
-            if(kv.second)
+            for(int i = 0; i < indent; i++)
             {
-                for(int i = 0; i < indent; i++)
-                {
-                    debugString += " ";
-                }
-                debugString += Tui::string_format("%d = ", kv.first);
-                kv.second->printHumanReadableString(debugString, indent);
-                debugString += ",\n";
+                debugString += " ";
             }
-            else
-            {
-                TuiWarn("Nil object for key:%d", kv.first);
-            }
+            debugString += Tui::string_format("%d = ", kv.first);
+            kv.second->printHumanReadableString(debugString, indent);
+            debugString += ",\n";
         }
         
         for(auto& kv : objectsByStringKey)
         {
-            if(kv.second)
+            for(int i = 0; i < indent; i++)
             {
-                for(int i = 0; i < indent; i++)
-                {
-                    debugString += " ";
-                }
-                debugString += "\"" + kv.first + "\" = "; //todo escape things correctly?
-                kv.second->printHumanReadableString(debugString, indent);
-                debugString += ",\n";
+                debugString += " ";
             }
-            else
-            {
-                TuiWarn("Nil object for key:%s", kv.first.c_str());
-            }
+            debugString += kv.first + " = ";//"\"" + kv.first + "\" = "; //todo escape things correctly?
+            kv.second->printHumanReadableString(debugString, indent);
+            debugString += ",\n";
         }
         
         for(int i = 0; i < indent-4; i++)
@@ -703,6 +682,45 @@ public://functions
         }
         
         debugString += "}";
+    }
+    
+    
+    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 1);
+        buffer[(*currentOffset)++] = Tui_binary_type_TABLE;
+        
+        
+        for(TuiRef* object : arrayObjects)
+        {
+            object->serializeBinary(buffer, currentOffset);
+        }
+        buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
+        
+            //todo
+        //for(auto& kv : objectsByNumberKey)
+        {
+            
+            //debugString += Tui::string_format("%d = ", kv.first);
+            //kv.second->printHumanReadableString(debugString, indent);
+        }
+        //buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
+        
+        for(auto& kv : objectsByStringKey)
+        {
+            const std::string& keyString = kv.first;
+            
+            resizeBufferIfNeeded(buffer, currentOffset, 5 + (int)keyString.size());
+            buffer[(*currentOffset)++] = Tui_binary_type_STRING;
+            uint32_t stringLength = (uint32_t)keyString.size();
+            memcpy(&buffer[(*currentOffset)], &stringLength, 4);
+            (*currentOffset)+=4;
+            memcpy(&buffer[(*currentOffset)], keyString.c_str(), keyString.size());
+            *currentOffset += keyString.size();
+            
+            kv.second->serializeBinary(buffer, currentOffset);
+        }
+        buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
     }
     
     void set(const std::string& key, TuiRef* value)

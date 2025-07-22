@@ -39,6 +39,16 @@ public://functions
     virtual bool boolValue() {return value != 0;}
     virtual double getNumberValue() {return value;}
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_NUMBER && ((TuiNumber*)other)->value == value;}
+    
+    
+    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 9);
+        buffer[(*currentOffset)++] = Tui_binary_type_NUMBER;
+        memcpy(&buffer[(*currentOffset)], &value, 8);
+        *currentOffset += 8;
+    }
+    
 
 private:
     
@@ -101,6 +111,19 @@ public://functions
             return !value;
         }
         return other == this;
+    }
+    
+    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 1);
+        if(value)
+        {
+            buffer[(*currentOffset)++] = Tui_binary_type_BOOL_TRUE;
+        }
+        else
+        {
+            buffer[(*currentOffset)++] = Tui_binary_type_BOOL_FALSE;
+        }
     }
 
 private:
@@ -185,6 +208,17 @@ public://functions
     virtual bool boolValue() {return true;}
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_VEC2 && ((TuiVec2*)other)->value == value;}
 
+    
+    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 17);
+        buffer[(*currentOffset)++] = Tui_binary_type_VEC2;
+        memcpy(&buffer[(*currentOffset)], &value.x, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value.y, 8);
+        *currentOffset += 8;
+    }
+    
 private:
     
 private:
@@ -267,6 +301,18 @@ public://functions
     virtual bool boolValue() {return true;}
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_VEC3 && ((TuiVec3*)other)->value == value;}
 
+    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 25);
+        buffer[(*currentOffset)++] = Tui_binary_type_VEC3;
+        memcpy(&buffer[(*currentOffset)], &value.x, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value.y, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value.z, 8);
+        *currentOffset += 8;
+    }
+    
 private:
     
 private:
@@ -349,6 +395,20 @@ public://functions
     virtual bool boolValue() {return true;}
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_VEC4 && ((TuiVec4*)other)->value == value;}
 
+    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 33);
+        buffer[(*currentOffset)++] = Tui_binary_type_VEC4;
+        memcpy(&buffer[(*currentOffset)], &value.x, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value.y, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value.z, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value.w, 8);
+        *currentOffset += 8;
+    }
+    
 private:
     
 private:

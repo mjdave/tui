@@ -41,6 +41,22 @@ enum {
 };
 
 enum {
+    Tui_binary_type_UNDEFINED = 0, //reserved as it may accidentally null terminate strings
+    Tui_binary_type_NIL,
+    Tui_binary_type_TABLE,
+    Tui_binary_type_NUMBER,
+    Tui_binary_type_STRING,
+    Tui_binary_type_BOOL_TRUE,
+    Tui_binary_type_BOOL_FALSE,
+    Tui_binary_type_VEC2,
+    Tui_binary_type_VEC3,
+    Tui_binary_type_VEC4,
+    Tui_binary_type_MAT3,
+    Tui_binary_type_MAT4,
+    Tui_binary_type_END_MARKER,
+};
+
+enum {
     Tui_operator_level_default = 0,
     Tui_operator_level_and_or,
     Tui_operator_level_comparison,
@@ -162,22 +178,28 @@ inline bool checkSymbolNameComplete(const char* str)
     return *tuiSkipToNextChar(str) != *str;
 }
 
+inline void resizeBufferIfNeeded(std::string& buffer, int* currentOffset, int toAddSize)
+{
+    if(*currentOffset + toAddSize > buffer.size())
+    {
+        buffer.resize(*currentOffset < 16 ? 32 : (*currentOffset + toAddSize) * 2);
+    }
+}
+
 class TuiRef {
     
 public: //static functions
     //static TuiRef* initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, uint32_t variableLoadType, TuiTokenMap* tokenMap = nullptr);
     static TuiTable* createRootTable(); //adds the built in functions 'print', 'require' etc.
     
-    static TuiRef* load(const std::string& filename, TuiTable* parent = createRootTable()); //public method to read from human readable file/string data. supply nullptr as last argument to prvent root table from loading
+    static TuiRef* loadBinary(const char* str, int* currentOffset, TuiTable* parent = createRootTable()); //public method to read from data previously serialized with serializeBinary()
+    static TuiRef* loadBinary(const std::string& inputString, TuiTable* parent = createRootTable()); // convenience public method
+    
+    static TuiRef* load(const std::string& filename, TuiTable* parent = createRootTable()); //public method to read from human readable file/string data. supply nullptr as last argument to prevent root table from loading
     static TuiRef* runScriptFile(const std::string& filename, TuiTable* parent = createRootTable());  //public method
     
     static TuiRef* load(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr); //public method
-    static TuiRef* load(const std::string& inputString, const std::string& debugName, TuiTable* parent); //public method
-    
-    //static TuiRef* initWithBinaryData(void* data); //todo
-    //static TuiRef* initWithBinaryFile(const std::string& filePath);  //todo
-   // static TuiRef* initWithHumanReadableString(const std::string& stringData, TuiTable* parent) {return new TuiRef(parent);} //internal, loads a single value/expression
-    //static TuiRef* initWithHumanReadableFile(const std::string& filePath);
+    static TuiRef* loadString(const std::string& inputString, const std::string& debugName = "loadString", TuiTable* parent = createRootTable()); //public method
     
     
     static TuiRef* loadExpression(const char* str,
@@ -264,12 +286,28 @@ public://functions
         debugString += getStringValue();
     }
     
+    std::string serializeHumanReadable() {
+        std::string exportString;
+        printHumanReadableString(exportString);
+        return exportString;
+    };
+    
     void saveToFile(const std::string& filePath) {
         std::string exportString;
         printHumanReadableString(exportString);
         Tui::writeToFile(filePath, exportString);
     };
     
+    virtual void serializeBinary(std::string& buffer, int* currentOffset) = 0; //buffer may not be set to the correct length
+    
+    std::string serializeBinary() //use the above for speed, this option is convenient but has slow copies
+    {
+        std::string buffer;
+        int length = 0;
+        serializeBinary(buffer, &length);
+        buffer.resize(length);
+        return buffer;
+    }
 
 };
 
@@ -290,6 +328,12 @@ public:
     virtual std::string getStringValue() {return "nil";}
     virtual bool boolValue() {return false;}
     virtual bool isEqual(TuiRef* other) {return (!other || other == this);}
+    
+    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 1);
+        buffer[(*currentOffset)++] = Tui_binary_type_NIL;
+    }
 
 private:
     
@@ -323,6 +367,11 @@ public:
     }
     virtual bool boolValue() {return value != nullptr;}
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_USERDATA && ((TuiUserData*)other)->value == value;}
+    
+    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    {
+        TuiError("Userdata objects do not support binary serialization");
+    }
 
 private:
     

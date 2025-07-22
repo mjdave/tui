@@ -22,6 +22,10 @@ public://functions
     virtual bool boolValue() {return !value.empty();}
     virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_STRING && ((TuiString*)other)->value == value;}
     
+    virtual void printHumanReadableString(std::string& debugString, int indent = 0) {
+        debugString += "\"" + getStringValue() + "\"";
+    }
+    
     TuiString(const std::string& value_) : TuiRef() {value = value_;}
     virtual ~TuiString() {};
     
@@ -32,6 +36,17 @@ public://functions
     virtual void assign(TuiRef* other) {
         value = ((TuiString*)other)->value;
     };
+    
+    virtual void serializeBinary(std::string& buffer, int* currentOffset)
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 5 + (int)value.size());
+        buffer[(*currentOffset)++] = Tui_binary_type_STRING;
+        uint32_t stringLength = (uint32_t)value.size();
+        memcpy(&buffer[(*currentOffset)], &stringLength, 4);
+        (*currentOffset)+=4;
+        memcpy(&buffer[(*currentOffset)], value.c_str(), value.size());
+        *currentOffset += value.size();
+    }
 
 private:
     

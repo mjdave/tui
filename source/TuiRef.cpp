@@ -576,7 +576,7 @@ TuiTable* TuiRef::createRootTable()
 }
 
 
-TuiRef* TuiRef::load(const std::string& inputString, const std::string& debugName, TuiTable* parent) {
+TuiRef* TuiRef::loadString(const std::string& inputString, const std::string& debugName, TuiTable* parent) {
     TuiDebugInfo debugInfo;
     debugInfo.fileName = debugName;
     const char* cString = inputString.c_str();
@@ -607,6 +607,123 @@ TuiRef* TuiRef::load(const std::string& filename, TuiTable* parent) {
         TuiError("File not found in TuiRef::load at:%s", filename.c_str());
     }
     return nullptr;
+}
+
+
+TuiRef* TuiRef::loadBinary(const char* inputString, int* currentOffset, TuiTable* parent)
+{
+    uint8_t type = inputString[(*currentOffset)++];
+    switch (type) {
+        case Tui_binary_type_NIL:
+        {
+            return TUI_NIL;
+        }
+            break;
+        case Tui_binary_type_BOOL_TRUE:
+        {
+            return TUI_TRUE;
+        }
+            break;
+        case Tui_binary_type_BOOL_FALSE:
+        {
+            return TUI_FALSE;
+        }
+            break;
+        case Tui_binary_type_NUMBER:
+        {
+            double value;
+            memcpy(&value, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            return new TuiNumber(value);
+        }
+            break;
+        case Tui_binary_type_VEC2:
+        {
+            dvec2 value;
+            memcpy(&value.x, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value.y, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            return new TuiVec2(value);
+        }
+            break;
+        case Tui_binary_type_VEC3:
+        {
+            dvec3 value;
+            memcpy(&value.x, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value.y, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value.z, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            return new TuiVec3(value);
+        }
+            break;
+        case Tui_binary_type_VEC4:
+        {
+            dvec4 value;
+            memcpy(&value.x, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value.y, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value.z, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value.w, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            return new TuiVec4(value);
+        }
+            break;
+        case Tui_binary_type_STRING:
+        {
+            uint32_t stringLength;
+            memcpy(&stringLength, &inputString[(*currentOffset)], 4);
+            (*currentOffset)+=4;
+            
+            TuiString* stringRef = new TuiString("");
+            stringRef->value.resize(stringLength);
+            memcpy(stringRef->value.data(), &inputString[(*currentOffset)], stringLength);
+            (*currentOffset)+=stringLength;
+            
+            return stringRef;
+        }
+            break;
+        case Tui_binary_type_TABLE:
+        {
+            TuiTable* table = new TuiTable(parent);
+            while(inputString[(*currentOffset)] != Tui_binary_type_END_MARKER)
+            {
+                TuiRef* arrayObject = TuiRef::loadBinary(inputString, currentOffset);
+                table->arrayObjects.push_back(arrayObject);
+            }
+            (*currentOffset)++;
+            
+            //todo objectsByNumberKey
+            
+            while(inputString[(*currentOffset)] != Tui_binary_type_END_MARKER)
+            {
+                TuiRef* keyObject = TuiRef::loadBinary(inputString, currentOffset);
+                TuiRef* valueObject = TuiRef::loadBinary(inputString, currentOffset);
+                table->set(((TuiString*)keyObject)->value, valueObject);
+                keyObject->release();
+                valueObject->release();
+            }
+            (*currentOffset)++;
+            
+            return table;
+        }
+            break;
+            
+        default:
+            break;
+    }
+    
+    return nullptr;
+}
+
+TuiRef* TuiRef::loadBinary(const std::string& inputString, TuiTable* parent)
+{
+    int currentOffset = 0;
+    return loadBinary(inputString.c_str(), &currentOffset);
 }
 
 TuiRef* TuiRef::runScriptFile(const std::string& filename, TuiTable* parent)

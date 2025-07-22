@@ -280,6 +280,17 @@ This means tui can solve two problems. You can use it as a scripting language, t
 
 Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other formats for storing and sharing data, tui reads JSON out of the box, with all the power of the scripting language.
 
+# Serialization
+Tui supports fast serialization to and from both binary and human readable formats.
+```c++
+//binary:
+std::string binaryData = table->serializeBinary();
+TuiRef* unserializedValue = TuiRef::loadBinary(binaryData);
+//human readable:
+std::string humanReadableData = table->serializeHumanReadable();
+TuiRef* unserializedValue = TuiRef::loadString(humanReadableData);
+```
+
 # onSet notifications for tables in C++
 
 Instead of implementing get/set bindings strictly as functions, with tui you can use the "onSet" notification to update any derived data on the C++ side when tui state changes. This encorages you to keep as much state as possible in tui objects, in many cases making it faster and easier to serialize and otherwise work with that data.
