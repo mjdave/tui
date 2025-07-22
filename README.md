@@ -341,7 +341,7 @@ Most scripting languages run a virtual machine, as this is the best approach for
 
 However, in many cases we don't really need such high performance from a scripting language. For low complexity operations, the speed that the script loads, and how it handles data is often more important. And at the other end, even with the fastest scripting language, if we are working with the behaviors of hundreds or thousands of complex objects every frame, we are still often best to use C++.
 
-High performance script code is of course very disirable, but the VM can create problems when managing state between the host and the scripting enviornment. Transferring data between the two can be slow, and for the programmer, bindings can often be quite difficult to implement.
+High performance script code is of course very desirable, but the VM can create problems when managing state between the host and the scripting enviornment. Transferring data between the two can be slow, and for the programmer, bindings can often be quite difficult to implement.
 
 Tui is fast enough for all the high level code, all the structure, the stuff you want to be able to change easily. And then when you need the performance, tui makes it easy to pull anything out and run it with C++ instead. Your C++ functions have all the data right there, and you're just a function call away from it being serialized and ready to save or send over a network.
 
