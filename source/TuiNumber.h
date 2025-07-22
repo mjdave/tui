@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <string>
+#include <cstring>
 #include "glm.hpp"
 #include "TuiLog.h"
 
