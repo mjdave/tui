@@ -24,7 +24,6 @@ set(SOURCES
     ../../source/TuiFunction.cpp
     ../../source/TuiRef.cpp
     ../../source/TuiSha1.cpp
-    ../../source/TuiStringUtils.cpp
 )
 
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/bin)
