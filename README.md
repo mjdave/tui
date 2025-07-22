@@ -116,7 +116,7 @@ error(msg1, msg2, ...)  // print values, args are concatenated together, calls a
 readValue()             // reads input from the command line, serializing just the first value, doesn't (shouldn't!) call functions or load variables
 clear()                 // clears the console when run from a command line
 
-require(path)   // loads the given tui file, path is relative to the tui binary (for now)
+require(path)   // loads the given tui file
 type()          // returns the type name of the given object, eg. 'table', 'string', 'number', 'vec4', 'bool'
 
 debug.getFileName()             // returns the current script file name or debug identifier string
@@ -276,7 +276,7 @@ int main()
 
 With no virtual machine, and no bindings required to access data in C++, all of the data and script state is stored in a public std::map or std::vector under the hood. Scripts and tables are parsed together and are treated the same. Each character is simply parsed one by one in a single phase, with data loaded immediately. Functions and for loops are serialized and run as required.
 
-This means tui can solve two problems. You can use it as a scripting language, that also happens to have built in serialization support from/to both binary (todo) and human readable data formats.
+This means tui can solve two problems. You can use it as a scripting language, that also happens to have built in serialization support from/to both binary and human readable data formats.
 
 Or you can use it as a data format and serialization library. Where you might have used XML, JSON, plists, or other formats for storing and sharing data, tui reads JSON out of the box, with all the power of the scripting language.
 
@@ -327,13 +327,13 @@ void View::tableKeyChanged(const std::string& key, TuiRef* valueRef)
 # What tui is not
 tui is not finished!
 
-It should not be used in production environments yet. Binary formats are not yet implemented, there is a lot of optimization work yet to do, error reporting has a few issues, and there is still missing functionality.
+It should not be used in production environments yet. There is a lot of optimization work yet to do, error reporting has a few issues, and there is still missing functionality.
 
 tui has 'objects', as tables. However there is no concept of 'self/this', and no direct support for inheritance or classes in general. Further OOP support is not planned.
 
 tui will stay small, and won't add a lot of support for built in system functionality. If this functionality is desired, it can easily be added on the C++ side by registering your own functions.
 
-There are no bindings for languages other than C++ at present.
+There are no bindings for languages other than C++ at present or planned.
 
 # More about the motivations and ideologies behind tui
 
