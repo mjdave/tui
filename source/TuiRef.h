@@ -182,7 +182,7 @@ inline void resizeBufferIfNeeded(std::string& buffer, int* currentOffset, int to
 {
     if(*currentOffset + toAddSize > buffer.size())
     {
-        buffer.resize(*currentOffset < 16 ? 32 : (*currentOffset + toAddSize) * 2);
+        buffer.resize(*currentOffset + toAddSize);
     }
 }
 

@@ -695,6 +695,7 @@ public://functions
         {
             object->serializeBinaryToBuffer(buffer, currentOffset);
         }
+        resizeBufferIfNeeded(buffer, currentOffset, 1);
         buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
         
             //todo
@@ -720,6 +721,7 @@ public://functions
             
             kv.second->serializeBinaryToBuffer(buffer, currentOffset);
         }
+        resizeBufferIfNeeded(buffer, currentOffset, 1);
         buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
     }
     
