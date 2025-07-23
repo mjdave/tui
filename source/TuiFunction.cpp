@@ -1994,7 +1994,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_childByString:
             case Tui_token_childByArrayIndex:
             {
-                bool isStringKey = (token == Tui_token_childByString);
+                //bool isStringKey = (token == Tui_token_childByString);
                 (*tokenPos)++;
                 bool isFunctionCall = false;
                 if(expression->tokens[*tokenPos] == Tui_token_functionCall)
@@ -2005,14 +2005,11 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 
                 TuiRef* keyConstant = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
                 TuiRef* child = nullptr;
+                bool isStringKey = false;
                 
-                if(isStringKey)
+                if(keyConstant->type() == Tui_ref_type_STRING)
                 {
-                    if(keyConstant->type() != Tui_ref_type_STRING)
-                    {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected string");
-                        return nullptr;
-                    }
+                    isStringKey = true;
                     
                     if(parent->objectsByStringKey.count(((TuiString*)keyConstant)->value) != 0)
                     {
