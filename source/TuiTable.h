@@ -639,7 +639,6 @@ public://functions
     }
     
     
-    
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) {
         debugString += "{\n";
         indent = indent + 4;
@@ -650,7 +649,14 @@ public://functions
             {
                 debugString += " ";
             }
-            object->printHumanReadableString(debugString, indent);
+            if(object) // it is valid to store a nullptr in arrayObjects
+            {
+                object->printHumanReadableString(debugString, indent);
+            }
+            else
+            {
+                debugString += "nil";
+            }
             debugString += ",\n";
         }
         
@@ -693,7 +699,15 @@ public://functions
         
         for(TuiRef* object : arrayObjects)
         {
-            object->serializeBinaryToBuffer(buffer, currentOffset);
+            if(object)
+            {
+                object->serializeBinaryToBuffer(buffer, currentOffset);
+            }
+            else
+            {
+                resizeBufferIfNeeded(buffer, currentOffset, 1);
+                buffer[(*currentOffset)++] = Tui_binary_type_NIL;
+            }
         }
         resizeBufferIfNeeded(buffer, currentOffset, 1);
         buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;

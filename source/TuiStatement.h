@@ -119,6 +119,7 @@ public://functions
 
 class TuiForExpressionsStatement : public TuiStatement { // for(i = 0, i < 5, i++)
 public://functions
+    std::string keyOrIndexName;
     std::vector<TuiStatement*> statements;
     TuiStatement* initialStatement = nullptr; //todo cleanup
     TuiExpression* continueExpression = nullptr; //todo cleanup
@@ -130,6 +131,8 @@ public://functions
 
 class TuiForContainerLoopStatement : public TuiStatement { // for(object in table)
 public://functions
+    std::string keyOrIndexName;
+    std::string objectName;
     std::vector<TuiStatement*> statements;
     TuiForContainerLoopStatement(uint32_t type_) : TuiStatement(type_) {}
 };

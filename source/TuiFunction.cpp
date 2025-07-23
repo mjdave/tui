@@ -920,19 +920,23 @@ TuiStatement* TuiFunction::serializeForStatement(const char* str,
             containerObjectTokenIndex = 2;
             
             forStatement = new TuiForContainerLoopStatement(Tui_statement_type_forKeyedValues);
+            forStatement->keyOrIndexName = setKey;
             resultStatement = forStatement;
             forStatement->debugInfo = *debugInfo;
             forStatement->expression = expression;
             
             s++; // ','
             s = tuiSkipToNextChar(s, debugInfo);
-            serializeValue(s, endptr, expression, parent, tokenMap, 1, debugInfo, nullptr); //store object var at index 1
+            std::string objectSetKey;
+            serializeValue(s, endptr, expression, parent, tokenMap, 1, debugInfo, &objectSetKey); //store object var at index 1
+            forStatement->objectName = objectSetKey;
             s = tuiSkipToNextChar(*endptr, debugInfo);
             *endptr = (char*)s;
         }
         else // for(object in table)
         {
             forStatement = new TuiForContainerLoopStatement(Tui_statement_type_forValues);
+            forStatement->objectName = setKey;
             resultStatement = forStatement;
             forStatement->debugInfo = *debugInfo;
             forStatement->expression = expression;
@@ -3706,6 +3710,8 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
         {
             TuiForContainerLoopStatement* forStatement = (TuiForContainerLoopStatement*)statement;
             
+            TuiTable* forLoopScope = new TuiTable(parent);
+            
             uint32_t containerTokenPos = 1;
             
             uint32_t indexToken = 0;
@@ -3718,7 +3724,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 containerTokenPos = 2;
             }
             
-            TuiRef* collectionRef = runExpression(forStatement->expression, &containerTokenPos, nullptr, parent, tokenMap, callData, debugInfo);
+            TuiRef* collectionRef = runExpression(forStatement->expression, &containerTokenPos, nullptr, forLoopScope, tokenMap, callData, debugInfo);
             
             if(!collectionRef || collectionRef->type() != Tui_ref_type_TABLE)
             {
@@ -3735,6 +3741,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 {
                     indexNumber = new TuiNumber(0);
                     callData->locals[indexToken] = indexNumber;
+                    forLoopScope->set(forStatement->keyOrIndexName, indexNumber);
                 }
                 
                 int i = 0;
@@ -3746,8 +3753,9 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     }
                     
                     callData->locals[objectToken] = object;
+                    forLoopScope->set(forStatement->objectName, object);
                     
-                    TuiRef* runResult = runStatementArray(forStatement->statements, result, parent, tokenMap, callData, debugInfo);
+                    TuiRef* runResult = runStatementArray(forStatement->statements, result, forLoopScope, tokenMap, callData, debugInfo);
                     
                     if(runResult)
                     {
@@ -3763,6 +3771,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 {
                     keyString = new TuiString("");
                     callData->locals[indexToken] = keyString;
+                    forLoopScope->set(forStatement->keyOrIndexName, keyString);
                 }
                 
                 for(auto& kv : containerObject->objectsByStringKey)
@@ -3773,8 +3782,9 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     }
                     
                     callData->locals[objectToken] = kv.second;
+                    forLoopScope->set(forStatement->objectName, kv.second);
                     
-                    TuiRef* runResult = runStatementArray(forStatement->statements, result, parent, tokenMap, callData, debugInfo);
+                    TuiRef* runResult = runStatementArray(forStatement->statements, result, forLoopScope, tokenMap, callData, debugInfo);
                     
                     if(runResult)
                     {
@@ -3784,7 +3794,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 
                 if(keyString)
                 {
-                    delete keyString;
+                    keyString->release();
                 }
             }
             
