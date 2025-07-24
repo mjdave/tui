@@ -1303,8 +1303,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 }
                 
                 functionVar->release();
-                
-                if(result && result->type() == functionResult->type())
+                if(result && functionResult && result->type() == functionResult->type() && result->type() != Tui_ref_type_BOOL && result->type() != Tui_ref_type_TABLE && result->type() != Tui_ref_type_FUNCTION)
                 {
                     result->assign(functionResult);
                 }
@@ -2117,7 +2116,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         args->release();
                     }
                     
-                    if(result && result->type() == functionResult->type())
+                    if(result && result->type() == functionResult->type() && result->type() != Tui_ref_type_BOOL && result->type() != Tui_ref_type_TABLE && result->type() != Tui_ref_type_FUNCTION)
                     {
                         result->assign(functionResult);
                     }
@@ -2144,7 +2143,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     
                     keyConstant->release();
                     
-                    if(result && result->type() == child->type())
+                    if(result && result->type() == child->type() && result->type() != Tui_ref_type_BOOL && result->type() != Tui_ref_type_TABLE && result->type() != Tui_ref_type_FUNCTION)
                     {
                         result->assign(child);
                     }
@@ -3420,7 +3419,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
         
         if(foundValue)
         {
-            if(result && result->type() == foundValue->type() && result->type() != Tui_ref_type_BOOL)// maybe? && (result->type() != Tui_ref_type_TABLE && result->type() != Tui_ref_type_FUNCTION))
+            if(result && result->type() == foundValue->type() && result->type() != Tui_ref_type_BOOL && result->type() != Tui_ref_type_TABLE && result->type() != Tui_ref_type_FUNCTION)
             {
                 result->assign(foundValue);
                 foundValue->release();
