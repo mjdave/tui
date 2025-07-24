@@ -281,6 +281,15 @@ TuiTable* TuiRef::createRootTable()
         return nullptr;
     });
     
+    stringTable->setFunction("sha1", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            return new TuiString(TuiSHA1::sha1(((TuiString*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.sha1 expected string");
+        return nullptr;
+    });
+    
     //************
     //math
     //************
