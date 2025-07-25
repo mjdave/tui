@@ -63,7 +63,7 @@ block comment
 */
 ```
 
-## Adds variables, if statements & Expressions
+## Adds variables, if statements, expressions, for and while loops
 Any previously assigned value can be accessed by the key name. This can be used to define constants to do math for later values.
 ```javascript
 width = 400,
@@ -80,9 +80,26 @@ else // 'else if' and 'elseif' are both valid too
 {
     height *= 0.5
 }
+
+for(i = 0, i < 5, i++)
+{
+    height *= i;
+    if(height > 1000)
+    {
+        break
+    }
+}
+
+done = false
+while(!done)
+{
+    print("hello")
+    done = true
+}
+
 ```
 ## Functions
-Functions support value assignments, if/else statements, and for loops.
+Functions support value assignments, if/else statements, while and for loops.
 ```javascript
 addTariff = function(base)
 {

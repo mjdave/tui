@@ -875,7 +875,8 @@ TuiStatement* TuiFunction::serializeForStatement(const char* str,
                                                  TuiTable* parent,
                                                  TuiTokenMap* tokenMap,
                                                  TuiDebugInfo* debugInfo,
-                                                 bool sharesParentScope) //entry point is after 'for'
+                                                 bool sharesParentScope,
+                                                 bool isWhileLoop) //entry point is after 'for'
 {
     const char* s = str;
     if(*s == '(')
@@ -888,7 +889,7 @@ TuiStatement* TuiFunction::serializeForStatement(const char* str,
     std::string setKey;
     
     bool skipInitializationStatement = false;
-    if(*s == ',')
+    if(isWhileLoop || *s == ',')
     {
         skipInitializationStatement = true;
     }
@@ -901,7 +902,29 @@ TuiStatement* TuiFunction::serializeForStatement(const char* str,
     TuiStatement* resultStatement = nullptr;
     
     //todo test function call for initial statement, probably a bug, expression probably already contains the whole call
-    if(skipInitializationStatement || *s == '=' || *s == '(') // for(i = 0, i < 5, i++)
+    if(isWhileLoop)
+    {
+        //expression only contains the variable so far
+        TuiForExpressionsStatement* forStatement = new TuiForExpressionsStatement();
+        resultStatement = forStatement;
+        forStatement->debugInfo = *debugInfo;
+        
+        forStatement->continueExpression = new TuiExpression();
+        recursivelySerializeExpression(s, endptr, forStatement->continueExpression, parent, tokenMap, debugInfo, Tui_operator_level_default);
+        s = tuiSkipToNextChar(*endptr, debugInfo);
+        s++; // ')'
+        s = tuiSkipToNextChar(s, debugInfo);
+        
+        bool success = serializeFunctionBody(s, endptr, parent, tokenMap, debugInfo, sharesParentScope, &forStatement->statements);
+        if(!success)
+        {
+            return nullptr;
+        }
+        
+        s = tuiSkipToNextChar(*endptr, debugInfo);
+        *endptr = (char*)s;
+    }
+    else if(skipInitializationStatement || *s == '=' || *s == '(') // for(i = 0, i < 5, i++)
     {
         //expression only contains the variable so far
         TuiForExpressionsStatement* forStatement = new TuiForExpressionsStatement();
@@ -1034,7 +1057,20 @@ bool TuiFunction::serializeFunctionBody(const char* str,
             s+=3;
             s = tuiSkipToNextChar(s, debugInfo);
             
-            TuiStatement* statement = TuiFunction::serializeForStatement(s, endptr, parent, tokenMap, debugInfo, sharesParentScope);
+            TuiStatement* statement = TuiFunction::serializeForStatement(s, endptr, parent, tokenMap, debugInfo, sharesParentScope, false);
+            if(!statement)
+            {
+                return false;
+            }
+            statements->push_back(statement);
+            s = tuiSkipToNextChar(*endptr, debugInfo, false);
+        }
+        else if(*s == 'w' && *(s + 1) == 'h' && *(s + 2) == 'i' && *(s + 3) == 'l' && *(s + 4) == 'e' && (*(s + 5) == '(' || isspace(*(s + 5))))
+        {
+            s+=5;
+            s = tuiSkipToNextChar(s, debugInfo);
+            
+            TuiStatement* statement = TuiFunction::serializeForStatement(s, endptr, parent, tokenMap, debugInfo, sharesParentScope, true);
             if(!statement)
             {
                 return false;
@@ -1137,11 +1173,11 @@ bool TuiFunction::serializeFunctionBody(const char* str,
         {
             s+=6;
             s = tuiSkipToNextChar(s, debugInfo);
-            if(*s == '}')
+            if(*s == '}') //this seems off
             {
                 TuiStatement* statement = new TuiStatement(Tui_statement_type_return);
                 statements->push_back(statement);
-                s++;
+                s++; //this in particular
                 s = tuiSkipToNextChar(s, debugInfo, true);
                 break;
             }
@@ -1157,6 +1193,17 @@ bool TuiFunction::serializeFunctionBody(const char* str,
                 
                 statements->push_back(statement);
             }
+        }
+        else if(*s == 'b'
+           && *(s + 1) == 'r'
+           && *(s + 2) == 'e'
+           && *(s + 3) == 'a'
+           && *(s + 4) == 'k')
+        {
+            s+=5;
+            s = tuiSkipToNextChar(s, debugInfo, true);
+            TuiStatement* statement = new TuiStatement(Tui_statement_type_break);
+            statements->push_back(statement);
         }
         else
         {
@@ -3468,7 +3515,8 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                                   TuiTable* parent,
                                   TuiTokenMap* tokenMap,
                                   TuiFunctionCallData* callData,
-                                  TuiDebugInfo* callingDebugInfo)
+                                  TuiDebugInfo* callingDebugInfo,
+                                  bool* breakFound)
 {
     TuiDebugInfo* debugInfo = &statement->debugInfo;
     switch(statement->type)
@@ -3476,6 +3524,15 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
         case Tui_statement_type_return:
         {
             return TUI_NIL;
+        }
+            break;
+        case Tui_statement_type_break:
+        {
+            if(breakFound)
+            {
+                *breakFound = true;
+            }
+            return nullptr;
         }
             break;
         case Tui_statement_type_returnExpression:
@@ -3779,11 +3836,17 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     callData->locals[objectToken] = object;
                     forLoopScope->set(forStatement->objectName, object);
                     
-                    TuiRef* runResult = runStatementArray(forStatement->statements, result, forLoopScope, tokenMap, callData, debugInfo);
+                    bool breakFound = false;
+                    TuiRef* runResult = runStatementArray(forStatement->statements, result, forLoopScope, tokenMap, callData, debugInfo, &breakFound);
                     
                     if(runResult)
                     {
                         return runResult;
+                    }
+                    
+                    if(breakFound)
+                    {
+                        break;
                     }
                 }
             }
@@ -3808,11 +3871,17 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     callData->locals[objectToken] = kv.second;
                     forLoopScope->set(forStatement->objectName, kv.second);
                     
-                    TuiRef* runResult = runStatementArray(forStatement->statements, result, forLoopScope, tokenMap, callData, debugInfo);
+                    bool breakFound = false;
+                    TuiRef* runResult = runStatementArray(forStatement->statements, result, forLoopScope, tokenMap, callData, debugInfo, &breakFound);
                     
                     if(runResult)
                     {
                         return runResult;
+                    }
+                    
+                    if(breakFound)
+                    {
+                        break;
                     }
                 }
                 
@@ -3825,7 +3894,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
         }
             break;
             
-        case Tui_statement_type_forExpressions: // for(i = 0, i < 5, i++)
+        case Tui_statement_type_forExpressions: // for(i = 0, i < 5, i++) or while(i < 5)
         {
             TuiForExpressionsStatement* forStatement = (TuiForExpressionsStatement*)statement;
             
@@ -3845,11 +3914,17 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             TuiRef* continueResult = runExpression(forStatement->continueExpression, &tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
             while(continueResult && continueResult->boolValue())
             {
-                TuiRef* runResult = runStatementArray(forStatement->statements, nullptr, parent, tokenMap, callData, debugInfo);
+                bool breakFound = false;
+                TuiRef* runResult = runStatementArray(forStatement->statements, nullptr, parent, tokenMap, callData, debugInfo, &breakFound);
                 
                 if(runResult)
                 {
                     return runResult;
+                }
+                
+                if(breakFound)
+                {
+                    break;
                 }
                 
                 if(forStatement->incrementStatement)
@@ -3893,7 +3968,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 
                 if(expressionPass)
                 {
-                    TuiRef* runResult = runStatementArray(currentSatement->statements, result, parent, tokenMap, callData, debugInfo);
+                    TuiRef* runResult = runStatementArray(currentSatement->statements, result, parent, tokenMap, callData, debugInfo, breakFound);
                     
                     if(runResult)
                     {
@@ -3911,7 +3986,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                         }
                         else
                         {
-                            TuiRef* runResult = runStatementArray(currentSatement->elseIfStatement->statements, result, parent, tokenMap, callData, debugInfo);
+                            TuiRef* runResult = runStatementArray(currentSatement->elseIfStatement->statements, result, parent, tokenMap, callData, debugInfo, breakFound);
                             if(runResult)
                             {
                                 return runResult;
@@ -3939,11 +4014,12 @@ TuiRef* TuiFunction::runStatementArray(std::vector<TuiStatement*>& statements_,
                                        TuiTable* parent,
                                        TuiTokenMap* tokenMap,
                                        TuiFunctionCallData* callData,
-                                       TuiDebugInfo* debugInfo) //static
+                                       TuiDebugInfo* debugInfo,
+                                       bool* breakFound) //static
 {
     for(TuiStatement* statement : statements_)
     {
-        TuiRef* newResult = TuiFunction::runStatement(statement, result, parent, tokenMap, callData, debugInfo);
+        TuiRef* newResult = TuiFunction::runStatement(statement, result, parent, tokenMap, callData, debugInfo, breakFound);
         if(newResult)
         {
             return newResult;

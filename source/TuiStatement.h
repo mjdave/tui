@@ -75,9 +75,10 @@ enum {
     Tui_statement_type_varModify, // += ++ etc
     Tui_statement_type_functionCall,
     Tui_statement_type_if,
-    Tui_statement_type_forExpressions, // for(i = 0, i < 5, i++)
+    Tui_statement_type_forExpressions, // for(i = 0, i < 5, i++), while(i < 5)
     Tui_statement_type_forKeyedValues, // for(indexOrKey, object in table)
     Tui_statement_type_forValues, // for(object in table)
+    Tui_statement_type_break,
 };
 
 struct TuiExpression {

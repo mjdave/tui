@@ -54,7 +54,8 @@ public: //static functions
                                                   TuiTable* parent,
                                                   TuiTokenMap* tokenMap,
                                                   TuiDebugInfo* debugInfo,
-                                               bool sharesParentScope);
+                                               bool sharesParentScope,
+                                               bool isWhileLoop);
     
     
     
@@ -76,14 +77,16 @@ public: //static functions
                                 TuiTable* parent,
                                 TuiTokenMap* tokenMap,
                                 TuiFunctionCallData* callData,
-                                TuiDebugInfo* debugInfo);
+                                TuiDebugInfo* debugInfo,
+                                bool* breakFound = nullptr);
     
     static TuiRef* runStatementArray(std::vector<TuiStatement*>& statements,
                                      TuiRef* result,
                                      TuiTable* parent,
                                      TuiTokenMap* tokenMap,
                                      TuiFunctionCallData* callData,
-                                     TuiDebugInfo* debugInfo);
+                                     TuiDebugInfo* debugInfo,
+                                     bool* breakFound = nullptr);
 
 public: //class members
     TuiTable* parentTable = nullptr;

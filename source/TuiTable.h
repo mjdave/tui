@@ -117,14 +117,23 @@ public://functions
             }
         }
         
-        if(*s == 'f' && *(s + 1) == 'o' && *(s + 2) == 'r' && (*(s + 3) == '(' || isspace(*(s + 3))))
+        if((*s == 'f' && *(s + 1) == 'o' && *(s + 2) == 'r' && (*(s + 3) == '(' || isspace(*(s + 3)))) ||
+           (*s == 'w' && *(s + 1) == 'h' && *(s + 2) == 'i' && *(s + 3) == 'l' && *(s + 4) == 'e' && (*(s + 5) == '(' || isspace(*(s + 5)))))
         {
-            s+=3;
+            bool isWhileLoop = (*s == 'w');
+            if(isWhileLoop)
+            {
+                s+=5;
+            }
+            else
+            {
+                s+=3;
+            }
             s = tuiSkipToNextChar(s, debugInfo);
             
             TuiTokenMap tokenMap;
             
-            TuiStatement* statement = TuiFunction::serializeForStatement(s, endptr, this, &tokenMap, debugInfo, true);
+            TuiStatement* statement = TuiFunction::serializeForStatement(s, endptr, this, &tokenMap, debugInfo, true, isWhileLoop);
             if(!statement)
             {
                 return false;
