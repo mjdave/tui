@@ -296,7 +296,7 @@ void addStringTable(TuiTable* rootTable)
         return nullptr;
     });
     
-    //returns -1 if not found
+    //returns nil if not found
     stringTable->setFunction("find", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
         {
@@ -307,6 +307,10 @@ void addStringTable(TuiTable* rootTable)
             }
             
             int location = (int)(((TuiString*)args->arrayObjects[0])->value).find(((TuiString*)args->arrayObjects[1])->value, startIndex);
+            if(location < 0)
+            {
+                return TUI_NIL;
+            }
             return new TuiNumber(location);
         }
         TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.find expected string");
