@@ -12,15 +12,16 @@
 #include "TuiFileUtils.h"
 #include "TuiStringUtils.h"
 #include "TuiStatement.h"
+#include "TuiBuiltInFunctions.h"
 
 class TuiTable;
 class TuiString;
 class TuiRef;
 class TuiBool;
 
-#define DEBUG_CHECK_FOR_OVER_RELEASE 0
+#define DEBUG_CHECK_FOR_OVER_RELEASE 0 //used internally for debugging tui bugs
 
-#define TuiParseError(__fileName__, __lineNumber__, fmt__, ...) TuiLog("\nfile:%s:%d\nError:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__); abort();
+#define TuiParseError(__fileName__, __lineNumber__, fmt__, ...) TuiLog("\nfile:%s:%d\nError:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__); abort(); //note this will exit the program due to the call to abort()
 #define TuiParseWarn(__fileName__, __lineNumber__, fmt__, ...) TuiLog("\nfile:%s:%d\nWarning:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
 
 enum {
@@ -40,7 +41,7 @@ enum {
     Tui_ref_type_EXPRESSION,
 };
 
-enum {
+enum { // used when serializing to binary, changing any existing values will break backwards compatibility
     Tui_binary_type_UNDEFINED = 0, //reserved as it may accidentally null terminate strings
     Tui_binary_type_NIL,
     Tui_binary_type_TABLE,
@@ -188,20 +189,20 @@ inline void resizeBufferIfNeeded(std::string& buffer, int* currentOffset, int to
 
 class TuiRef {
     
-public: //static functions
-    //static TuiRef* initUnknownTypeRefWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, uint32_t variableLoadType, TuiTokenMap* tokenMap = nullptr);
-    static TuiTable* createRootTable(); //adds the built in functions 'print', 'require' etc.
+public: // public static functions to load tui refs from files and data. Supply nullptr as last argument to prevent root table from loading, or call Tui::createRootTable() yourself once, and pass it to every call for better performance.
     
-    static TuiRef* loadBinary(const char* str, int* currentOffset, TuiTable* parent = createRootTable()); //public method to read from data previously serialized with serializeBinary()
-    static TuiRef* loadBinary(const std::string& inputString, TuiTable* parent = createRootTable()); // convenience public method
+    static TuiRef* loadBinary(const char* str, int* currentOffset, TuiTable* parent = Tui::createRootTable()); // public method to read from data previously serialized with serializeBinary()
+    static TuiRef* loadBinary(const std::string& inputString, TuiTable* parent = Tui::createRootTable()); // convenience method, calls loadBinary(const char* str,...
     
-    static TuiRef* load(const std::string& filename, TuiTable* parent = createRootTable()); //public method to read from human readable file/string data. supply nullptr as last argument to prevent root table from loading
-    static TuiRef* runScriptFile(const std::string& filename, TuiTable* parent = createRootTable());  //public method
+    static TuiRef* load(const std::string& filename, TuiTable* parent = Tui::createRootTable()); // read from human readable file/string data.
+    static TuiRef* runScriptFile(const std::string& filename, TuiTable* parent = Tui::createRootTable());
     
     static TuiRef* load(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr); //public method
-    static TuiRef* loadString(const std::string& inputString, const std::string& debugName = "loadString", TuiTable* parent = createRootTable()); //public method
+    static TuiRef* loadString(const std::string& inputString, const std::string& debugName = "loadString", TuiTable* parent = Tui::createRootTable()); //public method
     
+    // below here are public methods for convenience, however they are generally only useful internally
     
+public: // internal static functions
     static TuiRef* loadExpression(const char* str,
                                   char** endptr,
                                   TuiRef* existingValue,
@@ -238,8 +239,30 @@ public: //members
 
 public://functions
     TuiRef() {}
-    
     virtual ~TuiRef() {}
+    
+    std::string serializeHumanReadable() {
+        std::string exportString;
+        printHumanReadableString(exportString);
+        return exportString;
+    };
+    
+    void saveToFile(const std::string& filePath) {
+        std::string exportString;
+        printHumanReadableString(exportString);
+        Tui::writeToFile(filePath, exportString);
+    };
+    
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) = 0; //buffer may not be set to the correct length
+    
+    std::string serializeBinary() //use serializeBinaryToBuffer above for speed, this option is convenient but has slow copies
+    {
+        std::string buffer;
+        int length = 0;
+        serializeBinaryToBuffer(buffer, &length);
+        buffer.resize(length);
+        return buffer;
+    }
     
     
     virtual void release() {refCount--; if(refCount == 0) {
@@ -284,29 +307,6 @@ public://functions
     
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) {
         debugString += getStringValue();
-    }
-    
-    std::string serializeHumanReadable() {
-        std::string exportString;
-        printHumanReadableString(exportString);
-        return exportString;
-    };
-    
-    void saveToFile(const std::string& filePath) {
-        std::string exportString;
-        printHumanReadableString(exportString);
-        Tui::writeToFile(filePath, exportString);
-    };
-    
-    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) = 0; //buffer may not be set to the correct length
-    
-    std::string serializeBinary() //use serializeBinaryToBuffer above for speed, this option is convenient but has slow copies
-    {
-        std::string buffer;
-        int length = 0;
-        serializeBinaryToBuffer(buffer, &length);
-        buffer.resize(length);
-        return buffer;
     }
 
 };

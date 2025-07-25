@@ -129,8 +129,11 @@ table.remove(table, index)          // removes an object from an array, shufflin
 
 string.length(string)           // returns the number of characters in string
 string.format(string, arg1, arg2, ...)    // works like printf, eg string.format("float:%.2f int:%d hex:%x", 1.2345, 5.78, 127) produces "float:1.23 int:5 hex:7f"
+string.find(string, searchTermString) // searches string, returns the character index of the first occurance of searchTermString, or -1 if not found.
+string.find(string, searchTermString, pos) // as above, but starts searching at the character at index pos
 string.subString(string, pos)               // returns a substring from the chracter at index 'pos' to the end of the string
 string.subString(string, pos, length)       // returns a substring from the chracter at index 'pos' to pos + length or the end of the string, whichever comes first
+string.sha1(string) // returns an sha1 hash of the given string 
 
 math.pi //pi constant
 

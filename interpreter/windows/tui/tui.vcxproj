@@ -137,6 +137,7 @@ xcopy "$(SolutionDir)..\..\..\tests" "$(TargetDir)\tests" /i /d /y </Command>
     <ClCompile Include="..\..\..\source\TuiRef.cpp" />
     <ClCompile Include="..\..\..\source\TuiSha1.cpp" />
     <ClCompile Include="..\..\..\source\TuiStringUtils.cpp" />
+    <ClCompile Include="..\..\..\source\TuiBuiltInFunctions.cpp" />
     <ClCompile Include="..\..\Interpreter.cpp" />
     <ClCompile Include="tui.cpp" />
   </ItemGroup>
@@ -150,6 +151,7 @@ xcopy "$(SolutionDir)..\..\..\tests" "$(TargetDir)\tests" /i /d /y </Command>
     <ClInclude Include="..\..\..\source\TuiSha1.h" />
     <ClInclude Include="..\..\..\source\TuiString.h" />
     <ClInclude Include="..\..\..\source\TuiStringUtils.h" />
+    <ClInclude Include="..\..\..\source\TuiBuiltInFunctions.h" />
     <ClInclude Include="..\..\..\source\TuiTable.h" />
     <ClInclude Include="..\..\Interpreter.h" />
   </ItemGroup>

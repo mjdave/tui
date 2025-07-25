@@ -83,11 +83,36 @@ void serializeValue(const char* str,
             }
             else
             {
-                stringBuffer += *s;
                 escaped = false;
+                stringBuffer += *s;
             }
         }
-        else if(escaped || singleQuote || doubleQuote)
+        else if(escaped)
+        {
+            escaped = false;
+            switch(*s)
+            {
+                case 'n':
+                    stringBuffer += '\n';
+                    break;
+                case 'r':
+                    stringBuffer += '\r';
+                    break;
+                case 't':
+                    stringBuffer += '\t';
+                    break;
+                case 'a':
+                    stringBuffer += '\a';
+                    break;
+                case 'v':
+                    stringBuffer += '\v';
+                    break;
+                default:
+                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Unrecognized escape code:%c", *s)
+                    break;
+            }
+        }
+        else if(singleQuote || doubleQuote)
         {
             stringBuffer += *s;
             escaped = false;
