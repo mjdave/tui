@@ -43,7 +43,7 @@ TuiRef* TuiRef::load(const std::string& filename, TuiTable* parent) {
 }
 
 
-TuiRef* TuiRef::loadBinary(const char* inputString, int* currentOffset, TuiTable* parent)
+TuiRef* TuiRef::loadBinaryString(const char* inputString, int* currentOffset, TuiTable* parent)
 {
     uint8_t type = inputString[(*currentOffset)++];
     switch (type) {
@@ -125,7 +125,7 @@ TuiRef* TuiRef::loadBinary(const char* inputString, int* currentOffset, TuiTable
             TuiTable* table = new TuiTable(parent);
             while(inputString[(*currentOffset)] != Tui_binary_type_END_MARKER)
             {
-                TuiRef* arrayObject = TuiRef::loadBinary(inputString, currentOffset);
+                TuiRef* arrayObject = TuiRef::loadBinaryString(inputString, currentOffset);
                 table->arrayObjects.push_back(arrayObject);
             }
             (*currentOffset)++;
@@ -134,8 +134,8 @@ TuiRef* TuiRef::loadBinary(const char* inputString, int* currentOffset, TuiTable
             
             while(inputString[(*currentOffset)] != Tui_binary_type_END_MARKER)
             {
-                TuiRef* keyObject = TuiRef::loadBinary(inputString, currentOffset);
-                TuiRef* valueObject = TuiRef::loadBinary(inputString, currentOffset);
+                TuiRef* keyObject = TuiRef::loadBinaryString(inputString, currentOffset);
+                TuiRef* valueObject = TuiRef::loadBinaryString(inputString, currentOffset);
                 table->set(((TuiString*)keyObject)->value, valueObject);
                 keyObject->release();
                 valueObject->release();
@@ -153,17 +153,40 @@ TuiRef* TuiRef::loadBinary(const char* inputString, int* currentOffset, TuiTable
     return nullptr;
 }
 
-TuiRef* TuiRef::loadBinary(const std::string& inputString, TuiTable* parent)
+TuiRef* TuiRef::loadBinaryString(const std::string& inputString, TuiTable* parent)
 {
     int currentOffset = 0;
-    return loadBinary(inputString.c_str(), &currentOffset);
+    return loadBinaryString(inputString.c_str(), &currentOffset);
 }
 
-TuiRef* TuiRef::runScriptFile(const std::string& filename, TuiTable* parent)
+TuiRef* TuiRef::loadBinary(const std::string& path, TuiTable* parent)
 {
-    std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
+    std::ifstream in(path.c_str(), std::ios::in | std::ios::binary);
     TuiDebugInfo debugInfo;
-    debugInfo.fileName = filename;
+    debugInfo.fileName = path;
+    if(in)
+    {
+        std::string contents;
+        in.seekg(0, std::ios::end);
+        contents.resize(in.tellg());
+        in.seekg(0, std::ios::beg);
+        in.read(&contents[0], contents.size());
+        in.close();
+        int currentOffset = 0;
+        return loadBinaryString(contents.c_str(), &currentOffset);
+    }
+    else
+    {
+        TuiError("File not found in TuiRef::loadBinary at:%s", path.c_str());
+    }
+    return nullptr;
+}
+
+TuiRef* TuiRef::runScriptFile(const std::string& path, TuiTable* parent)
+{
+    std::ifstream in(path.c_str(), std::ios::in | std::ios::binary);
+    TuiDebugInfo debugInfo;
+    debugInfo.fileName = path;
     if(in)
     {
         std::string contents;
@@ -180,7 +203,7 @@ TuiRef* TuiRef::runScriptFile(const std::string& filename, TuiTable* parent)
     }
     else
     {
-        TuiError("File not found in TuiRef::runScriptFile at:%s", filename.c_str());
+        TuiError("File not found in TuiRef::runScriptFile at:%s", path.c_str());
     }
     return nullptr;
 }

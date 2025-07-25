@@ -191,11 +191,12 @@ class TuiRef {
     
 public: // public static functions to load tui refs from files and data. Supply nullptr as last argument to prevent root table from loading, or call Tui::createRootTable() yourself once, and pass it to every call for better performance.
     
-    static TuiRef* loadBinary(const char* str, int* currentOffset, TuiTable* parent = Tui::createRootTable()); // public method to read from data previously serialized with serializeBinary()
-    static TuiRef* loadBinary(const std::string& inputString, TuiTable* parent = Tui::createRootTable()); // convenience method, calls loadBinary(const char* str,...
+    static TuiRef* loadBinaryString(const char* str, int* currentOffset, TuiTable* parent = Tui::createRootTable()); // public method to read from data previously serialized with serializeBinary()
+    static TuiRef* loadBinaryString(const std::string& inputString, TuiTable* parent = Tui::createRootTable()); // convenience method, calls loadBinary(const char* str,...
+    static TuiRef* loadBinary(const std::string& path, TuiTable* parent = Tui::createRootTable()); // convenience method, calls loadBinary(const char* str,...
     
-    static TuiRef* load(const std::string& filename, TuiTable* parent = Tui::createRootTable()); // read from human readable file/string data.
-    static TuiRef* runScriptFile(const std::string& filename, TuiTable* parent = Tui::createRootTable());
+    static TuiRef* load(const std::string& path, TuiTable* parent = Tui::createRootTable()); // read from human readable file/string data.
+    static TuiRef* runScriptFile(const std::string& path, TuiTable* parent = Tui::createRootTable());
     
     static TuiRef* load(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr); //public method
     static TuiRef* loadString(const std::string& inputString, const std::string& debugName = "loadString", TuiTable* parent = Tui::createRootTable()); //public method
@@ -263,6 +264,15 @@ public://functions
         buffer.resize(length);
         return buffer;
     }
+    
+    
+    void saveBinary(const std::string& filePath) {
+        std::string exportString;
+        int bufferLength = 0;
+        serializeBinaryToBuffer(exportString, &bufferLength);
+        exportString.resize(bufferLength);
+        Tui::writeToFile(filePath, exportString);
+    };
     
     
     virtual void release() {refCount--; if(refCount == 0) {

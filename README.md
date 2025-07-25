@@ -135,6 +135,19 @@ string.subString(string, pos)               // returns a substring from the chra
 string.subString(string, pos, length)       // returns a substring from the chracter at index 'pos' to pos + length or the end of the string, whichever comes first
 string.sha1(string) // returns an sha1 hash of the given string 
 
+file.directoryContents(path) // returns an array of file names
+file.load(path) // returns a TuiRef object with the contents of a human readable tui or json file
+file.loadBinary(path) // returns an object with the contents of a file that had been saved in the tui binary format
+file.save(path, object) // saves the tui object to disk in a human readable format (unless object is a binary string)
+file.saveBinary(path, object) // saves the tui object to disk in the tui binary format
+file.loadData(path) // returns a string with the contents of file
+file.isDirectory(path) // returns true if path is a directory
+file.fileName(path) 
+file.extension(path) // returns the extension including the '.' eg. "image.jpg" returns ".jpg"
+file.changeExtension(path, newExtension) 
+file.removeExtension(path) 
+file.removeLastPathComponent(path)
+
 math.pi //pi constant
 
 math.sqrt(x)

@@ -633,6 +633,68 @@ void addFileTable(TuiTable* rootTable)
         }
     });
     
+    // file.load(path) returns a TuiRef object with the contents of a human readable tui or json file
+    fileTable->setFunction("load", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            return TuiRef::load(((TuiString*)args->arrayObjects[0])->value);
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.load expected string argument");
+        }
+    });
+    
+    // file.loadBinary(path) returns an object with the contents of a file that has been saved in the proprietry tui binary format
+    fileTable->setFunction("loadBinary", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            return TuiRef::loadBinary(((TuiString*)args->arrayObjects[0])->value);
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.loadBinary expected string argument");
+        }
+    });
+    
+    // file.save(path, object) saves the tui object to disk in a human readable format (unless object is a binary string)
+    fileTable->setFunction("save", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            ((TuiString*)args->arrayObjects[1])->saveToFile(((TuiString*)args->arrayObjects[0])->value);
+            return nullptr;
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.save expected string argument");
+        }
+    });
+    
+    // file.saveBinary(path, object) saves the tui object to disk in a proprietry tui binary format
+    fileTable->setFunction("saveBinary", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            ((TuiString*)args->arrayObjects[1])->saveBinary(((TuiString*)args->arrayObjects[0])->value);
+            return nullptr;
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.saveBinary expected string argument");
+        }
+    });
+    
+    
+    // file.loadData(path) returns a string with the contents of file
+    fileTable->setFunction("loadData", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            return new TuiString(Tui::getFileContents(((TuiString*)args->arrayObjects[0])->value));
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.loadData expected string argument");
+        }
+    });
     
     //file.isDirectory(path) returns true if path is a directory
     fileTable->setFunction("isDirectory", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
@@ -709,6 +771,7 @@ void addFileTable(TuiTable* rootTable)
             TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.pathByRemovingLastPathComponent expected string argument");
         }
     });
+    
     
 }
 
