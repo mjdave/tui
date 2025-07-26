@@ -265,9 +265,9 @@ void serializeValue(const char* str,
                         tokenPos++;
                         varChainStarted = true;
                     }
-                    expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_childByArrayIndex);
+                    expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_childByExpression);
     
-                    TuiFunction::recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, Tui_operator_level_default, foundVarName, foundVarIndex); //needs setKey etc.
+                    TuiFunction::recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, Tui_operator_level_default);
                     tokenPos = (int)expression->tokens.size();
                     s = tuiSkipToNextChar(*endptr, debugInfo);
                 }
@@ -2068,7 +2068,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             }
                 break;
             case Tui_token_childByString:
-            case Tui_token_childByArrayIndex:
+            case Tui_token_childByExpression:
             {
                 //bool isStringKey = (token == Tui_token_childByString);
                 (*tokenPos)++;
@@ -3714,7 +3714,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 else if(enclosingSetRef)
                 {
                     TuiRef* copiedValue = newValue->copy();
-                    ((TuiTable*)enclosingSetRef)->set(statement->varName, copiedValue);
+                    ((TuiTable*)enclosingSetRef)->set(setKey, copiedValue);
                     copiedValue->release();
                 }
                 else
@@ -3724,15 +3724,21 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     newValue->release();
                     newValue = copiedValue;
                 }
+                
+                std::string& varName = statement->varName;
+                if(enclosingSetRef && !setKey.empty())
+                {
+                    varName = setKey;
+                }
                     
                 uint32_t token = 0;
-                if(tokenMap->localTokensByVarName.count(statement->varName) != 0)
+                if(tokenMap->localTokensByVarName.count(varName) != 0)
                 {
-                    token = tokenMap->localTokensByVarName[statement->varName];
+                    token = tokenMap->localTokensByVarName[varName];
                 }
-                else if(tokenMap->capturedTokensByVarName.count(statement->varName) != 0)
+                else if(tokenMap->capturedTokensByVarName.count(varName) != 0)
                 {
-                    token = tokenMap->capturedTokensByVarName[statement->varName];
+                    token = tokenMap->capturedTokensByVarName[varName];
                 }
                 
                 TuiRef* prevValue = nullptr;

@@ -51,7 +51,7 @@ enum {
     
     Tui_token_varChain, //24
     Tui_token_childByString,
-    Tui_token_childByArrayIndex,
+    Tui_token_childByExpression,
     Tui_token_varName,
     Tui_token_true,
     Tui_token_false,
