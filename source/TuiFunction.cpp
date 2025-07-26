@@ -266,7 +266,8 @@ void serializeValue(const char* str,
                         varChainStarted = true;
                     }
                     expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_childByArrayIndex);
-                    TuiFunction::recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, Tui_operator_level_default);
+    
+                    TuiFunction::recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, Tui_operator_level_default, foundVarName, foundVarIndex); //needs setKey etc.
                     tokenPos = (int)expression->tokens.size();
                     s = tuiSkipToNextChar(*endptr, debugInfo);
                 }
@@ -2089,10 +2090,21 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     if(parent->objectsByStringKey.count(((TuiString*)keyConstant)->value) != 0)
                     {
                         child = parent->objectsByStringKey[((TuiString*)keyConstant)->value];
-                        
-                        if(setKey)
+                    }
+                    
+                    if(setKey)
+                    {
+                        *setKey = ((TuiString*)keyConstant)->value;
+                    }
+                    
+                    if(enclosingSetRef)
+                    {
+                        TuiRef* prevRef = *enclosingSetRef;
+                        *enclosingSetRef = parent;
+                        parent->retain();
+                        if(prevRef)
                         {
-                            *setKey = ((TuiString*)keyConstant)->value;
+                            prevRef->release();
                         }
                     }
                     
