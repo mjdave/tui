@@ -776,6 +776,82 @@ void addFileTable(TuiTable* rootTable)
         }
     });
     
+    //file.fileSizeAtPath(path) returns size in bytes
+    fileTable->setFunction("fileSize", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            return new TuiNumber(Tui::fileSizeAtPath(((TuiString*)args->arrayObjects[0])->value));
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.fileSizeAtPath expected string argument");
+        }
+    });
+    
+    //file.fileExistsAtPath(path) returns true if file exists, false otherwise
+    fileTable->setFunction("fileExists", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            return TUI_BOOL(Tui::fileExistsAtPath(((TuiString*)args->arrayObjects[0])->value));
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.fileExistsAtPath expected string argument");
+        }
+    });
+    
+    //file.fileExistsAtPath(path) returns true if file is a symlink, false otherwise
+    fileTable->setFunction("isSymLink", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            return TUI_BOOL(Tui::isSymLinkAtPath(((TuiString*)args->arrayObjects[0])->value));
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.isSymLinkAtPath expected string argument");
+        }
+    });
+    
+    //file.createDirectoriesIfNeededForDirPath(path) equivalent to mkdir -p
+    fileTable->setFunction("createDirectoriesIfNeededForDirPath", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            Tui::createDirectoriesIfNeededForDirPath(((TuiString*)args->arrayObjects[0])->value);
+            return nullptr;
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.createDirectoriesIfNeededForDirPath expected string argument");
+        }
+    });
+    
+    //file.createDirectoriesIfNeededForFilePath(path) equivalent to mkdir -p
+    fileTable->setFunction("createDirectoriesIfNeededForDirPath", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            Tui::createDirectoriesIfNeededForFilePath(((TuiString*)args->arrayObjects[0])->value);
+            return nullptr;
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.createDirectoriesIfNeededForFilePath expected string argument");
+        }
+    });
+    
+    //todo
+    /*
+
+     void moveFile(const std::string& fromPath, const std::string& toPath);
+     bool removeFile(const std::string& removePath);
+     bool removeEmptyDirectory(const std::string& removePath);
+     bool removeDirectory(const std::string& removePath);
+
+     bool copyFileOrDir(const std::string& sourcePath, const std::string& destinationPath);
+
+     void openFile(std::string filePath);
+
+     */
+    
     
 }
 
