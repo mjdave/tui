@@ -24,7 +24,7 @@ Interpreter::Interpreter(std::vector<std::string>& args)
     }
     else if(tuiRunMode == TUI_RUN_MODE_INTERNAL_TESTING)
     {
-        TuiRef* scriptRunResult = TuiRef::runScriptFile("examples/testing.tui");
+        TuiRef* scriptRunResult = TuiRef::runScriptFile("tests/internalTesting.tui");
         if(scriptRunResult)
         {
             scriptRunResult->debugLog();

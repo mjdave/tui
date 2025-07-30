@@ -1,0 +1,93 @@
+#testCommon = require("tests/testCommon.tui")
+#assert = testCommon.assert
+#getLineNumber = debug.getLineNumber
+
+itemViews = {}
+
+
+loadPlaylists = function(playlists)
+{
+    if(table.count(playlists) > 0)
+    {
+        for(i,playlist in playlists)
+        {
+            test = i
+            print("test:", test)
+
+            itemView = {
+                foo = i
+            }
+            table.insert(itemViews, itemView)
+
+            itemView.click = function()
+            {
+                print("i:", i)
+                print("test:", test) #bug! prints "test:nil"
+            }
+        }
+    }
+}
+
+testPlaylists = {
+    "zero",
+    "one",
+    "two",
+    "three",
+    "four"
+}
+
+loadPlaylists(testPlaylists)
+
+for(i,itemView in itemViews)
+{
+    print("itemView:", itemView)
+    itemView.click()
+}
+
+
+/*
+getView = function()
+{
+    return "view"
+}
+
+create = function(funcArg)
+{
+    funcArg()
+}
+
+testFunc1 = function()
+{
+    #todo playlistsHeader is nil second time
+    playlistsHeader = getView()
+    print("should be view:", playlistsHeader)
+
+    create(function()
+    {
+        print("should also be view:", playlistsHeader)
+    })
+}
+
+testFunc1()
+*/
+
+
+/*
+testTable = {
+    marker = "hi"
+}
+
+testFunc = function()
+{
+    stringID = "123"
+    testTable[stringID] = "testValue"
+    print("testTable:", testTable)
+    value = testTable[stringID]
+    print("testTable[stringID]:", value)
+
+}
+
+testFunc()*/
+
+/*
+*/

@@ -3809,7 +3809,9 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
         {
             TuiForContainerLoopStatement* forStatement = (TuiForContainerLoopStatement*)statement;
             
-            TuiTable* forLoopScope = new TuiTable(parent);
+            TuiTable* forLoopHeaderScope = new TuiTable(parent);//todo maybe, declare transparent?
+            
+            TuiFunctionCallData headerScopedCallData = *callData;
             
             uint32_t containerTokenPos = 1;
             
@@ -3823,7 +3825,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 containerTokenPos = 2;
             }
             
-            TuiRef* collectionRef = runExpression(forStatement->expression, &containerTokenPos, nullptr, forLoopScope, tokenMap, callData, debugInfo);
+            TuiRef* collectionRef = runExpression(forStatement->expression, &containerTokenPos, nullptr, forLoopHeaderScope, tokenMap, &headerScopedCallData, debugInfo);
             
             if(!collectionRef || collectionRef->type() != Tui_ref_type_TABLE)
             {
@@ -3833,71 +3835,91 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             TuiTable* containerObject = (TuiTable*)collectionRef;
             
+            TuiFunctionCallData scopedCallData;
+            
+            TuiRef* runResult = nullptr;
+            
             if(!containerObject->arrayObjects.empty())
             {
                 TuiNumber* indexNumber = nullptr;
-                if(indexToken)
-                {
-                    indexNumber = new TuiNumber(0);
-                    callData->locals[indexToken] = indexNumber;
-                    forLoopScope->set(forStatement->keyOrIndexName, indexNumber);
-                }
-                
                 int i = 0;
                 for(TuiRef* object : containerObject->arrayObjects)
                 {
-                    if(indexNumber)
-                    {
-                        indexNumber->value = i++;
-                    }
+                    TuiTable* forLoopScope = new TuiTable(forLoopHeaderScope); //todo maybe, declare transparent?
+                    scopedCallData = headerScopedCallData;
                     
-                    callData->locals[objectToken] = object;
+                    if(indexToken)
+                    {
+                        if(indexNumber)
+                        {
+                            indexNumber->release();
+                        }
+                        indexNumber = new TuiNumber(i);
+                        scopedCallData.locals[indexToken] = indexNumber;
+                        forLoopScope->set(forStatement->keyOrIndexName, indexNumber);
+                    }
+                    i++;
+                    
+                    scopedCallData.locals[objectToken] = object;
                     forLoopScope->set(forStatement->objectName, object);
                     
                     bool breakFound = false;
-                    TuiRef* runResult = runStatementArray(forStatement->statements, result, forLoopScope, tokenMap, callData, debugInfo, &breakFound);
+                    runResult = runStatementArray(forStatement->statements, result, forLoopScope, tokenMap, &scopedCallData, debugInfo, &breakFound);
                     
-                    if(runResult)
+                    forLoopScope->release();
+                    
+                    for(auto& tokenAndRef : scopedCallData.locals)
                     {
-                        return runResult;
+                        if(headerScopedCallData.locals.count(tokenAndRef.first) != 0 && headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
+                        {
+                            tokenAndRef.second->release();
+                        }
                     }
                     
-                    if(breakFound)
+                    if(runResult || breakFound)
                     {
                         break;
                     }
                 }
             }
             
-            if(!containerObject->objectsByStringKey.empty())
+            if(!runResult && !containerObject->objectsByStringKey.empty())
             {
                 TuiString* keyString = nullptr;
-                if(indexToken)
-                {
-                    keyString = new TuiString("");
-                    callData->locals[indexToken] = keyString;
-                    forLoopScope->set(forStatement->keyOrIndexName, keyString);
-                }
                 
                 for(auto& kv : containerObject->objectsByStringKey)
                 {
-                    if(keyString)
+                    TuiTable* forLoopScope = new TuiTable(forLoopHeaderScope); //todo maybe, declare transparent?
+                    scopedCallData = headerScopedCallData;
+                    
+                    if(indexToken)
                     {
-                        keyString->value = kv.first;
+                        if(keyString)
+                        {
+                            keyString->release();
+                        }
+                        keyString = new TuiString(kv.first);
+                        scopedCallData.locals[indexToken] = keyString;
+                        forLoopScope->set(forStatement->keyOrIndexName, keyString);
                     }
                     
-                    callData->locals[objectToken] = kv.second;
+                    scopedCallData.locals[objectToken] = kv.second;
                     forLoopScope->set(forStatement->objectName, kv.second);
                     
                     bool breakFound = false;
-                    TuiRef* runResult = runStatementArray(forStatement->statements, result, forLoopScope, tokenMap, callData, debugInfo, &breakFound);
+                    runResult = runStatementArray(forStatement->statements, result, forLoopScope, tokenMap, &scopedCallData, debugInfo, &breakFound);
                     
-                    if(runResult)
+                    forLoopScope->release();
+                    
+                    for(auto& tokenAndRef : scopedCallData.locals)
                     {
-                        return runResult;
+                        if(headerScopedCallData.locals.count(tokenAndRef.first) != 0 && headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
+                        {
+                            tokenAndRef.second->release();
+                        }
                     }
                     
-                    if(breakFound)
+                    if(runResult || breakFound)
                     {
                         break;
                     }
@@ -3909,6 +3931,22 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 }
             }
             
+            
+            for(auto& tokenAndRef : headerScopedCallData.locals)
+            {
+                if(callData->locals.count(tokenAndRef.first) != 0 && callData->locals[tokenAndRef.first] != tokenAndRef.second)
+                {
+                    tokenAndRef.second->release();
+                }
+            }
+            
+            if(runResult)
+            {
+                return runResult;
+            }
+            
+            //forLoopHeaderScope->release(); //todo leak, but this needs to be kept around incase this function is kept and called after the enclosing table has been released. retain cycle issues.
+            
         }
             break;
             
@@ -3919,9 +3957,14 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             uint32_t tokenPos = 0;
             //debugInfo->lineNumber = statement->lineNumber; //?
             
+            
+            TuiTable* forLoopHeaderScope = new TuiTable(parent);
+            TuiFunctionCallData headerScopedCallData = *callData;
+            
+            
             if(forStatement->initialStatement)
             {
-                TuiRef* runResult = runStatement(forStatement->initialStatement, nullptr, parent, tokenMap, callData, debugInfo);
+                TuiRef* runResult = runStatement(forStatement->initialStatement, nullptr, forLoopHeaderScope, tokenMap, &headerScopedCallData, debugInfo);
                 if(runResult)
                 {
                     runResult->release();
@@ -3929,25 +3972,36 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             }
             
             tokenPos = 0;
-            TuiRef* continueResult = runExpression(forStatement->continueExpression, &tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
+            TuiRef* continueResult = runExpression(forStatement->continueExpression, &tokenPos, nullptr, forLoopHeaderScope, tokenMap, &headerScopedCallData, debugInfo);
+            TuiFunctionCallData scopedCallData;
+            TuiRef* runResult = nullptr;
+            
             while(continueResult && continueResult->boolValue())
             {
-                bool breakFound = false;
-                TuiRef* runResult = runStatementArray(forStatement->statements, nullptr, parent, tokenMap, callData, debugInfo, &breakFound);
+                TuiTable* forLoopScope = new TuiTable(forLoopHeaderScope);
+                scopedCallData = headerScopedCallData;
                 
-                if(runResult)
+                bool breakFound = false;
+                runResult = runStatementArray(forStatement->statements, nullptr, forLoopScope, tokenMap, &scopedCallData, debugInfo, &breakFound);
+                forLoopScope->release();
+                
+                
+                for(auto& tokenAndRef : scopedCallData.locals)
                 {
-                    return runResult;
+                    if(headerScopedCallData.locals.count(tokenAndRef.first) != 0 && headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
+                    {
+                        tokenAndRef.second->release();
+                    }
                 }
                 
-                if(breakFound)
+                if(runResult || breakFound)
                 {
                     break;
                 }
                 
                 if(forStatement->incrementStatement)
                 {
-                    TuiRef* runResult = runStatement(forStatement->incrementStatement, nullptr, parent, tokenMap, callData, debugInfo);
+                    TuiRef* runResult = runStatement(forStatement->incrementStatement, nullptr, forLoopHeaderScope, tokenMap, &headerScopedCallData, debugInfo);
                     if(runResult)
                     {
                         runResult->release();
@@ -3955,7 +4009,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 }
                 
                 tokenPos = 0;
-                TuiRef* newResult = runExpression(forStatement->continueExpression, &tokenPos, continueResult, parent, tokenMap, callData, debugInfo);
+                TuiRef* newResult = runExpression(forStatement->continueExpression, &tokenPos, continueResult, forLoopHeaderScope, tokenMap, &headerScopedCallData, debugInfo);
                 if(newResult)
                 {
                     continueResult->release();
@@ -3965,6 +4019,19 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             if(continueResult)
             {
                 continueResult->release();
+            }
+            
+            for(auto& tokenAndRef : headerScopedCallData.locals)
+            {
+                if(callData->locals.count(tokenAndRef.first) != 0 && callData->locals[tokenAndRef.first] != tokenAndRef.second)
+                {
+                    tokenAndRef.second->release();
+                }
+            }
+            
+            if(runResult)
+            {
+                return runResult;
             }
         }
             break;

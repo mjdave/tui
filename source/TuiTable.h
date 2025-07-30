@@ -73,8 +73,8 @@ public://functions
            && *(s + 5) == 'n')
         {
             s+=6;
-            s = tuiSkipToNextChar(s, debugInfo);
-            if(*s == '}')
+            s = tuiSkipToNextChar(s, debugInfo, true);
+            if(*s == '}' || *s == '\0' || *s == '\n')
             {
                 if(resultRef)
                 {
@@ -184,6 +184,11 @@ public://functions
             }
             
             TuiRef* result = TuiFunction::runStatement(statement,  nullptr, parentTable, &tokenMap, &callData, debugInfo);
+            
+            for(auto& tokenAndRef : callData.locals)
+            {
+                tokenAndRef.second->release();
+            }
             
             if(result)
             {
