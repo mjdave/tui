@@ -3870,7 +3870,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     
                     for(auto& tokenAndRef : scopedCallData.locals)
                     {
-                        if(headerScopedCallData.locals.count(tokenAndRef.first) != 0 && headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
+                        if(headerScopedCallData.locals.count(tokenAndRef.first) == 0 || headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
                         {
                             tokenAndRef.second->release();
                         }
@@ -3913,7 +3913,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     
                     for(auto& tokenAndRef : scopedCallData.locals)
                     {
-                        if(headerScopedCallData.locals.count(tokenAndRef.first) != 0 && headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
+                        if(headerScopedCallData.locals.count(tokenAndRef.first) == 0 || headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
                         {
                             tokenAndRef.second->release();
                         }
@@ -3934,7 +3934,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             for(auto& tokenAndRef : headerScopedCallData.locals)
             {
-                if(callData->locals.count(tokenAndRef.first) != 0 && callData->locals[tokenAndRef.first] != tokenAndRef.second)
+                if(callData->locals.count(tokenAndRef.first) == 0 || callData->locals[tokenAndRef.first] != tokenAndRef.second)
                 {
                     tokenAndRef.second->release();
                 }
@@ -3988,7 +3988,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 
                 for(auto& tokenAndRef : scopedCallData.locals)
                 {
-                    if(headerScopedCallData.locals.count(tokenAndRef.first) != 0 && headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
+                    if(headerScopedCallData.locals.count(tokenAndRef.first) == 0 || headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
                     {
                         tokenAndRef.second->release();
                     }
@@ -4023,7 +4023,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             for(auto& tokenAndRef : headerScopedCallData.locals)
             {
-                if(callData->locals.count(tokenAndRef.first) != 0 && callData->locals[tokenAndRef.first] != tokenAndRef.second)
+                if(callData->locals.count(tokenAndRef.first) == 0 || callData->locals[tokenAndRef.first] != tokenAndRef.second)
                 {
                     tokenAndRef.second->release();
                 }
