@@ -147,17 +147,26 @@ public://functions
             
             for(auto& varNameAndToken : tokenMap.capturedTokensByVarName)
             {
-                TuiTable* parentTable = this;
-                while(parentTable)
+                if(tokenMap.refsByToken.count(varNameAndToken.second) != 0)
                 {
-                    if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
+                    TuiRef* var = tokenMap.refsByToken[varNameAndToken.second];
+                    var->retain();
+                    callData.locals[varNameAndToken.second] = var;
+                }
+                else
+                {
+                    TuiTable* parentTable = this;
+                    while(parentTable)
                     {
-                        TuiRef* var = parentTable->objectsByStringKey[varNameAndToken.first];
-                        var->retain();
-                        callData.locals[varNameAndToken.second] = var;
-                        break;
+                        if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
+                        {
+                            TuiRef* var = parentTable->objectsByStringKey[varNameAndToken.first];
+                            var->retain();
+                            callData.locals[varNameAndToken.second] = var;
+                            break;
+                        }
+                        parentTable = parentTable->parentTable;
                     }
-                    parentTable = parentTable->parentTable;
                 }
             }
             
@@ -166,19 +175,28 @@ public://functions
             {
                 if(callData.locals.count(parentDepthAndToken.first) == 0)
                 {
-                    TuiTable* parentTable = this->parentTable;
-                    for(int i = 1; parentTable && i <= parentDepthAndToken.first; i++)
+                    if(tokenMap.refsByToken.count(parentDepthAndToken.second) != 0)
                     {
-                        if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
+                        TuiRef* var = tokenMap.refsByToken[parentDepthAndToken.second];
+                        var->retain();
+                        callData.locals[parentDepthAndToken.second] = var;
+                    }
+                    else
+                    {
+                        TuiTable* parentTable = this->parentTable;
+                        for(int i = 1; parentTable && i <= parentDepthAndToken.first; i++)
                         {
-                            uint32_t token = tokenMap.capturedParentTokensByDepthCount[i];
-                            if(callData.locals.count(token) == 0)
+                            if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
                             {
-                                parentTable->retain();
-                                callData.locals[token] = parentTable;
+                                uint32_t token = tokenMap.capturedParentTokensByDepthCount[i];
+                                if(callData.locals.count(token) == 0)
+                                {
+                                    parentTable->retain();
+                                    callData.locals[token] = parentTable;
+                                }
                             }
+                            parentTable = parentTable->parentTable;
                         }
-                        parentTable = parentTable->parentTable;
                     }
                 }
             }

@@ -1534,15 +1534,34 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 }
                 functionCopy->parentTable = parent;
                 
-                if(result && result->type() == functionCopy->type())
+                for(auto& varNameAndToken : functionCopy->tokenMap.capturedTokensByVarName)
                 {
-                    result->assign(functionCopy);
-                    functionCopy->release();
+                    TuiTable* parentTable = parent;
+                    while(parentTable)
+                    {
+                        if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
+                        {
+                            TuiRef* var = parentTable->objectsByStringKey[varNameAndToken.first];
+                            
+                            functionCopy->tokenMap.refsByToken[varNameAndToken.second] = var->copy();
+                            break;
+                        }
+                        parentTable = parentTable->parentTable;
+                    }
                 }
-                else
+                
+                for(auto& parentDepthAndToken : functionCopy->tokenMap.capturedParentTokensByDepthCount)
                 {
-                    return functionCopy;
+                    TuiTable* parentTable = parent;
+                    for(int i = 1; parentTable && i <= parentDepthAndToken.first; i++)
+                    {
+                        parentTable = parentTable->parentTable;
+                    }
+                    
+                    functionCopy->tokenMap.refsByToken[parentDepthAndToken.second] = parentTable->copy();
                 }
+                
+                return functionCopy;
             }
                 break;
             case Tui_token_equalTo:
@@ -3809,7 +3828,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
         {
             TuiForContainerLoopStatement* forStatement = (TuiForContainerLoopStatement*)statement;
             
-            TuiTable* forLoopHeaderScope = new TuiTable(parent);//todo maybe, declare transparent?
+            TuiTable* forLoopHeaderScope = parent;//new TuiTable(parent);//todo maybe, declare transparent?
             
             TuiFunctionCallData headerScopedCallData = *callData;
             
@@ -3841,38 +3860,38 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             if(!containerObject->arrayObjects.empty())
             {
-                TuiNumber* indexNumber = nullptr;
                 int i = 0;
                 for(TuiRef* object : containerObject->arrayObjects)
                 {
-                    TuiTable* forLoopScope = new TuiTable(forLoopHeaderScope); //todo maybe, declare transparent?
+                    TuiTable* forLoopScope = parent;//new TuiTable(forLoopHeaderScope); //todo maybe, declare transparent?
                     scopedCallData = headerScopedCallData;
                     
                     if(indexToken)
                     {
-                        if(indexNumber)
-                        {
-                            indexNumber->release();
-                        }
-                        indexNumber = new TuiNumber(i);
+                        TuiNumber* indexNumber = new TuiNumber(i);
                         scopedCallData.locals[indexToken] = indexNumber;
                         forLoopScope->set(forStatement->keyOrIndexName, indexNumber);
                     }
                     i++;
                     
                     scopedCallData.locals[objectToken] = object;
+                    object->retain();
                     forLoopScope->set(forStatement->objectName, object);
                     
                     bool breakFound = false;
                     runResult = runStatementArray(forStatement->statements, result, forLoopScope, tokenMap, &scopedCallData, debugInfo, &breakFound);
                     
-                    forLoopScope->release();
+                    //forLoopScope->release();
                     
                     for(auto& tokenAndRef : scopedCallData.locals)
                     {
-                        if(headerScopedCallData.locals.count(tokenAndRef.first) == 0 || headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
+                        if(headerScopedCallData.locals.count(tokenAndRef.first) == 0)
                         {
                             tokenAndRef.second->release();
+                        }
+                        else if(headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
+                        {
+                            headerScopedCallData.locals[tokenAndRef.first] = tokenAndRef.second;
                         }
                     }
                     
@@ -3885,37 +3904,37 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             if(!runResult && !containerObject->objectsByStringKey.empty())
             {
-                TuiString* keyString = nullptr;
                 
                 for(auto& kv : containerObject->objectsByStringKey)
                 {
-                    TuiTable* forLoopScope = new TuiTable(forLoopHeaderScope); //todo maybe, declare transparent?
+                    TuiTable* forLoopScope = parent;//new TuiTable(forLoopHeaderScope); //todo maybe, declare transparent?
                     scopedCallData = headerScopedCallData;
                     
                     if(indexToken)
                     {
-                        if(keyString)
-                        {
-                            keyString->release();
-                        }
-                        keyString = new TuiString(kv.first);
+                        TuiString* keyString = new TuiString(kv.first);
                         scopedCallData.locals[indexToken] = keyString;
                         forLoopScope->set(forStatement->keyOrIndexName, keyString);
                     }
                     
                     scopedCallData.locals[objectToken] = kv.second;
+                    kv.second->retain();
                     forLoopScope->set(forStatement->objectName, kv.second);
                     
                     bool breakFound = false;
                     runResult = runStatementArray(forStatement->statements, result, forLoopScope, tokenMap, &scopedCallData, debugInfo, &breakFound);
                     
-                    forLoopScope->release();
+                    //forLoopScope->release();
                     
                     for(auto& tokenAndRef : scopedCallData.locals)
                     {
-                        if(headerScopedCallData.locals.count(tokenAndRef.first) == 0 || headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
+                        if(headerScopedCallData.locals.count(tokenAndRef.first) == 0)
                         {
                             tokenAndRef.second->release();
+                        }
+                        else if(headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
+                        {
+                            headerScopedCallData.locals[tokenAndRef.first] = tokenAndRef.second;
                         }
                     }
                     
@@ -3924,19 +3943,18 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                         break;
                     }
                 }
-                
-                if(keyString)
-                {
-                    keyString->release();
-                }
             }
             
             
             for(auto& tokenAndRef : headerScopedCallData.locals)
             {
-                if(callData->locals.count(tokenAndRef.first) == 0 || callData->locals[tokenAndRef.first] != tokenAndRef.second)
+                if(callData->locals.count(tokenAndRef.first) == 0)
                 {
                     tokenAndRef.second->release();
+                }
+                else if(callData->locals[tokenAndRef.first] != tokenAndRef.second)
+                {
+                    callData->locals[tokenAndRef.first] = tokenAndRef.second;
                 }
             }
             
@@ -3958,7 +3976,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             //debugInfo->lineNumber = statement->lineNumber; //?
             
             
-            TuiTable* forLoopHeaderScope = new TuiTable(parent);
+            TuiTable* forLoopHeaderScope = parent;//new TuiTable(parent);
             TuiFunctionCallData headerScopedCallData = *callData;
             
             
@@ -3978,19 +3996,23 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             while(continueResult && continueResult->boolValue())
             {
-                TuiTable* forLoopScope = new TuiTable(forLoopHeaderScope);
+                TuiTable* forLoopScope = parent;//new TuiTable(forLoopHeaderScope);
                 scopedCallData = headerScopedCallData;
                 
                 bool breakFound = false;
                 runResult = runStatementArray(forStatement->statements, nullptr, forLoopScope, tokenMap, &scopedCallData, debugInfo, &breakFound);
-                forLoopScope->release();
+               // forLoopScope->release();
                 
                 
                 for(auto& tokenAndRef : scopedCallData.locals)
                 {
-                    if(headerScopedCallData.locals.count(tokenAndRef.first) == 0 || headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
+                    if(headerScopedCallData.locals.count(tokenAndRef.first) == 0)
                     {
                         tokenAndRef.second->release();
+                    }
+                    else if(headerScopedCallData.locals[tokenAndRef.first] != tokenAndRef.second)
+                    {
+                        headerScopedCallData.locals[tokenAndRef.first] = tokenAndRef.second;
                     }
                 }
                 
@@ -4023,9 +4045,13 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             for(auto& tokenAndRef : headerScopedCallData.locals)
             {
-                if(callData->locals.count(tokenAndRef.first) == 0 || callData->locals[tokenAndRef.first] != tokenAndRef.second)
+                if(callData->locals.count(tokenAndRef.first) == 0)
                 {
                     tokenAndRef.second->release();
+                }
+                else if(callData->locals[tokenAndRef.first] != tokenAndRef.second)
+                {
+                    callData->locals[tokenAndRef.first] = tokenAndRef.second;
                 }
             }
             
@@ -4140,6 +4166,11 @@ TuiFunction::~TuiFunction()
     {
         parentTable->release();
     }
+    
+    for(auto& tokenAndRef : tokenMap.refsByToken)
+    {
+        tokenAndRef.second->release();
+    }
 }
 
 
@@ -4159,17 +4190,26 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
     {
         if(callData.locals.count(varNameAndToken.second) == 0)
         {
-            TuiTable* parentTable = state;
-            while(parentTable)
+            if(tokenMap.refsByToken.count(varNameAndToken.second) != 0)
             {
-                if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
+                TuiRef* var = tokenMap.refsByToken[varNameAndToken.second];
+                var->retain();
+                callData.locals[varNameAndToken.second] = var;
+            }
+            else
+            {
+                TuiTable* parentTable = state;
+                while(parentTable)
                 {
-                    TuiRef* var = parentTable->objectsByStringKey[varNameAndToken.first];
-                    var->retain();
-                    callData.locals[varNameAndToken.second] = var;
-                    break;
+                    if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
+                    {
+                        TuiRef* var = parentTable->objectsByStringKey[varNameAndToken.first];
+                        var->retain();
+                        callData.locals[varNameAndToken.second] = var;
+                        break;
+                    }
+                    parentTable = parentTable->parentTable;
                 }
-                parentTable = parentTable->parentTable;
             }
         }
     }
@@ -4178,19 +4218,28 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
     {
         if(callData.locals.count(parentDepthAndToken.first) == 0)
         {
-            TuiTable* parentTable = state;
-            for(int i = 1; parentTable && i <= parentDepthAndToken.first; i++)
+            if(tokenMap.refsByToken.count(parentDepthAndToken.second) != 0)
             {
-                if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
+                TuiRef* var = tokenMap.refsByToken[parentDepthAndToken.second];
+                var->retain();
+                callData.locals[parentDepthAndToken.second] = var;
+            }
+            else
+            {
+                TuiTable* parentTable = state;
+                for(int i = 1; parentTable && i <= parentDepthAndToken.first; i++)
                 {
-                    uint32_t token = tokenMap.capturedParentTokensByDepthCount[i];
-                    if(callData.locals.count(token) == 0)
+                    if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
                     {
-                        parentTable->retain();
-                        callData.locals[token] = parentTable;
+                        uint32_t token = tokenMap.capturedParentTokensByDepthCount[i];
+                        if(callData.locals.count(token) == 0)
+                        {
+                            parentTable->retain();
+                            callData.locals[token] = parentTable;
+                        }
                     }
+                    parentTable = parentTable->parentTable;
                 }
-                parentTable = parentTable->parentTable;
             }
         }
     }
@@ -4256,18 +4305,27 @@ TuiRef* TuiFunction::call(TuiTable* args,
         {
             if(callData.locals.count(varNameAndToken.second) == 0)
             {
-                TuiTable* parentRef = parentTable;
-                while(parentRef)
+                if(tokenMap.refsByToken.count(varNameAndToken.second) != 0)
                 {
-                    if(parentRef->objectsByStringKey.count(varNameAndToken.first) != 0)
+                    TuiRef* var = tokenMap.refsByToken[varNameAndToken.second];
+                    var->retain();
+                    callData.locals[varNameAndToken.second] = var;
+                }
+                else
+                {
+                    TuiTable* parentRef = parentTable;
+                    while(parentRef)
                     {
-                        TuiRef* var = parentRef->objectsByStringKey[varNameAndToken.first];
-                        var->retain();
-                        callData.locals[varNameAndToken.second] = var;
-                        //functionStateTable->set(varNameAndToken.second, var);
-                        break;
+                        if(parentRef->objectsByStringKey.count(varNameAndToken.first) != 0)
+                        {
+                            TuiRef* var = parentRef->objectsByStringKey[varNameAndToken.first];
+                            var->retain();
+                            callData.locals[varNameAndToken.second] = var;
+                            //functionStateTable->set(varNameAndToken.second, var);
+                            break;
+                        }
+                        parentRef = parentRef->parentTable;
                     }
-                    parentRef = parentRef->parentTable;
                 }
             }
         }
@@ -4276,19 +4334,28 @@ TuiRef* TuiFunction::call(TuiTable* args,
         {
             if(callData.locals.count(parentDepthAndToken.first) == 0)
             {
-                TuiTable* parentRef = parentTable->parentTable;
-                for(int i = 1; parentRef && i <= parentDepthAndToken.first; i++)
+                if(tokenMap.refsByToken.count(parentDepthAndToken.second) != 0)
                 {
-                    if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
+                    TuiRef* var = tokenMap.refsByToken[parentDepthAndToken.second];
+                    var->retain();
+                    callData.locals[parentDepthAndToken.second] = var;
+                }
+                else
+                {
+                    TuiTable* parentRef = parentTable->parentTable;
+                    for(int i = 1; parentRef && i <= parentDepthAndToken.first; i++)
                     {
-                        uint32_t token = tokenMap.capturedParentTokensByDepthCount[i];
-                        if(callData.locals.count(token) == 0)
+                        if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
                         {
-                            parentRef->retain();
-                            callData.locals[token] = parentRef;
+                            uint32_t token = tokenMap.capturedParentTokensByDepthCount[i];
+                            if(callData.locals.count(token) == 0)
+                            {
+                                parentRef->retain();
+                                callData.locals[token] = parentRef;
+                            }
                         }
+                        parentRef = parentRef->parentTable;
                     }
-                    parentRef = parentRef->parentTable;
                 }
             }
         }
