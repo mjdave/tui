@@ -1,12 +1,16 @@
 #include "TuiBuiltInFunctions.h"
 #include "TuiTable.h"
+#include <algorithm>
+#include <random>
+
+auto rd = std::random_device {};
+auto rng = std::default_random_engine { rd() };
 
 namespace Tui {
 
 TuiTable* createRootTable()
 {
     TuiTable* rootTable = new TuiTable(nullptr);
-    srand((unsigned)time(nullptr));
     
     //random(max) provides a floating point value between 0 and max (default 1.0)
     rootTable->setFunction("random", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
@@ -15,10 +19,10 @@ TuiTable* createRootTable()
             TuiRef* arg = args->arrayObjects[0];
             if(arg->type() == Tui_ref_type_NUMBER)
             {
-                return new TuiNumber(((double)rand() / RAND_MAX) * ((TuiNumber*)(arg))->value);
+                return new TuiNumber(((double)rng() / RAND_MAX) * ((TuiNumber*)(arg))->value);
             }
         }
-        return new TuiNumber(((double)rand() / RAND_MAX));
+        return new TuiNumber(((double)rng() / RAND_MAX));
     });
     
     
@@ -30,10 +34,10 @@ TuiTable* createRootTable()
             if(arg->type() == Tui_ref_type_NUMBER)
             {
                 double flooredValue = floor(((TuiNumber*)(arg))->value);
-                return new TuiNumber(min(flooredValue - 1.0, floor(((double)rand() / RAND_MAX) * flooredValue)));
+                return new TuiNumber(min(flooredValue - 1.0, floor(((double)rng() / UINT32_MAX) * flooredValue)));
             }
         }
-        return new TuiNumber(min(1.0, floor(((double)rand() / RAND_MAX) * 2)));
+        return new TuiNumber(min(1.0, floor(((double)rng() / RAND_MAX) * 2)));
     });
     
     
@@ -418,6 +422,23 @@ void addTableTable(TuiTable* rootTable)
         }
         return nullptr;
     });
+    
+    //table.shuffle(table) randomize order of array objects
+    tableTable->setFunction("shuffle", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1)
+        {
+            TuiRef* tableRef = args->arrayObjects[0];
+            if(tableRef->type() != Tui_ref_type_TABLE)
+            {
+                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.shuffle expected table for first argument");
+                return nullptr;
+            }
+            auto& arrayObjects = ((TuiTable*)tableRef)->arrayObjects;
+            std::shuffle(std::begin(arrayObjects), std::end(arrayObjects), rng);
+        }
+        return nullptr;
+    });
+    
     
     
 }
