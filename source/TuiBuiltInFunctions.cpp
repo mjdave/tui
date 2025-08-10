@@ -721,6 +721,19 @@ void addFileTable(TuiTable* rootTable)
         }
     });
     
+    // file.saveData(path, string) saves the string to disk directly
+    fileTable->setFunction("saveData", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2 && args->arrayObjects[0]->type() == Tui_ref_type_STRING  && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
+        {
+            Tui::writeToFile(((TuiString*)args->arrayObjects[0])->value, (((TuiString*)args->arrayObjects[1])->value));
+            return nullptr;
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.saveData expected 2 string arguments");
+        }
+    });
+    
     //file.isDirectory(path) returns true if path is a directory
     fileTable->setFunction("isDirectory", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() >= 1)
@@ -847,7 +860,7 @@ void addFileTable(TuiTable* rootTable)
     });
     
     //file.createDirectoriesIfNeededForFilePath(path) equivalent to mkdir -p
-    fileTable->setFunction("createDirectoriesIfNeededForDirPath", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    fileTable->setFunction("createDirectoriesIfNeededForFilePath", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
             Tui::createDirectoriesIfNeededForFilePath(((TuiString*)args->arrayObjects[0])->value);

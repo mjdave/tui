@@ -285,7 +285,7 @@ public://functions
     virtual TuiRef* retain() {refCount++;
         if(refCount > 50)
         {
-            TuiWarn("object is likely being leaked");
+            //TuiWarn("object is likely being leaked");
         }
         return this;
     }

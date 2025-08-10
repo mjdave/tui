@@ -18,15 +18,6 @@ namespace Tui {
 std::string getFileContents(const std::string& filename)
 {
     std::ifstream in((filename).c_str(), std::ios::in | std::ios::binary);
-    if(!in)
-    {
-        std::string tmpFilename = filename + ".tmp";
-        if(Tui::fileExistsAtPath(tmpFilename))
-        {
-            moveFile(tmpFilename, filename);
-            in = std::ifstream((filename).c_str(), std::ios::in | std::ios::binary);
-        }
-    }
     if(in)
     {
         std::string contents;
