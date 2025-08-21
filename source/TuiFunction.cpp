@@ -125,36 +125,7 @@ void serializeValue(const char* str,
         {
             if(*(s+1) == '.' && *s != '(' && *s != '[') // .. syntax eg. ..var
             {
-                if(hasFoundInitialValue)
-                {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "'..' may only be used at the start of a variable chain or as a standalone var eg. ..var or .., not var..");
-                    break;
-                }
-                hasFoundInitialValue = true;
-                
-                int depthCount = 0;
-                while(*(s + 1) == '.')
-                {
-                    s++;
-                    depthCount++;
-                }
-                
-                uint32_t varToken = 0;
-                if(tokenMap->capturedParentTokensByDepthCount.count(depthCount) != 0)
-                {
-                    varToken = tokenMap->capturedParentTokensByDepthCount[depthCount];
-                }
-                else
-                {
-                    varToken = tokenMap->tokenIndex++;
-                    tokenMap->capturedParentTokensByDepthCount[depthCount] = varToken;
-                }
-                
-                expression->tokens.insert(expression->tokens.begin() + tokenPos++, varToken);
-                
-                s = tuiSkipToNextChar(s, debugInfo, true);
-                *endptr = (char*)s;
-                
+                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "\"..\" is not valid"); // .foo = x sets x on the closest parent which has a key 'foo', or a global on the root table if none exists
             }
             else
             {
@@ -180,6 +151,7 @@ void serializeValue(const char* str,
                             uint32_t stringConstantToken = tokenMap->tokenIndex++;
                             varToken = stringConstantToken;
                             tokenMap->refsByToken[stringConstantToken] = stringConstant;
+                            
                             expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_childByString);
                             expression->tokens.insert(expression->tokens.begin() + tokenPos++, stringConstantToken); //note if this is a function, the function token gets placed just before this, see below
                             if(foundVarName)
@@ -232,6 +204,16 @@ void serializeValue(const char* str,
                     }
                     
                     stringBuffer = "";
+                }
+                else // .foo = 23
+                {
+                    if(!varChainStarted)
+                    {
+                        expression->tokens.insert(expression->tokens.begin() + tokenStartPos, Tui_token_parentCaptureVarChain); //note tokenStartPos to place before all other tokens
+                        tokenPos++;
+                        varChainStarted = true;
+                    }
+                    hasFoundInitialValue = true;
                 }
                 
                 if(*s == '(')
@@ -1550,17 +1532,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     }
                 }
                 
-                for(auto& parentDepthAndToken : functionCopy->tokenMap.capturedParentTokensByDepthCount)
-                {
-                    TuiTable* parentTable = parent;
-                    for(int i = 1; parentTable && i <= parentDepthAndToken.first; i++)
-                    {
-                        parentTable = parentTable->parentTable;
-                    }
-                    
-                    functionCopy->tokenMap.refsByToken[parentDepthAndToken.second] = parentTable->copy();
-                }
-                
                 return functionCopy;
             }
                 break;
@@ -1780,10 +1751,42 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             }
                 break;
             case Tui_token_varChain:
+            case Tui_token_parentCaptureVarChain:
             {
                 (*tokenPos)++;
-                TuiRef* chainParent = nullptr;
-                TuiRef* chainResult = parent;
+                TuiTable* chainParent = nullptr;
+                TuiTable* chainResult = parent;
+                
+                if(token == Tui_token_parentCaptureVarChain)
+                {
+                    uint32_t nextToken = expression->tokens[*tokenPos];
+                    if(nextToken == Tui_token_childByString)
+                    {
+                        uint32_t subTokenPos = *tokenPos;
+                        subTokenPos++;
+                        if(expression->tokens[subTokenPos] == Tui_token_functionCall)
+                        {
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Function call not supported here");
+                        }
+                        
+                        TuiRef* keyConstant = runExpression(expression, &subTokenPos, nullptr, parent, tokenMap, callData, debugInfo);
+                        
+                        if(keyConstant->type() == Tui_ref_type_STRING)
+                        {
+                            while(chainResult->parentTable)
+                            {
+                                if(chainResult->objectsByStringKey.count(((TuiString*)keyConstant)->value) != 0)
+                                {
+                                    break;
+                                }
+                                
+                                chainResult = chainResult->parentTable;
+                            }
+                        }
+                    }
+                }
+                    
+                    
                 chainResult->retain();
                 TuiRef* keyConstant = nullptr;
                 
@@ -1798,7 +1801,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 chainParent->release();
                             }
                             chainParent = chainResult;
-                            chainResult = runExpression(expression, tokenPos, nullptr, (TuiTable*)chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef); //todo should pass result here
+                            chainResult = (TuiTable*)runExpression(expression, tokenPos, nullptr, chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef); //todo should pass result here
                         }
                             break;
                         case Tui_ref_type_VEC2:
@@ -4214,37 +4217,6 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
         }
     }
     
-    for(auto& parentDepthAndToken : tokenMap.capturedParentTokensByDepthCount)
-    {
-        if(callData.locals.count(parentDepthAndToken.first) == 0)
-        {
-            if(tokenMap.refsByToken.count(parentDepthAndToken.second) != 0)
-            {
-                TuiRef* var = tokenMap.refsByToken[parentDepthAndToken.second];
-                var->retain();
-                callData.locals[parentDepthAndToken.second] = var;
-            }
-            else
-            {
-                TuiTable* parentTable = state;
-                for(int i = 1; parentTable && i <= parentDepthAndToken.first; i++)
-                {
-                    if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
-                    {
-                        uint32_t token = tokenMap.capturedParentTokensByDepthCount[i];
-                        if(callData.locals.count(token) == 0)
-                        {
-                            parentTable->retain();
-                            callData.locals[token] = parentTable;
-                        }
-                    }
-                    parentTable = parentTable->parentTable;
-                }
-            }
-        }
-    }
-    
-    
     TuiRef* result = runStatementArray(statements,  existingResult, functionStateTable, &tokenMap, &callData, &debugInfo);
     if(result)
     {
@@ -4329,37 +4301,6 @@ TuiRef* TuiFunction::call(TuiTable* args,
                 }
             }
         }
-        
-        for(auto& parentDepthAndToken : tokenMap.capturedParentTokensByDepthCount)
-        {
-            if(callData.locals.count(parentDepthAndToken.first) == 0)
-            {
-                if(tokenMap.refsByToken.count(parentDepthAndToken.second) != 0)
-                {
-                    TuiRef* var = tokenMap.refsByToken[parentDepthAndToken.second];
-                    var->retain();
-                    callData.locals[parentDepthAndToken.second] = var;
-                }
-                else
-                {
-                    TuiTable* parentRef = parentTable->parentTable;
-                    for(int i = 1; parentRef && i <= parentDepthAndToken.first; i++)
-                    {
-                        if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
-                        {
-                            uint32_t token = tokenMap.capturedParentTokensByDepthCount[i];
-                            if(callData.locals.count(token) == 0)
-                            {
-                                parentRef->retain();
-                                callData.locals[token] = parentRef;
-                            }
-                        }
-                        parentRef = parentRef->parentTable;
-                    }
-                }
-            }
-        }
-        
         
         TuiRef* result = runStatementArray(statements,  existingResult, functionStateTable, &tokenMap, &callData, &debugInfo);
         

@@ -170,37 +170,6 @@ public://functions
                 }
             }
             
-            
-            for(auto& parentDepthAndToken : tokenMap.capturedParentTokensByDepthCount)
-            {
-                if(callData.locals.count(parentDepthAndToken.first) == 0)
-                {
-                    if(tokenMap.refsByToken.count(parentDepthAndToken.second) != 0)
-                    {
-                        TuiRef* var = tokenMap.refsByToken[parentDepthAndToken.second];
-                        var->retain();
-                        callData.locals[parentDepthAndToken.second] = var;
-                    }
-                    else
-                    {
-                        TuiTable* parentTable = this->parentTable;
-                        for(int i = 1; parentTable && i <= parentDepthAndToken.first; i++)
-                        {
-                            if(tokenMap.capturedParentTokensByDepthCount.count(i) != 0)
-                            {
-                                uint32_t token = tokenMap.capturedParentTokensByDepthCount[i];
-                                if(callData.locals.count(token) == 0)
-                                {
-                                    parentTable->retain();
-                                    callData.locals[token] = parentTable;
-                                }
-                            }
-                            parentTable = parentTable->parentTable;
-                        }
-                    }
-                }
-            }
-            
             TuiRef* result = TuiFunction::runStatement(statement,  nullptr, parentTable, &tokenMap, &callData, debugInfo);
             
             for(auto& tokenAndRef : callData.locals)

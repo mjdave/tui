@@ -52,13 +52,14 @@ enum {
     Tui_token_varChain, //24
     Tui_token_childByString,
     Tui_token_childByExpression,
+    Tui_token_parentCaptureVarChain,
     Tui_token_varName,
     Tui_token_true,
     Tui_token_false,
     Tui_token_forCollectionLoopKeyValue,
-    Tui_token_forCollectionLoopValues,
     
-    Tui_token_functionDeclaration, //32
+    Tui_token_forCollectionLoopValues, //32
+    Tui_token_functionDeclaration,
     Tui_token_vec2,
     Tui_token_vec3,
     Tui_token_vec4,
@@ -90,7 +91,6 @@ struct TuiTokenMap {
     std::map<uint32_t, TuiRef*> refsByToken; //var names and constants. Captures may also be stored here when a function constructor is called
     std::map<std::string, uint32_t> capturedTokensByVarName;
     std::map<std::string, uint32_t> localTokensByVarName;
-    std::map<int, uint32_t> capturedParentTokensByDepthCount;
 };
 
 struct TuiDebugInfo {
