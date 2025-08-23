@@ -223,7 +223,9 @@ Every table and every function has its own scope for variable creation/assignmen
 
 If you assign to a variable eg: `a = 42` then that will assign to any existing variable named 'a' within the current scope only. If the parent table or function has a variable named 'a', it remains unaffected, and a new local 'a' is created.
 
-Variables are readable for all child tables/functions, and also read/writable via the `'.'` syntax to access children and `'..'` to access parents.
+Variables are readable for all child tables/functions.
+
+The next highest variable with a given name is also read/writable via the `'.'` syntax: `.parentVar = x`. Tui searches up the parent heirachy to find the given variable name, and if it is not found, a global is created in the root table.
 
 ```javascript
 value = 10
@@ -232,27 +234,33 @@ table = {
     subTable = {
         subValue = 30 // creates a new local table.subTable.subValue with the value 30
         
-        ..subValue = value // this assigns 10 to the parent subValue (previously 20)
+        .subValue = value // this assigns 10 to the closest parent subValue: table.subValue (previously 20)
+        print("subValue (30):", subValue) //local subValue is still 30
         
-        enclosingTable = .. // we can store the parent table '..' in a local variable
-        enclosingTable.subValue = value // achieves the same as '..subValue = value'.
-        enclosingTable = nil // otherwise we create a circular loop and will hang if we try to log or iterate this table!
+        .value = 20 // it will search up multiple levels to find the first parent. The top level "value" is now 20, previously 10
+        .global = 40 // if no parents have set this variable already, it is created on the root table. All scripts will now be able to access the variable named "global"
         
-        ...value = 20 // we can go up multiple levels by adding dots, this modifies the variable created at the top level on the first line
-        
+        print("global (40):", global)
+
         testValue = 1
         
         testFunction = function(valueToSet) { // the same rules apply for functions
-            ..testValue = value + 1 // 21, remember we can always *read* the higher level variables directly
-            ....value = valueToSet // 4 dots this time to modify
+            .value = valueToSet
+            .testValue = value + 1 // remember we can always *read* the higher level variables directly
+            testValue = 123 // no '.', so this creates a new local named "testValue". The parent's testValue is still 101.
+            print("testValue (123):", testValue)
         }
 
         testFunction(100)
+
+        print("testValue (101):", testValue)
     }
     
     outsideFunc = subTable.testFunction // we can grab a reference to that subTable's function and call it directly here
-    outsideFunc(200) // ..value is now 200. '....value' still works, because we find variables relative to where the function was defined, not where it is called
-    thisFuncDoesntExist() // error examples/scope.tui:27:attempt to call missing function: thisFuncDoesntExist()
+    outsideFunc(200) // set value to 200, subTable.testValue to 201.
+    print("value (200):", value) // we just set value to 200 from within subTable.testFunction
+    print("global (40):", global) // still accessible in this outer scope
+    print("subTable.testValue (201):", subTable.testValue)
 }
 ```
 
