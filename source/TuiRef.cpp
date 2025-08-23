@@ -564,33 +564,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
         }
         else if(*s == '.' && allowAsVariableName)
         {
-            if(*(s+1) == '.') // .. syntax eg. ..foo.x //todo
-            {
-                TuiRef* result = parent;
-                while(*(s + 1) == '.')
-                {
-                    s++;
-                    if(result->type() != Tui_ref_type_TABLE)
-                    {
-                        TuiError("Unimplemented"); //this might be a userdata's member table or a custom type or something?
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "No parent found for '..' variable");
-                        return nullptr;
-                    }
-                    
-                    result = ((TuiTable*)result)->parentTable;
-                }
-                
-                s = tuiSkipToNextChar(s, debugInfo, true);
-                *endptr = (char*)s;
-                
-                result->retain();
-                
-                return result;
-            }
-            else
-            {
-                break;
-            }
+            break;
         }
         else if(*s == '(' && allowAsVariableName && !stringBuffer.empty())
         {
@@ -789,11 +763,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
             TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call missing function:%s", stringBuffer.c_str());
             return nullptr;
         }
-        else if(*s == '.')
-        {
-            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to use '.' syntax on nil value:%s", stringBuffer.c_str());
-            return nullptr;
-        }
+        
         return nullptr;
     }
     
@@ -826,6 +796,77 @@ TuiRef* TuiRef::loadValue(const char* str,
     TuiRef* varChainParent = nullptr;
     TuiRef* result = nullptr;
     
+    if(*s == '.')
+    {
+            
+        const char* sTmp = s;
+        sTmp++;
+        std::string keyString;
+        bool done = false;
+        while(!done)
+        {
+            switch (*sTmp) {
+                case '\0':
+                case '.':
+                case '(':
+                case '[':
+                case ' ':
+                case '=':
+                case ',':
+                case '\n':
+                {
+                    done = true;
+                    break;
+                }
+                    break;
+                    
+                default:
+                {
+                    keyString += *sTmp;
+                }
+                    break;
+            }
+            sTmp++;
+        }
+        
+        if(keyString.empty())
+        {
+            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Something went wrong");
+        }
+        
+        TuiTable* parentToUse = parentTable->parentTable;
+        
+        s++;
+        s = tuiSkipToNextChar(s, debugInfo);
+        
+        
+        while(parentToUse->parentTable)
+        {
+            if(parentToUse->objectsByStringKey.count(keyString) != 0)
+            {
+                break;
+            }
+            
+            parentToUse = parentToUse->parentTable;
+        }
+        
+        
+        varChainParent = parentToUse;
+        varChainParent->retain();
+        
+        /*result = loadSingleValueInternal(s,
+                                                 endptr,
+                                                 nullptr,
+                                                 parentToUse,
+                                                 nullptr,
+                                                 debugInfo,
+                                                 allowQuotedStringsAsVariableNames,
+                                                 
+                                                 nullptr,
+                                                 nullptr,
+                                                 accessedParentVariable);*/
+    }
+
     while(1)
     {
         result = loadSingleValueInternal(s, endptr, existingValue, parentTable, varChainParent, debugInfo, allowQuotedStringsAsVariableNames, onSetKey, onSetIndex, accessedParentVariable);
