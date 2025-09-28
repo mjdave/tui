@@ -7,9 +7,9 @@ let package = Package(
     name: "tui",
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
-        // .library(
-        //     name: "tui",
-        //     targets: ["tui"]),
+        .library(
+            name: "tui",
+            targets: ["tui"]),
         .executable(name: "tui-interpreter", targets: ["tui-interpreter"])
     ],
     targets: [
