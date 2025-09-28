@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <random>
 
-auto rd = std::random_device {};
+std::random_device rd;
 auto rng = std::default_random_engine { rd() };
 
 namespace Tui {
@@ -119,7 +119,7 @@ TuiTable* createRootTable()
 #elif defined (__LINUX__) || defined(__gnu_linux__) || defined(__linux__)
         system("clear");
     //std::cout<< u8"\033[2J\033[1;1H"; //Using ANSI Escape Sequences
-#elif (__APPLE__ && (!TARGET_OS_IPHONE))
+#elif (__APPLE__ && (!defined(TARGET_OS_IPHONE)))
         system("clear");
 #endif
         return nullptr;

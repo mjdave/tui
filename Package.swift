@@ -17,17 +17,22 @@ let package = Package(
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "tui",
-            path: "source"
+            dependencies: ["glm"],
+            path: "source",
+            publicHeadersPath: "./",
         ),
         .target(
             name: "glm",
-            path: "thirdParty/glm",
-            publicHeadersPath: "thirdParty/glm"
+            path: "thirdParty/glm/glm",
+            publicHeadersPath: "./",
+            cxxSettings: [.headerSearchPath("../")]
         ),
         .executableTarget(
             name: "tui-interpreter",
-            dependencies: ["glm"],
-            path: "interpreter/macos/tui"
+            dependencies: ["tui"],
+            path: "interpreter/",
+            exclude: ["linux/", "windows/"],
+            publicHeadersPath: "./",
         )
     ],
     cxxLanguageStandard: .cxx11
