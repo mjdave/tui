@@ -1,38 +1,34 @@
 // swift-tools-version: 6.1
-// The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
 let package = Package(
-    name: "tui",
+    name: "Tui",
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
-        .library(
-            name: "tui",
-            targets: ["tui"]),
+        .library(name: "Tui", targets: ["Tui"]),
         .executable(name: "tui-interpreter", targets: ["tui-interpreter"])
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "tui",
-            dependencies: ["glm"],
+            name: "Tui",
+            dependencies: ["tui-glm"],
             path: "source",
-            publicHeadersPath: "./",
+            publicHeadersPath: "./"
         ),
         .target(
-            name: "glm",
+            name: "tui-glm",
             path: "thirdParty/glm/glm",
-            publicHeadersPath: "./",
-            cxxSettings: [.headerSearchPath("../")]
+            publicHeadersPath: "../glm",
+            cxxSettings: [
+                .headerSearchPath("../")
+            ]
         ),
         .executableTarget(
             name: "tui-interpreter",
-            dependencies: ["tui"],
+            dependencies: ["Tui"],
             path: "interpreter/",
             exclude: ["linux/", "windows/"],
-            publicHeadersPath: "./",
+            publicHeadersPath: "./"
         )
     ],
     cxxLanguageStandard: .cxx11
