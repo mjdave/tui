@@ -365,7 +365,7 @@ void View::tableKeyChanged(const std::string& key, TuiRef* valueRef)
 
 ```
 
-# Swift Package Maanger
+# Using tui with Swift Package Manager
 Due to some quirks with glm and the macos sdk, it's currently easiest to include the package locally by:
 - Check out the tui repo with git
 - Run `git submodule update --init` to set up glm
