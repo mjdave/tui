@@ -11,16 +11,32 @@ let package = Package(
     targets: [
         .target(
             name: "Tui",
-            dependencies: ["GLM"],
+            dependencies: ["glm"],
             path: "source",
-            publicHeadersPath: "./"
+            publicHeadersPath: "./",
+            swiftSettings: [
+                .interoperabilityMode(.Cxx)
+            ]
         ),
         .target(
-            name: "GLM",
+            name: "glm",
+            dependencies: ["tui_simd"],
             path: "thirdParty/glm/glm",
+            exclude: ["tui_simd/"],
             publicHeadersPath: "./",
             cxxSettings: [
-                .headerSearchPath("../")
+                .headerSearchPath("../"),
+            ],
+            swiftSettings: [
+                .interoperabilityMode(.Cxx)
+            ]
+        ),
+        .target(
+            name: "tui_simd",
+            path: "thirdParty/glm/glm/tui_simd",
+            publicHeadersPath: "./",
+            swiftSettings: [
+                .interoperabilityMode(.Cxx)
             ]
         ),
         .executableTarget(
@@ -34,5 +50,5 @@ let package = Package(
             ]
         )
     ],
-    cxxLanguageStandard: .cxx11
+    cxxLanguageStandard: .cxx17
 )
