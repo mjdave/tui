@@ -1,0 +1,4 @@
+module Tui {
+    export *
+    requires cplusplus
+}

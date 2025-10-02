@@ -6,29 +6,32 @@ let package = Package(
     name: "Tui",
     products: [
         .library(name: "Tui", targets: ["Tui"]),
-        .executable(name: "tui-interpreter", targets: ["tui-interpreter"])
+        .executable(name: "TuiInterpreter", targets: ["TuiInterpreter"])
     ],
     targets: [
         .target(
             name: "Tui",
-            dependencies: ["tui-glm"],
+            dependencies: ["GLM"],
             path: "source",
             publicHeadersPath: "./"
         ),
         .target(
-            name: "tui-glm",
+            name: "GLM",
             path: "thirdParty/glm/glm",
-            publicHeadersPath: "../glm",
+            publicHeadersPath: "./",
             cxxSettings: [
                 .headerSearchPath("../")
             ]
         ),
         .executableTarget(
-            name: "tui-interpreter",
+            name: "TuiInterpreter",
             dependencies: ["Tui"],
             path: "interpreter/",
             exclude: ["linux/", "windows/"],
-            publicHeadersPath: "./"
+            publicHeadersPath: "./",
+            swiftSettings: [
+                .interoperabilityMode(.Cxx)
+            ]
         )
     ],
     cxxLanguageStandard: .cxx11
