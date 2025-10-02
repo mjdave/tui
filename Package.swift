@@ -43,7 +43,7 @@ let package = Package(
             name: "TuiInterpreter",
             dependencies: ["Tui"],
             path: "interpreter/",
-            exclude: ["linux/", "windows/"],
+            exclude: ["linux/", "windows/", "macos/swift"],
             publicHeadersPath: "./",
             swiftSettings: [
                 .interoperabilityMode(.Cxx)

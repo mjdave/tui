@@ -7,151 +7,142 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5B7B4DD52DB1CBDE00F42201 /* examples in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5B7B4DD42DB1CBDE00F42201 /* examples */; };
-		5BEBE5CE2DBF32A8009B2FFA /* Interpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5BEBE5CD2DBF32A8009B2FFA /* Interpreter.cpp */; };
-		5BEBE5E82DC36B2F009B2FFA /* tests in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5BEBE5E72DC36B2F009B2FFA /* tests */; };
+		05359EC22E8F30EB009DE3BD /* Tui in Frameworks */ = {isa = PBXBuildFile; productRef = 05359EC12E8F30EB009DE3BD /* Tui */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		5B7B4CF92DB1C2E100F42201 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 12;
-			dstPath = "";
-			dstSubfolderSpec = 16;
-			files = (
-				5BEBE5E82DC36B2F009B2FFA /* tests in CopyFiles */,
-				5B7B4DD52DB1CBDE00F42201 /* examples in CopyFiles */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
-		5B7B4CFB2DB1C2E100F42201 /* tui */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tui; sourceTree = BUILT_PRODUCTS_DIR; };
-		5B7B4DD42DB1CBDE00F42201 /* examples */ = {isa = PBXFileReference; lastKnownFileType = folder; name = examples; path = ../../../../examples; sourceTree = "<group>"; };
-		5BEBE5CC2DBF32A8009B2FFA /* Interpreter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Interpreter.h; path = ../../../Interpreter.h; sourceTree = SOURCE_ROOT; };
-		5BEBE5CD2DBF32A8009B2FFA /* Interpreter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Interpreter.cpp; path = ../../../Interpreter.cpp; sourceTree = SOURCE_ROOT; };
-		5BEBE5E72DC36B2F009B2FFA /* tests */ = {isa = PBXFileReference; lastKnownFileType = folder; name = tests; path = ../../../../tests; sourceTree = "<group>"; };
+		054E6B912E8BA59B00DA47FB /* TuiExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TuiExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		5B7B4CFD2DB1C2E100F42201 /* tui */ = {
+		054E6B932E8BA59B00DA47FB /* TuiExample */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = tui;
+			path = TuiExample;
 			sourceTree = "<group>";
-		};
-		5BEBE5DE2DBF32CD009B2FFA /* source */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			name = source;
-			path = ../../../../source;
-			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		5B7B4CF82DB1C2E100F42201 /* Frameworks */ = {
+		054E6B8E2E8BA59B00DA47FB /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				05359EC22E8F30EB009DE3BD /* Tui in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		5B7B4CF22DB1C2E100F42201 = {
+		054E6B882E8BA59B00DA47FB = {
 			isa = PBXGroup;
 			children = (
-				5BEBE5E72DC36B2F009B2FFA /* tests */,
-				5BEBE5DE2DBF32CD009B2FFA /* source */,
-				5B7B4DD42DB1CBDE00F42201 /* examples */,
-				5BEBE5CC2DBF32A8009B2FFA /* Interpreter.h */,
-				5BEBE5CD2DBF32A8009B2FFA /* Interpreter.cpp */,
-				5B7B4CFD2DB1C2E100F42201 /* tui */,
-				5B7B4CFC2DB1C2E100F42201 /* Products */,
+				054E6B932E8BA59B00DA47FB /* TuiExample */,
+				054E6BA02E8BA5DC00DA47FB /* Frameworks */,
+				054E6B922E8BA59B00DA47FB /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		5B7B4CFC2DB1C2E100F42201 /* Products */ = {
+		054E6B922E8BA59B00DA47FB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5B7B4CFB2DB1C2E100F42201 /* tui */,
+				054E6B912E8BA59B00DA47FB /* TuiExample.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		054E6BA02E8BA5DC00DA47FB /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5B7B4CFA2DB1C2E100F42201 /* tui */ = {
+		054E6B902E8BA59B00DA47FB /* TuiExample */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5B7B4D022DB1C2E100F42201 /* Build configuration list for PBXNativeTarget "tui" */;
+			buildConfigurationList = 054E6B9C2E8BA59C00DA47FB /* Build configuration list for PBXNativeTarget "TuiExample" */;
 			buildPhases = (
-				5B7B4CF72DB1C2E100F42201 /* Sources */,
-				5B7B4CF82DB1C2E100F42201 /* Frameworks */,
-				5B7B4CF92DB1C2E100F42201 /* CopyFiles */,
+				054E6B8D2E8BA59B00DA47FB /* Sources */,
+				054E6B8E2E8BA59B00DA47FB /* Frameworks */,
+				054E6B8F2E8BA59B00DA47FB /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				5B7B4CFD2DB1C2E100F42201 /* tui */,
-				5BEBE5DE2DBF32CD009B2FFA /* source */,
+				054E6B932E8BA59B00DA47FB /* TuiExample */,
 			);
-			name = tui;
+			name = TuiExample;
 			packageProductDependencies = (
+				05359EC12E8F30EB009DE3BD /* Tui */,
 			);
-			productName = tui;
-			productReference = 5B7B4CFB2DB1C2E100F42201 /* tui */;
-			productType = "com.apple.product-type.tool";
+			productName = TuiTesting;
+			productReference = 054E6B912E8BA59B00DA47FB /* TuiExample.app */;
+			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		5B7B4CF32DB1C2E100F42201 /* Project object */ = {
+		054E6B892E8BA59B00DA47FB /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastUpgradeCheck = 1630;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
 				TargetAttributes = {
-					5B7B4CFA2DB1C2E100F42201 = {
-						CreatedOnToolsVersion = 16.3;
+					054E6B902E8BA59B00DA47FB = {
+						CreatedOnToolsVersion = 26.0.1;
 					};
 				};
 			};
-			buildConfigurationList = 5B7B4CF62DB1C2E100F42201 /* Build configuration list for PBXProject "tui" */;
+			buildConfigurationList = 054E6B8C2E8BA59B00DA47FB /* Build configuration list for PBXProject "TuiExample" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = 5B7B4CF22DB1C2E100F42201;
+			mainGroup = 054E6B882E8BA59B00DA47FB;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				05359EBE2E8F2D2E009DE3BD /* XCLocalSwiftPackageReference "../../../../tui" */,
+			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 5B7B4CFC2DB1C2E100F42201 /* Products */;
+			productRefGroup = 054E6B922E8BA59B00DA47FB /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5B7B4CFA2DB1C2E100F42201 /* tui */,
+				054E6B902E8BA59B00DA47FB /* TuiExample */,
 			);
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		054E6B8F2E8BA59B00DA47FB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
-		5B7B4CF72DB1C2E100F42201 /* Sources */ = {
+		054E6B8D2E8BA59B00DA47FB /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5BEBE5CE2DBF32A8009B2FFA /* Interpreter.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		5B7B4D002DB1C2E100F42201 /* Debug */ = {
+		054E6B9A2E8BA59C00DA47FB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -186,7 +177,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 9Q78V5BF2N;
+				DEVELOPMENT_TEAM = 7MY4UU63BT;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -205,15 +196,16 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.3;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
 		};
-		5B7B4D012DB1C2E100F42201 /* Release */ = {
+		054E6B9B2E8BA59C00DA47FB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -248,7 +240,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 9Q78V5BF2N;
+				DEVELOPMENT_TEAM = 7MY4UU63BT;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -261,59 +253,122 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 15.3;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
 		};
-		5B7B4D032DB1C2E100F42201 /* Debug */ = {
+		054E6B9D2E8BA59C00DA47FB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = NO;
 				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.cpp;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.TuiExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../../thirdParty/glm/glm\"";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_INTEROP_MODE = objcxx;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
 		};
-		5B7B4D042DB1C2E100F42201 /* Release */ = {
+		054E6B9E2E8BA59C00DA47FB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = NO;
 				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GCC_OPTIMIZATION_LEVEL = 0;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GCC_INPUT_FILETYPE = sourcecode.cpp.cpp;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.TuiExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../../thirdParty/glm/glm\"";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_INTEROP_MODE = objcxx;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5B7B4CF62DB1C2E100F42201 /* Build configuration list for PBXProject "tui" */ = {
+		054E6B8C2E8BA59B00DA47FB /* Build configuration list for PBXProject "TuiExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5B7B4D002DB1C2E100F42201 /* Debug */,
-				5B7B4D012DB1C2E100F42201 /* Release */,
+				054E6B9A2E8BA59C00DA47FB /* Debug */,
+				054E6B9B2E8BA59C00DA47FB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5B7B4D022DB1C2E100F42201 /* Build configuration list for PBXNativeTarget "tui" */ = {
+		054E6B9C2E8BA59C00DA47FB /* Build configuration list for PBXNativeTarget "TuiExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				5B7B4D032DB1C2E100F42201 /* Debug */,
-				5B7B4D042DB1C2E100F42201 /* Release */,
+				054E6B9D2E8BA59C00DA47FB /* Debug */,
+				054E6B9E2E8BA59C00DA47FB /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		05359EBE2E8F2D2E009DE3BD /* XCLocalSwiftPackageReference "../../../../tui" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../../../tui;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		05359EC12E8F30EB009DE3BD /* Tui */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 05359EBE2E8F2D2E009DE3BD /* XCLocalSwiftPackageReference "../../../../tui" */;
+			productName = Tui;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = 5B7B4CF32DB1C2E100F42201 /* Project object */;
+	rootObject = 054E6B892E8BA59B00DA47FB /* Project object */;
 }
