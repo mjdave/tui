@@ -15,7 +15,6 @@
 #include <iomanip>
 #include <limits>
 #include "TuiSha1.h"
-//#include <fmt/printf.h>
 
 #include <stdexcept>
 
