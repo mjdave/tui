@@ -524,7 +524,7 @@ void openFile(std::string filePath)
 {
 #ifdef WIN32
     ShellExecuteW(NULL, L"open", convertUtf8ToWide(filePath).c_str(), NULL, NULL, SW_SHOWDEFAULT);
-#elif (__APPLE__ && (!TARGET_OS_IPHONE))
+#elif (__APPLE__ && (!defined(TARGET_OS_IPHONE)))
     if(filePath.substr(0,4) == "http")
     {
         std::string cmd ="open \"" + filePath + "\"";

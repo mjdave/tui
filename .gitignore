@@ -8,3 +8,7 @@ interpreter/linux/tui
 interpreter/windows/tui/tui
 interpreter/windows/tui/x64
 examples/examples
+.build
+DerivedData
+.swiftpm
+.vscode

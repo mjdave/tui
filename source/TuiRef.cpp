@@ -114,7 +114,7 @@ TuiRef* TuiRef::loadBinaryString(const char* inputString, int* currentOffset, Tu
             
             TuiString* stringRef = new TuiString("");
             stringRef->value.resize(stringLength);
-            memcpy(stringRef->value.data(), &inputString[(*currentOffset)], stringLength);
+            memcpy(&stringRef->value[0], &inputString[(*currentOffset)], stringLength);
             (*currentOffset)+=stringLength;
             
             return stringRef;
