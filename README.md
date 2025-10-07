@@ -219,11 +219,11 @@ halfSize = size * 0.5
 ```
 
 ## Scope
-Every table and every function has its own scope for variable creation/assignment.
+Every table, function, and for/while loop has its own scope for variable creation/assignment.
 
-If you assign to a variable eg: `a = 42` then that will assign to any existing variable named 'a' within the current scope only. If the parent table or function has a variable named 'a', it remains unaffected, and a new local 'a' is created.
+If you assign to a variable eg: `a = 42` then that will assign to any existing variable named 'a' within the current scope only. If the parent table, loop or function has a variable named 'a', it remains unaffected, and a new local 'a' is created.
 
-Variables are readable for all child tables/functions.
+Variables are readable for all child scopes.
 
 The next highest variable with a given name is also read/writable via the `'.'` syntax: `.parentVar = x`. Tui searches up the parent heirachy to find the given variable name, and if it is not found, a global is created in the root table.
 
@@ -264,7 +264,7 @@ table = {
 }
 ```
 
-if/else and for statements do not create new scopes, but share the parent scope. Inside if/else/for blocks, you may freely access parent values, and all assigned variables belong to the enclosing table/function.
+if/else do not create new scopes, but share the parent scope. Inside if/else blocks, you may freely access parent values, and all assigned variables belong to the enclosing table/function.
 
 ```javascript
 a = 10
