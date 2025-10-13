@@ -426,4 +426,13 @@ testTuiNilEquality = function() {
 
 testTuiNilEquality()
 
+testNilAssignment = function() {
+    value = string.find("abc", "b")
+    assert(value == 1)
+    value = string.find("abc", "d")
+    assert(value == nil)
+}
+
+testNilAssignment()
+
 testCommon.printResult()
