@@ -419,4 +419,11 @@ assert(debug.getLineNumber() == 418, "debug.getLineNumber()")
 print("lineNumber 419:", debug.getLineNumber())
 print("fileName:", debug.getFileName())
 
+testTuiNilEquality = function() {
+    firstNil = string.find("abc", "d")
+    assert(firstNil == nil)
+}
+
+testTuiNilEquality()
+
 testCommon.printResult()
