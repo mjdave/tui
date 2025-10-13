@@ -98,6 +98,16 @@ std::string getResourcePath(const std::string &appendPath)
     return appendPath;
 }
 
+std::string getResourcePath(const std::string &appendPath, const std::string &filePath)
+{
+    if (fileExistsAtPath(appendPath)) {
+        return appendPath;
+    } else {
+        std::string path = pathByRemovingLastPathComponent(filePath);
+        return pathByAppendingPathComponent(path, appendPath);
+    }
+}
+
 std::vector<std::string> getDirectoryContents(const std::string& dirName)
 {
     std::vector<std::string> result;

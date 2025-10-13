@@ -14,6 +14,7 @@ std::string getFileContents(const std::string& filename);
 void writeToFile(const std::string& filename, const std::string& data);
 
 std::string getResourcePath(const std::string &appendPath = "");
+std::string getResourcePath(const std::string &appendPath, const std::string &path);
 std::string getSavePath(const std::string &appendPath = "");
 
 std::vector<std::string> getDirectoryContents(const std::string& dirName);
