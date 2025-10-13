@@ -74,7 +74,7 @@ TuiTable* createRootTable()
     rootTable->setFunction("require", [rootTable](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 0)
         {
-            return TuiRef::load(Tui::getResourcePath(args->arrayObjects[0]->getStringValue()), rootTable);
+            return TuiRef::load(Tui::getResourcePath(args->arrayObjects[0]->getStringValue(), callingDebugInfo->fileName), rootTable);
         }
         return nullptr;
     });
