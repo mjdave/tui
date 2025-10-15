@@ -414,7 +414,7 @@ public://functions
             // set value if valueRef isn't nil, setting enclosing->finalKey to nil if needed
             if(enclosingRef) //watch out, all this stuff might not be called on a successful copy into the existing keyRef
             {
-                if(valueRef && valueRef->type() != Tui_ref_type_NIL)
+                if(valueRef)
                 {
                     if(!finalKey.empty())
                     {
