@@ -15,7 +15,6 @@
 #include <iomanip>
 #include <limits>
 #include "TuiSha1.h"
-//#include <fmt/printf.h>
 
 #include <stdexcept>
 
@@ -111,8 +110,6 @@ inline std::vector<std::string> splitString(const std::string& input, char delim
     
     return result;
 }
-
-#include <string>
 
 static const unsigned char base64_table[65] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

@@ -6,29 +6,48 @@ let package = Package(
     name: "Tui",
     products: [
         .library(name: "Tui", targets: ["Tui"]),
-        .executable(name: "tui-interpreter", targets: ["tui-interpreter"])
+        .executable(name: "TuiInterpreter", targets: ["TuiInterpreter"])
     ],
     targets: [
         .target(
             name: "Tui",
-            dependencies: ["tui-glm"],
+            dependencies: ["glm"],
             path: "source",
-            publicHeadersPath: "./"
+            publicHeadersPath: "./",
+            swiftSettings: [
+                .interoperabilityMode(.Cxx)
+            ]
         ),
         .target(
-            name: "tui-glm",
+            name: "glm",
+            dependencies: ["tui_simd"],
             path: "thirdParty/glm/glm",
-            publicHeadersPath: "../glm",
+            exclude: ["tui_simd/"],
+            publicHeadersPath: "./",
             cxxSettings: [
-                .headerSearchPath("../")
+                .headerSearchPath("../"),
+            ],
+            swiftSettings: [
+                .interoperabilityMode(.Cxx)
+            ]
+        ),
+        .target(
+            name: "tui_simd",
+            path: "thirdParty/glm/glm/tui_simd",
+            publicHeadersPath: "./",
+            swiftSettings: [
+                .interoperabilityMode(.Cxx)
             ]
         ),
         .executableTarget(
-            name: "tui-interpreter",
+            name: "TuiInterpreter",
             dependencies: ["Tui"],
             path: "interpreter/",
-            exclude: ["linux/", "windows/"],
-            publicHeadersPath: "./"
+            exclude: ["linux/", "windows/", "macos/swift"],
+            publicHeadersPath: "./",
+            swiftSettings: [
+                .interoperabilityMode(.Cxx)
+            ]
         )
     ],
     cxxLanguageStandard: .cxx11
