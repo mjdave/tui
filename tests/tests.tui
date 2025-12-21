@@ -1,4 +1,4 @@
-testCommon = require("tests/testCommon.tui")
+testCommon = require("testCommon.tui")
 assert = testCommon.assert
 getLineNumber = debug.getLineNumber
 
