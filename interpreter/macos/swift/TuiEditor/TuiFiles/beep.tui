@@ -1,0 +1,12 @@
+// A simple demonstration of interfacing with simple macos features
+
+print("beeping 5 times")
+
+for(i = 0, i < 5, i++)
+{
+    print("beep!")
+    beep()
+    sleep()
+}
+
+42

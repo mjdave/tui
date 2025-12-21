@@ -4,20 +4,6 @@
 #include <vector>
 #include <string>
 
-/*#include <stdio.h>
-#include <string>
-#include <set>
-#include <functional>
-#include <map>
-#include <vector>
-#include "glm.hpp"
-#include "TuiLog.h"
-
-#include "TuiRef.h"
-#include "TuiString.h"*/
-
-//class TuiTable;
-
 class TuiString;
 class TuiRef;
 

@@ -28,10 +28,10 @@
 
 /* Begin PBXFileReference section */
 		5B7B4CFB2DB1C2E100F42201 /* tui */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tui; sourceTree = BUILT_PRODUCTS_DIR; };
-		5B7B4DD42DB1CBDE00F42201 /* examples */ = {isa = PBXFileReference; lastKnownFileType = folder; name = examples; path = ../../../examples; sourceTree = "<group>"; };
-		5BEBE5CC2DBF32A8009B2FFA /* Interpreter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Interpreter.h; path = /Users/davidframpton/Documents/mjscript/interpreter/Interpreter.h; sourceTree = "<absolute>"; };
-		5BEBE5CD2DBF32A8009B2FFA /* Interpreter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Interpreter.cpp; path = /Users/davidframpton/Documents/mjscript/interpreter/Interpreter.cpp; sourceTree = "<absolute>"; };
-		5BEBE5E72DC36B2F009B2FFA /* tests */ = {isa = PBXFileReference; lastKnownFileType = folder; name = tests; path = ../../../tests; sourceTree = "<group>"; };
+		5B7B4DD42DB1CBDE00F42201 /* examples */ = {isa = PBXFileReference; lastKnownFileType = folder; name = examples; path = ../../../../examples; sourceTree = "<group>"; };
+		5BEBE5CC2DBF32A8009B2FFA /* Interpreter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Interpreter.h; path = ../../../Interpreter.h; sourceTree = SOURCE_ROOT; };
+		5BEBE5CD2DBF32A8009B2FFA /* Interpreter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Interpreter.cpp; path = ../../../Interpreter.cpp; sourceTree = SOURCE_ROOT; };
+		5BEBE5E72DC36B2F009B2FFA /* tests */ = {isa = PBXFileReference; lastKnownFileType = folder; name = tests; path = ../../../../tests; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -43,8 +43,8 @@
 		5BEBE5DE2DBF32CD009B2FFA /* source */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			name = source;
-			path = /Users/davidframpton/Documents/mjscript/source;
-			sourceTree = "<absolute>";
+			path = ../../../../source;
+			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -272,11 +272,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 9Q78V5BF2N;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../../thirdParty/glm/glm\"";
+				USER_HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../../../thirdParty/glm/glm\"";
 			};
 			name = Debug;
 		};
@@ -284,11 +284,11 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = 9Q78V5BF2N;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../../thirdParty/glm/glm\"";
+				USER_HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../../../thirdParty/glm/glm\"";
 			};
 			name = Release;
 		};
