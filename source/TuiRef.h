@@ -337,7 +337,7 @@ public:
     virtual std::string getTypeName() {return "nil";}
     virtual std::string getStringValue() {return "nil";}
     virtual bool boolValue() {return false;}
-    virtual bool isEqual(TuiRef* other) {return (!other || other == this);}
+    virtual bool isEqual(TuiRef* other) {return (!other || other->type() == Tui_ref_type_NIL );}
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {
