@@ -3,6 +3,10 @@
 #include <algorithm>
 #include <random>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 std::random_device rd;
 auto rng = std::default_random_engine { rd() };
 
