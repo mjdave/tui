@@ -315,13 +315,39 @@ void addStringTable(TuiTable* rootTable)
             }
             
             int location = (int)(((TuiString*)args->arrayObjects[0])->value).find(((TuiString*)args->arrayObjects[1])->value, startIndex);
-            if(location < 0)
+            if(location == std::string::npos)
             {
                 return TUI_NIL;
             }
             return new TuiNumber(location);
         }
         TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.find expected string");
+        return nullptr;
+    });
+    
+    stringTable->setFunction("split", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
+        {
+            std::string foundString;
+            std::istringstream inputStringStream(((TuiString*)args->arrayObjects[0])->value);
+            
+            std::string& delimString = ((TuiString*)args->arrayObjects[1])->value;
+            if(delimString.length() != 1)
+            {
+                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.split: single split character expected, but got string of length:%d", delimString.length());
+                return nullptr;
+            }
+            char delim = delimString[0];
+            
+            TuiTable* result = new TuiTable(nullptr);
+            
+            while (std::getline(inputStringStream, foundString, delim)) {
+                result->arrayObjects.push_back(new TuiString(foundString));
+            }
+            
+            return result;
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.split expected string and split character");
         return nullptr;
     });
     

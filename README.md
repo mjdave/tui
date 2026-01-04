@@ -151,6 +151,7 @@ string.find(string, searchTermString, pos) // as above, but starts searching at 
 string.subString(string, pos)               // returns a substring from the chracter at index 'pos' to the end of the string
 string.subString(string, pos, length)       // returns a substring from the chracter at index 'pos' to pos + length or the end of the string, whichever comes first
 string.sha1(string) // returns an sha1 hash of the given string 
+string.split(string, splitChar) // returns an array of substrings split by the given splitChar. eg. string.split("path/file.txt", "/") -> {"path", "file.txt"} 
 
 file.directoryContents(path) // returns an array of file names
 file.load(path) // returns a TuiRef object with the contents of a human readable tui or json file
