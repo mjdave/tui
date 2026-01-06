@@ -32,6 +32,24 @@ std::string getFileContents(const std::string& filename)
     return "";
 }
 
+
+void getFileContents(const std::string& filename, std::string* contents)
+{
+    std::ifstream in((filename).c_str(), std::ios::in | std::ios::binary);
+    if(in)
+    {
+        in.seekg(0, std::ios::end);
+        contents->resize(in.tellg());
+        in.seekg(0, std::ios::beg);
+        in.read(&((*contents)[0]), contents->size());
+        in.close();
+    }
+    else
+    {
+        *contents = "";
+    }
+}
+
 void writeToFile(const std::string& filename, const std::string& data)
 {
     std::string tmpFile = filename + ".tmp";
