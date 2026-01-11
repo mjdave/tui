@@ -902,6 +902,34 @@ void addFileTable(TuiTable* rootTable)
         }
     });
     
+    //file.getAbsolutePath(path) returns the full path for a given relative path
+    fileTable->setFunction("getAbsolutePath", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            return new TuiString(Tui::getAbsolutePath(((TuiString*)args->arrayObjects[0])->value));
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.getAbsolutePath expected string argument");
+        }
+    });
+    
+    //file.isSubPath(path, basePath) returns true if path is a subPath of (is contained within) basePath, false otherwise. basePath is optional, defaults to current working directory
+    fileTable->setFunction("isSubPath", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            if(args->arrayObjects.size() >= 2 && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
+            {
+                return TUI_BOOL(Tui::isSubPath(((TuiString*)args->arrayObjects[0])->value, ((TuiString*)args->arrayObjects[1])->value));
+            }
+            return TUI_BOOL(Tui::isSubPath(((TuiString*)args->arrayObjects[0])->value));
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.isSubPath expected string argument");
+        }
+    });
+    
     //todo
     /*
 

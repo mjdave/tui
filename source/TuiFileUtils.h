@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <vector>
 #include <string>
+#include <filesystem> //c++17
 #include "TuiLog.h"
 
 namespace Tui {
@@ -17,6 +18,9 @@ void writeToFile(const std::string& filename, const std::string& data);
 std::string getResourcePath(const std::string &appendPath = "");
 std::string getResourcePath(const std::string &appendPath, const std::string &path);
 std::string getSavePath(const std::string &appendPath = "");
+
+std::string getAbsolutePath(const std::string &relativePath);
+bool isSubPath(const std::string& path, const std::string& basePath = std::filesystem::current_path());
 
 std::vector<std::string> getDirectoryContents(const std::string& dirName);
 std::string fileNameFromPath(const std::string& path);

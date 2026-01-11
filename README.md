@@ -165,6 +165,10 @@ file.extension(path) // returns the extension including the '.' eg. "image.jpg" 
 file.changeExtension(path, newExtension) 
 file.removeExtension(path) 
 file.removeLastPathComponent(path)
+file.removeLastPathComponent(path)
+file.getAbsolutePath(path) // returns the full path for a given relative path
+file.isSubPath(path, basePath) // returns true if path is a subPath of (is contained within) basePath, false otherwise. basePath is optional, defaults to current working directory
+    
 
 math.pi //pi constant
 

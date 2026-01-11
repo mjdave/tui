@@ -2,6 +2,7 @@
 #include "TuiStringUtils.h"
 
 #include <fstream>
+#include <filesystem>
 
 #ifdef WIN32
 #include <windows.h>
@@ -449,6 +450,63 @@ std::string getSavePath(const std::string& appendPath)
 {
     return appendPath;
 }
+
+std::string getAbsolutePath(const std::string &relativePath)
+{
+    return std::filesystem::absolute(relativePath);
+}
+
+bool isSubPath(const std::string& path, const std::string& basePath)
+{
+    std::string relative = std::filesystem::relative(path, basePath);
+    return relative.size() <= 1 || (relative[0] != '.' && relative[1] != '.');
+}
+/*
+bool pathIsWithinSandbox(const std::string &relativePath)
+{
+    std::string absolutePath = getAbsolutePath(relativePath);
+    //sanitize path
+    bool invalidPath = false;
+    
+    if(filePath[0] == '/' || filePath[0] == '\\')
+    {
+        invalidPath = true;
+    }
+    else
+    {
+        int currentLevel = 0;
+        for(int i = 0; i < filePath.size(); ++i)
+        {
+            char& c = filePath[i];
+            if(c == ':')
+            {
+                invalidPath = true;
+                break;
+            }
+            else if(c == '.')
+            {
+                if(i + 2 < filePath.size())
+                {
+                    if(filePath[i + 1] == '.' && filePath[i + 2] == '.')
+                    {
+                        currentLevel--;
+                        i += 2; // skip any '/' or '\'
+                    }
+                }
+                
+            }
+            else if(c == '/' || c == '\\')
+            {
+                currentLevel++;
+            }
+        }
+        
+        if(currentLevel < 0)
+        {
+            invalidPath = true;
+        }
+    }
+}*/
 
 void createDirectoriesIfNeededForDirPath(const std::string& path)
 {
