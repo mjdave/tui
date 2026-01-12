@@ -130,6 +130,7 @@ randomInt(max)          // provides an integer from 0 to (max - 1) with a defaul
 
 print(msg1, msg2, ...)  // print values, args are concatenated together
 error(msg1, msg2, ...)  // print values, args are concatenated together, calls abort() to exit the program
+exit(code)              // exits the program, code has default of 0
 readValue()             // reads input from the command line, serializing just the first value, doesn't (shouldn't!) call functions or load variables
 clear()                 // clears the console when run from a command line
 
