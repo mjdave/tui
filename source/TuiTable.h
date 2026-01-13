@@ -385,7 +385,6 @@ public://functions
                                               nullptr,
                                               this,
                                               debugInfo,
-                                              true,
                                               &enclosingRef,
                                               &finalKey,
                                               &finalIndex,

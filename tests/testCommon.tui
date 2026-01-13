@@ -2,7 +2,7 @@
 passCount = 0
 failCount = 0
 
-assert = function(pass, info)
+assert = function(pass, lineNumber)
 {
     if(pass)
     {
@@ -11,7 +11,7 @@ assert = function(pass, info)
     else
     {
         failCount++
-        print("test fail! ", info)
+        print("test fail! line:", lineNumber)
     }
 }
 

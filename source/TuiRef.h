@@ -210,8 +210,7 @@ public: // internal static functions
                                   TuiRef* leftValue,
                                   TuiTable* parentTable,
                                   TuiDebugInfo* debugInfo,
-                                  int operatorLevel = Tui_operator_level_default,
-                                  bool allowQuotedStringsAsVariableNames = false); //this is a hack to allow quoted strings as variable names for keys only. This is specifically required to load json files, but applies for all table keys
+                                  int operatorLevel = Tui_operator_level_default); //this is a hack to allow quoted strings as variable names for keys only. This is specifically required to load json files, but applies for all table keys
     
     // parses a variable chain and returns the result eg: foo.bar().array[1+2].x
     // optionally stores the enclosing ref and the final variable name if found
@@ -221,7 +220,6 @@ public: // internal static functions
                              TuiRef* existingValue,
                              TuiTable* parentTable,
                              TuiDebugInfo* debugInfo,
-                             bool allowQuotedStringsAsVariableNames,//this is a hack to allow quoted strings as variable names for keys only. This is specifically required to load json files, but applies for all table keys
                              
                              //below are only passed if we are setting a key, giving the caller quick access to the parent to set the value for an uninitialized variable
                              TuiRef** onSetIfNilFoundEnclosingRef = nullptr,

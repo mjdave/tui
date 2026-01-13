@@ -113,7 +113,6 @@ TuiTable* createRootTable()
                                            nullptr,
                                            rootTable,
                                            callingDebugInfo,
-                                           false,
                                            &enclosingRef,
                                            &finalKey,
                                            &finalIndex);

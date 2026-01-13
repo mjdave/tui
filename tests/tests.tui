@@ -421,18 +421,28 @@ print("fileName:", debug.getFileName())
 
 testTuiNilEquality = function() {
     firstNil = string.find("abc", "d")
-    assert(firstNil == nil)
+    assert(firstNil == nil, getLineNumber())
 }
 
 testTuiNilEquality()
 
 testNilAssignment = function() {
     value = string.find("abc", "b")
-    assert(value == 1)
+    assert(value == 1, getLineNumber())
     value = string.find("abc", "d")
-    assert(value == nil)
+    assert(value == nil, getLineNumber())
 }
 
 testNilAssignment()
+
+jsonTest = require("json.json")
+assert(jsonTest[0] == 42, getLineNumber())
+assert(jsonTest[1] == "coconut", getLineNumber())
+assert(jsonTest[2].y == 2, getLineNumber())
+
+a = {"something"}
+b = {"c", "a"}
+assert(b[0] == "c", getLineNumber())
+assert(b[1] == "a", getLineNumber())
 
 testCommon.printResult()

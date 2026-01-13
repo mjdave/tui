@@ -211,7 +211,7 @@ rootTable->setFunction("print", [](TuiTable* args, TuiRef* existingResult, TuiDe
         }
         TuiLog("%s", printString.c_str());
     }
-    return nullptr;
+    return TUI_NIL;
 });
 
 ```
