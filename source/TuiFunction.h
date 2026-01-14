@@ -115,8 +115,16 @@ public: //class functions
         TuiFunction* copied = new TuiFunction(parentTable);
         copied->argNames = argNames;
         copied->statements = statements;
+        for(TuiStatement* statement : copied->statements)
+        {
+            statement->refCount++;
+        }
         copied->func = func;
         copied->tokenMap = tokenMap;
+        for(auto& tokenAndRef : copied->tokenMap.refsByToken)
+        {
+            tokenAndRef.second->retain();
+        }
         copied->debugInfo = debugInfo;
         copied->functionLineNumber = functionLineNumber;
         return copied;

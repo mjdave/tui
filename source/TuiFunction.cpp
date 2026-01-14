@@ -4162,7 +4162,11 @@ TuiFunction::~TuiFunction()
 {
     for(TuiStatement* statement : statements)
     {
-        delete statement;
+        statement->refCount--;
+        if(statement->refCount <= 0)
+        {
+            delete statement;
+        }
     }
     
     if(parentTable)

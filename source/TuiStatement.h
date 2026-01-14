@@ -86,6 +86,7 @@ struct TuiDebugInfo {
 
 class TuiStatement {
 public: //members
+    int refCount = 1;
     TuiDebugInfo debugInfo;
     uint32_t type;
     std::string varName; //only stored for var assign statements
