@@ -1101,13 +1101,13 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     case '+':
                     {
                         ((TuiNumber*)leftValue)->value++;
-                        result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array
+                        result = TUI_NIL; //todo returns a nil ref, otherwise the key is addded to an array
                     }
                         break;
                     case '-':
                     {
                         ((TuiNumber*)leftValue)->value--;
-                        result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array
+                        result = TUI_NIL; //todo returns a nil ref, otherwise the key is addded to an array
                     }
                         break;
                     default:
@@ -1119,9 +1119,6 @@ TuiRef* TuiRef::loadExpression(const char* str,
             {
                 TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
             }
-            
-            
-            leftValue->release();
             
             if(*s == ')')
             {
