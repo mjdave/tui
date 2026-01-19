@@ -135,6 +135,7 @@ xcopy "$(SolutionDir)..\..\..\tests" "$(TargetDir)\tests" /i /d /y </Command>
     <ClCompile Include="..\..\..\source\TuiFileUtils.cpp" />
     <ClCompile Include="..\..\..\source\TuiFunction.cpp" />
     <ClCompile Include="..\..\..\source\TuiRef.cpp" />
+    <ClCompile Include="..\..\..\source\TuiTable.cpp" />
     <ClCompile Include="..\..\..\source\TuiSha1.cpp" />
     <ClCompile Include="..\..\..\source\TuiStringUtils.cpp" />
     <ClCompile Include="..\..\..\source\TuiBuiltInFunctions.cpp" />

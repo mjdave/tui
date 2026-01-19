@@ -27,6 +27,9 @@
     <ClCompile Include="..\..\..\source\TuiRef.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\source\TuiTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\..\source\TuiSha1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

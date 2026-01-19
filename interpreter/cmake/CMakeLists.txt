@@ -17,6 +17,7 @@ set(SOURCES
     ../../source/TuiFileUtils.cpp
     ../../source/TuiFunction.cpp
     ../../source/TuiRef.cpp
+    ../../source/TuiTable.cpp
     ../../source/TuiSha1.cpp
     ../../source/TuiBuiltInFunctions.cpp
 )
