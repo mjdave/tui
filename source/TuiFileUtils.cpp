@@ -453,12 +453,12 @@ std::string getSavePath(const std::string& appendPath)
 
 std::string getAbsolutePath(const std::string &relativePath)
 {
-    return std::filesystem::absolute(relativePath).u8string();
+    return std::filesystem::absolute(relativePath).string();
 }
 
 bool isSubPath(const std::string& path, const std::string& basePath)
 {
-    std::string relative = std::filesystem::relative(path, basePath).u8string();
+    std::string relative = std::filesystem::relative(path, basePath).string();
     return relative.size() <= 1 || (relative[0] != '.' && relative[1] != '.');
 }
 /*
