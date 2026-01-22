@@ -45,7 +45,7 @@ public://functions
         memcpy(&buffer[(*currentOffset)], &stringLength, 4);
         (*currentOffset)+=4;
         memcpy(&buffer[(*currentOffset)], value.c_str(), value.size());
-        *currentOffset += value.size();
+        *currentOffset += (int)value.size();
     }
 
 private:

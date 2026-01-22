@@ -20,7 +20,7 @@ std::string getResourcePath(const std::string &appendPath, const std::string &pa
 std::string getSavePath(const std::string &appendPath = "");
 
 std::string getAbsolutePath(const std::string &relativePath);
-bool isSubPath(const std::string& path, const std::string& basePath = std::filesystem::current_path());
+bool isSubPath(const std::string& path, const std::string& basePath = std::filesystem::current_path().u8string());
 
 std::vector<std::string> getDirectoryContents(const std::string& dirName);
 std::string fileNameFromPath(const std::string& path);
