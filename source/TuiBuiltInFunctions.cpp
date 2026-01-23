@@ -2,6 +2,8 @@
 #include "TuiTable.h"
 #include <algorithm>
 #include <random>
+#include <thread>
+#include <chrono>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -146,6 +148,16 @@ TuiTable* createRootTable()
         }
         return new TuiString("nil");
     });
+    
+    //sleep(seconds) puts the current thread to sleep for the duration given in seconds
+    rootTable->setFunction("sleep", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 0)
+        {
+            std::this_thread::sleep_for(std::chrono::duration<double>(((TuiNumber*)args->arrayObjects[0])->value));
+        }
+        return TUI_NIL;
+    });
+    
     
     addStringTable(rootTable);
     addTableTable(rootTable);
