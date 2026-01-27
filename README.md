@@ -128,6 +128,8 @@ The randomInt() function is built in, it's loaded in to the root table by defaul
 random(max)             // provides a floating point value between 0 and max (default 1.0)
 randomInt(max)          // provides an integer from 0 to (max - 1) with a default of 2.
 
+system(string)          // calls system() with the given string and returns the result code
+
 print(msg1, msg2, ...)  // print values, args are concatenated together
 error(msg1, msg2, ...)  // print values, args are concatenated together, calls abort() to exit the program
 exit(code)              // exits the program, code has default of 0
@@ -169,6 +171,10 @@ file.removeLastPathComponent(path)
 file.removeLastPathComponent(path)
 file.getAbsolutePath(path) // returns the full path for a given relative path
 file.isSubPath(path, basePath) // returns true if path is a subPath of (is contained within) basePath, false otherwise. basePath is optional, defaults to current working directory
+file.move(fromPath, toPath) // overwrites if toPath already exists
+file.copy(fromPath, toPath) // overwrites if toPath already exists
+file.remove(path)
+file.mkdir(path) //makes all enclosing/intermediate directories too, equivalent to mkdir -p
     
 
 math.pi //pi constant

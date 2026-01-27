@@ -18,6 +18,16 @@ TuiTable* initRootTable()
 {
     TuiTable* rootTable = new TuiTable(nullptr);
     
+    //system(string) calls out to a system function eg. system("ls -la")
+    rootTable->setFunction("system", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            int result = system(((TuiString*)args->arrayObjects[0])->value.c_str());
+            return new TuiNumber(result);
+        }
+        return TUI_NIL;
+    });
+    
     //random(max) provides a floating point value between 0 and max (default 1.0)
     rootTable->setFunction("random", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 0)
@@ -951,19 +961,67 @@ void addFileTable(TuiTable* rootTable)
         }
     });
     
-    //todo
-    /*
-
-     void moveFile(const std::string& fromPath, const std::string& toPath);
-     bool removeFile(const std::string& removePath);
-     bool removeEmptyDirectory(const std::string& removePath);
-     bool removeDirectory(const std::string& removePath);
-
-     bool copyFileOrDir(const std::string& sourcePath, const std::string& destinationPath);
-
-     void openFile(std::string filePath);
-
-     */
+    //file.move(fromPath, toPath) // overwrites if toPath already exists
+    fileTable->setFunction("move", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
+        {
+            return TUI_BOOL(Tui::moveFile(((TuiString*)args->arrayObjects[0])->value, ((TuiString*)args->arrayObjects[1])->value));
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.move expected 2 string arguments");
+        }
+        return TUI_FALSE;
+    });
+    
+    //file.remove(path)
+    fileTable->setFunction("remove", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            const std::string path = ((TuiString*)args->arrayObjects[0])->value;
+            if(isDirectoryAtPath(path) && !isSymLinkAtPath(path))
+            {
+                return TUI_BOOL(removeDirectory(path));
+            }
+            else
+            {
+                return TUI_BOOL(removeFile(path));
+            }
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.remove expected string argument");
+        }
+        return TUI_FALSE;
+    });
+    
+    
+    //file.copy(sourcePath, destinationPath) // overwritoverwrites if toPath already exists
+    fileTable->setFunction("copy", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
+        {
+            return TUI_BOOL(Tui::copyFileOrDir(((TuiString*)args->arrayObjects[0])->value, ((TuiString*)args->arrayObjects[1])->value));
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.copy expected 2 string arguments");
+        }
+        return TUI_FALSE;
+    });
+    
+    //file.mkdir(path) //makes all enclosing/intermediate directories too, equivalent to mkdir -p
+    fileTable->setFunction("mkdir", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            const std::string path = ((TuiString*)args->arrayObjects[0])->value;
+            return TUI_BOOL(Tui::createDirectoriesIfNeededForDirPath(path));
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.mkdir expected string argument");
+        }
+        return TUI_FALSE;
+    });
     
     
 }

@@ -36,10 +36,10 @@ bool fileExistsAtPath(const std::string& path);
 bool isSymLinkAtPath(const std::string& path);
 bool isDirectoryAtPath(const std::string& path);
 
-void createDirectoriesIfNeededForDirPath(const std::string& path);
-void createDirectoriesIfNeededForFilePath(const std::string& path);
+bool createDirectoriesIfNeededForDirPath(const std::string& path);
+bool createDirectoriesIfNeededForFilePath(const std::string& path);
 
-void moveFile(const std::string& fromPath, const std::string& toPath);
+bool moveFile(const std::string& fromPath, const std::string& toPath);
 bool removeFile(const std::string& removePath);
 bool removeEmptyDirectory(const std::string& removePath);
 bool removeDirectory(const std::string& removePath);

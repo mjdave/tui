@@ -63,13 +63,13 @@ void writeToFile(const std::string& filename, const std::string& data)
     }
 }
 
-void moveFile(const std::string& fromPath, const std::string& toPath)
+bool moveFile(const std::string& fromPath, const std::string& toPath)
 {
 #ifdef WIN32 //windows won't overwrite, doesn't seem to be a way to do it atomically, so just remove then rename.
     _wremove(convertUtf8ToWide(toPath).c_str());
-    _wrename(convertUtf8ToWide(fromPath).c_str(), convertUtf8ToWide(toPath).c_str());
+    return _wrename(convertUtf8ToWide(fromPath).c_str(), convertUtf8ToWide(toPath).c_str()) == 0;
 #else
-    rename(fromPath.c_str(), toPath.c_str());
+    return rename(fromPath.c_str(), toPath.c_str()) == 0;
 #endif
 }
 
@@ -508,15 +508,18 @@ bool pathIsWithinSandbox(const std::string &relativePath)
     }
 }*/
 
-void createDirectoriesIfNeededForDirPath(const std::string& path)
+bool createDirectoriesIfNeededForDirPath(const std::string& path)
 {
     std::vector<std::string> filePathComponents = splitString(normalizedPath(path), '/');
     if(filePathComponents.size() > 0)
     {
         std::string thisPath = filePathComponents[0];
-        for(int i = 1; i < filePathComponents.size(); i++)
+        for(int i = 0; i < filePathComponents.size(); i++)
         {
-            thisPath = thisPath + "/" + filePathComponents[i];
+            if(i > 0)
+            {
+                thisPath = thisPath + "/" + filePathComponents[i];
+            }
             if(!fileExistsAtPath(thisPath))
             {
                 int error = 0;
@@ -528,17 +531,19 @@ void createDirectoriesIfNeededForDirPath(const std::string& path)
 #endif
                 if(error)
                 {
-                    TuiLog("Error createDirectoriesIfNeededForDirPath for input path:%s", path.c_str());
+                    TuiLog("Error cannot create directory at path:%s", path.c_str());
+                    return false;
                 }
             }
         }
     }
+    return true;
 }
 
-void createDirectoriesIfNeededForFilePath(const std::string& path)
+bool createDirectoriesIfNeededForFilePath(const std::string& path)
 {
     std::string dirPath = pathByRemovingLastPathComponent(path);
-    createDirectoriesIfNeededForDirPath(dirPath);
+    return createDirectoriesIfNeededForDirPath(dirPath);
 }
 
 bool copyFile(const std::string& sourcePath, const std::string& destinationPath)

@@ -1,3 +1,33 @@
 #testCommon = require("testCommon.tui")
 #assert = testCommon.assert
 #getLineNumber = debug.getLineNumber
+
+#print("copy")
+#result = file.copy("testData.tui", "testDataCopied.tui")
+#print("result:", result)
+#system("ls -la")
+#
+#print("move")
+#result = file.move("testDataCopied.tui", "testDataMoved.tui")
+#print("result:", result)
+#system("ls -la")
+#
+#
+#print("remove")
+#result = file.remove("testDataMoved.tui")
+#print("result:", result)
+#system("ls -la")
+
+
+#print("mkdir")
+#result = file.mkdir("testDir1/testDir2")
+#print("result:", result)
+#system("ls -la")
+#print("ls -la testDir1:")
+#system("ls -la testDir1")
+#
+#
+#print("remove")
+#result = file.remove("testDir1")
+#print("result:", result)
+#system("ls -la")
