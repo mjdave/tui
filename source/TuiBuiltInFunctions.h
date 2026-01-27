@@ -6,7 +6,15 @@ class TuiTable;
 
 namespace Tui {
 
-TuiTable* createRootTable();
+TuiTable* initRootTable();
+
+
+static inline TuiTable* getRootTable()
+{
+    thread_local TuiTable* rootTable = Tui::initRootTable();
+    return rootTable;
+}
+
 void addStringTable(TuiTable* rootTable);
 void addTableTable(TuiTable* rootTable);
 void addMathTable(TuiTable* rootTable);

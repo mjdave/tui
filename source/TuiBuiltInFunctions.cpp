@@ -14,7 +14,7 @@ auto rng = std::default_random_engine { rd() };
 
 namespace Tui {
 
-TuiTable* createRootTable()
+TuiTable* initRootTable()
 {
     TuiTable* rootTable = new TuiTable(nullptr);
     

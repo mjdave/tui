@@ -189,17 +189,17 @@ inline void resizeBufferIfNeeded(std::string& buffer, int* currentOffset, int to
 
 class TuiRef {
     
-public: // public static functions to load tui refs from files and data. Supply nullptr as last argument to prevent root table from loading, or call Tui::createRootTable() yourself once, and pass it to every call for better performance.
+public: // public static functions to load tui refs from files and data. Supply nullptr as last argument to prevent root table from loading, or call Tui::getRootTable() yourself once, and pass it to every call for better performance.
     
-    static TuiRef* loadBinaryString(const char* str, int* currentOffset, TuiTable* parent = Tui::createRootTable()); // public method to read from data previously serialized with serializeBinary()
-    static TuiRef* loadBinaryString(const std::string& inputString, TuiTable* parent = Tui::createRootTable()); // convenience method, calls loadBinary(const char* str,...
-    static TuiRef* loadBinary(const std::string& path, TuiTable* parent = Tui::createRootTable()); // convenience method, calls loadBinary(const char* str,...
+    static TuiRef* loadBinaryString(const char* str, int* currentOffset, TuiTable* parent = Tui::getRootTable()); // public method to read from data previously serialized with serializeBinary()
+    static TuiRef* loadBinaryString(const std::string& inputString, TuiTable* parent = Tui::getRootTable()); // convenience method, calls loadBinary(const char* str,...
+    static TuiRef* loadBinary(const std::string& path, TuiTable* parent = Tui::getRootTable()); // convenience method, calls loadBinary(const char* str,...
     
-    static TuiRef* load(const std::string& path, TuiTable* parent = Tui::createRootTable()); // read from human readable file/string data.
-    static TuiRef* runScriptFile(const std::string& path, TuiTable* parent = Tui::createRootTable());
+    static TuiRef* load(const std::string& path, TuiTable* parent = Tui::getRootTable()); // read from human readable file/string data.
+    static TuiRef* runScriptFile(const std::string& path, TuiTable* parent = Tui::getRootTable());
     
     static TuiRef* load(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr); //public method
-    static TuiRef* loadString(const std::string& inputString, const std::string& debugName = "loadString", TuiTable* parent = Tui::createRootTable()); //public method
+    static TuiRef* loadString(const std::string& inputString, const std::string& debugName = "loadString", TuiTable* parent = Tui::getRootTable()); //public method
     
     // below here are public methods for convenience, however they are generally only useful internally
     
