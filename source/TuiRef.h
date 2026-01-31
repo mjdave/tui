@@ -374,7 +374,7 @@ public:
         return Tui::string_format("%p", value);
     }
     virtual bool boolValue() {return value != nullptr;}
-    virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_USERDATA && ((TuiUserData*)other)->value == value;}
+    virtual bool isEqual(TuiRef* other) {return other && other->type() == Tui_ref_type_USERDATA && ((TuiUserData*)other)->value == value;}
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {

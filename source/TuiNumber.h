@@ -39,7 +39,7 @@ public://functions
     }
     virtual bool boolValue() {return value != 0;}
     virtual double getNumberValue() {return value;}
-    virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_NUMBER && ((TuiNumber*)other)->value == value;}
+    virtual bool isEqual(TuiRef* other) {return other && other->type() == Tui_ref_type_NUMBER && ((TuiNumber*)other)->value == value;}
     
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
@@ -207,7 +207,7 @@ public://functions
         return Tui::string_format("vec2(%s,%s)", Tui::doubleToString(value.x).c_str(), Tui::doubleToString(value.y).c_str());
     }
     virtual bool boolValue() {return true;}
-    virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_VEC2 && ((TuiVec2*)other)->value == value;}
+    virtual bool isEqual(TuiRef* other) {return other && other->type() == Tui_ref_type_VEC2 && ((TuiVec2*)other)->value == value;}
 
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
@@ -300,7 +300,7 @@ public://functions
         return Tui::string_format("vec3(%s,%s,%s)", Tui::doubleToString(value.x).c_str(), Tui::doubleToString(value.y).c_str(), Tui::doubleToString(value.z).c_str());
     }
     virtual bool boolValue() {return true;}
-    virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_VEC3 && ((TuiVec3*)other)->value == value;}
+    virtual bool isEqual(TuiRef* other) {return other && other->type() == Tui_ref_type_VEC3 && ((TuiVec3*)other)->value == value;}
 
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {
@@ -394,7 +394,7 @@ public://functions
         return Tui::string_format("vec4(%s,%s,%s,%s)", Tui::doubleToString(value.x).c_str(), Tui::doubleToString(value.y).c_str(), Tui::doubleToString(value.z).c_str(), Tui::doubleToString(value.w).c_str());
     }
     virtual bool boolValue() {return true;}
-    virtual bool isEqual(TuiRef* other) {return other->type() == Tui_ref_type_VEC4 && ((TuiVec4*)other)->value == value;}
+    virtual bool isEqual(TuiRef* other) {return other && other->type() == Tui_ref_type_VEC4 && ((TuiVec4*)other)->value == value;}
 
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {
