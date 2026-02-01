@@ -4358,7 +4358,15 @@ TuiRef* TuiFunction::call(TuiTable* args,
 }
 
 
-TuiRef* TuiFunction::call(const std::string& debugName, TuiRef* arg1, TuiRef* arg2, TuiRef* arg3, TuiRef* arg4) //NOTE!!!! Args will be released. You must retain any args that you wish to use after this call.
+TuiRef* TuiFunction::call(const std::string& debugName,
+                          TuiRef* arg1,
+                          TuiRef* arg2,
+                          TuiRef* arg3,
+                          TuiRef* arg4,
+                          TuiRef* arg5,
+                          TuiRef* arg6,
+                          TuiRef* arg7,
+                          TuiRef* arg8)
 {
     TuiDebugInfo debugInfo;
     debugInfo.fileName = debugName;
@@ -4366,16 +4374,32 @@ TuiRef* TuiFunction::call(const std::string& debugName, TuiRef* arg1, TuiRef* ar
     if(arg1)
     {
         args = new TuiTable(nullptr);
-        args->arrayObjects.push_back(arg1);
+        args->arrayObjects.push_back(arg1->retain());
         if(arg2)
         {
-            args->arrayObjects.push_back(arg2);
+            args->arrayObjects.push_back(arg2->retain());
             if(arg3)
             {
-                args->arrayObjects.push_back(arg3);
+                args->arrayObjects.push_back(arg3->retain());
                 if(arg4)
                 {
-                    args->arrayObjects.push_back(arg4);
+                    args->arrayObjects.push_back(arg4->retain());
+                    if(arg5)
+                    {
+                        args->arrayObjects.push_back(arg5->retain());
+                        if(arg6)
+                        {
+                            args->arrayObjects.push_back(arg6->retain());
+                            if(arg7)
+                            {
+                                args->arrayObjects.push_back(arg7->retain());
+                                if(arg8)
+                                {
+                                    args->arrayObjects.push_back(arg8->retain());
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
