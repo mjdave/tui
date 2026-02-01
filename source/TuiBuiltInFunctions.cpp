@@ -677,6 +677,30 @@ void addMathTable(TuiTable* rootTable)
         return TUI_NIL;
     });
     
+    mathTable->setFunction("mix", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 2 && args->arrayObjects[0]->type() == args->arrayObjects[1]->type() && args->arrayObjects[2]->type() == Tui_ref_type_NUMBER)
+        {
+            if(args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
+            {
+                return new TuiNumber(mix(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value, ((TuiNumber*)args->arrayObjects[2])->value));
+            }
+            else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC2)
+            {
+                return new TuiVec2(mix(((TuiVec2*)args->arrayObjects[0])->value, ((TuiVec2*)args->arrayObjects[1])->value, ((TuiNumber*)args->arrayObjects[2])->value));
+            }
+            else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC3)
+            {
+                return new TuiVec3(mix(((TuiVec3*)args->arrayObjects[0])->value, ((TuiVec3*)args->arrayObjects[1])->value, ((TuiNumber*)args->arrayObjects[2])->value));
+            }
+            else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC4)
+            {
+                return new TuiVec4(mix(((TuiVec4*)args->arrayObjects[0])->value, ((TuiVec4*)args->arrayObjects[1])->value, ((TuiNumber*)args->arrayObjects[2])->value));
+            }
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.mix expected 2 numbers or vectors and a number");
+        return TUI_NIL;
+    });
+    
     mathTable->setDouble("pi", M_PI);
 }
 

@@ -191,6 +191,7 @@ math.abs(x)
 math.max(x, y)
 math.min(x, y)
 math.clamp(x, min, max)
+math.mix(x, y, a) //linear interpolate eg: x * (1 - a) + y * a
 
 math.sin(x)
 math.cos(x)
