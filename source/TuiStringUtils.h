@@ -105,7 +105,10 @@ inline std::vector<std::string> splitString(const std::string& input, char delim
     std::istringstream inputStringStream(input);
     
     while (std::getline(inputStringStream, foundString, delim)) {
-        result.push_back(foundString);
+        if(!foundString.empty())
+        {
+            result.push_back(foundString);
+        }
     }
     
     return result;

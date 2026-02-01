@@ -510,10 +510,15 @@ bool pathIsWithinSandbox(const std::string &relativePath)
 
 bool createDirectoriesIfNeededForDirPath(const std::string& path)
 {
-    std::vector<std::string> filePathComponents = splitString(normalizedPath(path), '/');
+    std::string pathNormalized = normalizedPath(path);
+    std::vector<std::string> filePathComponents = splitString(pathNormalized, '/');
     if(filePathComponents.size() > 0)
     {
         std::string thisPath = filePathComponents[0];
+        if(pathNormalized[0] == '/') //splitString got rid of this
+        {
+            thisPath = "/" + thisPath;
+        }
         for(int i = 0; i < filePathComponents.size(); i++)
         {
             if(i > 0)
