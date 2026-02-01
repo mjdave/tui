@@ -315,7 +315,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
     
     TuiRef* enclosingRef = nullptr;
     std::string finalKey = "";
-    int finalIndex = -1;
+    int finalIndex = -1; //todo this probably isn't actually used, wasn't needed?
     bool accessedParentVariable = false;
     
     //todo should this be released?
@@ -373,6 +373,21 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                     TuiRef* copyRef = valueRef->copy();
                     ((TuiTable*)enclosingRef)->replace(finalIndex, copyRef);
                     copyRef->release();
+                }
+                else if(existingObjectRef && existingObjectRef->type() == Tui_ref_type_TABLE && ((TuiTable*)existingObjectRef)->arrayObjects.size() == 1)
+                {
+                    TuiRef* arrayObject = ((TuiTable*)existingObjectRef)->arrayObjects[0];
+                    if(arrayObject->type() == Tui_ref_type_NUMBER)
+                    {
+                        if(enclosingRef->type() != Tui_ref_type_TABLE)
+                        {
+                            TuiError("Unimplemented");
+                        }
+                        int indexToUse = ((TuiNumber*)arrayObject)->value;
+                        TuiRef* copyRef = valueRef->copy();
+                        ((TuiTable*)enclosingRef)->replace(indexToUse, copyRef);
+                        copyRef->release();
+                    }
                 }
             }
         }

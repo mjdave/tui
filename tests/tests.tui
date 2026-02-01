@@ -2,6 +2,8 @@ testCommon = require("testCommon.tui")
 assert = testCommon.assert
 getLineNumber = debug.getLineNumber
 
+print("running tests...")
+
 emptyTable = {}
 assert(emptyTable[2] == nil, "emptyTable[2] == nil")
 
@@ -120,16 +122,34 @@ testTable = {
     "five"
 }
 table.insert(testTable, 3, "three")
-print(testTable)
-assert(testTable[3] == "three", "testTable[3] == three")
+assert(testTable[3] == "three", getLineNumber())
 testTable[2] = 2.0
-assert(testTable[2] == 2, "testTable[2] == 2")
+assert(testTable[2] == 2, getLineNumber())
 
 testTable[7] = "seven"
-assert(testTable[7] == "seven", "testTable[7] == seven")
-assert(testTable[6] == nil, "testTable[6] == nil")
+assert(testTable[7] == "seven", getLineNumber())
+assert(testTable[6] == nil, getLineNumber())
 
-print(testTable)
+testSetsAndArraysFunc = function()
+{
+    testTable = {
+        "zero",
+        "one",
+        "two",
+        "four",
+        "five"
+    }
+    table.insert(testTable, 3, "three")
+    assert(testTable[3] == "three", getLineNumber())
+    testTable[2] = 2.0
+    assert(testTable[2] == 2, getLineNumber())
+
+    testTable[7] = "seven"
+    assert(testTable[7] == "seven", getLineNumber())
+    assert(testTable[6] == nil, getLineNumber())
+}
+
+testSetsAndArraysFunc()
 
 notTrue = !true
 assert(notTrue == false, "notTrue == false")
@@ -415,9 +435,8 @@ testInPlace = function()
 
 testInPlace()
 
-assert(debug.getLineNumber() == 418, "debug.getLineNumber()")
-print("lineNumber 419:", debug.getLineNumber())
-print("fileName:", debug.getFileName())
+assert(getLineNumber() == 438, "debug.getLineNumber()")
+assert(debug.getFileName() == "tests/tests.tui", getLineNumber())
 
 testTuiNilEquality = function() {
     firstNil = string.find("abc", "d")
@@ -444,5 +463,38 @@ a = {"something"}
 b = {"c", "a"}
 assert(b[0] == "c", getLineNumber())
 assert(b[1] == "a", getLineNumber())
+
+
+tableVar = {
+    var = 512
+}
+
+foo = {
+    [45] = "something"
+    [tableVar.var] = "something else"
+}
+
+assert(foo[45] == "something", getLineNumber())
+assert(foo[512] == "something else", getLineNumber())
+assert(!foo[32], getLineNumber())
+assert(foo[tableVar.var] == "something else", getLineNumber())
+
+testSetsFunc = function()
+{
+    tableVarF = {
+        var = 512
+    }
+
+    fooF = {
+        [45] = "something"
+        [tableVarF.var] = "something else"
+    }
+    assert(fooF[45] == "something", getLineNumber())
+    assert(fooF[512] == "something else", getLineNumber())
+    assert(!fooF[32], getLineNumber())
+    assert(fooF[tableVarF.var] == "something else", getLineNumber())
+}
+
+testSetsFunc()
 
 testCommon.printResult()

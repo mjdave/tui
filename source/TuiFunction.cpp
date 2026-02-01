@@ -2104,6 +2104,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 TuiRef* keyConstant = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
                 TuiRef* child = nullptr;
                 bool isStringKey = false;
+                bool isNumberKey = false;
                 
                 if(keyConstant->type() == Tui_ref_type_STRING)
                 {
@@ -2157,14 +2158,31 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         return nullptr;
                     }
                     
+                    isNumberKey = true;
+                    
                     int arrayIndex = ((TuiNumber*)keyConstant)->value;
-                    if(parent->arrayObjects.size() > arrayIndex)
+                    if(arrayIndex >= 0 && arrayIndex < parent->arrayObjects.size())
                     {
                         child = parent->arrayObjects[arrayIndex];
-                        
-                        if(setIndex)
+                    }
+                    else if(parent->objectsByNumberKey.count(arrayIndex) != 0)
+                    {
+                        child = parent->objectsByNumberKey[arrayIndex];
+                    }
+                    
+                    if(setIndex)
+                    {
+                        *setIndex = arrayIndex;
+                    }
+                    
+                    if(enclosingSetRef)
+                    {
+                        TuiRef* prevRef = *enclosingSetRef;
+                        *enclosingSetRef = parent;
+                        parent->retain();
+                        if(prevRef)
                         {
-                            *setIndex = arrayIndex;
+                            prevRef->release();
                         }
                     }
                 }
@@ -2234,7 +2252,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 else
                 {
                     // todo maybe ++
-                    if(enclosingSetRef && isStringKey)
+                    if(enclosingSetRef && (isStringKey || isNumberKey))
                     {
                         TuiRef* prevRef = *enclosingSetRef;
                         *enclosingSetRef = parent;
@@ -2244,7 +2262,14 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             prevRef->release();
                         }
                         
-                        *setKey = ((TuiString*)keyConstant)->value;
+                        if(isStringKey)
+                        {
+                            *setKey = ((TuiString*)keyConstant)->value;
+                        }
+                        else if(isNumberKey)
+                        {
+                            *setIndex = ((TuiNumber*)keyConstant)->value;
+                        }
                     }
                     
                     keyConstant->release();
@@ -3736,7 +3761,14 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 else if(enclosingSetRef)
                 {
                     TuiRef* copiedValue = newValue->copy();
-                    ((TuiTable*)enclosingSetRef)->set(setKey, copiedValue);
+                    if(setIndex != -1)
+                    {
+                        ((TuiTable*)enclosingSetRef)->replace(setIndex, copiedValue);
+                    }
+                    else
+                    {
+                        ((TuiTable*)enclosingSetRef)->set(setKey, copiedValue);
+                    }
                     copiedValue->release();
                 }
                 else
@@ -3747,47 +3779,52 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     newValue = copiedValue;
                 }
                 
-                std::string& varName = statement->varName;
-                if(enclosingSetRef && !setKey.empty())
-                {
-                    varName = setKey;
-                }
-                    
-                uint32_t token = 0;
-                if(tokenMap->localTokensByVarName.count(varName) != 0)
-                {
-                    token = tokenMap->localTokensByVarName[varName];
-                }
-                else if(tokenMap->capturedTokensByVarName.count(varName) != 0)
-                {
-                    token = tokenMap->capturedTokensByVarName[varName];
-                }
+                //dont do this if enclosingSetRef and
                 
-                TuiRef* prevValue = nullptr;
-                if(callData->locals.count(token) != 0)
+                if(!enclosingSetRef) //hmmm
                 {
-                    prevValue = callData->locals[token];
-                }
-                
-                if(newValue != prevValue)
-                {
-                    if(newValue)
+                    std::string& varName = statement->varName;
+                    if(enclosingSetRef && !setKey.empty()) //remove if this works
                     {
-                        callData->locals[token] = newValue;
+                        varName = setKey;
+                    }
+                    
+                    uint32_t token = 0;
+                    if(tokenMap->localTokensByVarName.count(varName) != 0)
+                    {
+                        token = tokenMap->localTokensByVarName[varName];
+                    }
+                    else if(tokenMap->capturedTokensByVarName.count(varName) != 0)
+                    {
+                        token = tokenMap->capturedTokensByVarName[varName];
+                    }
+                    
+                    TuiRef* prevValue = nullptr;
+                    if(callData->locals.count(token) != 0)
+                    {
+                        prevValue = callData->locals[token];
+                    }
+                    
+                    if(newValue != prevValue)
+                    {
+                        if(newValue)
+                        {
+                            callData->locals[token] = newValue;
+                        }
+                        else
+                        {
+                            callData->locals.erase(token);
+                        }
+                        
+                        if(prevValue)
+                        {
+                            prevValue->release();
+                        }
                     }
                     else
                     {
-                        callData->locals.erase(token);
+                        newValue->release();
                     }
-                    
-                    if(prevValue)
-                    {
-                        prevValue->release();
-                    }
-                }
-                else
-                {
-                    newValue->release();
                 }
             }
             else if(enclosingSetRef && enclosingSetRef->type() == Tui_ref_type_TABLE)

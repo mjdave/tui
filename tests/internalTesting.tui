@@ -2,6 +2,49 @@
 #assert = testCommon.assert
 #getLineNumber = debug.getLineNumber
 
+
+#todo, this fails, maybe in a func, maybe with 45 as a var foo.var
+
+
+testFunc = function()
+{
+    testTable = {
+        "zero",
+        "one",
+        "two",
+        "four",
+        "five"
+    }
+    table.insert(testTable, 3, "three")
+    print(testTable)
+    print(testTable[3] == "three", "testTable[3] == three")
+    testTable[2] = 2.0
+    print(testTable)
+    print(testTable[2] == 2, "testTable[2] == 2")
+}
+
+testFunc()
+
+#runTest = function()
+#{
+#    tableVar = {
+#        var = 512
+#    }
+#
+#    foo = {
+#        [45] = "something"
+#        [tableVar.var] = "something else"
+#    }
+#    print(foo)
+#    print(foo[45])
+#    print(foo[512])
+#    print(foo[tableVar.var])
+#}
+#
+#runTest()
+
+
+
 #print("copy")
 #result = file.copy("testData.tui", "testDataCopied.tui")
 #print("result:", result)

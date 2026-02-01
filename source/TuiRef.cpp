@@ -277,7 +277,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                                        TuiDebugInfo* debugInfo,
                                        
                                        std::string* onSetKey, //watch out, using the existance of this var to allow "x":5 json quoted key names only. For values, a quoted string is not a valid variable name
-                                       int* onSetIndex, //index todo
+                                       int* onSetIndex,
                                        bool* accessedParentVariable)
 {
     const char* s = str;
@@ -427,21 +427,24 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 *onSetIndex = indexValue;
             }
             
-            if(indexValue < 0 || indexValue >= ((TuiTable*)varChainParent)->arrayObjects.size())
+            if(indexValue >= 0 && indexValue < ((TuiTable*)varChainParent)->arrayObjects.size())
             {
-                if(!onSetIndex)
+                TuiRef* result = ((TuiTable*)varChainParent)->arrayObjects[indexValue];
+                if(result)
                 {
-                    TuiParseWarn(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Table index:%d beyond bounds:%d", indexValue, (int)((TuiTable*)varChainParent)->arrayObjects.size());
+                    result->retain();
                 }
-                return TUI_NIL;
+                return result;
             }
             
-            TuiRef* result = ((TuiTable*)varChainParent)->arrayObjects[indexValue];
-            if(result)
+            if(((TuiTable*)varChainParent)->objectsByNumberKey.count(indexValue) != 0)
             {
+                TuiRef* result = ((TuiTable*)varChainParent)->objectsByNumberKey[indexValue];
                 result->retain();
+                return result;
             }
-            return result;
+            
+            return TUI_NIL;
         }
     }
     
@@ -780,7 +783,7 @@ TuiRef* TuiRef::loadValue(const char* str,
                           //below are only passed if there is a chance we are finding a key in order to set its value, giving the caller quick access to the parent to set the value for an uninitialized variable
                           TuiRef** onSetEnclosingRef,
                           std::string* onSetKey,
-                          int* onSetIndex, //index todo
+                          int* onSetIndex,
                           bool* accessedParentVariable)
 {
     const char* s = str;

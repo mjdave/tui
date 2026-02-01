@@ -195,9 +195,10 @@ public://functions
         return true;
     }
     
-    void replace(int replaceIndex, TuiRef* value)
+    void replace(int replaceIndex, TuiRef* value) //this is used by table[x] = y. if x <= array.size(), then we will replace the object in the array, otherwise, set an objectByNumberKey value. Generally not a good idea to mix arrays and sets, we just do our best
     {
         value->retain();
+        
         if(replaceIndex < arrayObjects.size())
         {
             TuiRef* existing = arrayObjects[replaceIndex];
@@ -207,10 +208,18 @@ public://functions
             }
             arrayObjects[replaceIndex] = value;
         }
-        else if(value && value->type() != Tui_ref_type_NIL)
+        else if(replaceIndex == arrayObjects.size())
         {
-            arrayObjects.resize(replaceIndex + 1);
-            arrayObjects[replaceIndex] = value;
+            arrayObjects.push_back(value);
+        }
+        else
+        {
+            if(objectsByNumberKey.count(replaceIndex) != 0)
+            {
+                objectsByNumberKey[replaceIndex]->release();
+            }
+            
+            objectsByNumberKey[replaceIndex] = value;
         }
     }
     
