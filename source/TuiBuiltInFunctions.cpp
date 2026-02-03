@@ -20,11 +20,15 @@ TuiTable* initRootTable()
     
     //system(string) calls out to a system function eg. system("ls -la")
     rootTable->setFunction("system", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+#if TARGET_OS_IPHONE
+        TuiError("system() is not supported on iOS");
+#else
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
             int result = system(((TuiString*)args->arrayObjects[0])->value.c_str());
             return new TuiNumber(result);
         }
+#endif
         return TUI_NIL;
     });
     
