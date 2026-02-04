@@ -216,6 +216,10 @@ std::string changeExtensionForPath(const std::string& path, const std::string& n
         if(fileNameComponents.size() > 0)
         {
             std::string result = "";
+            if(path[0] == '/') //splitString got rid of this
+            {
+                result = "/";
+            }
             for(int i = 0; i < filePathComponents.size() - 1; i++)
             {
                 result = result + filePathComponents[i] + "/";
@@ -246,6 +250,10 @@ std::string removeExtensionForPath(const std::string& path)
         if(fileNameComponents.size() > 0)
         {
             std::string result = "";
+            if(path[0] == '/') //splitString got rid of this
+            {
+                result = "/";
+            }
             for(int i = 0; i < filePathComponents.size() - 1; i++)
             {
                 result = result + filePathComponents[i] + "/";
@@ -266,6 +274,10 @@ std::string pathByRemovingLastPathComponent(const std::string& path)
     if(filePathComponents.size() > 0)
     {
         std::string result = "";
+        if(path[0] == '/') //splitString got rid of this
+        {
+            result = "/";
+        }
         for(int i = 0; i < filePathComponents.size() - 1; i++)
         {
             result = result + filePathComponents[i] + "/";
