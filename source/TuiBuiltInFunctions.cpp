@@ -12,68 +12,114 @@
 std::random_device rd;
 auto rng = std::default_random_engine { rd() };
 
+
 namespace Tui {
+
+static std::function tui_system = [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+#if TARGET_OS_IPHONE
+    TuiError("system() is not supported on iOS");
+#else
+    if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+    {
+        int result = system(((TuiString*)args->arrayObjects[0])->value.c_str());
+        return new TuiNumber(result);
+    }
+#endif
+    return TUI_NIL;
+};
+
+
+static std::function tui_print = [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    if(args && args->arrayObjects.size() > 0)
+    {
+        std::string printString = "";
+        for(TuiRef* arg : args->arrayObjects)
+        {
+            printString += arg->getDebugStringValue();
+        }
+        TuiLog("%s", printString.c_str());
+    }
+    return TUI_NIL;
+};
+
+
+TuiTable* initSafeRootTable(TuiFunction* permissionCallbackFunction, const std::string& sandBoxDir)
+{
+    TuiTable* rootTable = new TuiTable(nullptr);
+    
+    addBaseFunctions(rootTable, permissionCallbackFunction);
+    addStringTable(rootTable);
+    addTableTable(rootTable);
+    addMathTable(rootTable);
+    addFileTable(rootTable, sandBoxDir);
+    addDebugTable(rootTable);
+    
+    return rootTable;
+}
 
 TuiTable* initRootTable()
 {
     TuiTable* rootTable = new TuiTable(nullptr);
     
+    addBaseFunctions(rootTable);
+    addStringTable(rootTable);
+    addTableTable(rootTable);
+    addMathTable(rootTable);
+    addFileTable(rootTable);
+    addDebugTable(rootTable);
+    
+    return rootTable;
+}
+
+//todo permissionCallbackFunction for error, exit, sleep, require, and sandBoxDir for require
+void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFunction)
+{
     //system(string) calls out to a system function eg. system("ls -la")
-    rootTable->setFunction("system", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-#if TARGET_OS_IPHONE
-        TuiError("system() is not supported on iOS");
-#else
-        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+    if(permissionCallbackFunction)
+    {
+        rootTable->setFunction("system", [permissionCallbackFunction](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        TuiFunction* resultCallbackFunction = nullptr;
+        if(args && args->arrayObjects.size() > 1 && args->arrayObjects[args->arrayObjects.size() - 1]->type() == Tui_ref_type_FUNCTION)
         {
-            int result = system(((TuiString*)args->arrayObjects[0])->value.c_str());
-            return new TuiNumber(result);
+            resultCallbackFunction = (TuiFunction*)args->arrayObjects[args->arrayObjects.size() - 1];
         }
-#endif
+        
+        args->retain();
+        
+        TuiFunction* gotPermissionResultFunction = new TuiFunction([resultCallbackFunction, args](TuiTable* permissionResultArgs, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+            if(permissionResultArgs && permissionResultArgs->arrayObjects.size() > 0 && permissionResultArgs->arrayObjects[0]->boolValue())
+            {
+                TuiRef* callResult = tui_system(args, existingResult, callingDebugInfo);
+                if(callResult && resultCallbackFunction)
+                {
+                    resultCallbackFunction->call("system result callback", callResult);
+                }
+            }
+            args->release();
+            return TUI_NIL;
+        });
+        
+        if(permissionCallbackFunction)
+        {
+            TuiRef* functionNameRef = new TuiString("system");
+            permissionCallbackFunction->call("permissionCallbackFunction", functionNameRef, args, gotPermissionResultFunction);
+            functionNameRef->release();
+        }
+        else
+        {
+            TuiWarn("disallowing unpermitted function call to system()");
+            args->release();
+        }
         return TUI_NIL;
     });
-    
-    //random(max) provides a floating point value between 0 and max (default 1.0)
-    rootTable->setFunction("random", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        if(args && args->arrayObjects.size() > 0)
-        {
-            TuiRef* arg = args->arrayObjects[0];
-            if(arg->type() == Tui_ref_type_NUMBER)
-            {
-                return new TuiNumber(((double)rng() / RAND_MAX) * ((TuiNumber*)(arg))->value);
-            }
-        }
-        return new TuiNumber(((double)rng() / RAND_MAX));
-    });
-    
-    
-    //randomInt(max) provides an integer from 0 to (max - 1) with a default of 2.
-    rootTable->setFunction("randomInt", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        if(args && args->arrayObjects.size() > 0)
-        {
-            TuiRef* arg = args->arrayObjects[0];
-            if(arg->type() == Tui_ref_type_NUMBER)
-            {
-                double flooredValue = floor(((TuiNumber*)(arg))->value);
-                return new TuiNumber(min(flooredValue - 1.0, floor(((double)rng() / UINT32_MAX) * flooredValue)));
-            }
-        }
-        return new TuiNumber(min(1.0, floor(((double)rng() / RAND_MAX) * 2)));
-    });
-    
+    }
+    else
+    {
+        rootTable->setFunction("system", tui_system);
+    }
     
     // print(msg1, msg2, msg3, ...) print values, args are concatenated together
-    rootTable->setFunction("print", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        if(args && args->arrayObjects.size() > 0)
-        {
-            std::string printString = "";
-            for(TuiRef* arg : args->arrayObjects)
-            {
-                printString += arg->getDebugStringValue();
-            }
-            TuiLog("%s", printString.c_str());
-        }
-        return TUI_NIL;
-    });
+    rootTable->setFunction("print", tui_print);
     
     // error(msg1, msg2, msg3, ...) print values, args are concatenated together, calls abort() to exit the program
     rootTable->setFunction("error", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
@@ -100,7 +146,7 @@ TuiTable* initRootTable()
         exit(code);
     });
     
-    //require(path) loads the given tui file
+    //require(path) loads the given tui file NOTE! Unlike lua, this currently reloads every time. You will need to save the result yourself in the root table if you wish to resuse it
     rootTable->setFunction("require", [rootTable](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 0)
         {
@@ -171,15 +217,6 @@ TuiTable* initRootTable()
         }
         return TUI_NIL;
     });
-    
-    
-    addStringTable(rootTable);
-    addTableTable(rootTable);
-    addMathTable(rootTable);
-    addFileTable(rootTable);
-    addDebugTable(rootTable);
-    
-    return rootTable;
 }
 
 
@@ -517,6 +554,33 @@ void addMathTable(TuiTable* rootTable)
     rootTable->set("math", mathTable);
     mathTable->release();
     
+    //math.random(max) provides a floating point value between 0 and max (default 1.0)
+    mathTable->setFunction("random", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 0)
+        {
+            TuiRef* arg = args->arrayObjects[0];
+            if(arg->type() == Tui_ref_type_NUMBER)
+            {
+                return new TuiNumber(((double)rng() / RAND_MAX) * ((TuiNumber*)(arg))->value);
+            }
+        }
+        return new TuiNumber(((double)rng() / RAND_MAX));
+    });
+    
+    
+    //math.randomInt(max) provides an integer from 0 to (max - 1) with a default of 2.
+    mathTable->setFunction("randomInt", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 0)
+        {
+            TuiRef* arg = args->arrayObjects[0];
+            if(arg->type() == Tui_ref_type_NUMBER)
+            {
+                double flooredValue = floor(((TuiNumber*)(arg))->value);
+                return new TuiNumber(min(flooredValue - 1.0, floor(((double)rng() / UINT32_MAX) * flooredValue)));
+            }
+        }
+        return new TuiNumber(min(1.0, floor(((double)rng() / RAND_MAX) * 2)));
+    });
     
     mathTable->setFunction("sin", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
@@ -708,7 +772,7 @@ void addMathTable(TuiTable* rootTable)
     mathTable->setDouble("pi", M_PI);
 }
 
-void addFileTable(TuiTable* rootTable)
+void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sandBoxDir ignored
 {
     
     //************

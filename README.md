@@ -125,16 +125,12 @@ The randomInt() function is built in, it's loaded in to the root table by defaul
 
 ### List of built in functions (so far):
 ```c++
-random(max)             // provides a floating point value between 0 and max (default 1.0)
-randomInt(max)          // provides an integer from 0 to (max - 1) with a default of 2.
-
-system(string)          // calls system() with the given string and returns the result code
-
 print(msg1, msg2, ...)  // print values, args are concatenated together
 error(msg1, msg2, ...)  // print values, args are concatenated together, calls abort() to exit the program
 exit(code)              // exits the program, code has default of 0
 readValue()             // reads input from the command line, serializing just the first value, doesn't (shouldn't!) call functions or load variables
 clear()                 // clears the console when run from a command line
+system(string)          // calls system() with the given string and returns the result code
 
 require(path)   // loads the given tui file
 type()          // returns the type name of the given object, eg. 'table', 'string', 'number', 'vec4', 'bool'
@@ -177,14 +173,13 @@ file.copy(fromPath, toPath) // overwrites if toPath already exists
 file.remove(path)
 file.mkdir(path) //makes all enclosing/intermediate directories too, equivalent to mkdir -p
     
-
 math.pi //pi constant
-
+math.random(max)             // provides a floating point value between 0 and max (default 1.0)
+math.randomInt(max)          // provides an integer from 0 to (max - 1) with a default of 2.
 math.sqrt(x)
 math.exp(x)
 math.log(x)
 math.log10(x)
-
 math.floor(x)
 math.ceil(x)
 math.fmod(x)
@@ -193,7 +188,6 @@ math.max(x, y)
 math.min(x, y)
 math.clamp(x, min, max)
 math.mix(x, y, a) //linear interpolate eg: x * (1 - a) + y * a
-
 math.sin(x)
 math.cos(x)
 math.tan(x)
