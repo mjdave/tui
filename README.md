@@ -161,7 +161,8 @@ file.load(path) // returns a TuiRef object with the contents of a human readable
 file.loadBinary(path) // returns an object with the contents of a file that had been saved in the tui binary format
 file.save(path, object) // saves the tui object to disk in a human readable format (unless object is a binary string)
 file.saveBinary(path, object) // saves the tui object to disk in the tui binary format
-file.loadData(path) // returns a string with the contents of file
+file.loadData(path) // returns a string with the contents of file, can be binary data, eg. an image
+file.saveData(path, string) // saves the string data directly to disk, can be binary data, eg. an image
 file.isDirectory(path) // returns true if path is a directory
 file.fileName(path) 
 file.extension(path) // returns the extension including the '.' eg. "image.jpg" returns ".jpg"
