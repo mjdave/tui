@@ -146,10 +146,23 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
         exit(code);
     });
     
-    //require(path) loads the given tui file NOTE! Unlike lua, this currently reloads every time. You will need to save the result yourself in the root table if you wish to resuse it
+    //require(path) loads the given tui file NOTE! Unlike lua, this currently reloads every time. You will need to save the result yourself in the root table if you wish to reuse it
+    //you can also provide your own file.getResourcePath function in the root table
     rootTable->setFunction("require", [rootTable](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 0)
         {
+            TuiRef* getResourcePathFunc = ((TuiTable*)rootTable->get("file"))->get("getResourcePath");
+            if(getResourcePathFunc)
+            {
+                TuiRef* pathResult = ((TuiFunction*)getResourcePathFunc)->call("getResourcePathFunc", args->arrayObjects[0]);
+                if(pathResult)
+                {
+                    TuiRef* loadedRef = TuiRef::load(pathResult->getStringValue(), rootTable);
+                    pathResult->release();
+                    return loadedRef;
+                }
+                return TUI_NIL;
+            }
             return TuiRef::load(Tui::getResourcePath(args->arrayObjects[0]->getStringValue(), callingDebugInfo->fileName), rootTable);
         }
         return TUI_NIL;
