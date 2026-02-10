@@ -281,8 +281,7 @@ void serializeValue(const char* str,
             
             constructorFunction->tokenMap.tokenIndex = tokenMap->tokenIndex + 1;
             
-            TuiTable* subParent = new TuiTable(parent);
-            bool success = TuiFunction::serializeFunctionBody(s, endptr, subParent, &constructorFunction->tokenMap, &constructorFunction->debugInfo, true, &constructorFunction->statements);
+            bool success = TuiFunction::serializeFunctionBody(s, endptr, parent, &constructorFunction->tokenMap, &constructorFunction->debugInfo, true, &constructorFunction->statements);
             
             if(!success)
             {
