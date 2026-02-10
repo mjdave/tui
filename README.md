@@ -2,7 +2,7 @@
 
 tui is a small, cross platform, open source embeddable scripting language and serialization library for C++.
 
-***NOTE (July 2025): tui is still in the early stages of development, it is not fully optimized and will still contain bugs. It does work pretty well now though, and is actively being used and improved.***
+***NOTE (Feb 2026): tui is not fully optimized and will still contain bugs. It does work pretty well now though, and is actively being used and improved as the foundation of the [katipo](https://github.com/mjdave/katipo) networking library.***
 
 Created by a solo game developer to be fast, small, and easy to integrate and use, tui combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
 
@@ -145,10 +145,10 @@ table.remove(table, index)          // removes an object from an array, shufflin
 
 string.length(string)           // returns the number of characters in string
 string.format(string, arg1, arg2, ...)    // works like printf, eg string.format("float:%.2f int:%d hex:%x", 1.2345, 5.78, 127) produces "float:1.23 int:5 hex:7f"
-string.find(string, searchTermString) // searches string, returns the character index of the first occurance of searchTermString, or nil if not found.
+string.find(string, searchTermString) // searches string, returns the character index of the first occurrence of searchTermString, or nil if not found.
 string.find(string, searchTermString, pos) // as above, but starts searching at the character at index pos
-string.subString(string, pos)               // returns a substring from the chracter at index 'pos' to the end of the string
-string.subString(string, pos, length)       // returns a substring from the chracter at index 'pos' to pos + length or the end of the string, whichever comes first
+string.subString(string, pos)               // returns a substring from the character at index 'pos' to the end of the string
+string.subString(string, pos, length)       // returns a substring from the character at index 'pos' to pos + length or the end of the string, whichever comes first
 string.sha1(string) // returns an sha1 hash of the given string 
 string.split(string, splitChar) // returns an array of substrings split by the given splitChar. eg. string.split("path/file.txt", "/") -> {"path", "file.txt"} 
 
@@ -233,7 +233,7 @@ If you assign to a variable eg: `a = 42` then that will assign to any existing v
 
 Variables are readable for all child scopes.
 
-The next highest variable with a given name is also read/writable via the `'.'` syntax: `.parentVar = x`. Tui searches up the parent heirachy to find the given variable name, and if it is not found, a global is created in the root table.
+The next highest variable with a given name is also read/writable via the `'.'` syntax: `.parentVar = x`. Tui searches up the parent hierarchy to find the given variable name, and if it is not found, a global is created in the root table.
 
 ```javascript
 value = 10
@@ -342,7 +342,7 @@ TuiRef* unserializedValue = TuiRef::loadString(humanReadableData);
 
 # onSet notifications for tables in C++
 
-Instead of implementing get/set bindings strictly as functions, with tui you can use the "onSet" notification to update any derived data on the C++ side when tui state changes. This encorages you to keep as much state as possible in tui objects, in many cases making it faster and easier to serialize and otherwise work with that data.
+Instead of implementing get/set bindings strictly as functions, with tui you can use the "onSet" notification to update any derived data on the C++ side when tui state changes. This encourages you to keep as much state as possible in tui objects, in many cases making it faster and easier to serialize and otherwise work with that data.
 
 ```c++
 
@@ -390,7 +390,7 @@ Most scripting languages run a virtual machine, as this is the best approach for
 
 However, in many cases we don't really need such high performance from a scripting language. For low complexity operations, the speed that the script loads, and how it handles data is often more important. And at the other end, even with the fastest scripting language, if we are working with the behaviors of hundreds or thousands of complex objects every frame, we are still often best to use C++.
 
-High performance script code is of course very desirable, but the VM can create problems when managing state between the host and the scripting enviornment. Transferring data between the two can be slow, and for the programmer, bindings can often be quite difficult to implement.
+High performance script code is of course very desirable, but the VM can create problems when managing state between the host and the scripting environment. Transferring data between the two can be slow, and for the programmer, bindings can often be quite difficult to implement.
 
 Tui is fast enough for all the high level code, all the structure, the stuff you want to be able to change easily. And then when you need the performance, tui makes it easy to pull anything out and run it with C++ instead. Your C++ functions have all the data right there, and you're just a function call away from it being serialized and ready to save or send over a network.
 
