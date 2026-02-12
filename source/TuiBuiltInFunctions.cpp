@@ -824,6 +824,16 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
     });
     
+    // file.sha1(path) returns an sha1 hash of the contents of the file at the path provided
+    fileTable->setFunction("sha1", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            return new TuiString(TuiSHA1::from_file(((TuiString*)args->arrayObjects[0])->value));
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.sha1 expected string");
+        return TUI_NIL;
+    });
+    
     // file.load(path) returns a TuiRef object with the contents of a human readable tui or json file
     fileTable->setFunction("load", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)

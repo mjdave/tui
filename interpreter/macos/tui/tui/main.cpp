@@ -1,10 +1,3 @@
-//
-//  main.cpp
-//  tui
-//
-//  Created by David Frampton on 18/04/2025.
-//
-
 #include <iostream>
 #include "Interpreter.h"
 #include "TuiLog.h"

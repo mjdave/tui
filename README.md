@@ -159,6 +159,7 @@ file.save(path, object) // saves the tui object to disk in a human readable form
 file.saveBinary(path, object) // saves the tui object to disk in the tui binary format
 file.loadData(path) // returns a string with the contents of file, can be binary data, eg. an image
 file.saveData(path, string) // saves the string data directly to disk, can be binary data, eg. an image
+file.sha1(path) // returns an sha1 hash of the contents of the file at the path provided
 file.isDirectory(path) // returns true if path is a directory
 file.fileName(path) 
 file.extension(path) // returns the extension including the '.' eg. "image.jpg" returns ".jpg"
