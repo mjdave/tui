@@ -1160,6 +1160,12 @@ void addDebugTable(TuiTable* rootTable)
     debugTable->setFunction("getLineNumber", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         return new TuiNumber(callingDebugInfo->lineNumber);
     });
+    
+    
+    //debug.break() breaks, but only if you set a breakpoint in this function :)
+    debugTable->setFunction("break", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        return TUI_NIL;
+    });
 }
 
 
