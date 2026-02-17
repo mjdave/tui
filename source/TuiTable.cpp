@@ -110,6 +110,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
         }
         
         TuiRef* result = TuiFunction::runStatement(statement,  nullptr, parentTable, &tokenMap, &callData, debugInfo);
+        delete statement;
         
         for(auto& tokenAndRef : callData.locals)
         {
