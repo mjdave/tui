@@ -1346,7 +1346,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         
                         (*tokenPos)++;
                     }
-                    (*tokenPos)++;
                 }
                 
                 
