@@ -91,7 +91,7 @@ inline std::string stringByReplacingString(const std::string& input, const std::
     while(pos != std::string::npos)
     {
         result.replace(pos, search.size(), replace);
-        pos = result.find(search, pos + search.size());
+        pos = result.find(search, pos + replace.size());
     }
     
     return result;

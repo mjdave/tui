@@ -482,6 +482,9 @@ assert(foo[tableVar.var] == "something else", getLineNumber())
 replacedString = string.replace("this/that/apple", "/", " and ")
 assert(replacedString == "this and that and apple", getLineNumber())
 
+replacedStringB = string.replace("It's not working", "'", "\\'")
+assert(replacedStringB == "It\\'s not working", getLineNumber())
+
 testSetsFunc = function()
 {
     tableVarF = {
