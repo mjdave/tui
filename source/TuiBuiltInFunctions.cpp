@@ -410,6 +410,7 @@ void addStringTable(TuiTable* rootTable)
         return TUI_NIL;
     });
     
+    // returns an array of substrings split by the given splitChar. eg. string.split("path/file.txt", "/") -> {"path", "file.txt"}
     stringTable->setFunction("split", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
         {
@@ -433,6 +434,20 @@ void addStringTable(TuiTable* rootTable)
             return result;
         }
         TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.split expected string and split character");
+        return TUI_NIL;
+    });
+    
+    // string.replace(string, searchString, replacementString) replaces all occurrences of searchSting within string with replacementString
+    stringTable->setFunction("replace", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 2 &&
+        args->arrayObjects[0]->type() == Tui_ref_type_STRING &&
+        args->arrayObjects[1]->type() == Tui_ref_type_STRING &&
+        args->arrayObjects[2]->type() == Tui_ref_type_STRING)
+        {
+            return new TuiString(Tui::stringByReplacingString(((TuiString*)args->arrayObjects[0])->value, ((TuiString*)args->arrayObjects[1])->value, ((TuiString*)args->arrayObjects[2])->value));
+        }
+        
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.replace expected string, search string, and replace string");
         return TUI_NIL;
     });
     

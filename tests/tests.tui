@@ -479,6 +479,9 @@ assert(foo[512] == "something else", getLineNumber())
 assert(!foo[32], getLineNumber())
 assert(foo[tableVar.var] == "something else", getLineNumber())
 
+replacedString = string.replace("this/that/apple", "/", " and ")
+assert(replacedString == "this and that and apple", getLineNumber())
+
 testSetsFunc = function()
 {
     tableVarF = {

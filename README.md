@@ -151,6 +151,7 @@ string.subString(string, pos)               // returns a substring from the char
 string.subString(string, pos, length)       // returns a substring from the character at index 'pos' to pos + length or the end of the string, whichever comes first
 string.sha1(string) // returns an sha1 hash of the given string 
 string.split(string, splitChar) // returns an array of substrings split by the given splitChar. eg. string.split("path/file.txt", "/") -> {"path", "file.txt"} 
+string.replace(string, searchString, replacementString) // replaces all occurrences of searchSting within string with replacementString
 
 file.directoryContents(path) // returns an array of file names
 file.load(path) // returns a TuiRef object with the contents of a human readable tui or json file
@@ -163,7 +164,7 @@ file.sha1(path) // returns an sha1 hash of the contents of the file at the path 
 file.isDirectory(path) // returns true if path is a directory
 file.fileName(path) 
 file.extension(path) // returns the extension including the '.' eg. "image.jpg" returns ".jpg"
-file.changeExtension(path, newExtension) 
+file.changeExtension(path, newExtension) // accepts either ".mp3" or "mp3"
 file.removeExtension(path) 
 file.removeLastPathComponent(path)
 file.removeLastPathComponent(path)
