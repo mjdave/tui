@@ -69,7 +69,24 @@ bool moveFile(const std::string& fromPath, const std::string& toPath)
     _wremove(convertUtf8ToWide(toPath).c_str());
     return _wrename(convertUtf8ToWide(fromPath).c_str(), convertUtf8ToWide(toPath).c_str()) == 0;
 #else
-    return rename(fromPath.c_str(), toPath.c_str()) == 0;
+    std::error_code ec;
+    std::filesystem::rename(fromPath, toPath, ec);
+    if(ec) //rename doesn't work between different filesystems. copy and remove works in that case, so lets try
+    {
+        if(copyFileOrDir(fromPath, toPath))
+        {
+            if(fileSizeAtPath(toPath) == fileSizeAtPath(fromPath))
+            {
+                removeFile(fromPath);
+                return true;
+            }
+            TuiWarn("rename copyFileOrDir failed. fromPath:%s toPath:%s result:%d", fromPath.c_str(), toPath.c_str(), ec.message().c_str());
+            return false;
+        }
+        TuiWarn("rename copyFileOrDir failed. fromPath:%s toPath:%s result:%d", fromPath.c_str(), toPath.c_str(), ec.message().c_str());
+        return false;
+    }
+    return true;
 #endif
 }
 
