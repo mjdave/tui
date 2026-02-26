@@ -231,28 +231,6 @@ inline bool isNumber(std::string s) {
     return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
 }
 
-inline uint64_t playerIDFromString(std::string playerID)
-{
-    if(isNumber(playerID) && playerID.size() < 22)
-    {
-        try
-        {
-            uint64_t result = std::stoull(playerID, 0, 10);
-            return result;
-        }
-        catch(...){}
-    }
-    
-    try
-    {
-        uint64_t result = std::stoull(playerID.substr(0, 16), 0, 16);
-        return result;
-    }
-    catch(...){}
-    
-    return std::stoull(TuiSHA1::sha1(playerID).substr(0, 16), 0, 16);
-}
-
 inline std::string doubleToString(double d)
 {
     std::stringstream ss;
