@@ -142,6 +142,7 @@ table.count(table)                  // count of array objects
 table.insert(table, index, value)   // insert into an array, specifying the index. Will be filled with nil objects < index. Objects >= index are shifted
 table.insert(table,value)           // add to the end of an array
 table.remove(table, index)          // removes an object from an array, shuffling the rest down. Will exit with an error if index is beyond the bounds of the array
+table.shuffle(table)                // randomize order of array objects. Shuffles the table in-place.
 
 string.length(string)           // returns the number of characters in string
 string.format(string, arg1, arg2, ...)    // works like printf, eg string.format("float:%.2f int:%d hex:%x", 1.2345, 5.78, 127) produces "float:1.23 int:5 hex:7f"
@@ -152,6 +153,9 @@ string.subString(string, pos, length)       // returns a substring from the char
 string.sha1(string) // returns an sha1 hash of the given string 
 string.split(string, splitChar) // returns an array of substrings split by the given splitChar. eg. string.split("path/file.txt", "/") -> {"path", "file.txt"} 
 string.replace(string, searchString, replacementString) // replaces all occurrences of searchSting within string with replacementString
+
+string.lower(string) // returns the lower case transformation of string
+string.upper(string) // returns the upper case transformation of string
 
 file.directoryContents(path) // returns an array of file names
 file.load(path) // returns a TuiRef object with the contents of a human readable tui or json file

@@ -451,6 +451,34 @@ void addStringTable(TuiTable* rootTable)
         return TUI_NIL;
     });
     
+    
+    // string.lower(string) returns the lower case transformation of string
+    stringTable->setFunction("lower", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            TuiString* result = (TuiString*)args->arrayObjects[0]->copy();
+            std::transform(result->value.begin(), result->value.end(), result->value.begin(),
+                [](unsigned char c){ return std::tolower(c); });
+            return result;
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.lower expected string");
+        return TUI_NIL;
+    });
+    
+    
+    // string.upper(string) returns the upper case transformation of string
+    stringTable->setFunction("upper", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            TuiString* result = (TuiString*)args->arrayObjects[0]->copy();
+            std::transform(result->value.begin(), result->value.end(), result->value.begin(),
+                [](unsigned char c){ return std::toupper(c); });
+            return result;
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.upper expected string");
+        return TUI_NIL;
+    });
+    
 }
 
 void addTableTable(TuiTable* rootTable)
@@ -470,7 +498,7 @@ void addTableTable(TuiTable* rootTable)
             TuiRef* tableRef = args->arrayObjects[0];
             if(tableRef->type() != Tui_ref_type_TABLE)
             {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.insert expected table for first argument");
+                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.insert expected table for first argument. got:%s", tableRef->getTypeName().c_str());
                 return TUI_NIL;
             }
             
@@ -553,7 +581,7 @@ void addTableTable(TuiTable* rootTable)
         return TUI_NIL;
     });
     
-    //table.shuffle(table) randomize order of array objects
+    //table.shuffle(table) randomize order of array objects. Shuffles the table in-place.
     tableTable->setFunction("shuffle", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() >= 1)
         {

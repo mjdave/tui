@@ -4341,6 +4341,34 @@ TuiRef* TuiFunction::call(TuiTable* args,
             }
         }
         
+        
+        for(auto& varNameAndToken : tokenMap.localTokensByVarName)
+        {
+            if(callData.locals.count(varNameAndToken.second) == 0)
+            {
+                if(tokenMap.refsByToken.count(varNameAndToken.second) != 0)
+                {
+                    TuiRef* var = tokenMap.refsByToken[varNameAndToken.second];
+                    callData.locals[varNameAndToken.second] = var->copy();
+                }
+                else
+                {
+                    TuiTable* parentRef = parentTable;
+                    while(parentRef)
+                    {
+                        if(parentRef->objectsByStringKey.count(varNameAndToken.first) != 0)
+                        {
+                            TuiRef* var = parentRef->objectsByStringKey[varNameAndToken.first];
+                            callData.locals[varNameAndToken.second] = var->copy();
+                            //functionStateTable->set(varNameAndToken.second, var);
+                            break;
+                        }
+                        parentRef = parentRef->parentTable;
+                    }
+                }
+            }
+        }
+        
         TuiRef* result = runStatementArray(statements,  existingResult, functionStateTable, &tokenMap, &callData, &debugInfo);
         
         functionStateTable->release();
