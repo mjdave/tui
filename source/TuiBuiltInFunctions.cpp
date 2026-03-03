@@ -598,6 +598,54 @@ void addTableTable(TuiTable* rootTable)
     });
     
     
+    //table.sort(table, compareFunctionOrNil) sorts table in place, using optional compareFunction to compare objects. default compareFunction is function(a,b) { return a < b }
+    tableTable->setFunction("sort", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1)
+        {
+            TuiRef* tableRef = args->arrayObjects[0];
+            if(tableRef->type() != Tui_ref_type_TABLE)
+            {
+                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.sort expected table for first argument");
+                return TUI_NIL;
+            }
+            auto& arrayObjects = ((TuiTable*)tableRef)->arrayObjects;
+            if(!arrayObjects.empty())
+            {
+                
+                if(args->arrayObjects.size() >= 2 && args->arrayObjects[1]->type() == Tui_ref_type_FUNCTION)
+                {
+                    TuiFunction* compareFunction = (TuiFunction*)args->arrayObjects[1];
+                    
+                    std::sort(arrayObjects.begin(), arrayObjects.end(), [compareFunction](TuiRef* a, TuiRef* b) {
+                          return compareFunction->call("compare", a, b)->boolValue();
+                    });
+                }
+                else
+                {
+                    std::sort(arrayObjects.begin(), arrayObjects.end(), [](TuiRef* a, TuiRef* b) {
+                        if(a->type() != b->type())
+                        {
+                            return false;
+                        }
+                        switch (a->type()) {
+                            case Tui_ref_type_NUMBER:
+                                return ((TuiNumber*)a)->value < ((TuiNumber*)b)->value;
+                                break;
+                            case Tui_ref_type_STRING:
+                                return ((TuiString*)a)->value < ((TuiString*)b)->value;
+                                break;
+                                
+                            default:
+                                return false;
+                                break;
+                        }
+                    });
+                }
+            }
+        }
+        return TUI_NIL;
+    });
+    
     
 }
 

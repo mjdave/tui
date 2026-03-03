@@ -1745,6 +1745,30 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     }
                 }
                     break;
+                case '>':
+                {
+                    if(secondOperatorChar == '=')
+                    {
+                        result = TUI_BOOL(((TuiString*)leftValue)->value >= ((TuiString*)rightValue)->value);
+                    }
+                    else
+                    {
+                        result = TUI_BOOL(((TuiString*)leftValue)->value > ((TuiString*)rightValue)->value);
+                    }
+                }
+                    break;
+                case '<':
+                {
+                    if(secondOperatorChar == '=')
+                    {
+                        result = TUI_BOOL(((TuiString*)leftValue)->value <= ((TuiString*)rightValue)->value);
+                    }
+                    else
+                    {
+                        result = TUI_BOOL(((TuiString*)leftValue)->value < ((TuiString*)rightValue)->value);
+                    }
+                }
+                    break;
                 default:
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
                     break;

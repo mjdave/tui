@@ -2343,6 +2343,54 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         
                     }
                         break;
+                    case Tui_ref_type_STRING:
+                    {
+                        (*tokenPos)++;
+                        
+                        TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                        if(rightResult->type() != leftType)
+                        {
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected string");
+                            return nullptr;
+                        }
+                        
+                        switch (token) {
+                            case Tui_token_greaterThan:
+                            {
+                                TuiBool* returnResult = TUI_BOOL(((TuiString*)leftResult)->value > ((TuiString*)rightResult)->value);
+                                leftResult->release();
+                                rightResult->release();
+                                return returnResult;
+                            }
+                                break;
+                            case Tui_token_lessThan:
+                            {
+                                TuiBool* returnResult = TUI_BOOL(((TuiString*)leftResult)->value < ((TuiString*)rightResult)->value);
+                                leftResult->release();
+                                rightResult->release();
+                                return returnResult;
+                            }
+                                break;
+                            case Tui_token_greaterEqualTo:
+                            {
+                                TuiBool* returnResult = TUI_BOOL(((TuiString*)leftResult)->value >= ((TuiString*)rightResult)->value);
+                                leftResult->release();
+                                rightResult->release();
+                                return returnResult;
+                            }
+                                break;
+                            case Tui_token_lessEqualTo:
+                            {
+                                TuiBool* returnResult = TUI_BOOL(((TuiString*)leftResult)->value <= ((TuiString*)rightResult)->value);
+                                leftResult->release();
+                                rightResult->release();
+                                return returnResult;
+                            }
+                                break;
+                        };
+                        
+                    }
+                        break;
                         
                     default:
                     {

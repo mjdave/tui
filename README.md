@@ -143,6 +143,7 @@ table.insert(table, index, value)   // insert into an array, specifying the inde
 table.insert(table,value)           // add to the end of an array
 table.remove(table, index)          // removes an object from an array, shuffling the rest down. Will exit with an error if index is beyond the bounds of the array
 table.shuffle(table)                // randomize order of array objects. Shuffles the table in-place.
+table.sort(table, compareFunctionOrNil) // sorts table in place, using optional compareFunction to compare objects. default compareFunction is function(a,b) { return a < b }
 
 string.length(string)           // returns the number of characters in string
 string.format(string, arg1, arg2, ...)    // works like printf, eg string.format("float:%.2f int:%d hex:%x", 1.2345, 5.78, 127) produces "float:1.23 int:5 hex:7f"
