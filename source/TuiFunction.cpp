@@ -3655,6 +3655,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             std::string subTypeSetKey = ""; //this is set only if a Tui_token_childByString is found eg. color.x
             int setIndex = -1;
             TuiRef* enclosingSetRef = nullptr;
+            bool skipLocalsSetDueToIndex = false;
             TuiRef* subTypeRef = nullptr; //this is set only if a Tui_token_childByString is found eg. color.x or foo.table
             
             TuiRef* existingValue = runExpression(statement->expression, &tokenPos, nullptr, parent, tokenMap, callData, debugInfo, &setKey, &setIndex, &enclosingSetRef, &subTypeSetKey, &subTypeRef);
@@ -3762,6 +3763,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     if(setIndex != -1)
                     {
                         ((TuiTable*)enclosingSetRef)->replace(setIndex, copiedValue);
+                        skipLocalsSetDueToIndex = true;
                     }
                     else
                     {
@@ -3777,9 +3779,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     newValue = copiedValue;
                 }
                 
-                //dont do this if enclosingSetRef and
-                
-                if(!enclosingSetRef) //hmmm
+                if(!skipLocalsSetDueToIndex)
                 {
                     std::string& varName = statement->varName;
                     if(enclosingSetRef && !setKey.empty()) //remove if this works
