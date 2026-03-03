@@ -1041,7 +1041,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
     });
     
-    //file.fileExistsAtPath(path) returns true if file exists, false otherwise
+    //file.fileExists(path) returns true if file exists, false otherwise
     fileTable->setFunction("fileExists", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
@@ -1053,7 +1053,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
     });
     
-    //file.fileExistsAtPath(path) returns true if file is a symlink, false otherwise
+    //file.isSymLink(path) returns true if file is a symlink, false otherwise
     fileTable->setFunction("isSymLink", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {

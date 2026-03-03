@@ -153,7 +153,6 @@ string.subString(string, pos, length)       // returns a substring from the char
 string.sha1(string) // returns an sha1 hash of the given string 
 string.split(string, splitChar) // returns an array of substrings split by the given splitChar. eg. string.split("path/file.txt", "/") -> {"path", "file.txt"} 
 string.replace(string, searchString, replacementString) // replaces all occurrences of searchSting within string with replacementString
-
 string.lower(string) // returns the lower case transformation of string
 string.upper(string) // returns the upper case transformation of string
 
@@ -178,6 +177,10 @@ file.move(fromPath, toPath) // overwrites if toPath already exists
 file.copy(fromPath, toPath) // overwrites if toPath already exists
 file.remove(path)
 file.mkdir(path) //makes all enclosing/intermediate directories too, equivalent to mkdir -p
+file.fileExists(path) // returns true if file exists, false otherwise
+file.isSymLink(path) // returns true if file is a symlink, false otherwise
+file.createDirectoriesIfNeededForDirPath(path) // equivalent to mkdir -p, creates a directory at the given path
+file.createDirectoriesIfNeededForFilePath(path) // equivalent to mkdir -p, creates the directories needed to contain the file at the given path
     
 math.pi //pi constant
 math.random(max)             // provides a floating point value between 0 and max (default 1.0)
