@@ -361,10 +361,13 @@ int64_t fileSizeAtPath(const std::string& path)
     {
         if (S_ISREG( m_fileInfo->st_mode ))
         {
-            return m_fileInfo->st_size;
+            int64_t size = m_fileInfo->st_size;
+            delete m_fileInfo;
+            return size;
         }
         else
         {
+            delete m_fileInfo;
             return 0;
         }
     }

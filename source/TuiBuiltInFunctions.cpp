@@ -79,12 +79,15 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
     {
         rootTable->setFunction("system", [permissionCallbackFunction](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         TuiFunction* resultCallbackFunction = nullptr;
-        if(args && args->arrayObjects.size() > 1 && args->arrayObjects[args->arrayObjects.size() - 1]->type() == Tui_ref_type_FUNCTION)
+        if(args)
         {
-            resultCallbackFunction = (TuiFunction*)args->arrayObjects[args->arrayObjects.size() - 1];
+            if(args->arrayObjects.size() > 1 && args->arrayObjects[args->arrayObjects.size() - 1]->type() == Tui_ref_type_FUNCTION)
+            {
+                resultCallbackFunction = (TuiFunction*)args->arrayObjects[args->arrayObjects.size() - 1];
+            }
+            args->retain();
         }
         
-        args->retain();
         
         TuiFunction* gotPermissionResultFunction = new TuiFunction([resultCallbackFunction, args](TuiTable* permissionResultArgs, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
             if(permissionResultArgs && permissionResultArgs->arrayObjects.size() > 0 && permissionResultArgs->arrayObjects[0]->boolValue())
@@ -95,7 +98,10 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
                     resultCallbackFunction->call("system result callback", callResult);
                 }
             }
-            args->release();
+            if(args)
+            {
+                args->release();
+            }
             return TUI_NIL;
         });
         
@@ -108,7 +114,10 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
         else
         {
             TuiWarn("disallowing unpermitted function call to system()");
-            args->release();
+            if(args)
+            {
+                args->release();
+            }
         }
         return TUI_NIL;
     });

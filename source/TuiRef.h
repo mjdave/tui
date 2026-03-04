@@ -151,7 +151,7 @@ inline const char* tuiSkipToNextChar(const char* str, TuiDebugInfo* debugInfo = 
 inline const char* tuiSkipToNextMatchingChar(const char* str, TuiDebugInfo* debugInfo, char matchChar)
 {
     const char* s = str;
-    bool lineComment = false;
+    //bool lineComment = false;
     for(;; s++)
     {
         if(*s == matchChar)
@@ -162,13 +162,13 @@ inline const char* tuiSkipToNextMatchingChar(const char* str, TuiDebugInfo* debu
         {
             return s;
         }
-        else if(*s == '#' || (*s == '/' && *(s+1) == '/'))
+        /*else if(*s == '#' || (*s == '/' && *(s+1) == '/'))
         {
             lineComment = true;
-        }
+        }*/
         else if(*s == '\n')
         {
-            lineComment = false;
+            //lineComment = false;
             debugInfo->lineNumber++;
         }
     }
