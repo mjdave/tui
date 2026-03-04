@@ -24,7 +24,9 @@ public:
     
     std::function<void(TuiRef* table, const std::string& key, TuiRef* value)> onSet;
     
-private: //members
+private:
+    
+    void printSingleSubObject(std::string& debugString, int indent, TuiRef* object);
 
 public://functions
     

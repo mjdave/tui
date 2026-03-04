@@ -594,6 +594,19 @@ TuiTable* TuiTable::initWithHumanReadableString(const char* str, char** endptr, 
     return table;
 }
 
+
+void TuiTable::printSingleSubObject(std::string& debugString, int indent, TuiRef* object)
+{
+    if(indent > 128)
+    {
+        debugString += "[found likely circular loop, supressing log output]";
+    }
+    else
+    {
+        object->printHumanReadableString(debugString, indent);
+    }
+}
+
 void TuiTable::printHumanReadableString(std::string& debugString, int indent)
 {
     debugString += "{\n";
@@ -607,7 +620,7 @@ void TuiTable::printHumanReadableString(std::string& debugString, int indent)
         }
         if(object) // it is valid to store a nullptr in arrayObjects
         {
-            object->printHumanReadableString(debugString, indent);
+            printSingleSubObject(debugString, indent, object);
         }
         else
         {
@@ -623,7 +636,7 @@ void TuiTable::printHumanReadableString(std::string& debugString, int indent)
             debugString += " ";
         }
         debugString += Tui::string_format("%d = ", kv.first);
-        kv.second->printHumanReadableString(debugString, indent);
+        printSingleSubObject(debugString, indent, kv.second);
         debugString += ",\n";
     }
     
@@ -634,7 +647,7 @@ void TuiTable::printHumanReadableString(std::string& debugString, int indent)
             debugString += " ";
         }
         debugString += kv.first + " = ";//"\"" + kv.first + "\" = "; //todo escape things correctly?
-        kv.second->printHumanReadableString(debugString, indent);
+        printSingleSubObject(debugString, indent, kv.second);
         debugString += ",\n";
     }
     
