@@ -444,6 +444,23 @@ public://functions
         set(key, ref);
     }
     
+    TuiFunction* getFunction(const std::string& key)
+    {
+        if(objectsByStringKey.count(key) != 0)
+        {
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == Tui_ref_type_FUNCTION)
+            {
+                return ((TuiFunction*)ref);
+            }
+            else
+            {
+                TuiError("Found incorrect type (%s) when loading expected function:%s", ref->getTypeName().c_str(), key.c_str());
+            }
+        }
+        return nullptr;
+    }
+    
     void setFunction(const std::string& key, std::function<TuiRef*(TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> value)
     {
         TuiFunction* ref = new TuiFunction(value);
