@@ -11,6 +11,7 @@
 
 std::random_device rd;
 auto rng = std::default_random_engine { rd() };
+std::uniform_real_distribution<double> dist(0.0, 1.0);
 
 
 namespace Tui {
@@ -674,10 +675,10 @@ void addMathTable(TuiTable* rootTable)
             TuiRef* arg = args->arrayObjects[0];
             if(arg->type() == Tui_ref_type_NUMBER)
             {
-                return new TuiNumber(((double)rng() / RAND_MAX) * ((TuiNumber*)(arg))->value);
+                return new TuiNumber(dist(rng) * ((TuiNumber*)(arg))->value);
             }
         }
-        return new TuiNumber(((double)rng() / RAND_MAX));
+        return new TuiNumber(dist(rng));
     });
     
     
@@ -689,10 +690,10 @@ void addMathTable(TuiTable* rootTable)
             if(arg->type() == Tui_ref_type_NUMBER)
             {
                 double flooredValue = floor(((TuiNumber*)(arg))->value);
-                return new TuiNumber(min(flooredValue - 1.0, floor(((double)rng() / UINT32_MAX) * flooredValue)));
+                return new TuiNumber(min(flooredValue - 1.0, floor(dist(rng) * flooredValue)));
             }
         }
-        return new TuiNumber(min(1.0, floor(((double)rng() / RAND_MAX) * 2)));
+        return new TuiNumber(min(1.0, floor(dist(rng) * 2)));
     });
     
     mathTable->setFunction("sin", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
