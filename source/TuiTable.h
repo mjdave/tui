@@ -100,8 +100,7 @@ public://functions
         
         if(value && value->type() != Tui_ref_type_NIL)
         {
-            value->retain();
-            objectsByStringKey[key] = value;
+            objectsByStringKey[key] = value->copy();
         }
         
         if(onSet)
@@ -130,15 +129,13 @@ public://functions
         
         if(value && value->type() != Tui_ref_type_NIL)
         {
-            value->retain();
-            objectsByNumberKey[key] = value;
+            objectsByNumberKey[key] = value->copy();
         }
     }
     
     void push(TuiRef* value)
     {
-        value->retain();
-        arrayObjects.push_back(value);
+        arrayObjects.push_back(value->copy());
     }
     
     void pushString(const std::string& value)
@@ -173,15 +170,14 @@ public://functions
     
     void insert(int insertIndex, TuiRef* value)
     {
-        value->retain();
         if(insertIndex < arrayObjects.size())
         {
-            arrayObjects.insert(arrayObjects.begin() + insertIndex, value);
+            arrayObjects.insert(arrayObjects.begin() + insertIndex, value->copy());
         }
         else if(value && value->type() != Tui_ref_type_NIL)
         {
             arrayObjects.resize(insertIndex + 1);
-            arrayObjects[insertIndex] = value;
+            arrayObjects[insertIndex] = value->copy();
         }
     }
     
@@ -199,7 +195,6 @@ public://functions
     
     void replace(int replaceIndex, TuiRef* value) //this is used by table[x] = y. if x <= array.size(), then we will replace the object in the array, otherwise, set an objectByNumberKey value. Generally not a good idea to mix arrays and sets, we just do our best
     {
-        value->retain();
         
         if(replaceIndex < arrayObjects.size())
         {
@@ -208,11 +203,11 @@ public://functions
             {
                 existing->release();
             }
-            arrayObjects[replaceIndex] = value;
+            arrayObjects[replaceIndex] = value->copy();
         }
         else if(replaceIndex == arrayObjects.size())
         {
-            arrayObjects.push_back(value);
+            arrayObjects.push_back(value->copy());
         }
         else
         {
@@ -221,7 +216,7 @@ public://functions
                 objectsByNumberKey[replaceIndex]->release();
             }
             
-            objectsByNumberKey[replaceIndex] = value;
+            objectsByNumberKey[replaceIndex] = value->copy();
         }
     }
     

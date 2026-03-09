@@ -503,4 +503,10 @@ testSetsFunc = function()
 
 testSetsFunc()
 
+testVec2 = vec2(1.0,2.0)
+assert(math.length2(testVec2) == math.dot(testVec2, testVec2), getLineNumber())
+vec2Normal = math.normalize(testVec2)
+vecLength = math.length(vec2Normal)
+assert(vecLength > 0.999 && vecLength < 1.001, getLineNumber())
+
 testCommon.printResult()

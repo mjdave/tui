@@ -529,8 +529,7 @@ void addTableTable(TuiTable* rootTable)
             else
             {
                 TuiRef* addObject = args->arrayObjects[1];
-                addObject->retain();
-                ((TuiTable*)tableRef)->arrayObjects.push_back(addObject);
+                ((TuiTable*)tableRef)->arrayObjects.push_back(addObject->copy());
             }
         }
         else
@@ -884,6 +883,82 @@ void addMathTable(TuiTable* rootTable)
     });
     
     mathTable->setDouble("pi", M_PI);
+    
+    mathTable->setFunction("normalize", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 0)
+        {
+            if(args->arrayObjects[0]->type() == Tui_ref_type_VEC2)
+            {
+                return new TuiVec2(normalize(((TuiVec2*)args->arrayObjects[0])->value));
+            }
+            else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC3)
+            {
+                return new TuiVec3(normalize(((TuiVec3*)args->arrayObjects[0])->value));
+            }
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.normalize expected vec2 or vec3");
+        return TUI_NIL;
+    });
+    
+    mathTable->setFunction("length", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 0)
+        {
+            if(args->arrayObjects[0]->type() == Tui_ref_type_VEC2)
+            {
+                return new TuiNumber(length(((TuiVec2*)args->arrayObjects[0])->value));
+            }
+            else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC3)
+            {
+                return new TuiNumber(length(((TuiVec3*)args->arrayObjects[0])->value));
+            }
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.length expected vec2 or vec3");
+        return TUI_NIL;
+    });
+    
+    mathTable->setFunction("length2", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 0)
+        {
+            if(args->arrayObjects[0]->type() == Tui_ref_type_VEC2)
+            {
+                return new TuiNumber(dot(((TuiVec2*)args->arrayObjects[0])->value, ((TuiVec2*)args->arrayObjects[0])->value));
+            }
+            else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC3)
+            {
+                return new TuiNumber(dot(((TuiVec3*)args->arrayObjects[0])->value, ((TuiVec3*)args->arrayObjects[0])->value));
+            }
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.length2 expected vec2 or vec3");
+        return TUI_NIL;
+    });
+    
+    mathTable->setFunction("dot", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 1)
+        {
+            if(args->arrayObjects[0]->type() == Tui_ref_type_VEC2 && args->arrayObjects[1]->type() == Tui_ref_type_VEC2)
+            {
+                return new TuiNumber(dot(((TuiVec2*)args->arrayObjects[0])->value, ((TuiVec2*)args->arrayObjects[1])->value));
+            }
+            else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC3 && args->arrayObjects[1]->type() == Tui_ref_type_VEC3)
+            {
+                return new TuiNumber(dot(((TuiVec3*)args->arrayObjects[0])->value, ((TuiVec3*)args->arrayObjects[1])->value));
+            }
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.dot expected two vec2 or vec3s");
+        return TUI_NIL;
+    });
+    
+    mathTable->setFunction("cross", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 1)
+        {
+            if(args->arrayObjects[0]->type() == Tui_ref_type_VEC3 && args->arrayObjects[1]->type() == Tui_ref_type_VEC3)
+            {
+                return new TuiVec3(cross(((TuiVec3*)args->arrayObjects[0])->value, ((TuiVec3*)args->arrayObjects[1])->value));
+            }
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.cross expected two vec3s");
+        return TUI_NIL;
+    });
 }
 
 void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sandBoxDir ignored

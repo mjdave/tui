@@ -2728,12 +2728,15 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             rightResult->release();
                         }
                         
-                        if(((TuiTable*)inPlaceEnclosingSetRef)->onSet)
+                        if(inPlaceEnclosingSetRef)
                         {
-                            ((TuiTable*)inPlaceEnclosingSetRef)->onSet(inPlaceEnclosingSetRef, inPlaceSetKey, inPlaceSubRef);
+                            if(((TuiTable*)inPlaceEnclosingSetRef)->onSet)
+                            {
+                                ((TuiTable*)inPlaceEnclosingSetRef)->onSet(inPlaceEnclosingSetRef, inPlaceSetKey, inPlaceSubRef);
+                            }
+                            
+                            inPlaceEnclosingSetRef->release();
                         }
-                        
-                        inPlaceEnclosingSetRef->release();
                         
                         inPlaceSubRef->release();
                         
