@@ -2761,9 +2761,17 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 switch (leftType) {
                     case Tui_ref_type_NUMBER:
                     {
-                        if(token == Tui_token_increment)
+                        if(token == Tui_token_increment || token == Tui_token_decrement)
                         {
-                            ((TuiNumber*)leftResult)->value++;
+                            if(token == Tui_token_increment)
+                            {
+                                ((TuiNumber*)leftResult)->value++;
+                            }
+                            else //Tui_token_decrement
+                            {
+                                ((TuiNumber*)leftResult)->value--;
+                            }
+                            
                             if(inPlaceEnclosingSetRef && ((TuiTable*)inPlaceEnclosingSetRef)->onSet && !inPlaceSetKey.empty())
                             {
                                 ((TuiTable*)inPlaceEnclosingSetRef)->onSet(((TuiTable*)inPlaceEnclosingSetRef), inPlaceSetKey, leftResult);
