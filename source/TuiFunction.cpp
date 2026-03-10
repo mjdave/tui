@@ -2779,10 +2779,22 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         {
                             (*tokenPos)++;
                             TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
-                            if(!rightResult || rightResult->type() != leftType)
+                            if(!rightResult || (rightResult->type() != leftType && rightResult->type() != Tui_ref_type_STRING))
                             {
                                 TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
                                 return nullptr;
+                            }
+                            
+                            if(rightResult->type() == Tui_ref_type_STRING)
+                            {
+                                TuiString* returnResult = new TuiString(((TuiNumber*)leftResult)->getStringValue() + ((TuiString*)rightResult)->value);
+                                leftResult->release();
+                                rightResult->release();
+                                if(inPlaceEnclosingSetRef)
+                                {
+                                    inPlaceEnclosingSetRef->release();
+                                }
+                                return returnResult;
                             }
                             
                             if(result && result->type() == leftType)

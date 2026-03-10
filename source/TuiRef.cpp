@@ -1422,6 +1422,28 @@ TuiRef* TuiRef::loadExpression(const char* str,
                         break;
                 }
             }
+            else if(rightValue->type() == Tui_ref_type_STRING)
+            {
+                switch(operatorChar)
+                {
+                    case '+':
+                    {
+                        if(secondOperatorChar == '=')
+                        {
+                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "number += string not supported");
+                            break;
+                        }
+                        else
+                        {
+                            result = new TuiString(leftValue->getStringValue() + ((TuiString*)rightValue)->value);
+                        }
+                    }
+                        break;
+                    default:
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        break;
+                }
+            }
         }
         else if(leftValue->type() == Tui_ref_type_VEC2)
         {

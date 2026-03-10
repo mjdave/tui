@@ -509,4 +509,19 @@ vec2Normal = math.normalize(testVec2)
 vecLength = math.length(vec2Normal)
 assert(vecLength > 0.999 && vecLength < 1.001, getLineNumber())
 
+testSting = 3 + "45"
+assert(testSting == "345", getLineNumber())
+testSting = "45" + 6
+assert(testSting == "456", getLineNumber())
+
+testStringFunc = function()
+{
+    testSting = 3 + "45"
+    assert(testSting == "345", getLineNumber())
+    testSting = "45" + 6
+    assert(testSting == "456", getLineNumber())
+}
+
+testStringFunc()
+
 testCommon.printResult()
