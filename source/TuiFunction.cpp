@@ -1223,9 +1223,11 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
         //*endptr = (char*)s;
         
         
-        parent = new TuiTable(parent); //todo memeory leak?
+        parent = new TuiTable(parent);
         
         TuiFunction* mjFunction = new TuiFunction(parent);
+        
+        parent->release();
         
         mjFunction->debugInfo.fileName = debugInfo->fileName;
         
@@ -1486,7 +1488,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected function, got:%s", (functionVar ? functionVar->getDebugString().c_str() : "nil"));
                     return nullptr;
                 }
-                (*tokenPos)++;
                 
                 TuiRef* functionResult = ((TuiFunction*)functionVar)->runTableConstruct(parent, result, debugInfo);
                 functionVar->release();
