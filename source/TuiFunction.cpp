@@ -3840,6 +3840,10 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     else
                     {
                         ((TuiTable*)enclosingSetRef)->set(setKey, copiedValue);
+                        if(enclosingSetRef != callData->functionStateTable)
+                        {
+                            skipLocalsSetDueToIndex = true;
+                        }
                     }
                     copiedValue->release();
                 }

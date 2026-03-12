@@ -9,10 +9,9 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-std::random_device rd;
-auto rng = std::default_random_engine { rd() };
-std::uniform_real_distribution<double> dist(0.0, 1.0);
-
+thread_local std::default_random_engine rng = std::default_random_engine { std::random_device{}() };
+thread_local std::default_random_engine seedRng;
+std::uniform_real_distribution<double> randDistribution(0.0, 1.0);
 
 namespace Tui {
 
@@ -667,17 +666,48 @@ void addMathTable(TuiTable* rootTable)
     rootTable->set("math", mathTable);
     mathTable->release();
     
-    //math.random(max) provides a floating point value between 0 and max (default 1.0)
+    //math.random(max, optionalSeed) provides a floating point value between 0 and max (default 1.0). Uses a random seed unless optionalSeed is provided
     mathTable->setFunction("random", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 0)
         {
             TuiRef* arg = args->arrayObjects[0];
+            double result = 0.0;
+            
+            if(args->arrayObjects.size() > 1)
+            {
+                TuiRef* arg2 = args->arrayObjects[1];
+                if(arg2->type() == Tui_ref_type_NUMBER)
+                {
+                    seedRng.seed(((TuiNumber*)(arg2))->value);
+                    result = randDistribution(seedRng);
+                }
+                else if(arg2->type() == Tui_ref_type_STRING)
+                {
+                    std::string sha1 = TuiSHA1::sha1(((TuiString*)arg2)->value);
+                    uint32_t randValue;
+                    memcpy(&randValue, &sha1[0], sizeof(randValue));
+                    seedRng.seed(randValue);
+                    result = randDistribution(seedRng);
+                }
+                else
+                {
+                    TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.random(max, optionalSeed) expected number or string for seed argument");
+                }
+            }
+            else
+            {
+                result = randDistribution(rng);
+            }
+            
             if(arg->type() == Tui_ref_type_NUMBER)
             {
-                return new TuiNumber(dist(rng) * ((TuiNumber*)(arg))->value);
+                return new TuiNumber(result * ((TuiNumber*)(arg))->value);
             }
+            
+            return new TuiNumber(result);
         }
-        return new TuiNumber(dist(rng));
+        
+        return new TuiNumber(randDistribution(rng));
     });
     
     
@@ -686,13 +716,43 @@ void addMathTable(TuiTable* rootTable)
         if(args && args->arrayObjects.size() > 0)
         {
             TuiRef* arg = args->arrayObjects[0];
+            double result = 0.0;
+            
+            if(args->arrayObjects.size() > 1)
+            {
+                TuiRef* arg2 = args->arrayObjects[1];
+                if(arg2->type() == Tui_ref_type_NUMBER)
+                {
+                    seedRng.seed(((TuiNumber*)(arg2))->value);
+                    result = randDistribution(seedRng);
+                }
+                else if(arg2->type() == Tui_ref_type_STRING)
+                {
+                    std::string sha1 = TuiSHA1::sha1(((TuiString*)arg2)->value);
+                    uint32_t randValue;
+                    memcpy(&randValue, &sha1[0], sizeof(randValue));
+                    seedRng.seed(randValue);
+                    result = randDistribution(seedRng);
+                }
+                else
+                {
+                    TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.random(max, optionalSeed) expected number or string for seed argument");
+                }
+            }
+            else
+            {
+                result = randDistribution(rng);
+            }
+            
             if(arg->type() == Tui_ref_type_NUMBER)
             {
                 double flooredValue = floor(((TuiNumber*)(arg))->value);
-                return new TuiNumber(min(flooredValue - 1.0, floor(dist(rng) * flooredValue)));
+                return new TuiNumber(min(flooredValue - 1.0, floor(result * flooredValue)));
             }
+            
+            return new TuiNumber(floor(result));
         }
-        return new TuiNumber(min(1.0, floor(dist(rng) * 2)));
+        return new TuiNumber(min(1.0, floor(randDistribution(rng) * 2)));
     });
     
     mathTable->setFunction("pow", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
