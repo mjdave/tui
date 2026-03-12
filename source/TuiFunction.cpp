@@ -3727,7 +3727,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             std::string subTypeSetKey = ""; //this is set only if a Tui_token_childByString is found eg. color.x
             int setIndex = -1;
             TuiRef* enclosingSetRef = nullptr;
-            bool skipLocalsSetDueToIndex = false;
+            bool skipLocalsSetDueToTableSubKeySet = false;
             TuiRef* subTypeRef = nullptr; //this is set only if a Tui_token_childByString is found eg. color.x or foo.table
             
             TuiRef* existingValue = runExpression(statement->expression, &tokenPos, nullptr, parent, tokenMap, callData, debugInfo, &setKey, &setIndex, &enclosingSetRef, &subTypeSetKey, &subTypeRef);
@@ -3835,14 +3835,13 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     if(setIndex != -1)
                     {
                         ((TuiTable*)enclosingSetRef)->replace(setIndex, copiedValue);
-                        skipLocalsSetDueToIndex = true;
                     }
                     else
                     {
                         ((TuiTable*)enclosingSetRef)->set(setKey, copiedValue);
                         if(enclosingSetRef != callData->functionStateTable)
                         {
-                            skipLocalsSetDueToIndex = true;
+                            skipLocalsSetDueToTableSubKeySet = true;
                         }
                     }
                     copiedValue->release();
@@ -3854,58 +3853,64 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     newValue->release();
                     newValue = copiedValue;
                 }
-                
-                if(!skipLocalsSetDueToIndex)
-                {
-                    std::string& varName = statement->varName;
-                    if(enclosingSetRef && !setKey.empty()) //remove if this works
-                    {
-                        varName = setKey;
-                    }
-                    
-                    uint32_t token = 0;
-                    if(tokenMap->localTokensByVarName.count(varName) != 0)
-                    {
-                        token = tokenMap->localTokensByVarName[varName];
-                    }
-                    else if(tokenMap->capturedTokensByVarName.count(varName) != 0)
-                    {
-                        token = tokenMap->capturedTokensByVarName[varName];
-                    }
-                    
-                    TuiRef* prevValue = nullptr;
-                    if(callData->locals.count(token) != 0)
-                    {
-                        prevValue = callData->locals[token];
-                    }
-                    
-                    if(newValue != prevValue)
-                    {
-                        if(newValue)
-                        {
-                            callData->locals[token] = newValue;
-                        }
-                        else
-                        {
-                            callData->locals.erase(token);
-                        }
-                        
-                        if(prevValue)
-                        {
-                            prevValue->release();
-                        }
-                    }
-                    else
-                    {
-                        newValue->release();
-                    }
-                }
             }
             else if(enclosingSetRef && enclosingSetRef->type() == Tui_ref_type_TABLE)
             {
                 if(((TuiTable*)enclosingSetRef)->onSet && !setKey.empty())
                 {
                     ((TuiTable*)enclosingSetRef)->onSet(((TuiTable*)enclosingSetRef), setKey, existingValue);
+                }
+            }
+            
+            if(!skipLocalsSetDueToTableSubKeySet && setIndex == -1 && (newValue || existingValue))
+            {
+                std::string& varName = statement->varName;
+                if(enclosingSetRef && !setKey.empty()) //remove if this works
+                {
+                    varName = setKey;
+                }
+                
+                uint32_t token = 0;
+                if(tokenMap->localTokensByVarName.count(varName) != 0)
+                {
+                    token = tokenMap->localTokensByVarName[varName];
+                }
+                else if(tokenMap->capturedTokensByVarName.count(varName) != 0)
+                {
+                    token = tokenMap->capturedTokensByVarName[varName];
+                }
+                
+                TuiRef* prevValue = nullptr;
+                if(callData->locals.count(token) != 0)
+                {
+                    prevValue = callData->locals[token];
+                }
+                
+                TuiRef* newValueToUse = newValue;
+                if(!newValue && existingValue)
+                {
+                    newValueToUse = existingValue->retain();
+                }
+                
+                if(newValueToUse != prevValue)
+                {
+                    if(newValueToUse)
+                    {
+                        callData->locals[token] = newValueToUse;
+                    }
+                    else
+                    {
+                        callData->locals.erase(token);
+                    }
+                    
+                    if(prevValue)
+                    {
+                        prevValue->release();
+                    }
+                }
+                else if(newValueToUse)
+                {
+                    newValueToUse->release();
                 }
             }
             
