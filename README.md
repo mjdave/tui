@@ -2,7 +2,7 @@
 
 tui is a small, cross platform, open source embeddable scripting language and serialization library for C++.
 
-***NOTE (Feb 2026): tui is not fully optimized and will still contain bugs. It does work pretty well now though, and is actively being used and improved as the foundation of the [katipo](https://github.com/mjdave/katipo) networking library.***
+***NOTE (March 2026): tui is not fully optimized and will still contain bugs. It does work pretty well now though, and is actively being used and improved as the foundation of the [katipo](https://github.com/mjdave/katipo) networking library.***
 
 Created by a solo game developer to be fast, small, and easy to integrate and use, tui combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
 
@@ -104,7 +104,7 @@ Functions support value assignments, if/else statements, while and for loops.
 addTariff = function(base)
 {
     tariff = 145 / 100
-    if(randomInt(2) > 0)
+    if(math.randomInt(2) > 0)
     {
         tariff = 245 / 100
     }
@@ -121,7 +121,7 @@ for (i = 0, i < 5, i++)
     sadness = sadness + 1
 }
 ```
-The randomInt() function is built in, it's loaded in to the root table by default. 
+The math.randomInt() function is built in, it's loaded in to the root table by default. 
 
 ### List of built in functions (so far):
 ```c++
@@ -184,8 +184,8 @@ file.createDirectoriesIfNeededForDirPath(path) // equivalent to mkdir -p, create
 file.createDirectoriesIfNeededForFilePath(path) // equivalent to mkdir -p, creates the directories needed to contain the file at the given path
     
 math.pi //pi constant
-math.random(max)             // provides a floating point value between 0 and max (default 1.0)
-math.randomInt(max)          // provides an integer from 0 to (max - 1) with a default of 2.
+math.random(max, seedOrNil)    // provides a floating point value between 0 and max (default 1.0). Uses a random seed unless seedOrNil is provided
+math.randomInt(max, seedOrNil) // provides an integer from 0 to (max - 1) with a default of 2. Uses a random seed unless seedOrNil is provided
 math.sqrt(x)
 math.exp(x)
 math.log(x)

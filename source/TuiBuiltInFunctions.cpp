@@ -666,7 +666,7 @@ void addMathTable(TuiTable* rootTable)
     rootTable->set("math", mathTable);
     mathTable->release();
     
-    //math.random(max, optionalSeed) provides a floating point value between 0 and max (default 1.0). Uses a random seed unless optionalSeed is provided
+    //math.random(max, seedOrNil) provides a floating point value between 0 and max (default 1.0). Uses a random seed unless seedOrNil is provided
     mathTable->setFunction("random", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 0)
         {
@@ -711,7 +711,7 @@ void addMathTable(TuiTable* rootTable)
     });
     
     
-    //math.randomInt(max) provides an integer from 0 to (max - 1) with a default of 2.
+    //math.randomInt(max, seedOrNil) provides an integer from 0 to (max - 1) with a default of 2. Uses a random seed unless seedOrNil is provided
     mathTable->setFunction("randomInt", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 0)
         {
