@@ -184,8 +184,8 @@ file.createDirectoriesIfNeededForDirPath(path) // equivalent to mkdir -p, create
 file.createDirectoriesIfNeededForFilePath(path) // equivalent to mkdir -p, creates the directories needed to contain the file at the given path
     
 math.pi //pi constant
-math.random(max, seedOrNil)    // provides a floating point value between 0 and max (default 1.0). Uses a random seed unless seedOrNil is provided
-math.randomInt(max, seedOrNil) // provides an integer from 0 to (max - 1) with a default of 2. Uses a random seed unless seedOrNil is provided
+math.random(max, seedOrNil)    // provides a floating point value between 0 and max (default 1.0). Uses a random seed unless seedOrNil is provided. seedOrNil can be a number or a string
+math.randomInt(max, seedOrNil) // provides an integer from 0 to (max - 1) with a default of 2. Uses a random seed unless seedOrNil is provided. seedOrNil can be a number or a string
 math.sqrt(x)
 math.exp(x)
 math.log(x)
