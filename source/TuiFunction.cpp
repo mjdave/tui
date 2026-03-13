@@ -3839,9 +3839,19 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     else
                     {
                         ((TuiTable*)enclosingSetRef)->set(setKey, copiedValue);
-                        if(enclosingSetRef != callData->functionStateTable)
+                        
+                        skipLocalsSetDueToTableSubKeySet = true; //this surely could be fixed better but I'm outta ideas
+                        std::set<TuiTable*> searchedParents;
+                        TuiTable* parentTable = callData->functionStateTable;
+                        while(parentTable && searchedParents.count(parentTable) == 0)
                         {
-                            skipLocalsSetDueToTableSubKeySet = true;
+                            if(parentTable == enclosingSetRef)
+                            {
+                                skipLocalsSetDueToTableSubKeySet = false;
+                                break;
+                            }
+                            searchedParents.insert(parentTable);
+                            parentTable = parentTable->parentTable;
                         }
                     }
                     copiedValue->release();
@@ -3856,9 +3866,12 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             }
             else if(enclosingSetRef && enclosingSetRef->type() == Tui_ref_type_TABLE)
             {
-                if(((TuiTable*)enclosingSetRef)->onSet && !setKey.empty())
+                if(!setKey.empty())
                 {
-                    ((TuiTable*)enclosingSetRef)->onSet(((TuiTable*)enclosingSetRef), setKey, existingValue);
+                    if(((TuiTable*)enclosingSetRef)->onSet)
+                    {
+                        ((TuiTable*)enclosingSetRef)->onSet(((TuiTable*)enclosingSetRef), setKey, existingValue);
+                    }
                 }
             }
             
