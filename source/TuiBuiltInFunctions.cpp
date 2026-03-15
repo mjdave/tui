@@ -500,7 +500,11 @@ void addStringTable(TuiTable* rootTable)
             for(indexNumber->value = 0; indexNumber->value < inputString->value.length(); indexNumber->value++)
             {
                 charString->value = inputString->value[(int)indexNumber->value];
-                charFunction->call("string eachChar loop", charString, indexNumber);
+                TuiRef* result = charFunction->call("string eachChar loop", charString, indexNumber);
+                if(result && result->boolValue())
+                {
+                    break;
+                }
             }
             
             indexNumber->release();
@@ -524,7 +528,11 @@ void addStringTable(TuiTable* rootTable)
             std::istringstream inputStringStream(((TuiString*)args->arrayObjects[0])->value);
             
             while (std::getline(inputStringStream, lineString->value)) {
-                lineFunction->call("string eachLine loop", lineString, indexNumber);
+                TuiRef* result = lineFunction->call("string eachLine loop", lineString, indexNumber);
+                if(result && result->boolValue())
+                {
+                    break;
+                }
                 indexNumber->value++;
             }
             
