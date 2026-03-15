@@ -156,6 +156,8 @@ string.split(string, splitChar) // returns an array of substrings split by the g
 string.replace(string, searchString, replacementString) // replaces all occurrences of searchSting within string with replacementString
 string.lower(string) // returns the lower case transformation of string
 string.upper(string) // returns the upper case transformation of string
+string.eachChar(string, charFunction) // loops over each character, calling charFunction(charString, charIndex) for each
+string.eachLine(string, lineFunction) // loops over each line, calling lineFunction(lineString, lineIndex) for each
 
 file.directoryContents(path) // returns an array of file names
 file.load(path) // returns a TuiRef object with the contents of a human readable tui or json file

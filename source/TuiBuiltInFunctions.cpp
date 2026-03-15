@@ -488,6 +488,55 @@ void addStringTable(TuiTable* rootTable)
         return TUI_NIL;
     });
     
+    // string.eachChar(string, charFunction) loops over each character, calling charFunction(charString, charIndex) for each
+    stringTable->setFunction("eachChar", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_FUNCTION)
+        {
+            TuiString* inputString = (TuiString*)args->arrayObjects[0];
+            TuiFunction* charFunction = (TuiFunction*)args->arrayObjects[1];
+            
+            TuiString* charString = new TuiString("");
+            TuiNumber* indexNumber = new TuiNumber(0);
+            for(indexNumber->value = 0; indexNumber->value < inputString->value.length(); indexNumber->value++)
+            {
+                charString->value = inputString->value[(int)indexNumber->value];
+                charFunction->call("string eachChar loop", charString, indexNumber);
+            }
+            
+            indexNumber->release();
+            charString->release();
+            
+            return TUI_NIL;
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.eachChar expected string, charFunction");
+        return TUI_NIL;
+    });
+    
+    // string.eachLine(string, lineFunction) loops over each line, calling lineFunction(lineString, lineIndex) for each
+    stringTable->setFunction("eachLine", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_FUNCTION)
+        {
+            TuiFunction* lineFunction = (TuiFunction*)args->arrayObjects[1];
+            
+            TuiString* lineString = new TuiString("");
+            TuiNumber* indexNumber = new TuiNumber(0);
+            
+            std::istringstream inputStringStream(((TuiString*)args->arrayObjects[0])->value);
+            
+            while (std::getline(inputStringStream, lineString->value)) {
+                lineFunction->call("string eachLine loop", lineString, indexNumber);
+                indexNumber->value++;
+            }
+            
+            indexNumber->release();
+            lineString->release();
+            
+            return TUI_NIL;
+        }
+        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.eachLine expected string, lineFunction");
+        return TUI_NIL;
+    });
+    
 }
 
 void addTableTable(TuiTable* rootTable)
