@@ -113,6 +113,10 @@ public://functions
     TuiExpression* continueExpression = nullptr; //todo cleanup
     TuiStatement* incrementStatement = nullptr; //todo cleanup
     
+    TuiTokenMap outerTokenMap;
+    TuiTokenMap innerTokenMap;
+    
+    
     TuiForExpressionsStatement() : TuiStatement(Tui_statement_type_forExpressions) {}
 };
 
@@ -122,6 +126,13 @@ public://functions
     std::string keyOrIndexName;
     std::string objectName;
     std::vector<TuiStatement*> statements;
+    
+    uint32_t indexInnerToken = 0;
+    uint32_t objectInnerToken = 0;
+    
+    TuiTokenMap outerTokenMap;
+    TuiTokenMap innerTokenMap;
+    
     TuiForContainerLoopStatement(uint32_t type_) : TuiStatement(type_) {}
 };
 

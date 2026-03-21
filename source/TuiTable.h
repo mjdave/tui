@@ -456,7 +456,7 @@ public://functions
         return nullptr;
     }
     
-    void setFunction(const std::string& key, std::function<TuiRef*(TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo)> value)
+    void setFunction(const std::string& key, std::function<TuiRef*(TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo)> value)
     {
         TuiFunction* ref = new TuiFunction(value);
         set(key, ref);

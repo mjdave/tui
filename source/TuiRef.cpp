@@ -556,6 +556,13 @@ static TuiRef* loadSingleValueInternal(const char* str,
         {
             stringBuffer += *s;
             escaped = false;
+            if(*s == '\n')
+            {
+                if(debugInfo)
+                {
+                    debugInfo->lineNumber++;
+                }
+            }
         }
         else if(*s == '.' && allowAsVariableName)
         {
@@ -743,7 +750,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 
                 s = tuiSkipToNextChar(s, debugInfo, true);
                 *endptr = (char*)s;
-                TuiRef* newRef = ((TuiFunction*)resultRef)->call(argsArrayTable, existingValue, debugInfo);
+                TuiRef* newRef = ((TuiFunction*)resultRef)->call(argsArrayTable, existingValue, nullptr, debugInfo);
                 resultRef->release();
                 resultRef = newRef;
                 if(argsArrayTable)

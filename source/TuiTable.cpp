@@ -72,7 +72,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
         
         TuiTokenMap tokenMap;
         
-        TuiStatement* statement = TuiFunction::serializeForStatement(s, endptr, this, &tokenMap, debugInfo, true, isWhileLoop);
+        TuiStatement* statement = TuiFunction::serializeForStatement(s, endptr, this, debugInfo, true, isWhileLoop);
         if(!statement)
         {
             return false;
@@ -91,6 +91,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                 TuiRef* var = tokenMap.refsByToken[varNameAndToken.second];
                 var->retain();
                 callData.locals[varNameAndToken.second] = var;
+                callData.localTokensByStringKey[varNameAndToken.first] = varNameAndToken.second;
             }
             else
             {
@@ -102,6 +103,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                         TuiRef* var = parentTable->objectsByStringKey[varNameAndToken.first];
                         var->retain();
                         callData.locals[varNameAndToken.second] = var;
+                        callData.localTokensByStringKey[varNameAndToken.first] = varNameAndToken.second;
                         break;
                     }
                     parentTable = parentTable->parentTable;
@@ -109,7 +111,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
             }
         }
         
-        TuiRef* result = TuiFunction::runStatement(statement,  nullptr, parentTable, &tokenMap, &callData, debugInfo);
+        TuiRef* result = TuiFunction::runStatement(statement,  nullptr, this, &tokenMap, &callData, debugInfo);
         delete statement;
         
         for(auto& tokenAndRef : callData.locals)
