@@ -97,6 +97,34 @@ while(!done)
     done = true
 }
 
+jobs = {
+    "rinsing"
+    "stacking"
+    "washing"
+    "drying"
+}
+
+for(job in jobs)
+{
+    print("this job is:", job)
+}
+
+for(index, job in jobs)
+{
+    print("job at index:", index, " is:", job)
+}
+
+fishSpeeds = {
+    goldfish = 4
+    trout = 57
+    shark = 169
+}
+
+for(fish, speed in fishSpeeds)
+{
+    print("fish of type:", fish, " goes at ", speed, "km/h when fired into space")
+}
+
 ```
 ## Functions
 Functions support value assignments, if/else statements, while and for loops.
@@ -216,7 +244,7 @@ math.atan2(y,x)
 You can supply your own functions in C++ easily by providing a std::function that takes tables for args and any parent state, and gives you the result, eg. here is the code that adds the print function:
 ```c++
 
-rootTable->setFunction("print", [](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+rootTable->setFunction("print", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
     if(args && args->arrayObjects.size() > 0)
     {
         std::string printString = "";

@@ -3947,7 +3947,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                         
                         skipLocalsSetDueToTableSubKeySet = true; //this surely could be fixed better but I'm outta ideas
                         std::set<TuiTable*> searchedParents;
-                        TuiTable* parentTable = callData->functionStateTable;
+                        TuiTable* parentTable = callData->parentTable;
                         while(parentTable && searchedParents.count(parentTable) == 0)
                         {
                             if(parentTable == enclosingSetRef)
@@ -4015,26 +4015,28 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 {
                     if(newValueToUse)
                     {
-                        callData->locals[token] = newValueToUse; //ah we are setting the inner calldata copied local, not the outer
+                        callData->locals[token] = newValueToUse;
                         callData->localTokensByStringKey[varName] = token;
                         
-                        if(enclosingSetRef && enclosingSetRef != callData->functionStateTable)
+                        if(enclosingSetRef)
                         {
                             TuiFunctionCallData* thisCallData = callData;
-                            while(thisCallData->parentCallData)
+                            
+                            while(thisCallData)
                             {
-                                thisCallData = thisCallData->parentCallData;
-                                if(thisCallData->functionStateTable->hasKey(varName))
+                                if(thisCallData->parentTable == enclosingSetRef)
                                 {
-                                    if(thisCallData->localTokensByStringKey.count(varName) != 0)
+                                    TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
+                                    if(parentCallData->localTokensByStringKey.count(varName) != 0)
                                     {
-                                        uint32_t parentLocalSetToken = thisCallData->localTokensByStringKey[varName];
-                                        TuiRef* prevParentLocal = thisCallData->locals[parentLocalSetToken];
-                                        thisCallData->locals[parentLocalSetToken] = newValueToUse->retain();
+                                        uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
+                                        TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
+                                        parentCallData->locals[parentLocalSetToken] = newValueToUse->retain();
                                         prevParentLocal->release();
+                                        break;
                                     }
-                                    break;
                                 }
+                                thisCallData = thisCallData->parentCallData;
                             }
                         }
                     }
@@ -4043,23 +4045,25 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                         callData->locals.erase(token);
                         callData->localTokensByStringKey.erase(varName);
                         
-                        if(enclosingSetRef && enclosingSetRef != callData->functionStateTable)
+                        if(enclosingSetRef)
                         {
                             TuiFunctionCallData* thisCallData = callData;
-                            while(thisCallData->parentCallData)
+                            
+                            while(thisCallData)
                             {
-                                thisCallData = thisCallData->parentCallData;
-                                if(thisCallData->functionStateTable->hasKey(varName))
+                                if(thisCallData->parentTable == enclosingSetRef)
                                 {
-                                    if(thisCallData->localTokensByStringKey.count(varName) != 0)
+                                    TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
+                                    if(parentCallData->localTokensByStringKey.count(varName) != 0)
                                     {
-                                        uint32_t parentLocalSetToken = thisCallData->localTokensByStringKey[varName];
-                                        TuiRef* prevParentLocal = thisCallData->locals[parentLocalSetToken];
-                                        thisCallData->locals[parentLocalSetToken] = TUI_NIL;
+                                        uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
+                                        TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
+                                        parentCallData->locals[parentLocalSetToken] = TUI_NIL;
                                         prevParentLocal->release();
+                                        break;
                                     }
-                                    break;
                                 }
+                                thisCallData = thisCallData->parentCallData;
                             }
                         }
                     }
@@ -4112,7 +4116,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             TuiTable* functionStateTable = new TuiTable(parent);
             TuiFunctionCallData scopedCallData;
             scopedCallData.parentCallData = callData;
-            scopedCallData.functionStateTable = functionStateTable;
+            scopedCallData.parentTable = parent;
             
             loadTokens(parent, &forStatement->outerTokenMap, &scopedCallData);
             
@@ -4143,7 +4147,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     TuiTable* innerFunctionStateTable = new TuiTable(parent);
                     TuiFunctionCallData innerScopedCallData;
                     innerScopedCallData.parentCallData = callData;
-                    innerScopedCallData.functionStateTable = innerFunctionStateTable;
+                    innerScopedCallData.parentTable = parent;
                     
                     loadTokens(parent, &forStatement->innerTokenMap, &innerScopedCallData);
                     
@@ -4163,8 +4167,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     
                     bool breakFound = false;
                     runResult = runStatementArray(forStatement->statements, result, innerFunctionStateTable, &forStatement->innerTokenMap, &innerScopedCallData, debugInfo, &breakFound);
-                    
-                    //forLoopScope->release();
                     
                     for(auto& tokenAndRef : innerScopedCallData.locals)
                     {
@@ -4187,7 +4189,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     TuiTable* innerFunctionStateTable = new TuiTable(parent);
                     TuiFunctionCallData innerScopedCallData;
                     innerScopedCallData.parentCallData = callData;
-                    innerScopedCallData.functionStateTable = innerFunctionStateTable;
+                    innerScopedCallData.parentTable = parent;
                     
                     loadTokens(parent, &forStatement->innerTokenMap, &innerScopedCallData);
                     
@@ -4243,7 +4245,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             TuiTable* functionStateTable = new TuiTable(parent);
             TuiFunctionCallData scopedCallData;
             scopedCallData.parentCallData = callData;
-            scopedCallData.functionStateTable = functionStateTable;
+            scopedCallData.parentTable = parent;
             
             loadTokens(parent, &forStatement->outerTokenMap, &scopedCallData);
             
@@ -4265,7 +4267,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 TuiTable* innerFunctionStateTable = new TuiTable(parent);
                 TuiFunctionCallData innerScopedCallData;
                 innerScopedCallData.parentCallData = &scopedCallData;
-                innerScopedCallData.functionStateTable = innerFunctionStateTable;
+                innerScopedCallData.parentTable = parent;
                 
                 loadTokens(parent, &forStatement->innerTokenMap, &innerScopedCallData);
                 
@@ -4438,7 +4440,7 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
 {
     TuiTable* functionStateTable = new TuiTable(state);
     TuiFunctionCallData callData;
-    callData.functionStateTable = functionStateTable;
+    callData.parentTable = parentTable;
     
     // the code below up until calling the statement is very similar to TuiTable for() loop parsing
     // changes made here should probably be made there or it all could be factored out.
@@ -4503,7 +4505,7 @@ TuiRef* TuiFunction::call(TuiTable* args,
         TuiTable* functionStateTable = new TuiTable(parentTable);
         TuiFunctionCallData callData;
         callData.parentCallData = incomingCallData;
-        callData.functionStateTable = functionStateTable;
+        callData.parentTable = parentTable;
         
         if(args)
         {
