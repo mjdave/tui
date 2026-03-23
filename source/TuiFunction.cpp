@@ -1015,9 +1015,21 @@ TuiStatement* TuiFunction::serializeForStatement(const char* str,
                 return nullptr;
             }
             
+            if(forStatement->innerTokenMap.capturedTokensByVarName.count(forStatement->objectName) == 0)
+            {
+                uint32_t variableToken = forStatement->innerTokenMap.tokenIndex++;
+                forStatement->innerTokenMap.capturedTokensByVarName[forStatement->objectName] = variableToken;
+            }
+            
             forStatement->objectInnerToken = forStatement->innerTokenMap.capturedTokensByVarName[forStatement->objectName];
             if(!forStatement->keyOrIndexName.empty())
             {
+                if(forStatement->innerTokenMap.capturedTokensByVarName.count(forStatement->keyOrIndexName) == 0)
+                {
+                    uint32_t variableToken = forStatement->innerTokenMap.tokenIndex++;
+                    forStatement->innerTokenMap.capturedTokensByVarName[forStatement->keyOrIndexName] = variableToken;
+                }
+                
                 forStatement->indexInnerToken = forStatement->innerTokenMap.capturedTokensByVarName[forStatement->keyOrIndexName];
             }
             
@@ -4146,7 +4158,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 {
                     TuiTable* innerFunctionStateTable = new TuiTable(parent);
                     TuiFunctionCallData innerScopedCallData;
-                    innerScopedCallData.parentCallData = callData;
+                    innerScopedCallData.parentCallData = &scopedCallData;
                     innerScopedCallData.parentTable = parent;
                     
                     loadTokens(parent, &forStatement->innerTokenMap, &innerScopedCallData);
@@ -4188,7 +4200,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 {
                     TuiTable* innerFunctionStateTable = new TuiTable(parent);
                     TuiFunctionCallData innerScopedCallData;
-                    innerScopedCallData.parentCallData = callData;
+                    innerScopedCallData.parentCallData = &scopedCallData;
                     innerScopedCallData.parentTable = parent;
                     
                     loadTokens(parent, &forStatement->innerTokenMap, &innerScopedCallData);
