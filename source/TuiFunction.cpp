@@ -4011,83 +4011,87 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     token = tokenMap->capturedTokensByVarName[varName];
                 }
                 
-                TuiRef* prevValue = nullptr;
-                if(callData->locals.count(token) != 0)
+                if(token != 0)
                 {
-                    prevValue = callData->locals[token];
-                }
-                
-                TuiRef* newValueToUse = newValue;
-                if(!newValue && existingValue)
-                {
-                    newValueToUse = existingValue->retain();
-                }
-                
-                if(newValueToUse != prevValue)
-                {
-                    if(newValueToUse)
+                    
+                    TuiRef* prevValue = nullptr;
+                    if(callData->locals.count(token) != 0)
                     {
-                        callData->locals[token] = newValueToUse;
-                        callData->localTokensByStringKey[varName] = token;
-                        
-                        if(enclosingSetRef)
-                        {
-                            TuiFunctionCallData* thisCallData = callData;
-                            
-                            while(thisCallData)
-                            {
-                                if(thisCallData->parentTable == enclosingSetRef)
-                                {
-                                    TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
-                                    if(parentCallData->localTokensByStringKey.count(varName) != 0)
-                                    {
-                                        uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
-                                        TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
-                                        parentCallData->locals[parentLocalSetToken] = newValueToUse->retain();
-                                        prevParentLocal->release();
-                                        break;
-                                    }
-                                }
-                                thisCallData = thisCallData->parentCallData;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        callData->locals.erase(token);
-                        callData->localTokensByStringKey.erase(varName);
-                        
-                        if(enclosingSetRef)
-                        {
-                            TuiFunctionCallData* thisCallData = callData;
-                            
-                            while(thisCallData)
-                            {
-                                if(thisCallData->parentTable == enclosingSetRef)
-                                {
-                                    TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
-                                    if(parentCallData->localTokensByStringKey.count(varName) != 0)
-                                    {
-                                        uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
-                                        TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
-                                        parentCallData->locals[parentLocalSetToken] = TUI_NIL;
-                                        prevParentLocal->release();
-                                        break;
-                                    }
-                                }
-                                thisCallData = thisCallData->parentCallData;
-                            }
-                        }
+                        prevValue = callData->locals[token];
                     }
                     
-                    if(prevValue)
+                    TuiRef* newValueToUse = newValue;
+                    if(!newValue && existingValue)
                     {
-                        prevValue->release();
+                        newValueToUse = existingValue->retain();
                     }
-                }
-                else if(newValueToUse)
-                {
-                    newValueToUse->release();
+                    
+                    if(newValueToUse != prevValue)
+                    {
+                        if(newValueToUse)
+                        {
+                            callData->locals[token] = newValueToUse;
+                            callData->localTokensByStringKey[varName] = token;
+                            
+                            if(enclosingSetRef)
+                            {
+                                TuiFunctionCallData* thisCallData = callData;
+                                
+                                while(thisCallData)
+                                {
+                                    if(thisCallData->parentTable == enclosingSetRef)
+                                    {
+                                        TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
+                                        if(parentCallData->localTokensByStringKey.count(varName) != 0)
+                                        {
+                                            uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
+                                            TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
+                                            parentCallData->locals[parentLocalSetToken] = newValueToUse->retain();
+                                            prevParentLocal->release();
+                                            break;
+                                        }
+                                    }
+                                    thisCallData = thisCallData->parentCallData;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            callData->locals.erase(token);
+                            callData->localTokensByStringKey.erase(varName);
+                            
+                            if(enclosingSetRef)
+                            {
+                                TuiFunctionCallData* thisCallData = callData;
+                                
+                                while(thisCallData)
+                                {
+                                    if(thisCallData->parentTable == enclosingSetRef)
+                                    {
+                                        TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
+                                        if(parentCallData->localTokensByStringKey.count(varName) != 0)
+                                        {
+                                            uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
+                                            TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
+                                            parentCallData->locals[parentLocalSetToken] = TUI_NIL;
+                                            prevParentLocal->release();
+                                            break;
+                                        }
+                                    }
+                                    thisCallData = thisCallData->parentCallData;
+                                }
+                            }
+                        }
+                        
+                        if(prevValue)
+                        {
+                            prevValue->release();
+                        }
+                    }
+                    else if(newValueToUse)
+                    {
+                        newValueToUse->release();
+                    }
                 }
             }
             
