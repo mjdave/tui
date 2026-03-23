@@ -4039,17 +4039,18 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                                 
                                 while(thisCallData)
                                 {
+                                    TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
+                                    if(parentCallData && parentCallData->localTokensByStringKey.count(varName) != 0)
+                                    {
+                                        uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
+                                        TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
+                                        parentCallData->locals[parentLocalSetToken] = newValueToUse->retain();
+                                        prevParentLocal->release();
+                                    }
+                                    
                                     if(thisCallData->parentTable == enclosingSetRef)
                                     {
-                                        TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
-                                        if(parentCallData->localTokensByStringKey.count(varName) != 0)
-                                        {
-                                            uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
-                                            TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
-                                            parentCallData->locals[parentLocalSetToken] = newValueToUse->retain();
-                                            prevParentLocal->release();
-                                            break;
-                                        }
+                                        break;
                                     }
                                     thisCallData = thisCallData->parentCallData;
                                 }
@@ -4066,17 +4067,18 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                                 
                                 while(thisCallData)
                                 {
+                                    TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
+                                    if(parentCallData && parentCallData->localTokensByStringKey.count(varName) != 0)
+                                    {
+                                        uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
+                                        TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
+                                        parentCallData->locals[parentLocalSetToken] = TUI_NIL;
+                                        prevParentLocal->release();
+                                    }
+                                    
                                     if(thisCallData->parentTable == enclosingSetRef)
                                     {
-                                        TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
-                                        if(parentCallData->localTokensByStringKey.count(varName) != 0)
-                                        {
-                                            uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
-                                            TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
-                                            parentCallData->locals[parentLocalSetToken] = TUI_NIL;
-                                            prevParentLocal->release();
-                                            break;
-                                        }
+                                        break;
                                     }
                                     thisCallData = thisCallData->parentCallData;
                                 }
