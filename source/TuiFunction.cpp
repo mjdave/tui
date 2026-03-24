@@ -4048,7 +4048,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                                         prevParentLocal->release();
                                     }
                                     
-                                    if(thisCallData->parentTable == enclosingSetRef)
+                                    if(thisCallData->parentTable == enclosingSetRef && (!parentCallData || parentCallData->parentTable != enclosingSetRef))
                                     {
                                         break;
                                     }
@@ -4076,7 +4076,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                                         prevParentLocal->release();
                                     }
                                     
-                                    if(thisCallData->parentTable == enclosingSetRef)
+                                    if(thisCallData->parentTable == enclosingSetRef && (!parentCallData || parentCallData->parentTable != enclosingSetRef))
                                     {
                                         break;
                                     }
