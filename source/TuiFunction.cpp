@@ -4007,6 +4007,30 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                             callData->localTokensByStringKey.erase(varName);
                         }
                         
+                        
+                        if(enclosingSetRef)
+                        {
+                            TuiFunctionCallData* thisCallData = callData;
+                            
+                            while(thisCallData)
+                            {
+                                TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
+                                if(parentCallData && parentCallData->localTokensByStringKey.count(varName) != 0)
+                                {
+                                    uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
+                                    TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
+                                    parentCallData->locals[parentLocalSetToken] = (newValueToUse ? newValueToUse->retain() : TUI_NIL);
+                                    prevParentLocal->release();
+                                }
+                                
+                                if(thisCallData->parentTable == enclosingSetRef && (!parentCallData || parentCallData->parentTable != enclosingSetRef))
+                                {
+                                    break;
+                                }
+                                thisCallData = thisCallData->parentCallData;
+                            }
+                        }
+                        
                         if(prevValue)
                         {
                             prevValue->release();
@@ -4015,30 +4039,31 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     else if(newValueToUse)
                     {
                         newValueToUse->release();
-                        newValueToUse = nullptr;
                     }
                 }
-                
-                if(enclosingSetRef)
+                else
                 {
-                    TuiFunctionCallData* thisCallData = callData;
-                    
-                    while(thisCallData)
+                    if(enclosingSetRef)
                     {
-                        TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
-                        if(parentCallData && parentCallData->localTokensByStringKey.count(varName) != 0)
-                        {
-                            uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
-                            TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
-                            parentCallData->locals[parentLocalSetToken] = (newValueToUse ? newValueToUse->retain() : TUI_NIL);
-                            prevParentLocal->release();
-                        }
+                        TuiFunctionCallData* thisCallData = callData;
                         
-                        if(thisCallData->parentTable == enclosingSetRef && (!parentCallData || parentCallData->parentTable != enclosingSetRef))
+                        while(thisCallData)
                         {
-                            break;
+                            TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
+                            if(parentCallData && parentCallData->localTokensByStringKey.count(varName) != 0)
+                            {
+                                uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
+                                TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
+                                parentCallData->locals[parentLocalSetToken] = (newValueToUse ? newValueToUse->retain() : TUI_NIL);
+                                prevParentLocal->release();
+                            }
+                            
+                            if(thisCallData->parentTable == enclosingSetRef && (!parentCallData || parentCallData->parentTable != enclosingSetRef))
+                            {
+                                break;
+                            }
+                            thisCallData = thisCallData->parentCallData;
                         }
-                        thisCallData = thisCallData->parentCallData;
                     }
                 }
             }
