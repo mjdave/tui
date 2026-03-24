@@ -782,7 +782,6 @@ static TuiStatement* serializeBasicStatement(const char* str,
     
     if(expression->tokens[0] == Tui_token_functionCall)
     {
-        //TuiError("todo");
         statement = new TuiStatement(Tui_statement_type_functionCall);
         statement->debugInfo = *debugInfo;
         statement->expression = expression;
@@ -804,7 +803,6 @@ static TuiStatement* serializeBasicStatement(const char* str,
                 {
                     variableTokenToAddToLocals = tokenMap->tokenIndex++;
                     expression->tokens.push_back(variableTokenToAddToLocals);
-                   // tokenMap->localVarNamesByToken[variableToken] = localSetKey;
                 }
             }
             
@@ -2132,7 +2130,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_childByString:
             case Tui_token_childByExpression:
             {
-                //bool isStringKey = (token == Tui_token_childByString);
                 (*tokenPos)++;
                 bool isFunctionCall = false;
                 if(expression->tokens[*tokenPos] == Tui_token_functionCall)
@@ -2170,25 +2167,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             prevRef->release();
                         }
                     }
-                    
-                    /*
-                     switch(parent->type())
-                     {
-                         case Tui_ref_type_TABLE:
-                         {
-                             if(parent->objectsByStringKey.count(((TuiString*)keyConstant)->value) != 0)
-                             {
-                                 child = parent->objectsByStringKey[((TuiString*)keyConstant)->value];
-                             }
-                         }
-                             break;
-                         default:
-                         {
-                             TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "no '.' syntax supported for type:%s", parent->getTypeName().c_str());
-                             return nullptr;
-                         }
-                             break;
-                     }*/
                 }
                 else
                 {
@@ -3844,7 +3822,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             std::string subTypeSetKey = ""; //this is set only if a Tui_token_childByString is found eg. color.x
             int setIndex = -1;
             TuiRef* enclosingSetRef = nullptr;
-            bool skipLocalsSetDueToTableSubKeySet = false;
             TuiRef* subTypeRef = nullptr; //this is set only if a Tui_token_childByString is found eg. color.x or foo.table
             
             TuiRef* existingValue = runExpression(statement->expression, &tokenPos, nullptr, parent, tokenMap, callData, debugInfo, &setKey, &setIndex, &enclosingSetRef, &subTypeSetKey, &subTypeRef);
@@ -3956,20 +3933,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     else
                     {
                         ((TuiTable*)enclosingSetRef)->set(setKey, copiedValue);
-                        
-                        skipLocalsSetDueToTableSubKeySet = true; //this surely could be fixed better but I'm outta ideas
-                        std::set<TuiTable*> searchedParents;
-                        TuiTable* parentTable = callData->parentTable;
-                        while(parentTable && searchedParents.count(parentTable) == 0)
-                        {
-                            if(parentTable == enclosingSetRef)
-                            {
-                                skipLocalsSetDueToTableSubKeySet = false;
-                                break;
-                            }
-                            searchedParents.insert(parentTable);
-                            parentTable = parentTable->parentTable;
-                        }
                     }
                     copiedValue->release();
                 }
@@ -3993,7 +3956,13 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 }
             }
             
-            if(!skipLocalsSetDueToTableSubKeySet && setIndex == -1 && (newValue || existingValue))
+            bool skipLocalsDueToSubTableVarChainSet = false;
+            if(statement->expression->tokens[0] == Tui_token_varChain)
+            {
+                skipLocalsDueToSubTableVarChainSet = true;
+            }
+            
+            if(!skipLocalsDueToSubTableVarChainSet && setIndex == -1 && (newValue || existingValue))
             {
                 std::string& varName = statement->varName;
                 if(enclosingSetRef && !setKey.empty()) //remove if this works
@@ -4011,19 +3980,18 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     token = tokenMap->capturedTokensByVarName[varName];
                 }
                 
+                TuiRef* newValueToUse = newValue;
+                if(!newValue && existingValue)
+                {
+                    newValueToUse = existingValue->retain();
+                }
+                
                 if(token != 0)
                 {
-                    
                     TuiRef* prevValue = nullptr;
                     if(callData->locals.count(token) != 0)
                     {
                         prevValue = callData->locals[token];
-                    }
-                    
-                    TuiRef* newValueToUse = newValue;
-                    if(!newValue && existingValue)
-                    {
-                        newValueToUse = existingValue->retain();
                     }
                     
                     if(newValueToUse != prevValue)
@@ -4032,57 +4000,11 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                         {
                             callData->locals[token] = newValueToUse;
                             callData->localTokensByStringKey[varName] = token;
-                            
-                            if(enclosingSetRef)
-                            {
-                                TuiFunctionCallData* thisCallData = callData;
-                                
-                                while(thisCallData)
-                                {
-                                    TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
-                                    if(parentCallData && parentCallData->localTokensByStringKey.count(varName) != 0)
-                                    {
-                                        uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
-                                        TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
-                                        parentCallData->locals[parentLocalSetToken] = newValueToUse->retain();
-                                        prevParentLocal->release();
-                                    }
-                                    
-                                    if(thisCallData->parentTable == enclosingSetRef && (!parentCallData || parentCallData->parentTable != enclosingSetRef))
-                                    {
-                                        break;
-                                    }
-                                    thisCallData = thisCallData->parentCallData;
-                                }
-                            }
                         }
                         else
                         {
                             callData->locals.erase(token);
                             callData->localTokensByStringKey.erase(varName);
-                            
-                            if(enclosingSetRef)
-                            {
-                                TuiFunctionCallData* thisCallData = callData;
-                                
-                                while(thisCallData)
-                                {
-                                    TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
-                                    if(parentCallData && parentCallData->localTokensByStringKey.count(varName) != 0)
-                                    {
-                                        uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
-                                        TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
-                                        parentCallData->locals[parentLocalSetToken] = TUI_NIL;
-                                        prevParentLocal->release();
-                                    }
-                                    
-                                    if(thisCallData->parentTable == enclosingSetRef && (!parentCallData || parentCallData->parentTable != enclosingSetRef))
-                                    {
-                                        break;
-                                    }
-                                    thisCallData = thisCallData->parentCallData;
-                                }
-                            }
                         }
                         
                         if(prevValue)
@@ -4093,6 +4015,30 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     else if(newValueToUse)
                     {
                         newValueToUse->release();
+                        newValueToUse = nullptr;
+                    }
+                }
+                
+                if(enclosingSetRef)
+                {
+                    TuiFunctionCallData* thisCallData = callData;
+                    
+                    while(thisCallData)
+                    {
+                        TuiFunctionCallData* parentCallData = thisCallData->parentCallData;
+                        if(parentCallData && parentCallData->localTokensByStringKey.count(varName) != 0)
+                        {
+                            uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
+                            TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
+                            parentCallData->locals[parentLocalSetToken] = (newValueToUse ? newValueToUse->retain() : TUI_NIL);
+                            prevParentLocal->release();
+                        }
+                        
+                        if(thisCallData->parentTable == enclosingSetRef && (!parentCallData || parentCallData->parentTable != enclosingSetRef))
+                        {
+                            break;
+                        }
+                        thisCallData = thisCallData->parentCallData;
                     }
                 }
             }
@@ -4226,8 +4172,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     bool breakFound = false;
                     runResult = runStatementArray(forStatement->statements, result, innerFunctionStateTable, &forStatement->innerTokenMap, &innerScopedCallData, debugInfo, &breakFound);
                     
-                    //forLoopScope->release();
-                    
                     for(auto& tokenAndRef : innerScopedCallData.locals)
                     {
                         tokenAndRef.second->release();
@@ -4258,7 +4202,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             uint32_t tokenPos = 0;
             //debugInfo->lineNumber = statement->lineNumber; //?
-            
             
             TuiTable* functionStateTable = new TuiTable(parent);
             TuiFunctionCallData scopedCallData;
@@ -4459,10 +4402,6 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
     TuiTable* functionStateTable = new TuiTable(state);
     TuiFunctionCallData callData;
     callData.parentTable = parentTable;
-    
-    // the code below up until calling the statement is very similar to TuiTable for() loop parsing
-    // changes made here should probably be made there or it all could be factored out.
-    
     
     for(auto& varNameAndToken : tokenMap.capturedTokensByVarName)
     {
