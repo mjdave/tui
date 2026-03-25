@@ -4006,6 +4006,10 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                             callData->locals.erase(token);
                             callData->localTokensByStringKey.erase(varName);
                         }
+                        if(prevValue)
+                        {
+                            prevValue->release();
+                        }
                         
                         
                         if(enclosingSetRef)
@@ -4031,14 +4035,11 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                             }
                         }
                         
-                        if(prevValue)
-                        {
-                            prevValue->release();
-                        }
                     }
                     else if(newValueToUse)
                     {
                         newValueToUse->release();
+                        newValueToUse = nullptr;
                     }
                 }
                 else
