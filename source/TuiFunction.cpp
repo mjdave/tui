@@ -3665,26 +3665,49 @@ void loadTokens(TuiTable* parent,
     for(auto& varNameAndToken : tokenMap->capturedTokensByVarName)
     {
         bool found = false;
-        TuiFunctionCallData* thisCallData = callData;
-        while(thisCallData)
+        
+        if(!found)
         {
-            if(thisCallData->localTokensByStringKey.count(varNameAndToken.first) != 0)
+            TuiTable* parentRef = parent;
+            while(parentRef)
             {
-                if(callData->localTokensByStringKey.count(varNameAndToken.first) == 0 || varNameAndToken.second != callData->localTokensByStringKey[varNameAndToken.first])
+                if(parentRef->objectsByStringKey.count(varNameAndToken.first) != 0)
                 {
-                    TuiRef* var = thisCallData->locals[thisCallData->localTokensByStringKey[varNameAndToken.first]];
+                    TuiRef* var = parentRef->objectsByStringKey[varNameAndToken.first];
                     
                     var->retain();
                     callData->locals[varNameAndToken.second] = var;
                     callData->localTokensByStringKey[varNameAndToken.first] = varNameAndToken.second;
                     found = true;
+                    break;
                 }
-                break;
+                parentRef = parentRef->parentTable;
             }
-            thisCallData = thisCallData->parentCallData;
         }
         
         if(!found)
+        {
+            TuiFunctionCallData* thisCallData = callData;
+            while(thisCallData)
+            {
+                if(thisCallData->localTokensByStringKey.count(varNameAndToken.first) != 0)
+                {
+                    if(callData->localTokensByStringKey.count(varNameAndToken.first) == 0 || varNameAndToken.second != callData->localTokensByStringKey[varNameAndToken.first])
+                    {
+                        TuiRef* var = thisCallData->locals[thisCallData->localTokensByStringKey[varNameAndToken.first]];
+                        
+                        var->retain();
+                        callData->locals[varNameAndToken.second] = var;
+                        callData->localTokensByStringKey[varNameAndToken.first] = varNameAndToken.second;
+                        found = true;
+                    }
+                    break;
+                }
+                thisCallData = thisCallData->parentCallData;
+            }
+        }
+        
+        /*if(!found)
         {
             TuiTable* parentRef = parent;
             while(parentRef)
@@ -3701,7 +3724,7 @@ void loadTokens(TuiTable* parent,
                 }
                 parentRef = parentRef->parentTable;
             }
-        }
+        }*/
     }
     
     for(auto& varNameAndToken : tokenMap->localTokensByVarName)
