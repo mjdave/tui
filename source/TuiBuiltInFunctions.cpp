@@ -181,7 +181,12 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
     rootTable->setFunction("load", [rootTable](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            TuiRef* loadedRef = TuiRef::loadString(((TuiString*)args->arrayObjects[0])->value, callingDebugInfo->fileName + Tui::string_format(":%d", callingDebugInfo->lineNumber), rootTable);
+            TuiTable* parentTable = nullptr;
+            if(args->arrayObjects.size() > 1 && args->arrayObjects[1]->type() == Tui_ref_type_TABLE)
+            {
+                parentTable = (TuiTable*)args->arrayObjects[1];
+            }
+            TuiRef* loadedRef = TuiRef::loadString(((TuiString*)args->arrayObjects[0])->value, callingDebugInfo->fileName + Tui::string_format(":%d", callingDebugInfo->lineNumber), parentTable);
             return loadedRef;
         }
         TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "load expected string");
