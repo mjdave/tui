@@ -80,7 +80,7 @@ public://functions
     virtual void printHumanReadableString(std::string& debugString, int indent = 0);
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset);
     
-    void set(const std::string& key, TuiRef* value)
+    void set(const std::string& key, TuiRef* value, bool useCopy = true)
     {
         if(objectsByStringKey.count(key) != 0)
         {
@@ -100,7 +100,7 @@ public://functions
         
         if(value && value->type() != Tui_ref_type_NIL)
         {
-            objectsByStringKey[key] = value->copy();
+            objectsByStringKey[key] = (useCopy ? value->copy() : value->retain());
         }
         
         if(onSet)
