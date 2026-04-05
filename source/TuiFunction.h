@@ -15,12 +15,15 @@
 
 class TuiTable;
 class TuiString;
+class TuiFunction;
 
 struct TuiFunctionCallData {
     TuiFunctionCallData* parentCallData = nullptr;
     TuiTable* parentTable = nullptr;
     std::map<std::string, uint32_t> localTokensByStringKey;
     std::map<uint32_t, TuiRef*> locals; //need to release
+    std::vector<TuiTable*> transientLoopTables;
+    std::vector<TuiFunction*> capturedFunctions;
 };
 
 
@@ -96,6 +99,7 @@ public: //class members
     std::function<TuiRef*(TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo)> func;
     
     TuiTokenMap tokenMap;
+    std::vector<TuiTable*> retainedTransientLoopTables;
     
     TuiDebugInfo debugInfo;
     uint32_t functionLineNumber; //save a copy so we can change it in debugInfo, which will save a string copy
@@ -111,7 +115,11 @@ public: //class functions
         return this;
     }
     
-    TuiFunction* trueCopy()
+    virtual void release();
+    void releaseAndRemoveTransientLoopTables();
+    void deleteIfNeeded();
+    
+    TuiFunction* trueCopy() //assumed to only be used for function construction from a pre-serialized prototype
     {
         TuiFunction* copied = new TuiFunction(parentTable);
         copied->argNames = argNames;

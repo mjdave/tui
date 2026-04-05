@@ -68,10 +68,31 @@ public://functions
     virtual bool boolValue() {return true;}
     virtual bool isEqual(TuiRef* other) {return other == this;}
     
-    virtual TuiRef* copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
+    virtual TuiRef* copy() //NOTE! This is not a true copy, use trueCopy() below. copy() is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
         retain();
         return this;
+    }
+    
+    TuiTable* trueCopy()
+    {
+        TuiTable* tableCopy = new TuiTable(parentTable);
+        tableCopy->arrayObjects = arrayObjects;
+        tableCopy->objectsByStringKey = objectsByStringKey;
+        tableCopy->objectsByNumberKey = objectsByNumberKey;
+        for(TuiRef* ref : arrayObjects)
+        {
+            tableCopy->arrayObjects.push_back(ref->copy());
+        }
+        for(auto& kv : objectsByNumberKey)
+        {
+            tableCopy->objectsByNumberKey[kv.first] = kv.second->copy();
+        }
+        for(auto& kv : objectsByStringKey)
+        {
+            tableCopy->objectsByStringKey[kv.first] = kv.second->copy();
+        }
+        return tableCopy;
     }
 
     

@@ -678,6 +678,20 @@ void addTableTable(TuiTable* rootTable)
         return TUI_NIL;
     });
     
+    //table.clone(table) does a shallow copy of the table, returning a new table with the same contents.
+    tableTable->setFunction("clone", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1)
+        {
+            TuiRef* tableRef = args->arrayObjects[0];
+            if(tableRef->type() != Tui_ref_type_TABLE)
+            {
+                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.clone expected table for first argument");
+                return TUI_NIL;
+            }
+            return ((TuiTable*)tableRef)->trueCopy();
+        }
+        return TUI_NIL;
+    });
     
     //table.sort(table, compareFunctionOrNil) sorts table in place, using optional compareFunction to compare objects. default compareFunction is function(a,b) { return a < b }
     tableTable->setFunction("sort", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {

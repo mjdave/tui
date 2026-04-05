@@ -1254,11 +1254,7 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
         s = tuiSkipToNextChar(s, debugInfo);
         s++;
         
-        parent = new TuiTable(parent);
-        
         TuiFunction* mjFunction = new TuiFunction(parent);
-        
-        parent->release();
         
         mjFunction->debugInfo.fileName = debugInfo->fileName;
         
@@ -1539,12 +1535,16 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 TuiFunction* functionCopy = baseFunctionVar->trueCopy();
                 baseFunctionVar->release();
                 
-                parent->retain();
-                if(functionCopy->parentTable)
-                {
-                    functionCopy->parentTable->release();
-                }
                 functionCopy->parentTable = parent;
+                
+                for(TuiTable* transientTable : callData->transientLoopTables)
+                {
+                    transientTable->retain();
+                    functionCopy->retain();
+                }
+                functionCopy->retainedTransientLoopTables = callData->transientLoopTables;
+                
+                callData->capturedFunctions.push_back(functionCopy);
                 
                 for(auto& varNameAndToken : functionCopy->tokenMap.capturedTokensByVarName)
                 {
@@ -2255,7 +2255,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     TuiRef* functionResult = ((TuiFunction*)child)->call(args, result, callData, debugInfo);
                     if(args)
                     {
-                        args->release();
+                        args->release(); //release 2, 5->4
                     }
                     
                     if(result && result->type() == functionResult->type() && result->type() != Tui_ref_type_BOOL && result->type() != Tui_ref_type_TABLE && result->type() != Tui_ref_type_FUNCTION)
@@ -3891,7 +3891,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     
                     parent->set(statement->varName, copiedValue, false); //set a new local
                     
-                    newValue->release();
+                    newValue->release(); //first release, 4->3
                     newValue = copiedValue;
                 }
             }
@@ -4057,6 +4057,8 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             TuiFunctionCallData scopedCallData;
             scopedCallData.parentCallData = callData;
             scopedCallData.parentTable = functionStateTable;
+            scopedCallData.transientLoopTables = callData->transientLoopTables;
+            scopedCallData.transientLoopTables.push_back(functionStateTable);
             
             loadTokens(functionStateTable, &forStatement->outerTokenMap, &scopedCallData);
             
@@ -4088,6 +4090,8 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     TuiFunctionCallData innerScopedCallData;
                     innerScopedCallData.parentCallData = &scopedCallData;
                     innerScopedCallData.parentTable = innerFunctionStateTable;
+                    innerScopedCallData.transientLoopTables = scopedCallData.transientLoopTables;
+                    innerScopedCallData.transientLoopTables.push_back(innerFunctionStateTable);
                     
                     loadTokens(innerFunctionStateTable, &forStatement->innerTokenMap, &innerScopedCallData);
                     
@@ -4110,9 +4114,14 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     
                     for(auto& tokenAndRef : innerScopedCallData.locals)
                     {
-                        tokenAndRef.second->release();
+                        tokenAndRef.second->release(); //release 3 4->3
                     }
+                    
                     innerFunctionStateTable->release();
+                    for(TuiFunction* capturedFunction : innerScopedCallData.capturedFunctions)
+                    {
+                        capturedFunction->releaseAndRemoveTransientLoopTables(); //delete if needed maybe, and if so remove retain when this is added //release 4 3->2
+                    }
                     
                     if(runResult || breakFound)
                     {
@@ -4130,6 +4139,8 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     TuiFunctionCallData innerScopedCallData;
                     innerScopedCallData.parentCallData = &scopedCallData;
                     innerScopedCallData.parentTable = innerFunctionStateTable;
+                    innerScopedCallData.transientLoopTables = scopedCallData.transientLoopTables;
+                    innerScopedCallData.transientLoopTables.push_back(innerFunctionStateTable);
                     
                     loadTokens(parent, &forStatement->innerTokenMap, &innerScopedCallData);
                     
@@ -4152,7 +4163,12 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     {
                         tokenAndRef.second->release();
                     }
+                    
                     innerFunctionStateTable->release();
+                    for(TuiFunction* capturedFunction : innerScopedCallData.capturedFunctions)
+                    {
+                        capturedFunction->releaseAndRemoveTransientLoopTables();
+                    }
                     
                     if(runResult || breakFound)
                     {
@@ -4161,7 +4177,16 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 }
             }
             
+            
+            for(auto& tokenAndRef : scopedCallData.locals)
+            {
+                tokenAndRef.second->release();
+            }
             functionStateTable->release();
+            for(TuiFunction* capturedFunction : scopedCallData.capturedFunctions)
+            {
+                capturedFunction->releaseAndRemoveTransientLoopTables();
+            }
             collectionRef->release();
             
             if(runResult)
@@ -4183,6 +4208,8 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             TuiFunctionCallData scopedCallData;
             scopedCallData.parentCallData = callData;
             scopedCallData.parentTable = functionStateTable;
+            scopedCallData.transientLoopTables = callData->transientLoopTables;
+            scopedCallData.transientLoopTables.push_back(functionStateTable);
             
             loadTokens(functionStateTable, &forStatement->outerTokenMap, &scopedCallData);
             
@@ -4205,6 +4232,8 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 TuiFunctionCallData innerScopedCallData;
                 innerScopedCallData.parentCallData = &scopedCallData;
                 innerScopedCallData.parentTable = innerFunctionStateTable;
+                innerScopedCallData.transientLoopTables = scopedCallData.transientLoopTables;
+                innerScopedCallData.transientLoopTables.push_back(innerFunctionStateTable);
                 
                 loadTokens(innerFunctionStateTable, &forStatement->innerTokenMap, &innerScopedCallData);
                 
@@ -4217,6 +4246,10 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     tokenAndRef.second->release();
                 }
                 innerFunctionStateTable->release();
+                for(TuiFunction* capturedFunction : innerScopedCallData.capturedFunctions)
+                {
+                    capturedFunction->releaseAndRemoveTransientLoopTables();
+                }
                 
                 
                 if(runResult || breakFound)
@@ -4246,7 +4279,17 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 continueResult->release();
             }
             
+            for(auto& tokenAndRef : scopedCallData.locals)
+            {
+                tokenAndRef.second->release();
+            }
+            
             functionStateTable->release();
+            for(TuiFunction* capturedFunction : scopedCallData.capturedFunctions)
+            {
+                capturedFunction->releaseAndRemoveTransientLoopTables();
+            }
+            
             
             if(runResult)
             {
@@ -4338,7 +4381,6 @@ TuiFunction::TuiFunction(TuiTable* parentTable_)
 :TuiRef()
 {
     parentTable = parentTable_;
-    parentTable->retain();
 }
 
 
@@ -4346,6 +4388,50 @@ TuiFunction::TuiFunction(std::function<TuiRef*(TuiTable* args, TuiRef* existingR
 :TuiRef()
 {
     func = func_;
+}
+
+
+void TuiFunction::deleteIfNeeded()
+{
+    if(refCount - retainedTransientLoopTables.size() == 0)
+    {
+#if DEBUG_CHECK_FOR_OVER_RELEASE
+        TuiError("Over release");
+#else
+        for(TuiTable* retainedTransientLoopTable : retainedTransientLoopTables)
+        {
+            retainedTransientLoopTable->release();
+        }
+        delete this;
+#endif
+    }
+}
+
+void TuiFunction::release()
+{
+    refCount--;
+    deleteIfNeeded();
+}
+
+void TuiFunction::releaseAndRemoveTransientLoopTables()
+{
+    refCount--;
+    if(refCount - retainedTransientLoopTables.size() == 0)
+    {
+#if DEBUG_CHECK_FOR_OVER_RELEASE
+        TuiError("Over release");
+#else
+        for(TuiTable* retainedTransientLoopTable : retainedTransientLoopTables)
+        {
+            retainedTransientLoopTable->release();
+        }
+        delete this;
+#endif
+    }
+    else
+    {
+        retainedTransientLoopTables.clear();
+    }
 }
 
 TuiFunction::~TuiFunction()
@@ -4357,11 +4443,6 @@ TuiFunction::~TuiFunction()
         {
             delete statement;
         }
-    }
-    
-    if(parentTable)
-    {
-        parentTable->release();
     }
     
     for(auto& tokenAndRef : tokenMap.refsByToken)
@@ -4407,6 +4488,8 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
         }
     }
     
+    loadTokens(parentTable, &tokenMap, &callData); //not sure if this is required
+    
     TuiRef* result = runStatementArray(statements,  existingResult, functionStateTable, &tokenMap, &callData, &debugInfo);
     if(result)
     {
@@ -4439,6 +4522,11 @@ TuiRef* TuiFunction::call(TuiTable* args,
         TuiFunctionCallData callData;
         callData.parentCallData = incomingCallData;
         callData.parentTable = parentTable;
+        if(incomingCallData)
+        {
+            callData.transientLoopTables = incomingCallData->transientLoopTables;
+        }
+        callData.transientLoopTables.push_back(functionStateTable);
         
         if(args)
         {
@@ -4468,7 +4556,18 @@ TuiRef* TuiFunction::call(TuiTable* args,
         
         TuiRef* result = runStatementArray(statements,  existingResult, functionStateTable, &tokenMap, &callData, &debugInfo);
         
+        
+        
+        for(auto& tokenAndRef : callData.locals)
+        {
+            tokenAndRef.second->release();
+        }
+        
         functionStateTable->release();
+        for(TuiFunction* capturedFunction : callData.capturedFunctions)
+        {
+            capturedFunction->releaseAndRemoveTransientLoopTables();
+        }
         
         
         return result;
