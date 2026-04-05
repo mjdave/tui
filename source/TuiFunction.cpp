@@ -4540,14 +4540,16 @@ TuiRef* TuiFunction::call(TuiTable* args,
                     continue;
                 }
                 const std::string& argName = argNames[i];
+                TuiRef* copiedArg = arg->copy();
                 if(tokenMap.capturedTokensByVarName.count(argName) != 0)
                 {
                     uint32_t token = tokenMap.capturedTokensByVarName[argName];
-                    arg->retain();
-                    callData.locals[token] = arg;
+                    copiedArg->retain();
+                    callData.locals[token] = copiedArg;
                     callData.localTokensByStringKey[argName] = token;
                 }
-                functionStateTable->set(argName, arg, false);
+                functionStateTable->set(argName, copiedArg, false);
+                copiedArg->release();
                 i++;
             }
         }
