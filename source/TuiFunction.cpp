@@ -4104,10 +4104,13 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     }
                     i++;
                     
-                    innerScopedCallData.locals[forStatement->objectInnerToken] = object;
-                    innerScopedCallData.localTokensByStringKey[forStatement->objectName] = forStatement->objectInnerToken;
-                    object->retain();
-                    innerFunctionStateTable->set(forStatement->objectName, object);
+                    if(object)
+                    {
+                        innerScopedCallData.locals[forStatement->objectInnerToken] = object;
+                        innerScopedCallData.localTokensByStringKey[forStatement->objectName] = forStatement->objectInnerToken;
+                        object->retain();
+                        innerFunctionStateTable->set(forStatement->objectName, object);
+                    }
                     
                     bool breakFound = false;
                     runResult = runStatementArray(forStatement->statements, result, innerFunctionStateTable, &forStatement->innerTokenMap, &innerScopedCallData, debugInfo, &breakFound);
