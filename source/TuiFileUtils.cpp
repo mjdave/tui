@@ -80,10 +80,10 @@ bool moveFile(const std::string& fromPath, const std::string& toPath)
                 removeFile(fromPath);
                 return true;
             }
-            TuiWarn("rename copyFileOrDir failed. fromPath:%s toPath:%s result:%d", fromPath.c_str(), toPath.c_str(), ec.message().c_str());
+            TuiWarn("rename copyFileOrDir failed. fromPath:%s toPath:%s result:%s", fromPath.c_str(), toPath.c_str(), ec.message().c_str());
             return false;
         }
-        TuiWarn("rename copyFileOrDir failed. fromPath:%s toPath:%s result:%d", fromPath.c_str(), toPath.c_str(), ec.message().c_str());
+        TuiWarn("rename copyFileOrDir failed. fromPath:%s toPath:%s result:%s", fromPath.c_str(), toPath.c_str(), ec.message().c_str());
         return false;
     }
     return true;
