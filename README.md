@@ -2,15 +2,15 @@
 
 tui is a small, cross platform, open source embeddable scripting language and serialization library for C++.
 
-***NOTE (March 2026): tui is not fully optimized and will still contain bugs. It does work pretty well now though, and is actively being used and improved as the foundation of the [katipo](https://github.com/mjdave/katipo) networking library.***
+***NOTE (April 2026): tui still has a few issues but is nearing feature completion and is actively being used and improved as the foundation of the [katipo](https://github.com/mjdave/katipo) networking library.***
 
 Created by a solo game developer to be fast, small, and easy to integrate and use, tui combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
 
 tui is dynamically typed, flexible, and lightweight. Data is shared in memory between tui and the host c++ program, allowing high performance data read/writes in both environments.
 
-Compared to a JSON serializer, tui adds a whole scripting language on top. It's also super fast, provides your data in thinly wrapped stl containers (eg std::map, std::vector), and populates the data for the host program to read immediately when parsed.
+Compared to JSON, tui adds a whole scripting language on top. It's also super fast, provides your data in thinly wrapped stl containers (eg std::map, std::vector), and populates the data for the host program to read immediately when parsed.
 
-Compared to lua, tui is generally slower (up to 10x slower in tight loops), but easier to integrate and bind, and (potentially) faster when sharing data between C++ and the scripting environment. It has a smaller footprint, but less language features, and has good, fast built-in table serialization.
+Compared to lua, tui is generally slower, but easier to integrate and bind, and (potentially) faster when sharing data between C++ and the scripting environment. It has a smaller footprint, but less language features, and has good, fast built-in table serialization to both binary and human readable formats.
 
 There is a [VSCode extension](https://github.com/PythooonUser/vscode-tui-language-support) that adds language support for tui too!
 
