@@ -5,7 +5,6 @@ example = {
     print("now we are creating a table")
 
     innerTable = {
-        print("and we've just created a new table inside that one.")
         exampleString = "This is a value inside it."
     }
     print("that table has been created. Here it is:")
@@ -44,6 +43,4 @@ example = {
     {
         print("Too bad haha! Your answer was (hopefully):", value)
     }
-
-    
 }
