@@ -3601,7 +3601,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         
                     default:
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "invalid value");
+                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "invalid left value:%s", leftResult->getDebugString().c_str());
                     }
                         break;
                 }
@@ -4369,6 +4369,10 @@ TuiRef* TuiFunction::runStatementArray(std::vector<TuiStatement*>& statements_,
 {
     for(TuiStatement* statement : statements_)
     {
+        if(breakFound && *breakFound)
+        {
+            return nullptr;
+        }
         TuiRef* newResult = TuiFunction::runStatement(statement, result, parent, tokenMap, callData, debugInfo, breakFound);
         if(newResult)
         {
