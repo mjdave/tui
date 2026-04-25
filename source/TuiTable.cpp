@@ -185,7 +185,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
             }
             else
             {
-                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "if statement expected '{'");
+                TuiParseError(debugInfo, "if statement expected '{'");
                 return false;
             }
         }
@@ -290,7 +290,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                             }
                             else
                             {
-                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else if statement expected '{'");
+                                TuiParseError(debugInfo, "else if statement expected '{'");
                                 return false;
                             }
                         }
@@ -302,7 +302,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                     }
                     else
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else statement expected 'if' or '{'");
+                        TuiParseError(debugInfo, "else statement expected 'if' or '{'");
                         return false;
                     }
                 }
@@ -456,7 +456,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
         {
             if(*s == '\n')
             {
-                debugInfo->lineNumber++;
+                debugInfo->currentLine->lineNumber++;
             }
             s++;
             *endptr = (char*)s;
@@ -470,7 +470,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
         }
         else if(*s != '\0')
         {
-           TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ',' or newline after '=' or ':' assignment. unexpected character loading table:%c", *s);
+           TuiParseError(debugInfo, "Expected ',' or newline after '=' or ':' assignment. unexpected character loading table:%c", *s);
             return false;
         }
         
@@ -517,7 +517,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
             
             if(*s == '\n')
             {
-                debugInfo->lineNumber++;
+                debugInfo->currentLine->lineNumber++;
             }
             
             if(valueRef)
@@ -543,7 +543,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
         }
         else if(*s != '\0')
         {
-            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpected character loading table:%c", *s);
+            TuiParseError(debugInfo, "unexpected character loading table:%c", *s);
         }
     }
     

@@ -165,6 +165,8 @@ type()          // returns the type name of the given object, eg. 'table', 'stri
 
 debug.getFileName()             // returns the current script file name or debug identifier string
 debug.getLineNumber()           // returns the line number in the current script file
+debug.break()                   // will trigger a breakpoint, but you first need to set it in your IDE in TuiBuiltInFunctions.cpp
+debug.backtrace()               // prints a backtrace
 
 table.count(table)                  // count of array objects
 table.insert(table, index, value)   // insert into an array, specifying the index. Will be filled with nil objects < index. Objects >= index are shifted
@@ -351,16 +353,12 @@ You can add the files to your c++ project, run a script, and access the output e
 
 int main()
 {
-    TuiTable* table = (TuiTable*)TuiRef::load("config.tui"); // load a JSON-like config file
+    TuiTable* table = (TuiTable*)TuiRef::runScriptFile("config.tui"); // load a human readable tui file
     std::string playerName = table->getString("playerName"); // get a string
     double playDuration = table->getDouble("playDuration"); // get a number
     table->setDouble("playDuration", playDuration + 1.0); // set a number
-    table->saveToFile("config.tui"); // save in a human readable JSON-like format
+    table->saveToFile("config.tui"); // save a human readable tui file
     table->release(); // cleanup
-
-    TuiRef* scriptRunResult = TuiRef::runScriptFile("script.tui"); // run a script file
-    scriptRunResult->debugLog(); // print the result
-    scriptRunResult->release(); // cleanup
 }
 
 ```
@@ -438,7 +436,7 @@ Tui is fast enough for all the high level code, all the structure, the stuff you
 
 This is a one-man project, though I'm keen for help! My name is Dave Frampton, I made the games Sapiens (C++/Lua) and The Blockheads (Objective C) using my own custom engines.
 
-tui was initially created to serialize and share data in C++ for my games, so it started life as a quick little JSON parser. Very soon though, missing the power of lua, I started adding variables and functions.
+Tui was initially created to serialize and share data in C++ for my games, so it started life as a quick little JSON parser. Very soon though, missing the power of lua, I started adding variables and functions.
 
 I feel tui could be useful for a lot of people for many different purposes. I don't desire to keep it only for myself or to profit from it, so I'm making it open source. 
 

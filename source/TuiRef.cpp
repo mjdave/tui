@@ -11,18 +11,32 @@ TuiBool* TUI_FALSE = new TuiBool(false);
 
 TuiRef* TuiRef::loadString(const std::string& inputString, const std::string& debugName, TuiTable* parent) {
     TuiDebugInfo debugInfo;
-    debugInfo.fileName = debugName;
+    TuiDebugInfoPush(&debugInfo, debugName, 1);
     const char* cString = inputString.c_str();
     char* endPtr;
     
     return TuiRef::load(cString, &endPtr, parent, &debugInfo);
 }
 
-TuiRef* TuiRef::load(const std::string& filename, TuiTable* parent) {
-    
-    std::ifstream in(filename.c_str(), std::ios::in | std::ios::binary);
+TuiRef* TuiRef::loadString(const std::string& inputString, TuiTable* parent, TuiDebugInfo* callingDebugInfo)
+{
     TuiDebugInfo debugInfo;
-    debugInfo.fileName = filename;
+    TuiDebugInfoCopy(callingDebugInfo, &debugInfo);
+    const char* cString = inputString.c_str();
+    char* endPtr;
+    
+    return TuiRef::load(cString, &endPtr, parent, &debugInfo);
+}
+
+TuiRef* TuiRef::runScriptFile(const std::string& path, TuiTable* parent, TuiDebugInfo* callingDebugInfo, TuiRef* resultRef)
+{
+    std::ifstream in(path.c_str(), std::ios::in | std::ios::binary);
+    TuiDebugInfo debugInfo;
+    if(callingDebugInfo)
+    {
+        TuiDebugInfoCopy(callingDebugInfo, &debugInfo);
+    }
+    TuiDebugInfoPush(&debugInfo, path, 1);
     if(in)
     {
         std::string contents;
@@ -33,15 +47,14 @@ TuiRef* TuiRef::load(const std::string& filename, TuiTable* parent) {
         in.close();
         const char* cString = contents.c_str();
         char* endPtr;
-        return TuiRef::load(cString, &endPtr, parent, &debugInfo);
+        return TuiRef::load(cString, &endPtr, parent, &debugInfo, &resultRef);
     }
     else
     {
-        TuiError("File not found in TuiRef::load at:%s", filename.c_str());
+        TuiError("File not found in TuiRef::runScriptFile at:%s", path.c_str());
     }
     return nullptr;
 }
-
 
 TuiRef* TuiRef::loadBinaryString(const char* inputString, int* currentOffset, TuiTable* parent)
 {
@@ -162,8 +175,6 @@ TuiRef* TuiRef::loadBinaryString(const std::string& inputString, TuiTable* paren
 TuiRef* TuiRef::loadBinary(const std::string& path, TuiTable* parent)
 {
     std::ifstream in(path.c_str(), std::ios::in | std::ios::binary);
-    TuiDebugInfo debugInfo;
-    debugInfo.fileName = path;
     if(in)
     {
         std::string contents;
@@ -182,31 +193,6 @@ TuiRef* TuiRef::loadBinary(const std::string& path, TuiTable* parent)
     return nullptr;
 }
 
-TuiRef* TuiRef::runScriptFile(const std::string& path, TuiTable* parent)
-{
-    std::ifstream in(path.c_str(), std::ios::in | std::ios::binary);
-    TuiDebugInfo debugInfo;
-    debugInfo.fileName = path;
-    if(in)
-    {
-        std::string contents;
-        in.seekg(0, std::ios::end);
-        contents.resize(in.tellg());
-        in.seekg(0, std::ios::beg);
-        in.read(&contents[0], contents.size());
-        in.close();
-        const char* cString = contents.c_str();
-        char* endPtr;
-        TuiRef* resultRef = nullptr;
-        TuiRef::load(cString, &endPtr, parent, &debugInfo, &resultRef);
-        return resultRef;
-    }
-    else
-    {
-        TuiError("File not found in TuiRef::runScriptFile at:%s", path.c_str());
-    }
-    return nullptr;
-}
 
 TuiRef* TuiRef::load(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef) {
     
@@ -410,7 +396,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
             
             if(!index || index->type() != Tui_ref_type_NUMBER)
             {
-                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid table index:%s", (index ? index->getDebugString().c_str() : "nil"));
+                TuiParseError(debugInfo, "Invalid table index:%s", (index ? index->getDebugString().c_str() : "nil"));
                 return nullptr;
             }
             
@@ -548,7 +534,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                     stringBuffer += '\v';
                     break;
                 default:
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Unrecognized escape code:%c", *s)
+                    TuiParseError(debugInfo, "Unrecognized escape code:%c", *s)
                     break;
             }
         }
@@ -560,7 +546,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
             {
                 if(debugInfo)
                 {
-                    debugInfo->lineNumber++;
+                    debugInfo->currentLine->lineNumber++;
                 }
             }
         }
@@ -640,7 +626,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                             resultRef = new TuiNumber(((TuiVec2*)varChainParent)->value.y);
                             break;
                         default:
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid value");
+                            TuiParseError(debugInfo, "Invalid value");
                             break;
                     }
                 }
@@ -659,7 +645,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                             resultRef = new TuiNumber(((TuiVec3*)varChainParent)->value.z);
                             break;
                         default:
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid value");
+                            TuiParseError(debugInfo, "Invalid value");
                             break;
                     }
                 }
@@ -681,7 +667,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                             resultRef = new TuiNumber(((TuiVec4*)varChainParent)->value.w);
                             break;
                         default:
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid value");
+                            TuiParseError(debugInfo, "Invalid value");
                             break;
                     }
                 }
@@ -763,7 +749,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
         }
         else if(isFunctionCall)
         {
-            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempt to call missing function:%s", stringBuffer.c_str());
+            TuiParseError(debugInfo, "Attempt to call missing function:%s", stringBuffer.c_str());
             return nullptr;
         }
         
@@ -833,7 +819,7 @@ TuiRef* TuiRef::loadValue(const char* str,
         
         if(keyString.empty())
         {
-            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Something went wrong");
+            TuiParseError(debugInfo, "Something went wrong");
         }
         
         TuiTable* parentToUse = parentTable->parentTable;
@@ -965,7 +951,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
             if(*s != ')')
             {
-                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Expected ')'");
+                TuiParseError(debugInfo, "Expected ')'");
                 return nullptr;
             }
             s++;
@@ -1001,7 +987,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                         break;
                         
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number or vector, got:%s", (rightValue ? rightValue->getDebugString().c_str() : "nil"));
+                        TuiParseError(debugInfo, "expected number or vector, got:%s", (rightValue ? rightValue->getDebugString().c_str() : "nil"));
                         break;
                 }
                 
@@ -1009,7 +995,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
             }
             else
             {
-                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number or vector, got:%s", (rightValue ? rightValue->getDebugString().c_str() : "nil"));
+                TuiParseError(debugInfo, "expected number or vector, got:%s", (rightValue ? rightValue->getDebugString().c_str() : "nil"));
             }
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
             
@@ -1121,13 +1107,13 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     }
                         break;
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        TuiParseError(debugInfo, "Invalid operator:%c", operatorChar);
                         break;
                 }
             }
             else
             {
-                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
+                TuiParseError(debugInfo, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
             }
             
             if(*s == ')')
@@ -1320,7 +1306,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     }
                         break;
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        TuiParseError(debugInfo, "Invalid operator:%c", operatorChar);
                         break;
                 }
             }
@@ -1355,7 +1341,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     }
                         break;
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        TuiParseError(debugInfo, "Invalid operator:%c", operatorChar);
                         break;
                 }
             }
@@ -1390,7 +1376,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     }
                         break;
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        TuiParseError(debugInfo, "Invalid operator:%c", operatorChar);
                         break;
                 }
             }
@@ -1425,7 +1411,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     }
                         break;
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        TuiParseError(debugInfo, "Invalid operator:%c", operatorChar);
                         break;
                 }
             }
@@ -1437,7 +1423,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     {
                         if(secondOperatorChar == '=')
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "number += string not supported");
+                            TuiParseError(debugInfo, "number += string not supported");
                             break;
                         }
                         else
@@ -1447,7 +1433,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     }
                         break;
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        TuiParseError(debugInfo, "Invalid operator:%c", operatorChar);
                         break;
                 }
             }
@@ -1485,7 +1471,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     }
                         break;
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        TuiParseError(debugInfo, "Invalid operator:%c", operatorChar);
                         break;
                 }
             }
@@ -1546,7 +1532,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     }
                         break;
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        TuiParseError(debugInfo, "Invalid operator:%c", operatorChar);
                         break;
                 }
             }
@@ -1584,7 +1570,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     }
                         break;
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        TuiParseError(debugInfo, "Invalid operator:%c", operatorChar);
                         break;
                 }
             }
@@ -1645,7 +1631,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     }
                         break;
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        TuiParseError(debugInfo, "Invalid operator:%c", operatorChar);
                         break;
                 }
             }
@@ -1683,7 +1669,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     }
                         break;
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        TuiParseError(debugInfo, "Invalid operator:%c", operatorChar);
                         break;
                 }
             }
@@ -1744,7 +1730,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
                     }
                         break;
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                        TuiParseError(debugInfo, "Invalid operator:%c", operatorChar);
                         break;
                 }
             }
@@ -1799,13 +1785,13 @@ TuiRef* TuiRef::loadExpression(const char* str,
                 }
                     break;
                 default:
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid operator:%c", operatorChar);
+                    TuiParseError(debugInfo, "Invalid operator:%c", operatorChar);
                     break;
             }
         }
         else
         {
-            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
+            TuiParseError(debugInfo, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
         }
     }
     
@@ -1839,7 +1825,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
         return result;
     }
     
-    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid expression");
+    TuiParseError(debugInfo, "Invalid expression");
     return nullptr;
 }
 

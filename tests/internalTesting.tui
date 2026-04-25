@@ -1,76 +1,28 @@
-#testCommon = require("testCommon.tui")
-#assert = testCommon.assert
-#getLineNumber = debug.getLineNumber
+testCommon = require("testCommon.tui")
+assert = testCommon.assert
+getLineNumber = debug.getLineNumber
 
+tempTestFile = require("tempTestFile.tui")
 
-#todo, this fails, maybe in a func, maybe with 45 as a var foo.var
-
-array = {}
-
-testVec = vec2(1.0,2.0)
+print("hello this is top level")
+debug.backtrace()
 
 testFunc = function()
 {
-    testVec.y += 1.0
-    table.insert(array, testVec)
+    innerFunc = function(stuff, otherFunc)
+    {
+        print("hello this is innerFunc")
+        debug.backtrace()
+    }
 
-    print("array:", array)
+    print("hello this is testFunc")
+    debug.backtrace()
+
+    innerFunc()
+
+    tempTestFile.testFunc()
+    print("testFunc done")
 }
-
-testFunc()
-testFunc()
-testFunc()
-testFunc()
-testFunc()
-testFunc()
 testFunc()
 
-#runTest = function()
-#{
-#    tableVar = {
-#        var = 512
-#    }
-#
-#    foo = {
-#        [45] = "something"
-#        [tableVar.var] = "something else"
-#    }
-#    print(foo)
-#    print(foo[45])
-#    print(foo[512])
-#    print(foo[tableVar.var])
-#}
-#
-#runTest()
-
-
-
-#print("copy")
-#result = file.copy("testData.tui", "testDataCopied.tui")
-#print("result:", result)
-#system("ls -la")
-#
-#print("move")
-#result = file.move("testDataCopied.tui", "testDataMoved.tui")
-#print("result:", result)
-#system("ls -la")
-#
-#
-#print("remove")
-#result = file.remove("testDataMoved.tui")
-#print("result:", result)
-#system("ls -la")
-
-
-#print("mkdir")
-#result = file.mkdir("testDir1/testDir2")
-#print("result:", result)
-#system("ls -la")
-#print("ls -la testDir1:")
-#system("ls -la testDir1")
-#
-#
-#print("remove")
-#result = file.remove("testDir1")
-#print("result:", result)
-#system("ls -la")
+print("done")

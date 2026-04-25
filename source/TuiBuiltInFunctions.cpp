@@ -160,19 +160,23 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
     rootTable->setFunction("require", [rootTable](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 0)
         {
+            TuiDebugInfo debugInfo;
+            TuiDebugInfoCopy(callingDebugInfo, &debugInfo);
+            
             TuiRef* getResourcePathFunc = ((TuiTable*)rootTable->get("file"))->get("getResourcePath");
             if(getResourcePathFunc)
             {
                 TuiRef* pathResult = ((TuiFunction*)getResourcePathFunc)->call("getResourcePathFunc", args->arrayObjects[0]);
                 if(pathResult)
                 {
-                    TuiRef* loadedRef = TuiRef::load(pathResult->getStringValue(), rootTable);
+                    
+                    TuiRef* loadedRef = TuiRef::runScriptFile(pathResult->getStringValue(), rootTable, &debugInfo);
                     pathResult->release();
                     return loadedRef;
                 }
                 return TUI_NIL;
             }
-            return TuiRef::load(Tui::getResourcePath(args->arrayObjects[0]->getStringValue(), callingDebugInfo->fileName), rootTable);
+            return TuiRef::runScriptFile(Tui::getResourcePath(args->arrayObjects[0]->getStringValue(), callingDebugInfo->currentLine->fileName), rootTable, &debugInfo);
         }
         return TUI_NIL;
     });
@@ -186,10 +190,12 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
             {
                 parentTable = (TuiTable*)args->arrayObjects[1];
             }
-            TuiRef* loadedRef = TuiRef::loadString(((TuiString*)args->arrayObjects[0])->value, callingDebugInfo->fileName + Tui::string_format(":%d", callingDebugInfo->lineNumber), parentTable);
+            TuiDebugInfo debugInfo;
+            TuiDebugInfoCopy(callingDebugInfo, &debugInfo);
+            TuiRef* loadedRef = TuiRef::loadString(((TuiString*)args->arrayObjects[0])->value, parentTable, callingDebugInfo);
             return loadedRef;
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "load expected string");
+        TuiParseError(callingDebugInfo, "load expected string");
         return TUI_NIL;
     });
     
@@ -199,8 +205,6 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
         std::string stringValue;
         std::getline(std::cin, stringValue);
         
-        TuiDebugInfo debugInfo;
-        debugInfo.fileName = "input";
         const char* cString = stringValue.c_str();
         char* endPtr;
         
@@ -305,7 +309,7 @@ void addStringTable(TuiTable* rootTable)
                         {
                             if(argIndex >= args->arrayObjects.size())
                             {
-                                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.format expected at least %d args", argIndex + 1);
+                                TuiParseError(callingDebugInfo, "string.format expected at least %d args", argIndex + 1);
                                 break;
                             }
                             TuiRef* arg = args->arrayObjects[argIndex++];
@@ -378,7 +382,7 @@ void addStringTable(TuiTable* rootTable)
             
             return new TuiString(result);
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.format expected string, args");
+        TuiParseError(callingDebugInfo, "string.format expected string, args");
         return TUI_NIL;
     });
     
@@ -387,7 +391,7 @@ void addStringTable(TuiTable* rootTable)
         {
             return new TuiNumber((((TuiString*)args->arrayObjects[0])->value).length());
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.length expected string");
+        TuiParseError(callingDebugInfo, "string.length expected string");
         return TUI_NIL;
     });
     
@@ -401,7 +405,7 @@ void addStringTable(TuiTable* rootTable)
             }
             return new TuiString((((TuiString*)args->arrayObjects[0])->value).substr(((TuiNumber*)args->arrayObjects[1])->value, length));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.length expected string, start index, optional length");
+        TuiParseError(callingDebugInfo, "string.length expected string, start index, optional length");
         return TUI_NIL;
     });
     
@@ -410,7 +414,7 @@ void addStringTable(TuiTable* rootTable)
         {
             return new TuiString(TuiSHA1::sha1(((TuiString*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.sha1 expected string");
+        TuiParseError(callingDebugInfo, "string.sha1 expected string");
         return TUI_NIL;
     });
     
@@ -431,7 +435,7 @@ void addStringTable(TuiTable* rootTable)
             }
             return new TuiNumber(location);
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.find expected string");
+        TuiParseError(callingDebugInfo, "string.find expected string");
         return TUI_NIL;
     });
     
@@ -445,7 +449,7 @@ void addStringTable(TuiTable* rootTable)
             std::string& delimString = ((TuiString*)args->arrayObjects[1])->value;
             if(delimString.length() != 1)
             {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.split: single split character expected, but got string of length:%d", (int)delimString.length());
+                TuiParseError(callingDebugInfo, "string.split: single split character expected, but got string of length:%d", (int)delimString.length());
                 return TUI_NIL;
             }
             char delim = delimString[0];
@@ -458,7 +462,7 @@ void addStringTable(TuiTable* rootTable)
             
             return result;
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.split expected string and split character");
+        TuiParseError(callingDebugInfo, "string.split expected string and split character");
         return TUI_NIL;
     });
     
@@ -472,7 +476,7 @@ void addStringTable(TuiTable* rootTable)
             return new TuiString(Tui::stringByReplacingString(((TuiString*)args->arrayObjects[0])->value, ((TuiString*)args->arrayObjects[1])->value, ((TuiString*)args->arrayObjects[2])->value));
         }
         
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.replace expected string, search string, and replace string");
+        TuiParseError(callingDebugInfo, "string.replace expected string, search string, and replace string");
         return TUI_NIL;
     });
     
@@ -486,7 +490,7 @@ void addStringTable(TuiTable* rootTable)
                 [](unsigned char c){ return std::tolower(c); });
             return result;
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.lower expected string");
+        TuiParseError(callingDebugInfo, "string.lower expected string");
         return TUI_NIL;
     });
     
@@ -500,7 +504,7 @@ void addStringTable(TuiTable* rootTable)
                 [](unsigned char c){ return std::toupper(c); });
             return result;
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.upper expected string");
+        TuiParseError(callingDebugInfo, "string.upper expected string");
         return TUI_NIL;
     });
     
@@ -528,7 +532,7 @@ void addStringTable(TuiTable* rootTable)
             
             return TUI_NIL;
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.eachChar expected string, charFunction");
+        TuiParseError(callingDebugInfo, "string.eachChar expected string, charFunction");
         return TUI_NIL;
     });
     
@@ -557,7 +561,7 @@ void addStringTable(TuiTable* rootTable)
             
             return TUI_NIL;
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "string.eachLine expected string, lineFunction");
+        TuiParseError(callingDebugInfo, "string.eachLine expected string, lineFunction");
         return TUI_NIL;
     });
     
@@ -580,7 +584,7 @@ void addTableTable(TuiTable* rootTable)
             TuiRef* tableRef = args->arrayObjects[0];
             if(tableRef->type() != Tui_ref_type_TABLE)
             {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.insert expected table for first argument. got:%s", tableRef->getTypeName().c_str());
+                TuiParseError(callingDebugInfo, "table.insert expected table for first argument. got:%s", tableRef->getTypeName().c_str());
                 return TUI_NIL;
             }
             
@@ -589,7 +593,7 @@ void addTableTable(TuiTable* rootTable)
                 TuiRef* indexObject = args->arrayObjects[1];
                 if(indexObject->type() != Tui_ref_type_NUMBER)
                 {
-                    TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.insert expected index for second argument. (object to add is third)");
+                    TuiParseError(callingDebugInfo, "table.insert expected index for second argument. (object to add is third)");
                     return TUI_NIL;
                 }
                 int addIndex = ((TuiNumber*)indexObject)->value;
@@ -606,7 +610,7 @@ void addTableTable(TuiTable* rootTable)
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.insert expected 2-3 args.");
+            TuiParseError(callingDebugInfo, "table.insert expected 2-3 args.");
         }
         return TUI_NIL;
     });
@@ -618,26 +622,26 @@ void addTableTable(TuiTable* rootTable)
             TuiRef* tableRef = args->arrayObjects[0];
             if(tableRef->type() != Tui_ref_type_TABLE)
             {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.remove expected table for first argument");
+                TuiParseError(callingDebugInfo, "table.remove expected table for first argument");
                 return TUI_NIL;
             }
             
             TuiRef* indexObject = args->arrayObjects[1];
             if(indexObject->type() != Tui_ref_type_NUMBER)
             {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.remove expected index for second argument.");
+                TuiParseError(callingDebugInfo, "table.remove expected index for second argument.");
                 return TUI_NIL;
             }
             int removeIndex = ((TuiNumber*)indexObject)->value;
             
             if(!((TuiTable*)tableRef)->remove(removeIndex))
             {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.remove index beyond bounds. index:%d array object count:%d", removeIndex, (int)((TuiTable*)tableRef)->arrayObjects.size());
+                TuiParseError(callingDebugInfo, "table.remove index beyond bounds. index:%d array object count:%d", removeIndex, (int)((TuiTable*)tableRef)->arrayObjects.size());
             }
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.remove expected table and index.");
+            TuiParseError(callingDebugInfo, "table.remove expected table and index.");
         }
         return TUI_NIL;
     });
@@ -649,7 +653,7 @@ void addTableTable(TuiTable* rootTable)
             TuiRef* tableRef = args->arrayObjects[0];
             if(tableRef->type() != Tui_ref_type_TABLE)
             {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.count expected table for first argument");
+                TuiParseError(callingDebugInfo, "table.count expected table for first argument");
                 return TUI_NIL;
             }
             
@@ -657,7 +661,7 @@ void addTableTable(TuiTable* rootTable)
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.count expected table argument");
+            TuiParseError(callingDebugInfo, "table.count expected table argument");
         }
         return TUI_NIL;
     });
@@ -669,7 +673,7 @@ void addTableTable(TuiTable* rootTable)
             TuiRef* tableRef = args->arrayObjects[0];
             if(tableRef->type() != Tui_ref_type_TABLE)
             {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.shuffle expected table for first argument");
+                TuiParseError(callingDebugInfo, "table.shuffle expected table for first argument");
                 return TUI_NIL;
             }
             auto& arrayObjects = ((TuiTable*)tableRef)->arrayObjects;
@@ -685,7 +689,7 @@ void addTableTable(TuiTable* rootTable)
             TuiRef* tableRef = args->arrayObjects[0];
             if(tableRef->type() != Tui_ref_type_TABLE)
             {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.clone expected table for first argument");
+                TuiParseError(callingDebugInfo, "table.clone expected table for first argument");
                 return TUI_NIL;
             }
             return ((TuiTable*)tableRef)->trueCopy();
@@ -700,7 +704,7 @@ void addTableTable(TuiTable* rootTable)
             TuiRef* tableRef = args->arrayObjects[0];
             if(tableRef->type() != Tui_ref_type_TABLE)
             {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "table.sort expected table for first argument");
+                TuiParseError(callingDebugInfo, "table.sort expected table for first argument");
                 return TUI_NIL;
             }
             auto& arrayObjects = ((TuiTable*)tableRef)->arrayObjects;
@@ -778,7 +782,7 @@ void addMathTable(TuiTable* rootTable)
                 }
                 else
                 {
-                    TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.random(max, optionalSeed) expected number or string for seed argument");
+                    TuiParseError(callingDebugInfo, "math.random(max, optionalSeed) expected number or string for seed argument");
                 }
             }
             else
@@ -823,7 +827,7 @@ void addMathTable(TuiTable* rootTable)
                 }
                 else
                 {
-                    TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.random(max, optionalSeed) expected number or string for seed argument");
+                    TuiParseError(callingDebugInfo, "math.random(max, optionalSeed) expected number or string for seed argument");
                 }
             }
             else
@@ -847,7 +851,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(pow(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.pow expected 2 numbers");
+        TuiParseError(callingDebugInfo, "math.pow expected 2 numbers");
         return TUI_NIL;
     });
     
@@ -856,7 +860,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(sin(((TuiNumber*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.sin expected number");
+        TuiParseError(callingDebugInfo, "math.sin expected number");
         return TUI_NIL;
     });
     
@@ -865,7 +869,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(cos(((TuiNumber*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.cos expected number");
+        TuiParseError(callingDebugInfo, "math.cos expected number");
         return TUI_NIL;
     });
     
@@ -874,7 +878,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(tan(((TuiNumber*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.tan expected number");
+        TuiParseError(callingDebugInfo, "math.tan expected number");
         return TUI_NIL;
     });
     
@@ -883,7 +887,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(asin(((TuiNumber*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.asin expected number");
+        TuiParseError(callingDebugInfo, "math.asin expected number");
         return TUI_NIL;
     });
     
@@ -892,7 +896,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(acos(((TuiNumber*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.acos expected number");
+        TuiParseError(callingDebugInfo, "math.acos expected number");
         return TUI_NIL;
     });
     
@@ -901,7 +905,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(atan(((TuiNumber*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.atan expected number");
+        TuiParseError(callingDebugInfo, "math.atan expected number");
         return TUI_NIL;
     });
     
@@ -910,7 +914,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(atan2(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.atan2 expected 2 numbers");
+        TuiParseError(callingDebugInfo, "math.atan2 expected 2 numbers");
         return TUI_NIL;
     });
     
@@ -919,7 +923,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(sqrt(((TuiNumber*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.sqrt expected number");
+        TuiParseError(callingDebugInfo, "math.sqrt expected number");
         return TUI_NIL;
     });
     
@@ -929,7 +933,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(exp(((TuiNumber*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.exp expected number");
+        TuiParseError(callingDebugInfo, "math.exp expected number");
         return TUI_NIL;
     });
     
@@ -938,7 +942,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(log(((TuiNumber*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.log expected number");
+        TuiParseError(callingDebugInfo, "math.log expected number");
         return TUI_NIL;
     });
     
@@ -947,7 +951,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(log10(((TuiNumber*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.log10 expected number");
+        TuiParseError(callingDebugInfo, "math.log10 expected number");
         return TUI_NIL;
     });
     
@@ -956,7 +960,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(floor(((TuiNumber*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.floor expected number");
+        TuiParseError(callingDebugInfo, "math.floor expected number");
         return TUI_NIL;
     });
     
@@ -965,7 +969,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(ceil(((TuiNumber*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.ceil expected number");
+        TuiParseError(callingDebugInfo, "math.ceil expected number");
         return TUI_NIL;
     });
     
@@ -974,7 +978,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(abs(((TuiNumber*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.abs expected number");
+        TuiParseError(callingDebugInfo, "math.abs expected number");
         return TUI_NIL;
     });
     
@@ -983,7 +987,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(fmod(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.fmod expected 2 numbers");
+        TuiParseError(callingDebugInfo, "math.fmod expected 2 numbers");
         return TUI_NIL;
     });
     
@@ -992,7 +996,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(max(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.max expected 2 numbers");
+        TuiParseError(callingDebugInfo, "math.max expected 2 numbers");
         return TUI_NIL;
     });
     
@@ -1001,7 +1005,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(min(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.min expected 2 numbers");
+        TuiParseError(callingDebugInfo, "math.min expected 2 numbers");
         return TUI_NIL;
     });
     
@@ -1010,7 +1014,7 @@ void addMathTable(TuiTable* rootTable)
         {
             return new TuiNumber(clamp(((TuiNumber*)args->arrayObjects[0])->value, ((TuiNumber*)args->arrayObjects[1])->value, ((TuiNumber*)args->arrayObjects[2])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.clamp expected 3 numbers");
+        TuiParseError(callingDebugInfo, "math.clamp expected 3 numbers");
         return TUI_NIL;
     });
     
@@ -1034,7 +1038,7 @@ void addMathTable(TuiTable* rootTable)
                 return new TuiVec4(mix(((TuiVec4*)args->arrayObjects[0])->value, ((TuiVec4*)args->arrayObjects[1])->value, ((TuiNumber*)args->arrayObjects[2])->value));
             }
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.mix expected 2 numbers or vectors and a number");
+        TuiParseError(callingDebugInfo, "math.mix expected 2 numbers or vectors and a number");
         return TUI_NIL;
     });
     
@@ -1052,7 +1056,7 @@ void addMathTable(TuiTable* rootTable)
                 return new TuiVec3(normalize(((TuiVec3*)args->arrayObjects[0])->value));
             }
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.normalize expected vec2 or vec3");
+        TuiParseError(callingDebugInfo, "math.normalize expected vec2 or vec3");
         return TUI_NIL;
     });
     
@@ -1068,7 +1072,7 @@ void addMathTable(TuiTable* rootTable)
                 return new TuiNumber(length(((TuiVec3*)args->arrayObjects[0])->value));
             }
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.length expected vec2 or vec3");
+        TuiParseError(callingDebugInfo, "math.length expected vec2 or vec3");
         return TUI_NIL;
     });
     
@@ -1084,7 +1088,7 @@ void addMathTable(TuiTable* rootTable)
                 return new TuiNumber(dot(((TuiVec3*)args->arrayObjects[0])->value, ((TuiVec3*)args->arrayObjects[0])->value));
             }
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.length2 expected vec2 or vec3");
+        TuiParseError(callingDebugInfo, "math.length2 expected vec2 or vec3");
         return TUI_NIL;
     });
     
@@ -1100,7 +1104,7 @@ void addMathTable(TuiTable* rootTable)
                 return new TuiNumber(dot(((TuiVec3*)args->arrayObjects[0])->value, ((TuiVec3*)args->arrayObjects[1])->value));
             }
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.dot expected two vec2 or vec3s");
+        TuiParseError(callingDebugInfo, "math.dot expected two vec2 or vec3s");
         return TUI_NIL;
     });
     
@@ -1112,7 +1116,7 @@ void addMathTable(TuiTable* rootTable)
                 return new TuiVec3(cross(((TuiVec3*)args->arrayObjects[0])->value, ((TuiVec3*)args->arrayObjects[1])->value));
             }
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "math.cross expected two vec3s");
+        TuiParseError(callingDebugInfo, "math.cross expected two vec3s");
         return TUI_NIL;
     });
 }
@@ -1134,7 +1138,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
             TuiRef* pathRef = args->arrayObjects[0];
             if(pathRef->type() != Tui_ref_type_STRING)
             {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.directoryContents expected string argument");
+                TuiParseError(callingDebugInfo, "file.directoryContents expected string argument");
                 return TUI_NIL;
             }
             
@@ -1152,7 +1156,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.directoryContents expected string argument");
+            TuiParseError(callingDebugInfo, "file.directoryContents expected string argument");
         }
     });
     
@@ -1162,7 +1166,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         {
             return new TuiString(TuiSHA1::from_file(((TuiString*)args->arrayObjects[0])->value));
         }
-        TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.sha1 expected string");
+        TuiParseError(callingDebugInfo, "file.sha1 expected string");
         return TUI_NIL;
     });
     
@@ -1170,11 +1174,11 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
     fileTable->setFunction("load", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return TuiRef::load(((TuiString*)args->arrayObjects[0])->value);
+            return TuiRef::runScriptFile(((TuiString*)args->arrayObjects[0])->value, nullptr, callingDebugInfo);
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.load expected string argument");
+            TuiParseError(callingDebugInfo, "file.load expected string argument");
         }
     });
     
@@ -1186,7 +1190,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.loadBinary expected string argument");
+            TuiParseError(callingDebugInfo, "file.loadBinary expected string argument");
         }
     });
     
@@ -1199,7 +1203,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.save expected string argument");
+            TuiParseError(callingDebugInfo, "file.save expected string argument");
         }
     });
     
@@ -1212,7 +1216,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.saveBinary expected string argument");
+            TuiParseError(callingDebugInfo, "file.saveBinary expected string argument");
         }
     });
     
@@ -1225,7 +1229,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.loadData expected string argument");
+            TuiParseError(callingDebugInfo, "file.loadData expected string argument");
         }
     });
     
@@ -1238,7 +1242,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.saveData expected 2 string arguments");
+            TuiParseError(callingDebugInfo, "file.saveData expected 2 string arguments");
         }
     });
     
@@ -1249,7 +1253,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
             TuiRef* pathRef = args->arrayObjects[0];
             if(pathRef->type() != Tui_ref_type_STRING)
             {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.isDirectory expected string argument");
+                TuiParseError(callingDebugInfo, "file.isDirectory expected string argument");
                 return TUI_NIL;
             }
             
@@ -1262,7 +1266,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.isDirectory expected string argument");
+            TuiParseError(callingDebugInfo, "file.isDirectory expected string argument");
         }
     });
     
@@ -1273,7 +1277,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.fileNameFromPath expected string argument");
+            TuiParseError(callingDebugInfo, "file.fileNameFromPath expected string argument");
         }
     });
     //file.extension(path) returns the extension including the '.' eg. "image.jpg" returns ".jpg"
@@ -1284,7 +1288,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.fileExtensionFromPath expected string argument");
+            TuiParseError(callingDebugInfo, "file.fileExtensionFromPath expected string argument");
         }
     });
     fileTable->setFunction("changeExtension", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
@@ -1294,7 +1298,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.changeExtensionForPath expected string argument");
+            TuiParseError(callingDebugInfo, "file.changeExtensionForPath expected string argument");
         }
     });
     fileTable->setFunction("removeExtension", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
@@ -1304,7 +1308,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.removeExtensionForPath expected string argument");
+            TuiParseError(callingDebugInfo, "file.removeExtensionForPath expected string argument");
         }
     });
     fileTable->setFunction("removeLastPathComponent", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
@@ -1314,7 +1318,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.pathByRemovingLastPathComponent expected string argument");
+            TuiParseError(callingDebugInfo, "file.pathByRemovingLastPathComponent expected string argument");
         }
     });
     
@@ -1326,7 +1330,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.fileSizeAtPath expected string argument");
+            TuiParseError(callingDebugInfo, "file.fileSizeAtPath expected string argument");
         }
     });
     
@@ -1338,7 +1342,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.fileExistsAtPath expected string argument");
+            TuiParseError(callingDebugInfo, "file.fileExistsAtPath expected string argument");
         }
     });
     
@@ -1350,7 +1354,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.isSymLinkAtPath expected string argument");
+            TuiParseError(callingDebugInfo, "file.isSymLinkAtPath expected string argument");
         }
     });
     
@@ -1363,7 +1367,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.createDirectoriesIfNeededForDirPath expected string argument");
+            TuiParseError(callingDebugInfo, "file.createDirectoriesIfNeededForDirPath expected string argument");
         }
     });
     
@@ -1376,7 +1380,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.createDirectoriesIfNeededForFilePath expected string argument");
+            TuiParseError(callingDebugInfo, "file.createDirectoriesIfNeededForFilePath expected string argument");
         }
     });
     
@@ -1388,7 +1392,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.getAbsolutePath expected string argument");
+            TuiParseError(callingDebugInfo, "file.getAbsolutePath expected string argument");
         }
     });
     
@@ -1404,7 +1408,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.isSubPath expected string argument");
+            TuiParseError(callingDebugInfo, "file.isSubPath expected string argument");
         }
     });
     
@@ -1416,7 +1420,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.move expected 2 string arguments");
+            TuiParseError(callingDebugInfo, "file.move expected 2 string arguments");
         }
         return TUI_FALSE;
     });
@@ -1437,7 +1441,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.remove expected string argument");
+            TuiParseError(callingDebugInfo, "file.remove expected string argument");
         }
         return TUI_FALSE;
     });
@@ -1451,7 +1455,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.copy expected 2 string arguments");
+            TuiParseError(callingDebugInfo, "file.copy expected 2 string arguments");
         }
         return TUI_FALSE;
     });
@@ -1465,7 +1469,7 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "file.mkdir expected string argument");
+            TuiParseError(callingDebugInfo, "file.mkdir expected string argument");
         }
         return TUI_FALSE;
     });
@@ -1485,12 +1489,12 @@ void addDebugTable(TuiTable* rootTable)
     
     //debug.getFileName() returns the current script file name or debug identifier string
     debugTable->setFunction("getFileName", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        return new TuiString(callingDebugInfo->fileName);
+        return new TuiString(callingDebugInfo->currentLine->fileName);
     });
     
     //debug.getLineNumber() returns the line number in the current script file
     debugTable->setFunction("getLineNumber", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        return new TuiNumber(callingDebugInfo->lineNumber);
+        return new TuiNumber(callingDebugInfo->currentLine->lineNumber);
     });
     
     
@@ -1498,6 +1502,14 @@ void addDebugTable(TuiTable* rootTable)
     debugTable->setFunction("break", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         return TUI_NIL;
     });
+    
+    //debug.backtrace() prints a backtrace
+    debugTable->setFunction("backtrace", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        TuiLog("debug.backtrace:");
+        TuiPrintDebugBacktrace(callingDebugInfo);
+        return TUI_NIL;
+    });
+    
 }
 
 

@@ -33,7 +33,7 @@ public://functions
     TuiTable(TuiTable* parentTable_ = nullptr) : TuiRef() {parentTable = parentTable_;}
     TuiTable(const std::string& tableString, TuiTable* parentTable_ = nullptr) : TuiRef() {
         TuiDebugInfo debugInfo;
-        debugInfo.fileName = "table string constructor";
+        TuiDebugInfoPush(&debugInfo, "table string construct", 1);
         const char* cString = tableString.c_str();
         char* endPtr;
         

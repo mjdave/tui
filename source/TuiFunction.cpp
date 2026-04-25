@@ -108,7 +108,7 @@ void serializeValue(const char* str,
                     stringBuffer += '\v';
                     break;
                 default:
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Unrecognized escape code:%c", *s)
+                    TuiParseError(debugInfo, "Unrecognized escape code:%c", *s)
                     break;
             }
         }
@@ -125,7 +125,7 @@ void serializeValue(const char* str,
         {
             if(*(s+1) == '.' && *s != '(' && *s != '[') // .. syntax eg. ..var
             {
-                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "\"..\" is not valid"); // .foo = x sets x on the closest parent which has a key 'foo', or a global on the root table if none exists
+                TuiParseError(debugInfo, "\"..\" is not valid"); // .foo = x sets x on the closest parent which has a key 'foo', or a global on the root table if none exists
             }
             else
             {
@@ -134,7 +134,7 @@ void serializeValue(const char* str,
                     uint32_t varToken = 0;
                     if(singleQuote || doubleQuote)
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unable to chain a quoted string");
+                        TuiParseError(debugInfo, "unable to chain a quoted string");
                     }
                     else
                     {
@@ -273,8 +273,7 @@ void serializeValue(const char* str,
         {
             expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_tableConstruct);
             TuiFunction* constructorFunction = new TuiFunction(parent);
-            constructorFunction->debugInfo.fileName = debugInfo->fileName;
-            constructorFunction->debugInfo.lineNumber = debugInfo->lineNumber;
+            TuiDebugInfoCopy(debugInfo, &constructorFunction->debugInfo);
             uint32_t constructorFunctionToken = tokenMap->tokenIndex++;
             expression->tokens.insert(expression->tokens.begin() + tokenPos++, constructorFunctionToken);
             tokenMap->refsByToken[constructorFunctionToken] = constructorFunction;
@@ -287,7 +286,7 @@ void serializeValue(const char* str,
             {
                 return;
             }
-            debugInfo->lineNumber = constructorFunction->debugInfo.lineNumber;
+            debugInfo->currentLine->lineNumber = constructorFunction->debugInfo.currentLine->lineNumber;
             s = tuiSkipToNextChar(*endptr, debugInfo, true);
             *endptr = (char*)s;
             break;
@@ -776,7 +775,7 @@ static TuiStatement* serializeBasicStatement(const char* str,
     
     if(expression->tokens.empty())
     {
-        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "unexpcted character:%c", *s);
+        TuiParseError(debugInfo, "unexpcted character:%c", *s);
         return nullptr;
     }
     
@@ -998,7 +997,7 @@ TuiStatement* TuiFunction::serializeForStatement(const char* str,
             }
             else
             {
-                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected ',' or 'in' or ':' in for loop");
+                TuiParseError(debugInfo, "expected ',' or 'in' or ':' in for loop");
             }
             s = tuiSkipToNextChar(s, debugInfo);
             
@@ -1051,7 +1050,7 @@ bool TuiFunction::serializeFunctionBody(const char* str,
     const char* s = str;
     if(*s != '{')
     {
-        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Function expected opening brace");
+        TuiParseError(debugInfo, "Function expected opening brace");
         return false;
     }
     s++;
@@ -1169,7 +1168,7 @@ bool TuiFunction::serializeFunctionBody(const char* str,
                     }
                     else
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "else statement expected 'if' or '{'");
+                        TuiParseError(debugInfo, "else statement expected 'if' or '{'");
                         return false;
                     }
                 }
@@ -1256,7 +1255,8 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
         
         TuiFunction* mjFunction = new TuiFunction(parent);
         
-        mjFunction->debugInfo.fileName = debugInfo->fileName;
+        TuiDebugInfoCopy(debugInfo, &mjFunction->debugInfo);
+        TuiDebugInfoPush(&mjFunction->debugInfo, debugInfo->currentLine->fileName, 1);
         
         std::string currentVarName = "";
         
@@ -1277,7 +1277,7 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
             {
                 if(*s == '\n')
                 {
-                    debugInfo->lineNumber++;
+                    debugInfo->currentLine->lineNumber++;
                 }
                 if(!currentVarName.empty())
                 {
@@ -1348,7 +1348,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 TuiFunction* functionVar = (TuiFunction*)runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 if(!functionVar || functionVar->type() != Tui_ref_type_FUNCTION)
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected function, got:%s", (functionVar ? functionVar->getDebugString().c_str() : "nil"));
+                    TuiParseError(debugInfo, "expected function, got:%s", (functionVar ? functionVar->getDebugString().c_str() : "nil"));
                     return nullptr;
                 }
                 (*tokenPos)++;
@@ -1405,7 +1405,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 
                 if(!x || x->type() != Tui_ref_type_NUMBER)
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "x component expected number, got:%s", (x ? x->getDebugString().c_str() : "nil"));
+                    TuiParseError(debugInfo, "x component expected number, got:%s", (x ? x->getDebugString().c_str() : "nil"));
                     return nullptr;
                 }
                 
@@ -1414,7 +1414,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 
                 if(!y || y->type() != Tui_ref_type_NUMBER)
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "y component expected number, got:%s", (y ? y->getDebugString().c_str() : "nil"));
+                    TuiParseError(debugInfo, "y component expected number, got:%s", (y ? y->getDebugString().c_str() : "nil"));
                     return nullptr;
                 }
                 
@@ -1445,7 +1445,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             
                             if(!z || z->type() != Tui_ref_type_NUMBER)
                             {
-                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "z component expected number, got:%s", (z ? z->getDebugString().c_str() : "nil"));
+                                TuiParseError(debugInfo, "z component expected number, got:%s", (z ? z->getDebugString().c_str() : "nil"));
                                 return nullptr;
                             }
                             
@@ -1476,7 +1476,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 
                                 if(!w || w->type() != Tui_ref_type_NUMBER)
                                 {
-                                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "w component expected number, got:%s", (w ? w->getDebugString().c_str() : "nil"));
+                                    TuiParseError(debugInfo, "w component expected number, got:%s", (w ? w->getDebugString().c_str() : "nil"));
                                     return nullptr;
                                 }
                                 if(result && result->type() == Tui_ref_type_VEC4)
@@ -1512,7 +1512,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 TuiFunction* functionVar = (TuiFunction*)runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 if(!functionVar || functionVar->type() != Tui_ref_type_FUNCTION)
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected function, got:%s", (functionVar ? functionVar->getDebugString().c_str() : "nil"));
+                    TuiParseError(debugInfo, "expected function, got:%s", (functionVar ? functionVar->getDebugString().c_str() : "nil"));
                     return nullptr;
                 }
                 
@@ -1528,7 +1528,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 TuiFunction* baseFunctionVar = (TuiFunction*)runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 if(!baseFunctionVar || baseFunctionVar->type() != Tui_ref_type_FUNCTION)
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected function, got:%s", (baseFunctionVar ? baseFunctionVar->getDebugString().c_str() : "nil"));
+                    TuiParseError(debugInfo, "expected function, got:%s", (baseFunctionVar ? baseFunctionVar->getDebugString().c_str() : "nil"));
                     return nullptr;
                 }
                 
@@ -1772,7 +1772,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         break;
                         
                     default:
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number or vector, got:%s", (leftResult ? leftResult->getDebugString().c_str() : "nil"));
+                        TuiParseError(debugInfo, "expected number or vector, got:%s", (leftResult ? leftResult->getDebugString().c_str() : "nil"));
                         break;
                 }
                 return nullptr;
@@ -1804,7 +1804,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         subTokenPos++;
                         if(expression->tokens[subTokenPos] == Tui_token_functionCall)
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Function call not supported here");
+                            TuiParseError(debugInfo, "Function call not supported here");
                         }
                         
                         TuiRef* keyConstant = runExpression(expression, &subTokenPos, nullptr, parent, tokenMap, callData, debugInfo);
@@ -1862,7 +1862,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             break;
                         default:
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "no '.' syntax supported for type:%s (might also be attempting to call a nil functon)", chainResult->getTypeName().c_str());
+                            TuiParseError(debugInfo, "no '.' syntax supported for type:%s (might also be attempting to call a nil functon)", chainResult->getTypeName().c_str());
                             return nullptr;
                         }
                             break;
@@ -1872,7 +1872,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     
                     /*if(!chainResult) //this catches false positives. A function call foo.bar() maybe returns no result, but has done its job
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to use '.' syntax on nil value");
+                        TuiParseError(debugInfo, "attempt to use '.' syntax on nil value");
                         return nullptr;
                     }*/
                     
@@ -2102,7 +2102,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             break;
                         default:
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "no '.' syntax supported for type:%s", parent->getTypeName().c_str());
+                            TuiParseError(debugInfo, "no '.' syntax supported for type:%s", parent->getTypeName().c_str());
                             return nullptr;
                         }
                             break;
@@ -2172,7 +2172,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 {
                     if(keyConstant->type() != Tui_ref_type_NUMBER)
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
+                        TuiParseError(debugInfo, "expected number");
                         return nullptr;
                     }
                     
@@ -2209,7 +2209,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 {
                     if(isFunctionCall)
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Attempting to call nil function:%s", (keyConstant ? keyConstant->getDebugString().c_str() : "nil"));
+                        TuiParseError(debugInfo, "Attempting to call nil function:%s", (keyConstant ? keyConstant->getDebugString().c_str() : "nil"));
                         return nullptr;
                     }
                     keyConstant->release();
@@ -2222,7 +2222,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     
                     if(child->type() != Tui_ref_type_FUNCTION)
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected function, got:%s", (child ? child->getDebugString().c_str() : "nil"));
+                        TuiParseError(debugInfo, "expected function, got:%s", (child ? child->getDebugString().c_str() : "nil"));
                         return nullptr;
                     }
                     
@@ -2322,7 +2322,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         if(rightResult->type() != leftType)
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
+                            TuiParseError(debugInfo, "expected number");
                             return nullptr;
                         }
                         
@@ -2370,7 +2370,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         if(rightResult->type() != leftType)
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected string");
+                            TuiParseError(debugInfo, "expected string");
                             return nullptr;
                         }
                         
@@ -2414,7 +2414,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         
                     default:
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
+                        TuiParseError(debugInfo, "expected number");
                         return nullptr;
                     }
                         break;
@@ -2461,7 +2461,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
                             if(rightResult->type() != Tui_ref_type_NUMBER)
                             {
-                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
+                                TuiParseError(debugInfo, "expected number");
                                 return nullptr;
                             }
                         }
@@ -2765,7 +2765,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     else
                     {
                         //leftResult = result;
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "invalid value");
+                        TuiParseError(debugInfo, "invalid value");
                         return nullptr;
                     }
                     
@@ -2773,7 +2773,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 
                 if(!leftResult)
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "invalid value");
+                    TuiParseError(debugInfo, "invalid value");
                     return nullptr;
                 }
                 
@@ -2809,7 +2809,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
                             if(!rightResult || (rightResult->type() != leftType && rightResult->type() != Tui_ref_type_STRING))
                             {
-                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number");
+                                TuiParseError(debugInfo, "expected number");
                                 return nullptr;
                             }
                             
@@ -2935,7 +2935,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         break;
                                         
                                     default:
-                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid token");
+                                        TuiParseError(debugInfo, "Invalid token");
                                         break;
                                 };
                             }
@@ -2957,7 +2957,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         if(!rightResult)
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected value");
+                            TuiParseError(debugInfo, "expected value");
                             return nullptr;
                         }
                         
@@ -3081,7 +3081,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         
                                     default:
                                     {
-                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec2");
+                                        TuiParseError(debugInfo, "attempt to add or subtract number from vec2");
                                         return nullptr;
                                     }
                                         break;
@@ -3125,7 +3125,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         break;
                                     default:
                                     {
-                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec2");
+                                        TuiParseError(debugInfo, "attempt to add or subtract number from vec2");
                                         return nullptr;
                                     }
                                         break;
@@ -3134,7 +3134,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         }
                         else
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected vec2 or number");
+                            TuiParseError(debugInfo, "expected vec2 or number");
                             return nullptr;
                         }
                         
@@ -3155,7 +3155,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         if(!rightResult)
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected value");
+                            TuiParseError(debugInfo, "expected value");
                             return nullptr;
                         }
                         
@@ -3279,7 +3279,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         
                                     default:
                                     {
-                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec3");
+                                        TuiParseError(debugInfo, "attempt to add or subtract number from vec3");
                                         return nullptr;
                                     }
                                         break;
@@ -3323,7 +3323,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         break;
                                     default:
                                     {
-                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec3");
+                                        TuiParseError(debugInfo, "attempt to add or subtract number from vec3");
                                         return nullptr;
                                     }
                                         break;
@@ -3332,7 +3332,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         }
                         else
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected vec2 or number");
+                            TuiParseError(debugInfo, "expected vec2 or number");
                             return nullptr;
                         }
                         
@@ -3353,7 +3353,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         if(!rightResult)
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected value");
+                            TuiParseError(debugInfo, "expected value");
                             return nullptr;
                         }
                         
@@ -3477,7 +3477,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         
                                     default:
                                     {
-                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec4");
+                                        TuiParseError(debugInfo, "attempt to add or subtract number from vec4");
                                         return nullptr;
                                     }
                                         break;
@@ -3521,7 +3521,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         break;
                                     default:
                                     {
-                                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "attempt to add or subtract number from vec4");
+                                        TuiParseError(debugInfo, "attempt to add or subtract number from vec4");
                                         return nullptr;
                                     }
                                         break;
@@ -3530,7 +3530,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         }
                         else
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected vec4 or number");
+                            TuiParseError(debugInfo, "expected vec4 or number");
                             return nullptr;
                         }
                         
@@ -3583,7 +3583,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                     break;
                                     
                                 default:
-                                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "Invalid token");
+                                    TuiParseError(debugInfo, "Invalid token");
                                     break;
                             };
                         }
@@ -3601,7 +3601,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         
                     default:
                     {
-                        TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "invalid left value:%s", leftResult->getDebugString().c_str());
+                        TuiParseError(debugInfo, "invalid left value:%s", leftResult->getDebugString().c_str());
                     }
                         break;
                 }
@@ -3793,7 +3793,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                         {
                             if(newValue->type() != Tui_ref_type_NUMBER)
                             {
-                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number when assigning vector sub-value, got:%s", (newValue ? newValue->getDebugString().c_str() : "nil"));
+                                TuiParseError(debugInfo, "expected number when assigning vector sub-value, got:%s", (newValue ? newValue->getDebugString().c_str() : "nil"));
                             }
                             switch(subTypeSetKey[0])
                             {
@@ -3815,7 +3815,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                         {
                             if(newValue->type() != Tui_ref_type_NUMBER)
                             {
-                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number when assigning vector sub-value, got:%s", (newValue ? newValue->getDebugString().c_str() : "nil"));
+                                TuiParseError(debugInfo, "expected number when assigning vector sub-value, got:%s", (newValue ? newValue->getDebugString().c_str() : "nil"));
                             }
                             switch(subTypeSetKey[0])
                             {
@@ -3840,7 +3840,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                         {
                             if(newValue->type() != Tui_ref_type_NUMBER)
                             {
-                                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected number when assigning vector sub-value, got:%s", (newValue ? newValue->getDebugString().c_str() : "nil"));
+                                TuiParseError(debugInfo, "expected number when assigning vector sub-value, got:%s", (newValue ? newValue->getDebugString().c_str() : "nil"));
                             }
                             switch(subTypeSetKey[0])
                             {
@@ -3866,7 +3866,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                             break;
                         default:
                         {
-                            TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected table or vec object when accessing sub-value, got:%s", (subTypeRef ? subTypeRef->getDebugString().c_str() : "nil"));
+                            TuiParseError(debugInfo, "expected table or vec object when accessing sub-value, got:%s", (subTypeRef ? subTypeRef->getDebugString().c_str() : "nil"));
                             return nullptr;
                         }
                             break;
@@ -4073,7 +4073,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             if(!collectionRef || collectionRef->type() != Tui_ref_type_TABLE)
             {
-                TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "expected table object, got:%s", (collectionRef ? collectionRef->getDebugString().c_str() : "nil"));
+                TuiParseError(debugInfo, "expected table object, got:%s", (collectionRef ? collectionRef->getDebugString().c_str() : "nil"));
                 return nullptr;
             }
             
@@ -4595,7 +4595,7 @@ TuiRef* TuiFunction::call(const std::string& debugName,
                           TuiRef* arg8)
 {
     TuiDebugInfo debugInfo;
-    debugInfo.fileName = debugName;
+    TuiDebugInfoPush(&debugInfo, debugName, 1);
     TuiTable* args = nullptr;
     if(arg1)
     {

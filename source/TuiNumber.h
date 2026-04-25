@@ -164,7 +164,7 @@ public://functions
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "uninitialized or non-number value in vec2 constructor:%c", *s);
+                    TuiParseError(debugInfo, "uninitialized or non-number value in vec2 constructor:%c", *s);
                     if(loadedValue)
                     {
                         loadedValue->release();
@@ -187,7 +187,7 @@ public://functions
                 }
                 else
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec2:%c", *s);
+                    TuiParseError(debugInfo, "found bad char when expecting ',' within vec2:%c", *s);
                     return nullptr;
                 }
             }
@@ -257,7 +257,7 @@ public://functions
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "uninitialized or non-number value in vec3 constructor:%c", *s);
+                    TuiParseError(debugInfo, "uninitialized or non-number value in vec3 constructor:%c", *s);
                     if(loadedValue)
                     {
                         loadedValue->release();
@@ -281,7 +281,7 @@ public://functions
                 }
                 else
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec3:%c", *s);
+                    TuiParseError(debugInfo, "found bad char when expecting ',' within vec3:%c", *s);
                     return nullptr;
                 }
             }
@@ -351,7 +351,7 @@ public://functions
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "uninitialized or non-number value in vec4 constructor:%c", *s);
+                    TuiParseError(debugInfo, "uninitialized or non-number value in vec4 constructor:%c", *s);
                     if(loadedValue)
                     {
                         loadedValue->release();
@@ -374,7 +374,7 @@ public://functions
                 }
                 else
                 {
-                    TuiParseError(debugInfo->fileName.c_str(), debugInfo->lineNumber, "found bad char when expecting ',' within vec4:%c", *s);
+                    TuiParseError(debugInfo, "found bad char when expecting ',' within vec4:%c", *s);
                     return nullptr;
                 }
             }

@@ -1,0 +1,5 @@
+testFunc = function()
+{
+    print("in tempTestFile testFunc")
+    debug.backtrace()
+}

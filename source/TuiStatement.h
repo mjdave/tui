@@ -79,10 +79,29 @@ struct TuiTokenMap {
     std::map<std::string, uint32_t> localTokensByVarName;
 };
 
-struct TuiDebugInfo {
+struct TuiDebugInfoLine {
     std::string fileName;
     int lineNumber = 1;
 };
+
+struct TuiDebugInfo {
+    TuiDebugInfoLine* currentLine = nullptr;
+    std::vector<TuiDebugInfoLine> lines;
+};
+
+inline void TuiDebugInfoPush(TuiDebugInfo* debugInfo, const std::string& fileName, int lineNumber)
+{
+    debugInfo->lines.resize(debugInfo->lines.size() + 1);
+    debugInfo->currentLine = &(debugInfo->lines[debugInfo->lines.size() - 1]);
+    debugInfo->currentLine->fileName = fileName;
+    debugInfo->currentLine->lineNumber = lineNumber;
+}
+
+inline void TuiDebugInfoCopy(TuiDebugInfo* src, TuiDebugInfo* dst)
+{
+    dst->lines = src->lines;
+    dst->currentLine = &(dst->lines[dst->lines.size() - 1]);
+}
 
 class TuiStatement {
 public: //members
