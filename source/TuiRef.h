@@ -27,7 +27,7 @@ inline void TuiPrintDebugBacktrace(TuiDebugInfo* debugInfo)
 {
     for(TuiDebugInfoLine& line : debugInfo->lines)
     {
-        TuiLog("in file:%s:%d", line.fileName.c_str(), line.lineNumber);
+        TuiLog("%s:%d", line.fileName.c_str(), line.lineNumber);
     }
 }
 

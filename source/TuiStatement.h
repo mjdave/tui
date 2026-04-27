@@ -97,6 +97,19 @@ inline void TuiDebugInfoPush(TuiDebugInfo* debugInfo, const std::string& fileNam
     debugInfo->currentLine->lineNumber = lineNumber;
 }
 
+inline void TuiDebugInfoPop(TuiDebugInfo* debugInfo)
+{
+    debugInfo->lines.resize(debugInfo->lines.size() - 1);
+    if(debugInfo->lines.empty())
+    {
+        debugInfo->currentLine = nullptr;
+    }
+    else
+    {
+        debugInfo->currentLine = &(debugInfo->lines[debugInfo->lines.size() - 1]);
+    }
+}
+
 inline void TuiDebugInfoCopy(TuiDebugInfo* src, TuiDebugInfo* dst)
 {
     dst->lines = src->lines;
@@ -106,7 +119,7 @@ inline void TuiDebugInfoCopy(TuiDebugInfo* src, TuiDebugInfo* dst)
 class TuiStatement {
 public: //members
     int refCount = 1;
-    TuiDebugInfo debugInfo;
+    TuiDebugInfoLine debugInfoLine;
     uint32_t type;
     std::string varName; //only stored for var assign statements
     TuiExpression* expression = nullptr;

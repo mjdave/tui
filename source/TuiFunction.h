@@ -101,8 +101,7 @@ public: //class members
     TuiTokenMap tokenMap;
     std::vector<TuiTable*> retainedTransientLoopTables;
     
-    TuiDebugInfo debugInfo;
-    uint32_t functionLineNumber; //save a copy so we can change it in debugInfo, which will save a string copy
+    TuiDebugInfoLine debugInfoLine;
     
 public: //class functions
     TuiFunction(TuiTable* parentTable_);
@@ -134,8 +133,7 @@ public: //class functions
         {
             tokenAndRef.second->retain();
         }
-        copied->debugInfo = debugInfo;
-        copied->functionLineNumber = functionLineNumber;
+        copied->debugInfoLine = debugInfoLine;
         return copied;
     }
     
