@@ -4323,7 +4323,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
         case Tui_statement_type_if:
         {
             TuiIfStatement* currentSatement = (TuiIfStatement*)statement;
-            TuiDebugInfoPush(callingDebugInfo, debugInfoLine->fileName, debugInfoLine->lineNumber);
             
             while(currentSatement)
             {
@@ -4343,7 +4342,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     
                     if(runResult)
                     {
-                        TuiDebugInfoPop(callingDebugInfo);
                         return runResult;
                     }
                     break;
@@ -4361,7 +4359,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                             TuiRef* runResult = runStatementArray(currentSatement->elseIfStatement->statements, result, parent, tokenMap, callData,callingDebugInfo, breakFound);
                             if(runResult)
                             {
-                                TuiDebugInfoPop(callingDebugInfo);
                                 return runResult;
                             }
                             break;
@@ -4373,8 +4370,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     }
                 }
             }
-            
-            TuiDebugInfoPop(callingDebugInfo);
         }
             break;
         default:

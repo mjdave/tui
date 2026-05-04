@@ -25,13 +25,30 @@ class TuiBool;
 
 inline void TuiPrintDebugBacktrace(TuiDebugInfo* debugInfo)
 {
-    for(TuiDebugInfoLine& line : debugInfo->lines)
+    for(int i = 0; i < debugInfo->lines.size(); i++)
     {
-        TuiLog("%s:%d", line.fileName.c_str(), line.lineNumber);
+        TuiDebugInfoLine& line = debugInfo->lines[i];
+        
+        std::string fileName = line.fileName;
+        
+        if(i == debugInfo->lines.size() - 1)
+        {
+            fileName = "Error:" + fileName;
+        }
+        else if(fileName.size() > 64)
+        {
+            fileName = "from:..." + fileName.substr(fileName.size() - 64);
+        }
+        else
+        {
+            fileName = "from:" + fileName;
+        }
+        
+        TuiLog("%s:%d", fileName.c_str(), line.lineNumber);
     }
 }
 
-#define TuiParseError(__debugInfo__, fmt__, ...) TuiPrintDebugBacktrace(__debugInfo__); TuiLog("\nError:" fmt__, ##__VA_ARGS__); abort(); //note this will exit the program due to the call to abort()
+#define TuiParseError(__debugInfo__, fmt__, ...) TuiPrintDebugBacktrace(__debugInfo__); TuiLog("Error:" fmt__, ##__VA_ARGS__); abort(); //note this will exit the program due to the call to abort()
 #define TuiParseWarn(__fileName__, __lineNumber__, fmt__, ...) TuiLog("\nfile:%s:%d\nWarning:" fmt__, __fileName__, __lineNumber__, ##__VA_ARGS__)
 
 enum {
