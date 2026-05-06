@@ -618,10 +618,12 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
                 if(secondOperatorChar == '+')
                 {
                     expression->tokens.insert(expression->tokens.begin() + tokenStartPos, Tui_token_increment);
+                    newOperatorLevel = Tui_operator_level_default;
                 }
                 else if(secondOperatorChar == '=')
                 {
                     expression->tokens.insert(expression->tokens.begin() + tokenStartPos, Tui_token_addInPlace);
+                    newOperatorLevel = Tui_operator_level_default;
                 }
                 else
                 {
@@ -634,10 +636,12 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
                 if(secondOperatorChar == '-')
                 {
                     expression->tokens.insert(expression->tokens.begin() + tokenStartPos, Tui_token_decrement);
+                    newOperatorLevel = Tui_operator_level_default;
                 }
                 else if(secondOperatorChar == '=')
                 {
                     expression->tokens.insert(expression->tokens.begin() + tokenStartPos, Tui_token_subtractInPlace);
+                    newOperatorLevel = Tui_operator_level_default;
                 }
                 else
                 {
@@ -650,6 +654,7 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
                 if(secondOperatorChar == '=')
                 {
                     expression->tokens.insert(expression->tokens.begin() + tokenStartPos, Tui_token_multiplyInPlace);
+                    newOperatorLevel = Tui_operator_level_default;
                 }
                 else
                 {
@@ -662,6 +667,7 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
                 if(secondOperatorChar == '=')
                 {
                     expression->tokens.insert(expression->tokens.begin() + tokenStartPos, Tui_token_divideInPlace);
+                    newOperatorLevel = Tui_operator_level_default;
                 }
                 else
                 {
