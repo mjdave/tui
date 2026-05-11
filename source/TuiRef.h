@@ -195,6 +195,44 @@ inline const char* tuiSkipToNextMatchingChar(const char* str, TuiDebugInfo* debu
     }
 }
 
+inline std::string getVariableNameForDebug(const char* str)
+{
+    const char* sTmp = str;
+    std::string keyString;
+    bool done = false;
+    while(!done)
+    {
+        switch (*sTmp) {
+            case '\0':
+            case ' ':
+            case '=':
+            case ',':
+            case ')':
+            case ']':
+            case '\n':
+            {
+                done = true;
+                break;
+            }
+            break;
+                
+            default:
+            {
+                if(TuiExpressionOperatorsSet.count(*sTmp) != 0)
+                {
+                    done = true;
+                    break;
+                }
+                
+                keyString += *sTmp;
+            }
+            break;
+        }
+        sTmp++;
+    }
+    return keyString;
+}
+
 inline bool checkSymbolNameComplete(const char* str)
 {
     return *tuiSkipToNextChar(str) != *str;

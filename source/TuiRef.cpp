@@ -1113,7 +1113,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
             }
             else
             {
-                TuiParseError(debugInfo, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
+                TuiParseError(debugInfo, "Invalid or unassigned value:%s for:%s", leftValue->getDebugString().c_str(), getVariableNameForDebug(str).c_str());
             }
             
             if(*s == ')')
@@ -1791,7 +1791,7 @@ TuiRef* TuiRef::loadExpression(const char* str,
         }
         else
         {
-            TuiParseError(debugInfo, "Invalid or unassigned value in expression:%s", leftValue->getDebugString().c_str());
+            TuiParseError(debugInfo, "Invalid or unassigned value:%s for:%s", leftValue->getDebugString().c_str(), getVariableNameForDebug(str).c_str());
         }
     }
     
