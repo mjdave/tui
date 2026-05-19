@@ -1,28 +1,20 @@
-testCommon = require("testCommon.tui")
-assert = testCommon.assert
-getLineNumber = debug.getLineNumber
+#testCommon = require("testCommon.tui")
+#assert = testCommon.assert
+#getLineNumber = debug.getLineNumber
 
-tempTestFile = require("tempTestFile.tui")
+#tempTestFile = require("tempTestFile.tui")
 
-print("hello this is top level")
-debug.backtrace()
+#nilFunc() #Attempt to call missing function 'nilFunc'
+#foo.nothing() #Attempt to call missing function 'nothing'. 'foo' is valid, but 'foo.nothing' is nil
+#foo.bar() #Expected function 'bar', found string. 'foo.bar' is not a function
+#bar.foo() #Attempt to use '.' to access from nil object 'bar'
 
 testFunc = function()
 {
-    innerFunc = function(stuff, otherFunc)
-    {
-        print("hello this is innerFunc")
-        debug.backtrace()
-    }
-
-    print("hello this is testFunc")
-    debug.backtrace()
-
-    innerFunc()
-
-    tempTestFile.testFunc()
-    print("testFunc done")
+    #nilFunc() #Attempt to call missing function 'nilFunc'
+    #foo.nothing() #Attempt to call missing function 'nothing'. 'foo' is valid, but 'foo.nothing' is nil
+    #foo.bar() #Expected function 'bar', found string. 'foo.bar' is not a function
+    #bar.foo() #Attempt to use '.' to access from nil object 'bar'
 }
-testFunc()
 
-print("done")
+testFunc()

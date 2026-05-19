@@ -1191,7 +1191,7 @@ bool TuiFunction::serializeFunctionBody(const char* str,
            && *(s + 2) == 't'
            && *(s + 3) == 'u'
            && *(s + 4) == 'r'
-           && *(s + 5) == 'n')
+           && *(s + 5) == 'n' && checkSymbolNameComplete(s + 6))
         {
             s+=6;
             s = tuiSkipToNextChar(s, debugInfo);
@@ -1220,7 +1220,7 @@ bool TuiFunction::serializeFunctionBody(const char* str,
            && *(s + 1) == 'r'
            && *(s + 2) == 'e'
            && *(s + 3) == 'a'
-           && *(s + 4) == 'k')
+           && *(s + 4) == 'k' && checkSymbolNameComplete(s + 5))
         {
             s+=5;
             s = tuiSkipToNextChar(s, debugInfo, true);
@@ -1355,7 +1355,27 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 TuiFunction* functionVar = (TuiFunction*)runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 if(!functionVar || functionVar->type() != Tui_ref_type_FUNCTION)
                 {
-                    TuiParseError(debugInfo, "expected function, got:%s", (functionVar ? functionVar->getDebugString().c_str() : "nil"));
+                    
+                    if(functionVar && functionVar->type() != Tui_ref_type_NIL)
+                    {
+                        TuiParseError(debugInfo, "Expected function, found %s.", (functionVar ? functionVar->getTypeName().c_str() : "nil"));
+                        return nullptr;
+                    }
+                    
+                    std::string funcNameText = "";
+                    
+                    if(expression->tokens.size() > *tokenPos)
+                    {
+                        for(auto& varNameAndToken : tokenMap->capturedTokensByVarName)
+                        {
+                            if(varNameAndToken.second == expression->tokens[*tokenPos])
+                            {
+                                funcNameText = " '" + varNameAndToken.first + "'";
+                            }
+                        }
+                    }
+                    
+                    TuiParseError(debugInfo, "Attempt to call missing function%s", funcNameText.c_str());
                     return nullptr;
                 }
                 (*tokenPos)++;
@@ -1868,8 +1888,29 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         }
                             break;
                         default:
-                        {
-                            TuiParseError(debugInfo, "no '.' syntax supported for type:%s (might also be attempting to call a nil functon)", chainResult->getTypeName().c_str());
+                        { //#Attempt to use '.' to access from nil object 'bar'
+                            
+                            std::string parentNameText = "";
+                            
+                            if(expression->tokens.size() - 1 > *tokenPos)
+                            {
+                                for(auto& varNameAndToken : tokenMap->capturedTokensByVarName)
+                                {
+                                    if(varNameAndToken.second == expression->tokens[*tokenPos - 1])
+                                    {
+                                        parentNameText = " '" + varNameAndToken.first + "'";
+                                    }
+                                }
+                            }
+                            
+                            if(chainResult->type() == Tui_ref_type_NIL)
+                            {
+                                TuiParseError(debugInfo, "Attempt to use '.' to access from nil object%s", parentNameText.c_str());
+                            }
+                            else
+                            {
+                                TuiParseError(debugInfo, "Attempt to use '.' to access from object%s of unsupported type:%s", parentNameText.c_str(), chainResult->getTypeName().c_str());
+                            }
                             return nullptr;
                         }
                             break;
@@ -2216,7 +2257,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 {
                     if(isFunctionCall)
                     {
-                        TuiParseError(debugInfo, "Attempting to call nil function:%s", (keyConstant ? keyConstant->getDebugString().c_str() : "nil"));
+                        TuiParseError(debugInfo, "Attempt to call missing function '%s'.", (keyConstant ? ((TuiString*)keyConstant)->value.c_str() : "nil"));
                         return nullptr;
                     }
                     keyConstant->release();
@@ -2225,13 +2266,14 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 
                 if(isFunctionCall)
                 {
-                    keyConstant->release();
                     
                     if(child->type() != Tui_ref_type_FUNCTION)
                     {
-                        TuiParseError(debugInfo, "expected function, got:%s", (child ? child->getDebugString().c_str() : "nil"));
+                        TuiParseError(debugInfo, "Expected function '%s', found %s. 'table.%s' is not a function", ((TuiString*)keyConstant)->value.c_str(), (child ? child->getTypeName().c_str() : "nil"), ((TuiString*)keyConstant)->value.c_str());
                         return nullptr;
                     }
+                    
+                    keyConstant->release();
                     
                     TuiTable* args = nullptr;
                     (*tokenPos)++;

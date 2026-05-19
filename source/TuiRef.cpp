@@ -264,7 +264,9 @@ static TuiRef* loadSingleValueInternal(const char* str,
                                        
                                        std::string* onSetKey, //watch out, using the existance of this var to allow "x":5 json quoted key names only. For values, a quoted string is not a valid variable name
                                        int* onSetIndex,
-                                       bool* accessedParentVariable)
+                                       bool* accessedParentVariable,
+                                       std::string& stringBuffer,
+                                       std::string debugVarChainParentName)
 {
     const char* s = str;
     
@@ -290,6 +292,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
         {
             s++;
             s = tuiSkipToNextChar(s, debugInfo);
+            std::string subStringBuffer;
             TuiRef* result = loadSingleValueInternal(s,
                                                      endptr,
                                                      nullptr,
@@ -299,7 +302,9 @@ static TuiRef* loadSingleValueInternal(const char* str,
                                                      
                                                      nullptr,
                                                      nullptr,
-                                                     accessedParentVariable);
+                                                     accessedParentVariable,
+                                                     subStringBuffer,
+                                                     "");
             if(result)
             {
                 bool newValue = !result->boolValue();
@@ -354,7 +359,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
         
         if(*s == 'n'
            && *(s + 1) == 'i'
-           && *(s + 2) == 'l')
+           && *(s + 2) == 'l' && checkSymbolNameComplete(s + 3))
         {
             s+=3;
             s = tuiSkipToNextChar(s, debugInfo, true);
@@ -365,7 +370,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
         else if(*s == 'n'
                 && *(s + 1) == 'u'
                 && *(s + 2) == 'l'
-                && *(s + 3) == 'l')
+                && *(s + 3) == 'l' && checkSymbolNameComplete(s + 4))
         {
             s+=4;
             s = tuiSkipToNextChar(s, debugInfo, true);
@@ -434,8 +439,6 @@ static TuiRef* loadSingleValueInternal(const char* str,
         }
     }
     
-    std::string stringBuffer;
-    
     bool singleQuote = false;
     bool doubleQuote = false;
     bool escaped = false;
@@ -443,6 +446,8 @@ static TuiRef* loadSingleValueInternal(const char* str,
     
     bool allowAsVariableName = true;
     bool isFunctionCall = false;
+    
+    bool foundAnyQuote = false;
     
     
     for(;; s++)
@@ -466,6 +471,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                     if(stringBuffer.empty())
                     {
                         singleQuote = true;
+                        foundAnyQuote = true;
                         allowAsVariableName = false;
                     }
                 }
@@ -492,6 +498,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                     {
                         doubleQuote = true;
                         allowAsVariableName = false;
+                        foundAnyQuote = true;
                     }
                 }
             }
@@ -706,6 +713,16 @@ static TuiRef* loadSingleValueInternal(const char* str,
         {
             if(isFunctionCall)
             {
+                if(resultRef->type() != Tui_ref_type_FUNCTION)
+                {
+                    std::string extraInfo = "";
+                    if(!debugVarChainParentName.empty())
+                    {
+                        extraInfo = " '" + debugVarChainParentName + "." + stringBuffer + "' is not a function";
+                    }
+                    TuiParseError(debugInfo, "Expected function '%s', found %s.%s", stringBuffer.c_str(), resultRef->getTypeName().c_str(), extraInfo.c_str());
+                    return nullptr;
+                }
                 TuiTable* argsArrayTable = new TuiTable(parent);//TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
                 
                 while(*s != ')')
@@ -749,14 +766,26 @@ static TuiRef* loadSingleValueInternal(const char* str,
         }
         else if(isFunctionCall)
         {
-            TuiParseError(debugInfo, "Attempt to call missing function:%s", stringBuffer.c_str());
+            std::string extraInfo = "";
+            if(!debugVarChainParentName.empty())
+            {
+                if(!varChainParent)
+                {
+                    extraInfo = " '" + debugVarChainParentName + "' is nil";
+                }
+                else
+                {
+                    extraInfo = " '" + debugVarChainParentName + "' is valid, but '" + debugVarChainParentName + "." + stringBuffer + "' is nil";
+                }
+            }
+            TuiParseError(debugInfo, "Attempt to call missing function '%s'.%s", stringBuffer.c_str(), extraInfo.c_str());
             return nullptr;
         }
         
         return nullptr;
     }
     
-    if(!stringBuffer.empty())
+    if(!stringBuffer.empty() || foundAnyQuote)
     {
         TuiString* tuiString = new TuiString(stringBuffer);
         return tuiString;
@@ -854,9 +883,11 @@ TuiRef* TuiRef::loadValue(const char* str,
                                                  accessedParentVariable);*/
     }
 
+    std::string debugVarChainParentName = "";
     while(1)
     {
-        result = loadSingleValueInternal(s, endptr, existingValue, parentTable, varChainParent, debugInfo, onSetKey, onSetIndex, accessedParentVariable);
+        std::string stringBuffer;
+        result = loadSingleValueInternal(s, endptr, existingValue, parentTable, varChainParent, debugInfo, onSetKey, onSetIndex, accessedParentVariable, stringBuffer, debugVarChainParentName);
         s = *endptr;
         
         if(*s == '.')
@@ -865,7 +896,21 @@ TuiRef* TuiRef::loadValue(const char* str,
             {
                 varChainParent->release();
             }
+            
+            if(!result)
+            {
+                std::string extraInfo = " '";
+                if(!debugVarChainParentName.empty())
+                {
+                    extraInfo += debugVarChainParentName + ".";
+                }
+                extraInfo += stringBuffer + "'";
+                
+                TuiParseError(debugInfo, "Attempt to use '.' to access from nil object%s", extraInfo.c_str());
+                return nullptr;
+            }
             varChainParent = result;
+            debugVarChainParentName = stringBuffer;
             s++;
         }
         else if(*s == '[')
@@ -873,7 +918,7 @@ TuiRef* TuiRef::loadValue(const char* str,
             if(varChainParent)
             {
                 varChainParent->release();
-            }
+            } //todo else
             varChainParent = result;
         }
         else

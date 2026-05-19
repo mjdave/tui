@@ -84,12 +84,12 @@ public://functions
     static TuiBool* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
         const char* s = tuiSkipToNextChar(str, debugInfo);
         
-        if(*s == 't' && *(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e' )
+        if(*s == 't' && *(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e' && checkSymbolNameComplete(s + 4))
         {
             *endptr = (char*)(s + 4);
             return TUI_TRUE;
         }
-        if(*s == 'f' && *(s + 1) == 'a' && *(s + 2) == 'l' && *(s + 3) == 's' && *(s + 4) == 'e' )
+        if(*s == 'f' && *(s + 1) == 'a' && *(s + 2) == 'l' && *(s + 3) == 's' && *(s + 4) == 'e' && checkSymbolNameComplete(s + 5))
         {
             *endptr = (char*)(s + 5);
             return TUI_FALSE;

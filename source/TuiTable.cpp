@@ -9,7 +9,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
        && *(s + 2) == 't'
        && *(s + 3) == 'u'
        && *(s + 4) == 'r'
-       && *(s + 5) == 'n')
+       && *(s + 5) == 'n' && checkSymbolNameComplete(s + 6))
     {
         s+=6;
         s = tuiSkipToNextChar(s, debugInfo, true);

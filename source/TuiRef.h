@@ -235,6 +235,10 @@ inline std::string getVariableNameForDebug(const char* str)
 
 inline bool checkSymbolNameComplete(const char* str)
 {
+    if(*str == '\0' || *str == '#' || *str == '\n' || *str == ',' || isspace(*str) || *str == ')' || *str == '}' || *str == ']' || TuiExpressionOperatorsSet.count(*str) != 0)
+    {
+        return true;
+    }
     return *tuiSkipToNextChar(str) != *str;
 }
 
