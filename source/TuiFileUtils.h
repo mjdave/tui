@@ -12,7 +12,7 @@
 namespace Tui {
 
 std::string getFileContents(const std::string& filename);
-void getFileContents(const std::string& filename, std::string* contents);
+bool getFileContents(const std::string& filename, std::string* contents);
 void writeToFile(const std::string& filename, const std::string& data);
 
 std::string getResourcePath(const std::string &appendPath = "");

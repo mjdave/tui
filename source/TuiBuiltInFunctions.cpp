@@ -1225,7 +1225,15 @@ void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir) //TODO! sa
     fileTable->setFunction("loadData", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return new TuiString(Tui::getFileContents(((TuiString*)args->arrayObjects[0])->value));
+            TuiString* result = new TuiString("");
+            bool success = Tui::getFileContents(((TuiString*)args->arrayObjects[0])->value, &(result->value));
+            if(!success)
+            {
+                result->release();
+                TuiWarn("file not found in file.loadData. path:%s", ((TuiString*)args->arrayObjects[0])->value.c_str());
+                return TUI_NIL;
+            }
+            return result;
         }
         else
         {

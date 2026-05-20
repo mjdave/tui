@@ -34,7 +34,7 @@ std::string getFileContents(const std::string& filename)
 }
 
 
-void getFileContents(const std::string& filename, std::string* contents)
+bool getFileContents(const std::string& filename, std::string* contents)
 {
     std::ifstream in((filename).c_str(), std::ios::in | std::ios::binary);
     if(in)
@@ -44,11 +44,11 @@ void getFileContents(const std::string& filename, std::string* contents)
         in.seekg(0, std::ios::beg);
         in.read(&((*contents)[0]), contents->size());
         in.close();
+        return true;
     }
-    else
-    {
-        *contents = "";
-    }
+    
+    *contents = "";
+    return false;
 }
 
 void writeToFile(const std::string& filename, const std::string& data)
