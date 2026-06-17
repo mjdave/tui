@@ -18,7 +18,12 @@ namespace Tui {
 
 std::string getFileContents(const std::string& filename)
 {
+#ifdef WIN32
+    std::filesystem::path fileSystemPath = std::filesystem::u8path(filename);
+    std::ifstream in(fileSystemPath, std::ios::in | std::ios::binary);
+#else
     std::ifstream in((filename).c_str(), std::ios::in | std::ios::binary);
+#endif
     if(in)
     {
         std::string contents;
@@ -36,7 +41,12 @@ std::string getFileContents(const std::string& filename)
 
 bool getFileContents(const std::string& filename, std::string* contents)
 {
+#ifdef WIN32
+    std::filesystem::path fileSystemPath = std::filesystem::u8path(filename);
+    std::ifstream in(fileSystemPath, std::ios::in | std::ios::binary);
+#else
     std::ifstream in((filename).c_str(), std::ios::in | std::ios::binary);
+#endif
     if(in)
     {
         in.seekg(0, std::ios::end);
@@ -53,14 +63,27 @@ bool getFileContents(const std::string& filename, std::string* contents)
 
 void writeToFile(const std::string& filename, const std::string& data)
 {
+
     std::string tmpFile = filename + ".tmp";
-    std::wofstream ofs(convertUtf8ToWide(tmpFile).c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
+
+#ifdef WIN32
+    std::filesystem::path fileSystemPath = std::filesystem::u8path(tmpFile);
+    std::ofstream ofs(fileSystemPath, std::ios::binary | std::ios::out | std::ios::trunc);
     if(ofs)
     {
-        ofs.write((const wchar_t*)data.data(), data.size());
+        ofs.write(data.data(), data.size());
         ofs.close();
         moveFile(tmpFile, filename);
     }
+#else
+    std::ofstream ofs((tmpFile).c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
+    if(ofs)
+    {
+        ofs.write(data.data(), data.size());
+        ofs.close();
+        moveFile(tmpFile, filename);
+    }
+#endif
 }
 
 bool moveFile(const std::string& fromPath, const std::string& toPath)
