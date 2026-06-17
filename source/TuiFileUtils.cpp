@@ -54,10 +54,10 @@ bool getFileContents(const std::string& filename, std::string* contents)
 void writeToFile(const std::string& filename, const std::string& data)
 {
     std::string tmpFile = filename + ".tmp";
-    std::ofstream ofs((tmpFile).c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
+    std::wofstream ofs(convertUtf8ToWide(tmpFile).c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
     if(ofs)
     {
-        ofs.write(data.data(), data.size());
+        ofs.write((const wchar_t*)data.data(), data.size());
         ofs.close();
         moveFile(tmpFile, filename);
     }
