@@ -19,7 +19,7 @@ public://functions
     virtual std::string getTypeName() {return "string";}
     virtual std::string getStringValue() {return value;}
     virtual double getNumberValue() {return atof(value.c_str());}
-    virtual bool boolValue() {return !value.empty();}
+    virtual bool boolValue() {return true;}
     virtual bool isEqual(TuiRef* other) {return other && other->type() == Tui_ref_type_STRING && ((TuiString*)other)->value == value;}
     
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) {
