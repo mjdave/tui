@@ -403,9 +403,16 @@ void addStringTable(TuiTable* rootTable)
             {
                 length = ((TuiNumber*)args->arrayObjects[2])->value;
             }
-            return new TuiString((((TuiString*)args->arrayObjects[0])->value).substr(((TuiNumber*)args->arrayObjects[1])->value, length));
+            int32_t pos = ((TuiNumber*)args->arrayObjects[1])->value;
+            TuiString* tuiString = (TuiString*)args->arrayObjects[0];
+            if(pos < 0 || pos >= tuiString->value.length())
+            {
+                TuiParseError(callingDebugInfo, "string.subString pos:%d invalid for string length:%d", pos, (int)(tuiString->value.length()));
+                return TUI_NIL;
+            }
+            return new TuiString(tuiString->value.substr(pos, length));
         }
-        TuiParseError(callingDebugInfo, "string.length expected string, start index, optional length");
+        TuiParseError(callingDebugInfo, "string.subString expected string, start index, optional length");
         return TUI_NIL;
     });
     
