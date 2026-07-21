@@ -130,7 +130,7 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
     // print(msg1, msg2, msg3, ...) print values, args are concatenated together
     rootTable->setFunction("print", tui_print);
     
-    // error(msg1, msg2, msg3, ...) print values, args are concatenated together, calls abort() to exit the program
+    // error(msg1, msg2, msg3, ...) print values, args are concatenated together, prints a backtrace, calls abort() to exit the program
     rootTable->setFunction("error", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 0)
         {
@@ -139,8 +139,7 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
             {
                 printString += arg->getDebugStringValue();
             }
-            TuiError("%s", printString.c_str());
-            abort();
+            TuiParseError(callingDebugInfo, "%s", printString.c_str());
         }
         return TUI_NIL;
     });

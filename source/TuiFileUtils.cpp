@@ -249,61 +249,29 @@ std::string fileExtensionFromPath(const std::string& path)
 
 std::string changeExtensionForPath(const std::string& path, const std::string& newExtension)
 {
-    std::vector<std::string> filePathComponents = splitString(normalizedPath(path), '/');
-    if(filePathComponents.size() > 0)
+    std::string pathWithoutExtension = path;
+    size_t lastPos = path.rfind(".");
+    if(lastPos != std::string::npos)
     {
-        std::vector<std::string> fileNameComponents = splitString(filePathComponents[filePathComponents.size() - 1], '.');
-        if(fileNameComponents.size() > 0)
-        {
-            std::string result = "";
-            if(path[0] == '/') //splitString got rid of this
-            {
-                result = "/";
-            }
-            for(int i = 0; i < filePathComponents.size() - 1; i++)
-            {
-                result = result + filePathComponents[i] + "/";
-            }
-            
-            if(newExtension[0] == '.')
-            {
-                result = result + fileNameComponents[0] + newExtension;
-            }
-            else
-            {
-                result = result + fileNameComponents[0] + "." + newExtension;
-            }
-            
-            return result;
-        }
+        pathWithoutExtension = path.substr(0, lastPos);
     }
-    TuiLog("Error in changeExtensionForPath for input path:%s", path.c_str());
-    return "";
+    
+    if(newExtension[0] != '.')
+    {
+        pathWithoutExtension += ".";
+    }
+    
+    return pathWithoutExtension + newExtension;
 }
 
 std::string removeExtensionForPath(const std::string& path)
 {
-    std::vector<std::string> filePathComponents = splitString(normalizedPath(path), '/');
-    if(filePathComponents.size() > 0)
+    size_t lastPos = path.rfind(".");
+    if(lastPos != std::string::npos)
     {
-        std::vector<std::string> fileNameComponents = splitString(filePathComponents[filePathComponents.size() - 1], '.');
-        if(fileNameComponents.size() > 0)
-        {
-            std::string result = "";
-            if(path[0] == '/') //splitString got rid of this
-            {
-                result = "/";
-            }
-            for(int i = 0; i < filePathComponents.size() - 1; i++)
-            {
-                result = result + filePathComponents[i] + "/";
-            }
-            
-            result = result + fileNameComponents[0];
-            
-            return result;
-        }
+        return path.substr(0, lastPos);
     }
+    
     TuiLog("Error in changeExtensionForPath for input path:%s", path.c_str());
     return "";
 }
