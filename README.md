@@ -159,6 +159,7 @@ exit(code)              // exits the program, code has default of 0
 readValue()             // reads input from the command line, serializing just the first value, doesn't (shouldn't!) call functions or load variables
 clear()                 // clears the console when run from a command line
 system(string)          // calls system() with the given string and returns the result code
+platform()              // returns a string representing the current running platform, currently one of: ios, macos, windows, linux
 
 require(path)   // loads the given tui file
 type()          // returns the type name of the given object, eg. 'table', 'string', 'number', 'vec4', 'bool'

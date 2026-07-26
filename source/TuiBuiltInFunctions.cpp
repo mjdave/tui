@@ -235,7 +235,7 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
 #elif defined (__LINUX__) || defined(__gnu_linux__) || defined(__linux__)
         system("clear");
     //std::cout<< u8"\033[2J\033[1;1H"; //Using ANSI Escape Sequences
-#elif (__APPLE__ && (!defined(TARGET_OS_IPHONE)))
+#elif (__APPLE__ && (!TARGET_OS_IPHONE))
         system("clear");
 #endif
         return TUI_NIL;
@@ -257,6 +257,19 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
             std::this_thread::sleep_for(std::chrono::duration<double>(((TuiNumber*)args->arrayObjects[0])->value));
         }
         return TUI_NIL;
+    });
+    
+    //platform() returns a string representing the current running platform, currently one of: ios, macos, windows, linux
+    rootTable->setFunction("platform", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+#if defined _WIN32
+        return new TuiString("windows");
+#elif defined (__LINUX__) || defined(__gnu_linux__) || defined(__linux__)
+        return new TuiString("linux");
+#elif TARGET_OS_IPHONE
+        return new TuiString("ios");
+#elif (__APPLE__)
+        return new TuiString("macos");
+#endif
     });
 }
 
