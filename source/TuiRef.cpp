@@ -119,6 +119,31 @@ TuiRef* TuiRef::loadBinaryString(const char* inputString, int* currentOffset, Tu
             return new TuiVec4(value);
         }
             break;
+        case Tui_binary_type_MAT3:
+        {
+            dmat3 value;
+            memcpy(&value[0].x, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value[0].y, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value[0].z, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value[1].x, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value[1].y, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value[1].z, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value[2].x, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value[2].y, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            memcpy(&value[2].z, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            
+            return new TuiMat3(value);
+        }
+            break;
         case Tui_binary_type_STRING:
         {
             uint32_t stringLength;
@@ -355,6 +380,12 @@ static TuiRef* loadSingleValueInternal(const char* str,
         if(vec4Ref)
         {
             return vec4Ref;
+        }
+        
+        TuiMat3* mat3Ref = TuiMat3::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        if(mat3Ref)
+        {
+            return mat3Ref;
         }
         
         if(*s == 'n'

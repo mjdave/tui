@@ -4,6 +4,8 @@
 #include <random>
 #include <thread>
 #include <chrono>
+#define GLM_ENABLE_EXPERIMENTAL
+#include "gtx/transform.hpp"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -1133,6 +1135,20 @@ void addMathTable(TuiTable* rootTable)
             if(args->arrayObjects[0]->type() == Tui_ref_type_VEC3 && args->arrayObjects[1]->type() == Tui_ref_type_VEC3)
             {
                 return new TuiVec3(cross(((TuiVec3*)args->arrayObjects[0])->value, ((TuiVec3*)args->arrayObjects[1])->value));
+            }
+        }
+        TuiParseError(callingDebugInfo, "math.cross expected two vec3s");
+        return TUI_NIL;
+    });
+    
+    
+    //math.rotate(angleDegrees, axisVec3) returns a mat3 rotation matrix
+    mathTable->setFunction("rotate", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 1)
+        {
+            if(args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_VEC3)
+            {
+                return new TuiMat3(rotate(((TuiNumber*)args->arrayObjects[0])->value, ((TuiVec3*)args->arrayObjects[1])->value));
             }
         }
         TuiParseError(callingDebugInfo, "math.cross expected two vec3s");

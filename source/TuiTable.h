@@ -189,6 +189,11 @@ public://functions
         arrayObjects.push_back(new TuiVec4(value));
     }
     
+    void pushMat3(const dmat3& value)
+    {
+        arrayObjects.push_back(new TuiMat3(value));
+    }
+    
     void insert(int insertIndex, TuiRef* value)
     {
         if(insertIndex < arrayObjects.size())
@@ -409,6 +414,31 @@ public://functions
     void setVec4(const std::string& key, const dvec4& value)
     {
         TuiVec4* ref = new TuiVec4(value);
+        set(key, ref);
+        ref->release();
+    }
+    
+    const dmat3& getMat3(const std::string& key)
+    {
+        static const dmat3 identity = dmat3(1.0);
+        if(objectsByStringKey.count(key) != 0)
+        {
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == Tui_ref_type_MAT3)
+            {
+                return ((TuiMat3*)ref)->value;
+            }
+            else
+            {
+                TuiError("Found incorrect type (%s) when loading expected vec4:%s", ref->getTypeName().c_str(), key.c_str());
+            }
+        }
+        return identity;
+    }
+    
+    void setMat3(const std::string& key, const dmat3& value)
+    {
+        TuiMat3* ref = new TuiMat3(value);
         set(key, ref);
         ref->release();
     }

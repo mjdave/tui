@@ -345,6 +345,50 @@ void serializeValue(const char* str,
                 }
             }
             
+            if(*s == 'm' && *(s + 1) == 'a' && *(s + 2) == 't' && *(s + 4) == '(')
+            {
+                int vecCount = 0;
+                switch(*(s + 3))
+                {
+                    case '3':
+                    {
+                        vecCount = 9;
+                        expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_mat3);
+                    }
+                        break;
+                    /*case '4':
+                    {
+                        vecCount = 16;
+                        expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_vec3);
+                    }
+                        break;*/
+                }
+                
+                if(vecCount > 0)
+                {
+                    foundBuiltInType = true;
+                    
+                    s+= 5;
+                    s = tuiSkipToNextChar(s, debugInfo);
+                    
+                    
+                    tokenPos++;
+                    
+                    int argCount = 0;
+                    while(*s != ')' && *s != '\0' && argCount < vecCount)
+                    {
+                        if(*s == ',')
+                        {
+                            s++;
+                            s = tuiSkipToNextChar(s, debugInfo);
+                        }
+                        TuiFunction::recursivelySerializeExpression(s, endptr, expression, parent, tokenMap, debugInfo, Tui_operator_level_default);
+                        s = tuiSkipToNextChar(*endptr, debugInfo);
+                        argCount++;
+                    }
+                }
+            }
+            
             TuiFunction* functionRef = TuiFunction::initWithHumanReadableString(s, endptr, parent, debugInfo);
             if(functionRef)
             {
@@ -1529,6 +1573,52 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             }
                         }
                         break;
+                }
+                
+            }
+                break;
+            case Tui_token_mat3:
+            {
+                double values[9];
+                for(int i= 0; i < 9; i++)
+                {
+                    (*tokenPos)++;
+                    TuiRef* x = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                    
+                    if(!x || x->type() != Tui_ref_type_NUMBER)
+                    {
+                        TuiParseError(debugInfo, "matrix component at index:%d expected number, got:%s", i, (x ? x->getDebugString().c_str() : "nil"));
+                        return nullptr;
+                    }
+                    
+                    values[i] = ((TuiNumber*)x)->value;
+                    x->release();
+                }
+                
+                if(result && result->type() == Tui_ref_type_MAT3)
+                {
+                    ((TuiMat3*)result)->value[0].x = values[0];
+                    ((TuiMat3*)result)->value[0].y = values[1];
+                    ((TuiMat3*)result)->value[0].z = values[2];
+                    ((TuiMat3*)result)->value[1].x = values[3];
+                    ((TuiMat3*)result)->value[1].y = values[4];
+                    ((TuiMat3*)result)->value[1].z = values[5];
+                    ((TuiMat3*)result)->value[2].x = values[6];
+                    ((TuiMat3*)result)->value[2].y = values[7];
+                    ((TuiMat3*)result)->value[2].z = values[8];
+                }
+                else
+                {
+                    TuiMat3* newResult = new TuiMat3(dmat3(values[0],
+                                                  values[1],
+                                                  values[2],
+                                                  values[3],
+                                                  values[4],
+                                                  values[5],
+                                                  values[6],
+                                                  values[7],
+                                                  values[8]));
+                    return newResult;
                 }
                 
             }

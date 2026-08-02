@@ -411,6 +411,125 @@ public://functions
     }
     
 private:
+};
+
+
+class TuiMat3 : public TuiRef {
+public: //members
+    dmat3 value;
+
+public://functions
+    TuiMat3(dmat3 value_) : TuiRef() {value = value_;}
+    virtual ~TuiMat3() {};
+    virtual TuiRef* copy()
+    {
+        return new TuiMat3(value);
+    }
+    virtual void assign(TuiRef* other) {
+        value = ((TuiMat3*)other)->value;
+    };
+    
+    static TuiMat3* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
+        const char* s = tuiSkipToNextChar(str, debugInfo);
+        
+        if(*s == 'm' && *(s + 1) == 'a' && *(s + 2) == 't' && *(s + 3) == '3' && *(s + 4) == '(')
+        {
+            s+= 5;
+            s = tuiSkipToNextChar(s, debugInfo);
+            
+            double values[9] = {0,0,0,0,0,0,0,0,0};
+            for(int i = 0; i < 9; i++)
+            {
+                TuiRef* loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, (TuiTable*)parent, debugInfo);
+                s = tuiSkipToNextChar(*endptr, debugInfo);
+                
+                if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
+                {
+                    TuiParseError(debugInfo, "uninitialized or non-number value in mat3 constructor:%c", *s);
+                    if(loadedValue)
+                    {
+                        loadedValue->release();
+                    }
+                    return nullptr;
+                }
+                
+                values[i] = ((TuiNumber*)loadedValue)->value;
+                loadedValue->release();
+                
+                if(*s == ',')
+                {
+                    s++;
+                    s = tuiSkipToNextChar(s, debugInfo);
+                }
+                else if(*s == ')' || *s == '\0')
+                {
+                    s++;
+                    break;
+                }
+                else
+                {
+                    TuiParseError(debugInfo, "found bad char when expecting ',' within mat3:%c", *s);
+                    return nullptr;
+                }
+            }
+            
+            s = tuiSkipToNextChar(s, debugInfo, true);
+            *endptr = (char*)s;
+            
+            return new TuiMat3(dmat3(values[0],
+                                     values[1],
+                                     values[2],
+                                     values[3],
+                                     values[4],
+                                     values[5],
+                                     values[6],
+                                     values[7],
+                                     values[8]));
+        }
+        
+        return nullptr;
+    }
+    
+    virtual uint8_t type() { return Tui_ref_type_MAT3; }
+    virtual std::string getTypeName() {return "mat3";}
+    virtual std::string getStringValue() {
+        return Tui::string_format("mat3((%s,%s,%s), (%s,%s,%s), (%s,%s,%s))",
+                                  Tui::doubleToString(value[0].x).c_str(),
+                                  Tui::doubleToString(value[0].y).c_str(),
+                                  Tui::doubleToString(value[0].z).c_str(),
+                                  Tui::doubleToString(value[1].x).c_str(),
+                                  Tui::doubleToString(value[1].y).c_str(),
+                                  Tui::doubleToString(value[1].z).c_str(),
+                                  Tui::doubleToString(value[2].x).c_str(),
+                                  Tui::doubleToString(value[2].y).c_str(),
+                                  Tui::doubleToString(value[2].z).c_str());
+    }
+    virtual bool boolValue() {return true;}
+    virtual bool isEqual(TuiRef* other) {return other && other->type() == Tui_ref_type_MAT3 && ((TuiMat3*)other)->value == value;}
+
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 73);
+        buffer[(*currentOffset)++] = Tui_binary_type_MAT3;
+        memcpy(&buffer[(*currentOffset)], &value[0].x, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value[0].y, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value[0].z, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value[1].x, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value[1].y, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value[1].z, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value[2].x, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value[2].y, 8);
+        *currentOffset += 8;
+        memcpy(&buffer[(*currentOffset)], &value[2].z, 8);
+        *currentOffset += 8;
+    }
     
 private:
 };
