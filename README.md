@@ -241,6 +241,14 @@ math.acos(x)
 math.atan(x)
 math.atan2(y,x)
 
+math.length(vec3)
+math.length2(vec3) //returns the length squared
+math.normalize(vec3) //returns the normalized result, leaves input unmodified
+math.dot(vec3, vec3)
+math.cross(vec3, vec3)
+
+math.rotate(angleDegrees, axisVec3) //returns a mat3 rotation matrix
+
 ```
 
 ### Supplying custom functions in C++
