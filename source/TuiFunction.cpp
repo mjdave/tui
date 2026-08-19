@@ -2423,7 +2423,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         {
                             *setKey = ((TuiString*)keyConstant)->value;
                         }
-                        else if(isNumberKey)
+                        else if(isNumberKey && setIndex)
                         {
                             *setIndex = ((TuiNumber*)keyConstant)->value;
                         }

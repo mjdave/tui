@@ -1151,7 +1151,7 @@ void addMathTable(TuiTable* rootTable)
                 return new TuiMat3(rotate(((TuiNumber*)args->arrayObjects[0])->value, ((TuiVec3*)args->arrayObjects[1])->value));
             }
         }
-        TuiParseError(callingDebugInfo, "math.cross expected two vec3s");
+        TuiParseError(callingDebugInfo, "math.rotate expected angleDegrees, axisVec3");
         return TUI_NIL;
     });
 }
