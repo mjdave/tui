@@ -1146,7 +1146,11 @@ void addMathTable(TuiTable* rootTable)
     mathTable->setFunction("rotate", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 1)
         {
-            if(args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_VEC3)
+            if(args->arrayObjects[0]->type() == Tui_ref_type_MAT3 && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER && args->arrayObjects[2]->type() == Tui_ref_type_VEC3)
+            {
+                return new TuiMat3(((TuiMat3*)args->arrayObjects[0])->value * dmat3(rotate(((TuiNumber*)args->arrayObjects[1])->value, ((TuiVec3*)args->arrayObjects[2])->value)));
+            }
+            else if(args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_VEC3)
             {
                 return new TuiMat3(rotate(((TuiNumber*)args->arrayObjects[0])->value, ((TuiVec3*)args->arrayObjects[1])->value));
             }

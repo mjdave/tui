@@ -247,6 +247,7 @@ math.dot(vec3, vec3)
 math.cross(vec3, vec3)
 
 math.rotate(angleDegrees, axisVec3) //returns a mat3 rotation matrix
+math.rotate(matrix, angleDegrees, axisVec3) //rotates a given mat3 rotation matrix by an angle and axis
 
 ```
 
