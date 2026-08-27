@@ -83,6 +83,38 @@ TuiRef* TuiRef::loadBinaryString(const char* inputString, int* currentOffset, Tu
             return new TuiNumber(value);
         }
             break;
+        case Tui_binary_type_NUMBER_8:
+        {
+            uint8_t value;
+            memcpy(&value, &inputString[(*currentOffset)], 1);
+            (*currentOffset)+=1;
+            return new TuiNumber8(value);
+        }
+            break;
+        case Tui_binary_type_NUMBER_16:
+        {
+            uint16_t value;
+            memcpy(&value, &inputString[(*currentOffset)], 2);
+            (*currentOffset)+=2;
+            return new TuiNumber16(value);
+        }
+            break;
+        case Tui_binary_type_NUMBER_32:
+        {
+            uint32_t value;
+            memcpy(&value, &inputString[(*currentOffset)], 4);
+            (*currentOffset)+=4;
+            return new TuiNumber32(value);
+        }
+            break;
+        case Tui_binary_type_NUMBER_64:
+        {
+            uint64_t value;
+            memcpy(&value, &inputString[(*currentOffset)], 8);
+            (*currentOffset)+=8;
+            return new TuiNumber64(value);
+        }
+            break;
         case Tui_binary_type_VEC2:
         {
             dvec2 value;

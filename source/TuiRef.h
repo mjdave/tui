@@ -66,6 +66,10 @@ enum {
     Tui_ref_type_USERDATA,
     Tui_ref_type_FUNCTION,
     Tui_ref_type_EXPRESSION,
+    Tui_ref_type_NUMBER_8,
+    Tui_ref_type_NUMBER_16,
+    Tui_ref_type_NUMBER_32,
+    Tui_ref_type_NUMBER_64
 };
 
 enum { // used when serializing to binary, changing any existing values will break backwards compatibility
@@ -82,6 +86,10 @@ enum { // used when serializing to binary, changing any existing values will bre
     Tui_binary_type_MAT3,
     Tui_binary_type_MAT4,
     Tui_binary_type_END_MARKER,
+    Tui_binary_type_NUMBER_8,
+    Tui_binary_type_NUMBER_16,
+    Tui_binary_type_NUMBER_32,
+    Tui_binary_type_NUMBER_64,
 };
 
 enum {

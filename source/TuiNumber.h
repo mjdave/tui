@@ -11,6 +11,12 @@
 
 using namespace glm;
 
+class TuiNumber8;
+class TuiNumber16;
+class TuiNumber32;
+class TuiNumber64;
+
+
 class TuiNumber : public TuiRef {
 public: //members
     double value;
@@ -49,11 +55,161 @@ public://functions
         memcpy(&buffer[(*currentOffset)], &value, 8);
         *currentOffset += 8;
     }
-    
+};
 
-private:
+
+//these integer types are only added for binary serializaton so far, they cannot yet be used from within tui scripts
+
+class TuiNumber8 : public TuiRef {
+public: //members
+    uint8_t value;
+
+public://functions
+    TuiNumber8(uint8_t value_) : TuiRef() {value = value_;}
+    virtual ~TuiNumber8() {};
     
-private:
+    virtual TuiRef* copy()
+    {
+        return new TuiNumber8(value);
+    }
+    virtual void assign(TuiRef* other) {
+        value = ((TuiNumber8*)other)->value;
+    };
+    
+    
+    virtual uint8_t type() { return Tui_ref_type_NUMBER_8; }
+    virtual std::string getTypeName() {return "number8";}
+    virtual std::string getStringValue() {
+        return Tui::string_format("%u", value);
+    }
+    virtual bool boolValue() {return true;}
+    virtual double getNumberValue() {return value;}
+    virtual bool isEqual(TuiRef* other) {return other && (
+      (other->type() == Tui_ref_type_NUMBER_8 && ((TuiNumber8*)other)->value == value))
+        ;}
+    
+    
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 2);
+        buffer[(*currentOffset)++] = Tui_binary_type_NUMBER_8;
+        memcpy(&buffer[(*currentOffset)], &value, 1);
+        *currentOffset += 1;
+    }
+};
+
+class TuiNumber16 : public TuiRef {
+public: //members
+    uint16_t value;
+
+public://functions
+    TuiNumber16(uint16_t value_) : TuiRef() {value = value_;}
+    virtual ~TuiNumber16() {};
+    
+    virtual TuiRef* copy()
+    {
+        return new TuiNumber16(value);
+    }
+    virtual void assign(TuiRef* other) {
+        value = ((TuiNumber16*)other)->value;
+    };
+    
+    
+    virtual uint8_t type() { return Tui_ref_type_NUMBER_16; }
+    virtual std::string getTypeName() {return "number16";}
+    virtual std::string getStringValue() {
+        return Tui::string_format("%lu", value);
+    }
+    virtual bool boolValue() {return true;}
+    virtual double getNumberValue() {return value;}
+    virtual bool isEqual(TuiRef* other) {return other && (
+      (other->type() == Tui_ref_type_NUMBER_16 && ((TuiNumber16*)other)->value == value))
+        ;}
+    
+    
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 3);
+        buffer[(*currentOffset)++] = Tui_binary_type_NUMBER_16;
+        memcpy(&buffer[(*currentOffset)], &value, 2);
+        *currentOffset += 2;
+    }
+};
+
+
+class TuiNumber32 : public TuiRef {
+public: //members
+    uint32_t value;
+
+public://functions
+    TuiNumber32(uint32_t value_) : TuiRef() {value = value_;}
+    virtual ~TuiNumber32() {};
+    
+    virtual TuiRef* copy()
+    {
+        return new TuiNumber32(value);
+    }
+    virtual void assign(TuiRef* other) {
+        value = ((TuiNumber32*)other)->value;
+    };
+    
+    
+    virtual uint8_t type() { return Tui_ref_type_NUMBER_32; }
+    virtual std::string getTypeName() {return "number32";}
+    virtual std::string getStringValue() {
+        return Tui::string_format("%lu", value);
+    }
+    virtual bool boolValue() {return true;}
+    virtual double getNumberValue() {return value;}
+    virtual bool isEqual(TuiRef* other) {return other && (
+      (other->type() == Tui_ref_type_NUMBER_32 && ((TuiNumber32*)other)->value == value))
+        ;}
+    
+    
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 5);
+        buffer[(*currentOffset)++] = Tui_binary_type_NUMBER_32;
+        memcpy(&buffer[(*currentOffset)], &value, 4);
+        *currentOffset += 4;
+    }
+};
+
+
+class TuiNumber64 : public TuiRef {
+public: //members
+    uint64_t value;
+
+public://functions
+    TuiNumber64(uint64_t value_) : TuiRef() {value = value_;}
+    virtual ~TuiNumber64() {};
+    
+    virtual TuiRef* copy()
+    {
+        return new TuiNumber64(value);
+    }
+    virtual void assign(TuiRef* other) {
+        value = ((TuiNumber64*)other)->value;
+    };
+    
+    virtual uint8_t type() { return Tui_ref_type_NUMBER_64; }
+    virtual std::string getTypeName() {return "number64";}
+    virtual std::string getStringValue() {
+        return Tui::string_format("%llu", value);
+    }
+    virtual bool boolValue() {return true;}
+    virtual double getNumberValue() {return value;}
+    virtual bool isEqual(TuiRef* other) {return other && (
+      (other->type() == Tui_ref_type_NUMBER_64 && ((TuiNumber64*)other)->value == value))
+        ;}
+    
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 9);
+        buffer[(*currentOffset)++] = Tui_binary_type_NUMBER_64;
+        memcpy(&buffer[(*currentOffset)], &value, 8);
+        *currentOffset += 8;
+    }
 };
 
 class TuiBool;
