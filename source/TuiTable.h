@@ -514,6 +514,11 @@ public://functions
         ref->release();
     }
     
+    void setFunction(const std::string& key, TuiFunction* value)
+    {
+        set(key, value);
+    }
+    
     void* getUserData(const std::string& key)
     {
         if(objectsByStringKey.count(key) != 0)
