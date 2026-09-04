@@ -467,6 +467,102 @@ public://functions
         ref->release();
     }
     
+    uint8_t getInt8(const std::string& key)
+    {
+        if(objectsByStringKey.count(key) != 0)
+        {
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == Tui_ref_type_NUMBER_8)
+            {
+                return ((TuiNumber8*)ref)->value;
+            }
+            else
+            {
+                TuiError("Found incorrect type (%s) when loading expected int8:%s", ref->getTypeName().c_str(), key.c_str());
+            }
+        }
+        return 0;
+    }
+    
+    void setInt8(const std::string& key, uint8_t value)
+    {
+        TuiNumber8* ref = new TuiNumber8(value);
+        set(key, ref);
+        ref->release();
+    }
+    
+    void setInt16(const std::string& key, uint16_t value)
+    {
+        TuiNumber16* ref = new TuiNumber16(value);
+        set(key, ref);
+        ref->release();
+    }
+    
+    uint16_t getInt16(const std::string& key)
+    {
+        if(objectsByStringKey.count(key) != 0)
+        {
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == Tui_ref_type_NUMBER_16)
+            {
+                return ((TuiNumber16*)ref)->value;
+            }
+            else
+            {
+                TuiError("Found incorrect type (%s) when loading expected int16:%s", ref->getTypeName().c_str(), key.c_str());
+            }
+        }
+        return 0;
+    }
+    
+    void setInt32(const std::string& key, uint32_t value)
+    {
+        TuiNumber32* ref = new TuiNumber32(value);
+        set(key, ref);
+        ref->release();
+    }
+    
+    uint32_t getInt32(const std::string& key)
+    {
+        if(objectsByStringKey.count(key) != 0)
+        {
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == Tui_ref_type_NUMBER_32)
+            {
+                return ((TuiNumber32*)ref)->value;
+            }
+            else
+            {
+                TuiError("Found incorrect type (%s) when loading expected int32:%s", ref->getTypeName().c_str(), key.c_str());
+            }
+        }
+        return 0;
+    }
+    
+    void setInt64(const std::string& key, uint64_t value)
+    {
+        TuiNumber64* ref = new TuiNumber64(value);
+        set(key, ref);
+        ref->release();
+    }
+    
+    uint32_t getInt64(const std::string& key)
+    {
+        if(objectsByStringKey.count(key) != 0)
+        {
+            TuiRef* ref = objectsByStringKey[key];
+            if(ref->type() == Tui_ref_type_NUMBER_64)
+            {
+                return ((TuiNumber64*)ref)->value;
+            }
+            else
+            {
+                TuiError("Found incorrect type (%s) when loading expected int64:%s", ref->getTypeName().c_str(), key.c_str());
+            }
+        }
+        return 0;
+    }
+    
     bool getBool(const std::string& key)
     {
         if(objectsByStringKey.count(key) != 0)

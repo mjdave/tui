@@ -200,13 +200,18 @@ TuiRef* TuiRef::loadBinaryString(const char* inputString, int* currentOffset, Tu
             }
             (*currentOffset)++;
             
-            //todo objectsByNumberKey
-            
             while(inputString[(*currentOffset)] != Tui_binary_type_END_MARKER)
             {
                 TuiRef* keyObject = TuiRef::loadBinaryString(inputString, currentOffset);
                 TuiRef* valueObject = TuiRef::loadBinaryString(inputString, currentOffset);
-                table->set(((TuiString*)keyObject)->value, valueObject);
+                if(keyObject->type() == Tui_ref_type_NUMBER_32)
+                {
+                    table->set(((TuiNumber32*)keyObject)->value, valueObject);
+                }
+                else
+                {
+                    table->set(((TuiString*)keyObject)->value, valueObject);
+                }
                 keyObject->release();
                 valueObject->release();
             }

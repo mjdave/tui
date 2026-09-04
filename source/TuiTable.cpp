@@ -704,14 +704,18 @@ void TuiTable::serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     resizeBufferIfNeeded(buffer, currentOffset, 1);
     buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
     
-        //todo
-    //for(auto& kv : objectsByNumberKey)
+    for(auto& kv : objectsByNumberKey)
     {
+        const uint32_t& keyInt = kv.first;
         
-        //debugString += Tui::string_format("%d = ", kv.first);
-        //kv.second->printHumanReadableString(debugString, indent);
+        resizeBufferIfNeeded(buffer, currentOffset, 1 + 4);
+        buffer[(*currentOffset)++] = Tui_binary_type_NUMBER_32;
+        memcpy(&buffer[(*currentOffset)], &keyInt, 4);
+        *currentOffset += 4;
+        
+        kv.second->serializeBinaryToBuffer(buffer, currentOffset);
     }
-    //buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
+    //buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER; //we can just check the type byte for int or string key
     
     for(auto& kv : objectsByStringKey)
     {

@@ -51,6 +51,7 @@ TuiTable* initSafeRootTable(TuiFunction* permissionCallbackFunction, const std::
     
     addBaseFunctions(rootTable, permissionCallbackFunction);
     addStringTable(rootTable);
+    addTimeTable(rootTable);
     addTableTable(rootTable);
     addMathTable(rootTable);
     addFileTable(rootTable, sandBoxDir);
@@ -65,6 +66,7 @@ TuiTable* initRootTable()
     
     addBaseFunctions(rootTable);
     addStringTable(rootTable);
+    addTimeTable(rootTable);
     addTableTable(rootTable);
     addMathTable(rootTable);
     addFileTable(rootTable);
@@ -274,7 +276,6 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
 #endif
     });
 }
-
 
 void addStringTable(TuiTable* rootTable)
 {
@@ -586,6 +587,22 @@ void addStringTable(TuiTable* rootTable)
         return TUI_NIL;
     });
     
+}
+
+void addTimeTable(TuiTable* rootTable)
+{
+    //************
+    //time
+    //************
+    
+    TuiTable* timeTable = new TuiTable(rootTable);
+    rootTable->set("time", timeTable);
+    timeTable->release();
+    
+    //time.now() current time in seconds since epoch
+    timeTable->setFunction("now", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        return new TuiNumber(Tui::nowTime());
+    });
 }
 
 void addTableTable(TuiTable* rootTable)

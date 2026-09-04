@@ -25,6 +25,12 @@ TuiTable* initSafeRootTable(TuiFunction* permissionCallbackFunction = nullptr, c
 
 TuiTable* initRootTable();
 
+inline double nowTime()
+{
+    auto nowTime = std::chrono::system_clock::now();
+    return std::chrono::duration_cast<std::chrono::microseconds>(nowTime.time_since_epoch()).count() / 1000000.0;
+}
+
 
 static inline TuiTable* getRootTable()
 {
@@ -35,6 +41,7 @@ static inline TuiTable* getRootTable()
 
 void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFunction = nullptr);
 void addStringTable(TuiTable* rootTable);
+void addTimeTable(TuiTable* rootTable);
 void addTableTable(TuiTable* rootTable);
 void addMathTable(TuiTable* rootTable);
 void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir = "");

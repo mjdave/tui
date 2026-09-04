@@ -169,6 +169,8 @@ debug.getLineNumber()           // returns the line number in the current script
 debug.break()                   // will trigger a breakpoint, but you first need to set it in your IDE in TuiBuiltInFunctions.cpp
 debug.backtrace()               // prints a backtrace
 
+time.now()      // returns the seconds since epoch as a floating point value, with the accuracy in microseconds
+
 table.count(table)                  // count of array objects
 table.insert(table, index, value)   // insert into an array, specifying the index. Will be filled with nil objects < index. Objects >= index are shifted
 table.insert(table,value)           // add to the end of an array
