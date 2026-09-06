@@ -3,6 +3,7 @@
 #define __TuiBuiltInFunctions__
 
 #include <string>
+#include <chrono>
 
 class TuiTable;
 class TuiFunction;

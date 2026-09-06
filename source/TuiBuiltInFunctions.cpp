@@ -4,6 +4,13 @@
 #include <random>
 #include <thread>
 #include <chrono>
+#include <cstdio>
+#include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <array>
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include "gtx/transform.hpp"
 
@@ -30,6 +37,28 @@ static std::function tui_system = [](TuiTable* args, TuiRef* existingResult, Tui
     return TUI_NIL;
 };
 
+static std::function tui_exec = [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+#if TARGET_OS_IPHONE
+    TuiError("exec() is not supported on iOS");
+#else
+    if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+    {
+        std::array<char, 128> buffer;
+        std::string result;
+        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(((TuiString*)args->arrayObjects[0])->value.c_str(), "r"), pclose);
+        if (!pipe) {
+            TuiError("popen() failed!");
+            return TUI_NIL;
+        }
+        while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe.get()) != nullptr) {
+            result += buffer.data();
+        }
+
+        return new TuiString(result);
+    }
+#endif
+    return TUI_NIL;
+};
 
 static std::function tui_print = [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
     if(args && args->arrayObjects.size() > 0)
@@ -82,53 +111,55 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
     if(permissionCallbackFunction)
     {
         rootTable->setFunction("system", [permissionCallbackFunction](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        TuiFunction* resultCallbackFunction = nullptr;
-        if(args)
-        {
-            if(args->arrayObjects.size() > 1 && args->arrayObjects[args->arrayObjects.size() - 1]->type() == Tui_ref_type_FUNCTION)
-            {
-                resultCallbackFunction = (TuiFunction*)args->arrayObjects[args->arrayObjects.size() - 1];
-            }
-            args->retain();
-        }
-        
-        
-        TuiFunction* gotPermissionResultFunction = new TuiFunction([resultCallbackFunction, args](TuiTable* permissionResultArgs, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-            if(permissionResultArgs && permissionResultArgs->arrayObjects.size() > 0 && permissionResultArgs->arrayObjects[0]->boolValue())
-            {
-                TuiRef* callResult = tui_system(args, existingResult, incomingCallData, callingDebugInfo);
-                if(callResult && resultCallbackFunction)
-                {
-                    resultCallbackFunction->call("system result callback", callResult);
-                }
-            }
+            TuiFunction* resultCallbackFunction = nullptr;
             if(args)
             {
-                args->release();
+                if(args->arrayObjects.size() > 1 && args->arrayObjects[args->arrayObjects.size() - 1]->type() == Tui_ref_type_FUNCTION)
+                {
+                    resultCallbackFunction = (TuiFunction*)args->arrayObjects[args->arrayObjects.size() - 1];
+                }
+                args->retain();
+            }
+            
+            
+            TuiFunction* gotPermissionResultFunction = new TuiFunction([resultCallbackFunction, args](TuiTable* permissionResultArgs, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+                if(permissionResultArgs && permissionResultArgs->arrayObjects.size() > 0 && permissionResultArgs->arrayObjects[0]->boolValue())
+                {
+                    TuiRef* callResult = tui_system(args, existingResult, incomingCallData, callingDebugInfo);
+                    if(callResult && resultCallbackFunction)
+                    {
+                        resultCallbackFunction->call("system result callback", callResult);
+                    }
+                }
+                if(args)
+                {
+                    args->release();
+                }
+                return TUI_NIL;
+            });
+            
+            if(permissionCallbackFunction)
+            {
+                TuiRef* functionNameRef = new TuiString("system");
+                permissionCallbackFunction->call("permissionCallbackFunction", functionNameRef, args, gotPermissionResultFunction);
+                functionNameRef->release();
+            }
+            else
+            {
+                TuiWarn("disallowing unpermitted function call to system()");
+                if(args)
+                {
+                    args->release();
+                }
             }
             return TUI_NIL;
         });
-        
-        if(permissionCallbackFunction)
-        {
-            TuiRef* functionNameRef = new TuiString("system");
-            permissionCallbackFunction->call("permissionCallbackFunction", functionNameRef, args, gotPermissionResultFunction);
-            functionNameRef->release();
-        }
-        else
-        {
-            TuiWarn("disallowing unpermitted function call to system()");
-            if(args)
-            {
-                args->release();
-            }
-        }
-        return TUI_NIL;
-    });
     }
     else
     {
         rootTable->setFunction("system", tui_system);
+
+        rootTable->setFunction("exec", tui_exec);
     }
     
     // print(msg1, msg2, msg3, ...) print values, args are concatenated together
