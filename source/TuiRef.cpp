@@ -193,6 +193,59 @@ TuiRef* TuiRef::loadBinaryString(const char* inputString, int* currentOffset, Tu
         case Tui_binary_type_TABLE:
         {
             TuiTable* table = new TuiTable(parent);
+            
+            if(inputString[(*currentOffset)] == Tui_binary_type_NUMBER_8_SET)
+            {
+                (*currentOffset)++;
+                while(inputString[(*currentOffset)] != Tui_binary_type_END_MARKER)
+                {
+                    uint8_t value;
+                    memcpy(&value, &inputString[(*currentOffset)], sizeof(value));
+                    (*currentOffset)+=sizeof(value);
+                    table->set8.insert(value);
+                }
+                (*currentOffset)++;
+            }
+            
+            if(inputString[(*currentOffset)] == Tui_binary_type_NUMBER_16_SET)
+            {
+                (*currentOffset)++;
+                while(inputString[(*currentOffset)] != Tui_binary_type_END_MARKER)
+                {
+                    uint16_t value;
+                    memcpy(&value, &inputString[(*currentOffset)], sizeof(value));
+                    (*currentOffset)+=sizeof(value);
+                    table->set16.insert(value);
+                }
+                (*currentOffset)++;
+            }
+            
+            if(inputString[(*currentOffset)] == Tui_binary_type_NUMBER_32_SET)
+            {
+                (*currentOffset)++;
+                while(inputString[(*currentOffset)] != Tui_binary_type_END_MARKER)
+                {
+                    uint32_t value;
+                    memcpy(&value, &inputString[(*currentOffset)], sizeof(value));
+                    (*currentOffset)+=sizeof(value);
+                    table->set32.insert(value);
+                }
+                (*currentOffset)++;
+            }
+            
+            if(inputString[(*currentOffset)] == Tui_binary_type_NUMBER_64_SET)
+            {
+                (*currentOffset)++;
+                while(inputString[(*currentOffset)] != Tui_binary_type_END_MARKER)
+                {
+                    uint64_t value;
+                    memcpy(&value, &inputString[(*currentOffset)], sizeof(value));
+                    (*currentOffset)+=sizeof(value);
+                    table->set64.insert(value);
+                }
+                (*currentOffset)++;
+            }
+            
             while(inputString[(*currentOffset)] != Tui_binary_type_END_MARKER)
             {
                 TuiRef* arrayObject = TuiRef::loadBinaryString(inputString, currentOffset);
@@ -478,12 +531,12 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 TuiError("Unimplemented");
             }
             
-            int indexValue = ((TuiNumber*)index)->value;
+            uint64_t indexValue = ((TuiNumber*)index)->value;
             index->release();
             
             if(onSetIndex)
             {
-                *onSetIndex = indexValue;
+                *onSetIndex = (uint32_t)indexValue;
             }
             
             if(indexValue >= 0 && indexValue < ((TuiTable*)varChainParent)->arrayObjects.size())
@@ -496,12 +549,33 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 return result;
             }
             
-            if(((TuiTable*)varChainParent)->objectsByNumberKey.count(indexValue) != 0)
+            if(((TuiTable*)varChainParent)->objectsByNumberKey.count((uint32_t)indexValue) != 0)
             {
-                TuiRef* result = ((TuiTable*)varChainParent)->objectsByNumberKey[indexValue];
+                TuiRef* result = ((TuiTable*)varChainParent)->objectsByNumberKey[(uint32_t)indexValue];
                 result->retain();
                 return result;
             }
+            
+            if(((TuiTable*)varChainParent)->set8.count((uint8_t)indexValue) != 0)
+            {
+                return TUI_TRUE;
+            }
+            
+            if(((TuiTable*)varChainParent)->set16.count((uint16_t)indexValue) != 0)
+            {
+                return TUI_TRUE;
+            }
+            
+            if(((TuiTable*)varChainParent)->set32.count((uint32_t)indexValue) != 0)
+            {
+                return TUI_TRUE;
+            }
+            
+            if(((TuiTable*)varChainParent)->set64.count(indexValue) != 0)
+            {
+                return TUI_TRUE;
+            }
+            
             
             return TUI_NIL;
         }

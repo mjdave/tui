@@ -90,6 +90,10 @@ enum { // used when serializing to binary, changing any existing values will bre
     Tui_binary_type_NUMBER_16,
     Tui_binary_type_NUMBER_32,
     Tui_binary_type_NUMBER_64,
+    Tui_binary_type_NUMBER_8_SET,
+    Tui_binary_type_NUMBER_16_SET,
+    Tui_binary_type_NUMBER_32_SET,
+    Tui_binary_type_NUMBER_64_SET,
 };
 
 enum {

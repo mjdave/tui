@@ -715,6 +715,201 @@ void addTableTable(TuiTable* rootTable)
         return TUI_NIL;
     });
     
+    tableTable->setFunction("set8Add", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2)
+        {
+            TuiRef* tableRef = args->arrayObjects[0];
+            if(tableRef->type() != Tui_ref_type_TABLE)
+            {
+                TuiParseError(callingDebugInfo, "table.set8Add expected table for first argument. got:%s", tableRef->getTypeName().c_str());
+                return TUI_NIL;
+            }
+            
+            TuiRef* addObject = args->arrayObjects[1];
+            if(addObject->type() != Tui_ref_type_NUMBER)
+            {
+                TuiParseError(callingDebugInfo, "table.set8Add expected number for second argument. got:%s", tableRef->getTypeName().c_str());
+            }
+            ((TuiTable*)tableRef)->set8.insert(((TuiNumber*)addObject)->value);
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo, "table.set8Add expected 2 args.");
+        }
+        return TUI_NIL;
+    });
+    
+    tableTable->setFunction("set8Remove", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2)
+        {
+            TuiRef* tableRef = args->arrayObjects[0];
+            if(tableRef->type() != Tui_ref_type_TABLE)
+            {
+                TuiParseError(callingDebugInfo, "table.set8Remove expected table for first argument. got:%s", tableRef->getTypeName().c_str());
+                return TUI_NIL;
+            }
+            
+            TuiRef* addObject = args->arrayObjects[1];
+            if(addObject->type() != Tui_ref_type_NUMBER)
+            {
+                TuiParseError(callingDebugInfo, "table.set8Remove expected number for second argument. got:%s", tableRef->getTypeName().c_str());
+            }
+            ((TuiTable*)tableRef)->set8.erase(((TuiNumber*)addObject)->value);
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo, "table.set8Remove expected 2 args.");
+        }
+        return TUI_NIL;
+    });
+    
+    tableTable->setFunction("set16Add", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2)
+        {
+            TuiRef* tableRef = args->arrayObjects[0];
+            if(tableRef->type() != Tui_ref_type_TABLE)
+            {
+                TuiParseError(callingDebugInfo, "table.set16Add expected table for first argument. got:%s", tableRef->getTypeName().c_str());
+                return TUI_NIL;
+            }
+            
+            TuiRef* addObject = args->arrayObjects[1];
+            if(addObject->type() != Tui_ref_type_NUMBER)
+            {
+                TuiParseError(callingDebugInfo, "table.set16Add expected number for second argument. got:%s", tableRef->getTypeName().c_str());
+            }
+            ((TuiTable*)tableRef)->set16.insert(((TuiNumber*)addObject)->value);
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo, "table.set16Add expected 2 args.");
+        }
+        return TUI_NIL;
+    });
+    
+    tableTable->setFunction("set16Remove", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2)
+        {
+            TuiRef* tableRef = args->arrayObjects[0];
+            if(tableRef->type() != Tui_ref_type_TABLE)
+            {
+                TuiParseError(callingDebugInfo, "table.set16Remove expected table for first argument. got:%s", tableRef->getTypeName().c_str());
+                return TUI_NIL;
+            }
+            
+            TuiRef* addObject = args->arrayObjects[1];
+            if(addObject->type() != Tui_ref_type_NUMBER)
+            {
+                TuiParseError(callingDebugInfo, "table.set16Remove expected number for second argument. got:%s", tableRef->getTypeName().c_str());
+            }
+            ((TuiTable*)tableRef)->set16.erase(((TuiNumber*)addObject)->value);
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo, "table.set16Remove expected 2 args.");
+        }
+        return TUI_NIL;
+    });
+    
+    
+    tableTable->setFunction("set32Add", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2)
+        {
+            TuiRef* tableRef = args->arrayObjects[0];
+            if(tableRef->type() != Tui_ref_type_TABLE)
+            {
+                TuiParseError(callingDebugInfo, "table.set32Add expected table for first argument. got:%s", tableRef->getTypeName().c_str());
+                return TUI_NIL;
+            }
+            
+            TuiRef* addObject = args->arrayObjects[1];
+            if(addObject->type() != Tui_ref_type_NUMBER)
+            {
+                TuiParseError(callingDebugInfo, "table.set32Add expected number for second argument. got:%s", tableRef->getTypeName().c_str());
+            }
+            ((TuiTable*)tableRef)->set32.insert(((TuiNumber*)addObject)->value);
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo, "table.set32Add expected 2 args.");
+        }
+        return TUI_NIL;
+    });
+    
+    tableTable->setFunction("set32Remove", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2)
+        {
+            TuiRef* tableRef = args->arrayObjects[0];
+            if(tableRef->type() != Tui_ref_type_TABLE)
+            {
+                TuiParseError(callingDebugInfo, "table.set32Remove expected table for first argument. got:%s", tableRef->getTypeName().c_str());
+                return TUI_NIL;
+            }
+            
+            TuiRef* addObject = args->arrayObjects[1];
+            if(addObject->type() != Tui_ref_type_NUMBER)
+            {
+                TuiParseError(callingDebugInfo, "table.set32Remove expected number for second argument. got:%s", tableRef->getTypeName().c_str());
+            }
+            ((TuiTable*)tableRef)->set32.erase(((TuiNumber*)addObject)->value);
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo, "table.set32Remove expected 2 args.");
+        }
+        return TUI_NIL;
+    });
+    
+    
+    //todo the number is interpreted as a TuiNumber/double, there is no way to specify a 64 bit integer constant in tui yet
+    tableTable->setFunction("set64Add", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2)
+        {
+            TuiRef* tableRef = args->arrayObjects[0];
+            if(tableRef->type() != Tui_ref_type_TABLE)
+            {
+                TuiParseError(callingDebugInfo, "table.set64Add expected table for first argument. got:%s", tableRef->getTypeName().c_str());
+                return TUI_NIL;
+            }
+            
+            TuiRef* addObject = args->arrayObjects[1];
+            if(addObject->type() != Tui_ref_type_NUMBER)
+            {
+                TuiParseError(callingDebugInfo, "table.set64Add expected number for second argument. got:%s", tableRef->getTypeName().c_str());
+            }
+            ((TuiTable*)tableRef)->set64.insert(((TuiNumber*)addObject)->value);
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo, "table.set64Add expected 2 args.");
+        }
+        return TUI_NIL;
+    });
+    
+    tableTable->setFunction("set64Remove", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2)
+        {
+            TuiRef* tableRef = args->arrayObjects[0];
+            if(tableRef->type() != Tui_ref_type_TABLE)
+            {
+                TuiParseError(callingDebugInfo, "table.set64Remove expected table for first argument. got:%s", tableRef->getTypeName().c_str());
+                return TUI_NIL;
+            }
+            
+            TuiRef* addObject = args->arrayObjects[1];
+            if(addObject->type() != Tui_ref_type_NUMBER)
+            {
+                TuiParseError(callingDebugInfo, "table.set64Remove expected number for second argument. got:%s", tableRef->getTypeName().c_str());
+            }
+            ((TuiTable*)tableRef)->set64.erase(((TuiNumber*)addObject)->value);
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo, "table.set64Remove expected 2 args.");
+        }
+        return TUI_NIL;
+    });
+    
     //table.count(table) count of array objects
     tableTable->setFunction("count", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() >= 1)

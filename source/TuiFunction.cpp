@@ -2316,19 +2316,35 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     
                     isNumberKey = true;
                     
-                    int arrayIndex = ((TuiNumber*)keyConstant)->value;
+                    uint64_t arrayIndex = ((TuiNumber*)keyConstant)->value;
                     if(arrayIndex >= 0 && arrayIndex < parent->arrayObjects.size())
                     {
                         child = parent->arrayObjects[arrayIndex];
                     }
-                    else if(parent->objectsByNumberKey.count(arrayIndex) != 0)
+                    else if(parent->objectsByNumberKey.count((uint32_t)arrayIndex) != 0)
                     {
-                        child = parent->objectsByNumberKey[arrayIndex];
+                        child = parent->objectsByNumberKey[(uint32_t)arrayIndex];
+                    }
+                    else if(parent->set8.count((uint8_t)arrayIndex) != 0)
+                    {
+                        child = TUI_TRUE;
+                    }
+                    else if(parent->set16.count((uint16_t)arrayIndex) != 0)
+                    {
+                        child = TUI_TRUE;
+                    }
+                    else if(parent->set32.count((uint32_t)arrayIndex) != 0)
+                    {
+                        child = TUI_TRUE;
+                    }
+                    else if(parent->set64.count(arrayIndex) != 0)
+                    {
+                        child = TUI_TRUE;
                     }
                     
                     if(setIndex)
                     {
-                        *setIndex = arrayIndex;
+                        *setIndex = (uint32_t)arrayIndex;
                     }
                     
                     if(enclosingSetRef)

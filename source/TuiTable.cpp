@@ -636,6 +636,94 @@ void TuiTable::printHumanReadableString(std::string& debugString, int indent)
     debugString += "{\n";
     indent = indent + 4;
     
+    if(!set8.empty())
+    {
+        //note this syntax is probably final. set8-64 are not yet loaded (unimplimented) when you read back, could be done easily enough. Fully supported in binary.
+        /*
+         example:{
+             :8 = {1,4}
+         }
+         */
+        
+        for(int i = 0; i < indent; i++)
+        {
+            debugString += " ";
+        }
+        debugString += ":8 = {";
+        bool first = true;
+        for(uint8_t v : set8)
+        {
+            if(!first)
+            {
+                debugString+=",";
+            }
+            first = false;
+            debugString += Tui::string_format("%u", v);
+        }
+        debugString += "}\n";
+    }
+    
+    if(!set16.empty())
+    {
+        for(int i = 0; i < indent; i++)
+        {
+            debugString += " ";
+        }
+        debugString += ":16 = {";
+        bool first = true;
+        for(uint16_t v : set16)
+        {
+            if(!first)
+            {
+                debugString+=",";
+            }
+            first = false;
+            debugString += Tui::string_format("%u", v);
+        }
+        debugString += "}\n";
+    }
+    
+    if(!set32.empty())
+    {
+        for(int i = 0; i < indent; i++)
+        {
+            debugString += " ";
+        }
+        debugString += ":32 = {";
+        bool first = true;
+        for(uint32_t v : set32)
+        {
+            if(!first)
+            {
+                debugString+=",";
+            }
+            first = false;
+            debugString += Tui::string_format("%u", v);
+        }
+        debugString += "}\n";
+    }
+    
+    if(!set64.empty())
+    {
+        for(int i = 0; i < indent; i++)
+        {
+            debugString += " ";
+        }
+        debugString += ":64 = {";
+        bool first = true;
+        for(uint64_t v : set64)
+        {
+            if(!first)
+            {
+                debugString+=",";
+            }
+            first = false;
+            debugString += Tui::string_format("%llu", v);
+        }
+        debugString += "}\n";
+    }
+    
+    
     for(TuiRef* object : arrayObjects)
     {
         for(int i = 0; i < indent; i++)
@@ -688,6 +776,53 @@ void TuiTable::serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     resizeBufferIfNeeded(buffer, currentOffset, 1);
     buffer[(*currentOffset)++] = Tui_binary_type_TABLE;
     
+    if(!set8.empty())
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 2 + sizeof(uint8_t) * (int)set8.size());
+        buffer[(*currentOffset)++] = Tui_binary_type_NUMBER_8_SET;
+        for(const uint8_t& v : set8)
+        {
+            memcpy(&buffer[(*currentOffset)], &v, sizeof(uint8_t));
+            *currentOffset += sizeof(uint8_t);
+        }
+        buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
+    }
+    
+    if(!set16.empty())
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 2 + sizeof(uint16_t) * (int)set16.size());
+        buffer[(*currentOffset)++] = Tui_binary_type_NUMBER_16_SET;
+        for(const uint16_t& v : set16)
+        {
+            memcpy(&buffer[(*currentOffset)], &v, sizeof(uint16_t));
+            *currentOffset += sizeof(uint16_t);
+        }
+        buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
+    }
+    
+    if(!set32.empty())
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 2 + sizeof(uint32_t) * (int)set32.size());
+        buffer[(*currentOffset)++] = Tui_binary_type_NUMBER_32_SET;
+        for(const uint32_t& v : set32)
+        {
+            memcpy(&buffer[(*currentOffset)], &v, sizeof(uint32_t));
+            *currentOffset += sizeof(uint32_t);
+        }
+        buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
+    }
+    
+    if(!set64.empty())
+    {
+        resizeBufferIfNeeded(buffer, currentOffset, 2 + sizeof(uint64_t) * (int)set64.size());
+        buffer[(*currentOffset)++] = Tui_binary_type_NUMBER_64_SET;
+        for(const uint64_t& v : set64)
+        {
+            memcpy(&buffer[(*currentOffset)], &v, sizeof(uint64_t));
+            *currentOffset += sizeof(uint64_t);
+        }
+        buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
+    }
     
     for(TuiRef* object : arrayObjects)
     {

@@ -4,17 +4,56 @@
 
 #tempTestFile = require("tempTestFile.tui")
 
-#nilFunc() #Attempt to call missing function 'nilFunc'
-#foo.nothing() #Attempt to call missing function 'nothing'. 'foo' is valid, but 'foo.nothing' is nil
-#foo.bar() #Expected function 'bar', found string. 'foo.bar' is not a function
-#bar.foo() #Attempt to use '.' to access from nil object 'bar'
+#TODO:
+#clockSizes = {0.42 * clockScale, 0.39 * clockScale, 0.31 * clockScale, 0.23 * clockScale, 0.4 * clockScale} #tui bug
+
+#testSet = {
+#    :8 = {1,2,3,4}
+#}
+
+testSet = {}
 
 testFunc = function()
 {
-    #nilFunc() #Attempt to call missing function 'nilFunc'
-    #foo.nothing() #Attempt to call missing function 'nothing'. 'foo' is valid, but 'foo.nothing' is nil
-    #foo.bar() #Expected function 'bar', found string. 'foo.bar' is not a function
-    #bar.foo() #Attempt to use '.' to access from nil object 'bar'
+    table.set8Add(testSet, 4)
+    table.set8Add(testSet, 75)
+    table.set8Add(testSet, 257)
+
+    table.set16Add(testSet, 2743)
+    table.set32Add(testSet, 235812)
+    table.set64Add(testSet, 3284473232234432221)
+
+    for(v in testSet)
+    {
+        print("got:", v)
+    }
+
+    if(testSet[4])
+    {
+        print("yes!")
+    }
+
+    if(testSet[67])
+    {
+        print("oh no!")
+    }
+
+
+    if(testSet[3284473232234432221])
+    {
+        print("yay!")
+    }
+
+    table.set8Remove(testSet, 75)
+
+    print("after removing:", testSet)
+
+    file.saveBinary("test.tuib", testSet)
+
+    loaded = file.loadBinary("test.tuib")
+
+    print("loaded:", loaded)
+    
 }
 
 testFunc()
