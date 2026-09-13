@@ -163,6 +163,7 @@ exec(string)            // calls popen() with the given string and returns the p
 platform()              // returns a string representing the current running platform, currently one of: ios, macos, windows, linux
 
 require(path)   // loads the given tui file
+load(string)    // loads the given tui string
 type()          // returns the type name of the given object, eg. 'table', 'string', 'number', 'vec4', 'bool'
 
 debug.getFileName()             // returns the current script file name or debug identifier string
