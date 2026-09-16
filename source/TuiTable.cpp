@@ -83,6 +83,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
         // the code below up until calling the statement is very similar to TuiFunction::call()
         // changes made here should probably be made there or it all could be factored out.
         TuiFunctionCallData callData;
+        callData.thisTable = this;
         
         for(auto& varNameAndToken : tokenMap.capturedTokensByVarName)
         {

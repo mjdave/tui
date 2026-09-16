@@ -51,6 +51,7 @@ enum {
     Tui_token_vec4,
     Tui_token_mat3,
     Tui_token_negate,
+    Tui_token_this,
     
     Tui_token_VAR_START_INDEX
 };

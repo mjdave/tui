@@ -472,6 +472,10 @@ void serializeValue(const char* str,
             {
                 expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_false);
             }
+            else if(stringBuffer == "this")
+            {
+                expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_this);
+            }
             else if(tokenMap->localTokensByVarName.count(stringBuffer) != 0)
             {
                 expression->tokens.insert(expression->tokens.begin() + tokenPos++, tokenMap->localTokensByVarName[stringBuffer]);
@@ -1900,6 +1904,17 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 return TUI_TRUE;
             }
                 break;
+            case Tui_token_this:
+            {
+                TuiTable* parentToReturn = callData->thisTable;
+                if(parentToReturn)
+                {
+                    parentToReturn->retain();
+                    return parentToReturn;
+                }
+                return TUI_NIL;
+            }
+                break;
             case Tui_token_false:
             {
                 return TUI_FALSE;
@@ -2316,7 +2331,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     
                     isNumberKey = true;
                     
-                    uint64_t arrayIndex = ((TuiNumber*)keyConstant)->value;
+                    int64_t arrayIndex = ((TuiNumber*)keyConstant)->value;
                     if(arrayIndex >= 0 && arrayIndex < parent->arrayObjects.size())
                     {
                         child = parent->arrayObjects[arrayIndex];
@@ -4223,6 +4238,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             TuiTable* functionStateTable = new TuiTable(parent);
             TuiFunctionCallData scopedCallData;
+            scopedCallData.thisTable = callData->thisTable;
             scopedCallData.parentCallData = callData;
             scopedCallData.parentTable = functionStateTable;
             scopedCallData.transientLoopTables = callData->transientLoopTables;
@@ -4258,6 +4274,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 {
                     TuiTable* innerFunctionStateTable = new TuiTable(functionStateTable);
                     TuiFunctionCallData innerScopedCallData;
+                    innerScopedCallData.thisTable = callData->thisTable;
                     innerScopedCallData.parentCallData = &scopedCallData;
                     innerScopedCallData.parentTable = innerFunctionStateTable;
                     innerScopedCallData.transientLoopTables = scopedCallData.transientLoopTables;
@@ -4310,6 +4327,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 {
                     TuiTable* innerFunctionStateTable = new TuiTable(functionStateTable);
                     TuiFunctionCallData innerScopedCallData;
+                    innerScopedCallData.thisTable = callData->thisTable;
                     innerScopedCallData.parentCallData = &scopedCallData;
                     innerScopedCallData.parentTable = innerFunctionStateTable;
                     innerScopedCallData.transientLoopTables = scopedCallData.transientLoopTables;
@@ -4381,6 +4399,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             TuiTable* functionStateTable = new TuiTable(parent);
             TuiFunctionCallData scopedCallData;
+            scopedCallData.thisTable = callData->thisTable;
             scopedCallData.parentCallData = callData;
             scopedCallData.parentTable = functionStateTable;
             scopedCallData.transientLoopTables = callData->transientLoopTables;
@@ -4406,6 +4425,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             {
                 TuiTable* innerFunctionStateTable = new TuiTable(functionStateTable);
                 TuiFunctionCallData innerScopedCallData;
+                innerScopedCallData.thisTable = callData->thisTable;
                 innerScopedCallData.parentCallData = &scopedCallData;
                 innerScopedCallData.parentTable = innerFunctionStateTable;
                 innerScopedCallData.transientLoopTables = scopedCallData.transientLoopTables;
@@ -4644,6 +4664,7 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
     TuiTable* functionStateTable = new TuiTable(state);
     TuiFunctionCallData callData;
     callData.parentTable = parentTable;
+    callData.thisTable = parentTable;
     
     for(auto& varNameAndToken : tokenMap.capturedTokensByVarName)
     {
@@ -4707,6 +4728,7 @@ TuiRef* TuiFunction::call(TuiTable* args,
         TuiFunctionCallData callData;
         callData.parentCallData = incomingCallData;
         callData.parentTable = parentTable;
+        callData.thisTable = parentTable;
         if(incomingCallData)
         {
             callData.transientLoopTables = incomingCallData->transientLoopTables;

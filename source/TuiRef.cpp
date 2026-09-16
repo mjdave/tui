@@ -441,6 +441,13 @@ static TuiRef* loadSingleValueInternal(const char* str,
             return number;
         }
         
+        if(*s == 't' && *(s + 1) == 'h' && *(s + 2) == 'i' && *(s + 3) == 's' && checkSymbolNameComplete(s + 4))
+        {
+            *endptr = (char*)(s + 4);
+            parentRef->retain();
+            return parentRef;
+        }
+        
         //todo pull out these functions, set existing values correctly
         TuiFunction* functionRef = TuiFunction::initWithHumanReadableString(s, endptr, parent, debugInfo);
         if(functionRef)
@@ -531,7 +538,7 @@ static TuiRef* loadSingleValueInternal(const char* str,
                 TuiError("Unimplemented");
             }
             
-            uint64_t indexValue = ((TuiNumber*)index)->value;
+            int64_t indexValue = ((TuiNumber*)index)->value;
             index->release();
             
             if(onSetIndex)

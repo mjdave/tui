@@ -20,6 +20,7 @@ class TuiFunction;
 struct TuiFunctionCallData {
     TuiFunctionCallData* parentCallData = nullptr;
     TuiTable* parentTable = nullptr;
+    TuiTable* thisTable = nullptr;
     std::map<std::string, uint32_t> localTokensByStringKey;
     std::map<uint32_t, TuiRef*> locals; //need to release
     std::vector<TuiTable*> transientLoopTables;
