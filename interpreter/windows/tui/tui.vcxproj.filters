@@ -33,9 +33,6 @@
     <ClCompile Include="..\..\..\source\TuiSha1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\source\TuiStringUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\source\TuiBuiltInFunctions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
