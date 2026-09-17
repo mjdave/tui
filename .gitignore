@@ -11,3 +11,5 @@ examples/examples
 DerivedData
 .vscode
 xcuserdata/
+.vs
+*.vcxproj.user
