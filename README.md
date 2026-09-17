@@ -1,12 +1,14 @@
 # Tui Coding Language
 
+NOTE (September 2026):
+>Tui still has a few issues but is nearing feature completion and is actively being used and improved as the foundation of the [katipo](https://ktp.nz) protocol, including [Waraki Music Player](https://ktp.nz/waraki/index.html) and [Blockheads 2](https://theblockheads.net/2026/09/10/blockheads-2.html).
+>
+>There is a fully functional Solitaire game written in tui, you can download the [Koru browser](https://github.com/mjdave/katipoBrowser/releases) to play it, or have a look at the the [Solitaire tui source code](https://github.com/mjdave/daves-katipo-sites/blob/main/solitaire/clientSite/scripts/code.tui) for a good working example.
+
+
 Tui is a small, cross platform, open source embeddable scripting language and serialization library for C++.
 
-AI had not been used to create tui, and will not be used in the future. This repository will not accept contributions from AI bots, or from people using AI.
-
-***NOTE (September 2026): tui still has a few issues but is nearing feature completion and is actively being used and improved as the foundation of the [katipo](https://ktp.nz) protocol, including [Waraki Music Player](https://ktp.nz/waraki/index.html) and [Blockheads 2](https://theblockheads.net/2026/09/10/blockheads-2.html).
-
-There is a fully functional Solitaire game written in tui, you can download the [Koru browser](https://github.com/mjdave/katipoBrowser/releases) to play it, or have a look at the the [Solitaire tui source code](https://github.com/mjdave/daves-katipo-sites/blob/main/solitaire/clientSite/scripts/code.tui) for a good working example.***
+AI has not been used to create tui, and will not be used in the future. This repository will not accept contributions from AI bots, or from people using AI.
 
 Created by a solo game developer to be fast, small, and easy to integrate and use, tui combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
 
