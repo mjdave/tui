@@ -1,8 +1,12 @@
-# This is tui
+# Tui Coding Language
 
-tui is a small, cross platform, open source embeddable scripting language and serialization library for C++.
+Tui is a small, cross platform, open source embeddable scripting language and serialization library for C++.
 
-***NOTE (April 2026): tui still has a few issues but is nearing feature completion and is actively being used and improved as the foundation of the [katipo](https://github.com/mjdave/katipo) networking library.***
+AI had not been used to create tui, and will not be used in the future. This repository will not accept contributions from AI bots, or from people using AI.
+
+***NOTE (September 2026): tui still has a few issues but is nearing feature completion and is actively being used and improved as the foundation of the [katipo](https://ktp.nz) protocol, including [Waraki Music Player](https://ktp.nz/waraki/index.html) and [Blockheads 2](https://theblockheads.net/2026/09/10/blockheads-2.html).
+
+There is a fully functional Solitaire game written in tui, you can download the [Koru browser](https://github.com/mjdave/katipoBrowser/releases) to play it, or have a look at the the [Solitaire tui source code](https://github.com/mjdave/daves-katipo-sites/blob/main/solitaire/clientSite/scripts/code.tui) for a good working example.***
 
 Created by a solo game developer to be fast, small, and easy to integrate and use, tui combines a key/value storage data format in a human readable format similar to JSON, with a powerful scripting language and interpreter similar to lua.
 
@@ -12,7 +16,7 @@ Compared to JSON, tui adds a whole scripting language on top. It's also super fa
 
 Compared to lua, tui is generally slower, but easier to integrate and bind, and (potentially) faster when sharing data between C++ and the scripting environment. It has a smaller footprint, but less language features, and has good, fast built-in table serialization to both binary and human readable formats.
 
-There is a [VSCode extension](https://github.com/PythooonUser/vscode-tui-language-support) that adds language support for tui too!
+There is an excellent [VSCode extension](https://github.com/PythooonUser/vscode-tui-language-support) that adds language support for tui too!
 
 # Features & Usage/Examples
 
