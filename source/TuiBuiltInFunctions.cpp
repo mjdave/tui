@@ -45,7 +45,11 @@ static std::function tui_exec = [](TuiTable* args, TuiRef* existingResult, TuiFu
     {
         std::array<char, 128> buffer;
         std::string result;
+#if defined _WIN32
+        std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(((TuiString*)args->arrayObjects[0])->value.c_str(), "r"), _pclose);
+#else
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(((TuiString*)args->arrayObjects[0])->value.c_str(), "r"), pclose);
+#endif
         if (!pipe) {
             TuiError("popen() failed!");
             return TUI_NIL;
