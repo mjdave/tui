@@ -187,6 +187,33 @@ inline const char* tuiSkipToNextChar(const char* str, TuiDebugInfo* debugInfo = 
     }
 }
 
+inline const char* tuiSkipToAfterNextClosingBrace(const char* str, TuiDebugInfo* debugInfo, bool openingBraceAlreadyAdded)
+{
+    const char* s = str;
+    int depthCount = (openingBraceAlreadyAdded ? 1 : 0);
+    while(true)
+    {
+        s = tuiSkipToNextChar(s + 1, debugInfo);
+        if(*s == '}')
+        {
+            depthCount--;
+            if(depthCount == 0)
+            {
+                s = tuiSkipToNextChar(s + 1, debugInfo);
+                return s;
+            }
+        }
+        else if(*s == '{')
+        {
+            depthCount++;
+        }
+        else if(*s == '\0')
+        {
+            return s;
+        }
+    }
+}
+
 inline const char* tuiSkipToNextMatchingChar(const char* str, TuiDebugInfo* debugInfo, char matchChar)
 {
     const char* s = str;

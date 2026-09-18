@@ -192,30 +192,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
         }
         else
         {
-            int depthCount = 1;
-            
-            while(true)
-            {
-                s = tuiSkipToNextChar(s + 1, debugInfo);
-                if(*s == '}')
-                {
-                    depthCount--;
-                    if(depthCount == 0)
-                    {
-                        break;
-                    }
-                }
-                else if(*s == '{')
-                {
-                    depthCount++;
-                }
-                else if(*s == '\0')
-                {
-                    break;
-                }
-            }
-            
-            s = tuiSkipToNextChar(s + 1, debugInfo);
+            s = tuiSkipToAfterNextClosingBrace(s, debugInfo, false);
         }
         
         
@@ -225,8 +202,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
             {
                 if(ifStatementComplete)
                 {
-                    s = tuiSkipToNextMatchingChar(s, debugInfo, '}');
-                    s = tuiSkipToNextChar(s + 1, debugInfo);
+                    s = tuiSkipToAfterNextClosingBrace(s, debugInfo, false);
                 }
                 else
                 {
@@ -319,8 +295,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                         }
                         else
                         {
-                            s = tuiSkipToNextMatchingChar(s, debugInfo, '}');
-                            s = tuiSkipToNextChar(s + 1, debugInfo);
+                            s = tuiSkipToAfterNextClosingBrace(s, debugInfo, false);
                         }
                     }
                     else
