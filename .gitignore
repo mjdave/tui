@@ -13,3 +13,5 @@ DerivedData
 xcuserdata/
 .vs
 *.vcxproj.user
+*.exe
+*.pdb
