@@ -109,13 +109,13 @@ public: //class functions
     TuiFunction(std::function<TuiRef*(TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo)> func_);
     virtual ~TuiFunction();
     
-    virtual TuiRef* copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
+    virtual TuiRef* copy() override //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
         retain();
         return this;
     }
     
-    virtual void release();
+    virtual void release() override;
     void releaseAndRemoveTransientLoopTables();
     void deleteIfNeeded();
     
@@ -138,12 +138,12 @@ public: //class functions
         return copied;
     }
     
-    virtual uint8_t type() { return Tui_ref_type_FUNCTION; }
-    virtual std::string getTypeName() {return "function";}
-    virtual std::string getStringValue() {return "function";}
-    virtual bool isEqual(TuiRef* other) {return other == this;}
+    virtual uint8_t type() override { return Tui_ref_type_FUNCTION; }
+    virtual std::string getTypeName() override {return "function";}
+    virtual std::string getStringValue() override {return "function";}
+    virtual bool isEqual(TuiRef* other) override {return other == this;}
     
-    virtual bool boolValue() {return true;}
+    virtual bool boolValue() override {return true;}
     
     TuiRef* call(TuiTable* args,
                  TuiRef* existingResult,
@@ -177,7 +177,7 @@ public: //class functions
     
     //void call(TuiTable* args, std::function<void(TuiRef*)> callback); //todo async
     
-    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
     {
         TuiError("TuiFunction does not support binary serialization");
     }
