@@ -387,7 +387,7 @@ public://functions
     delete this;
 #endif
     }}
-    virtual TuiRef* retain() {refCount++;
+    virtual TuiRef* retain() { refCount++;
         //if(refCount > 50) //uncommenting this block can be useful to help track down leaks
         //{
             //TuiWarn("object is likely being leaked");
@@ -395,7 +395,7 @@ public://functions
         return this;
     }
     virtual TuiRef* copy() = 0;
-    virtual void assign(TuiRef* other) {};
+    virtual void assign(TuiRef* other) {}
     virtual bool isEqual(TuiRef* other) {
         return (!other || other->type() == Tui_ref_type_NIL);
     }
@@ -432,19 +432,19 @@ class TuiNil : public TuiRef {
 public:
     TuiNil() {}
     virtual ~TuiNil() {}
-    virtual TuiRef* copy() {return this;}
-    virtual void assign(TuiRef* other) {};
+    virtual TuiRef* copy() override {return this;}
+    virtual void assign(TuiRef* other) override {}
     
-    virtual void release() {}
-    virtual TuiRef* retain() {return this;}
+    virtual void release() override {}
+    virtual TuiRef* retain() override {return this;}
     
-    virtual uint8_t type() { return Tui_ref_type_NIL; }
-    virtual std::string getTypeName() {return "nil";}
-    virtual std::string getStringValue() {return "nil";}
-    virtual bool boolValue() {return false;}
-    virtual bool isEqual(TuiRef* other) {return (!other || other->type() == Tui_ref_type_NIL );}
+    virtual uint8_t type() override { return Tui_ref_type_NIL; }
+    virtual std::string getTypeName() override {return "nil";}
+    virtual std::string getStringValue() override {return "nil";}
+    virtual bool boolValue() override {return false;}
+    virtual bool isEqual(TuiRef* other) override {return (!other || other->type() == Tui_ref_type_NIL );}
     
-    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
     {
         resizeBufferIfNeeded(buffer, currentOffset, 1);
         buffer[(*currentOffset)++] = Tui_binary_type_NIL;
@@ -465,25 +465,25 @@ public:
     TuiUserData(void* value_);
     virtual ~TuiUserData() {}
     
-    virtual TuiRef* copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
+    virtual TuiRef* copy() override //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
         retain();
         return this;
     }
     
-    virtual void assign(TuiRef* other) {
+    virtual void assign(TuiRef* other) override {
         value = ((TuiUserData*)other)->value;
-    };
+    }
     
-    virtual uint8_t type() { return Tui_ref_type_USERDATA; }
-    virtual std::string getTypeName() {return "userData";}
-    virtual std::string getStringValue() {
+    virtual uint8_t type() override { return Tui_ref_type_USERDATA; }
+    virtual std::string getTypeName() override {return "userData";}
+    virtual std::string getStringValue() override {
         return Tui::string_format("%p", value);
     }
-    virtual bool boolValue() {return value != nullptr;}
-    virtual bool isEqual(TuiRef* other) {return other && other->type() == Tui_ref_type_USERDATA && ((TuiUserData*)other)->value == value;}
+    virtual bool boolValue() override {return value != nullptr;}
+    virtual bool isEqual(TuiRef* other) override {return other && other->type() == Tui_ref_type_USERDATA && ((TuiUserData*)other)->value == value;}
     
-    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
     {
         TuiError("Userdata objects do not support binary serialization");
     }

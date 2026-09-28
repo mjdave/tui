@@ -66,14 +66,14 @@ public://functions
     };
     
     
-    virtual uint8_t type() { return Tui_ref_type_TABLE; }
-    virtual std::string getTypeName() {return "table";}
-    virtual std::string getStringValue() {return "table";}
-    virtual std::string getDebugStringValue() {return getDebugString();}
-    virtual bool boolValue() {return true;}
-    virtual bool isEqual(TuiRef* other) {return other == this;}
+    virtual uint8_t type() override { return Tui_ref_type_TABLE; }
+    virtual std::string getTypeName() override {return "table";}
+    virtual std::string getStringValue() override {return "table";}
+    virtual std::string getDebugStringValue() override {return getDebugString();}
+    virtual bool boolValue() override {return true;}
+    virtual bool isEqual(TuiRef* other) override {return other == this;}
     
-    virtual TuiRef* copy() //NOTE! This is not a true copy, use trueCopy() below. copy() is called internally when assigning vars, but tables, function, and userdata are treated like pointers
+    virtual TuiRef* copy() override //NOTE! This is not a true copy, use trueCopy() below. copy() is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
         retain();
         return this;
@@ -108,8 +108,8 @@ public://functions
     
     bool addHumanReadableKeyValuePair(const char* str, char** endptr, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr);
     
-    virtual void printHumanReadableString(std::string& debugString, int indent = 0);
-    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset);
+    virtual void printHumanReadableString(std::string& debugString, int indent = 0) override;
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override;
     
     void set(const std::string& key, TuiRef* value, bool useCopy = true)
     {
