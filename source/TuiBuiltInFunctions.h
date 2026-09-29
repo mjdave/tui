@@ -48,6 +48,12 @@ void addMathTable(TuiTable* rootTable);
 void addFileTable(TuiTable* rootTable, const std::string& sandBoxDir = "");
 void addDebugTable(TuiTable* rootTable);
 
+//utility functions
+
+double random();
+double random(uint32_t seed);
+double random(const std::string& seed);
+
 }
 
 #endif

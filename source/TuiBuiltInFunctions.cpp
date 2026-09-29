@@ -24,6 +24,26 @@ std::uniform_real_distribution<double> randDistribution(0.0, 1.0);
 
 namespace Tui {
 
+double random(uint32_t seed)
+{
+    seedRng.seed(seed);
+    return randDistribution(seedRng);
+}
+
+double random(const std::string& seed)
+{
+    std::string sha1 = TuiSHA1::sha1(seed);
+    uint32_t randValue;
+    memcpy(&randValue, &sha1[0], sizeof(randValue));
+    seedRng.seed(randValue);
+    return randDistribution(seedRng);
+}
+
+double random()
+{
+    return randDistribution(rng);
+}
+
 static std::function tui_system = [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
 #if TARGET_OS_IPHONE
     TuiError("system() is not supported on iOS");
@@ -193,11 +213,28 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
         exit(code);
     });
     
-    //require(path) loads the given tui file NOTE! Unlike lua, this currently reloads every time. You will need to save the result yourself in the root table if you wish to reuse it
+    
+    //require(path) loads the given tui file. Keeps a cache in "tui_requireCache"
     //you can also provide your own file.getResourcePath function in the root table
     rootTable->setFunction("require", [rootTable](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 0)
         {
+            std::string argPath = args->arrayObjects[0]->getStringValue();
+            
+            TuiTable* tui_requireCache = rootTable->getTable("tui_requireCache");
+            if(!tui_requireCache)
+            {
+                tui_requireCache = new TuiTable();
+                rootTable->setTable("tui_requireCache", tui_requireCache);
+                tui_requireCache->release();
+            }
+            
+            if(tui_requireCache->hasKey(argPath))
+            {
+                TuiRef* result = tui_requireCache->objectsByStringKey[argPath];
+                result->retain();
+                return result;
+            }
             TuiDebugInfo debugInfo;
             TuiDebugInfoCopy(callingDebugInfo, &debugInfo);
             
@@ -210,11 +247,21 @@ void addBaseFunctions(TuiTable* rootTable, TuiFunction* permissionCallbackFuncti
                     
                     TuiRef* loadedRef = TuiRef::runScriptFile(pathResult->getStringValue(), rootTable, &debugInfo);
                     pathResult->release();
+                    if(loadedRef && loadedRef != TUI_NIL)
+                    {
+                        tui_requireCache->set(argPath, loadedRef);
+                    }
                     return loadedRef;
                 }
                 return TUI_NIL;
             }
-            return TuiRef::runScriptFile(Tui::getResourcePath(args->arrayObjects[0]->getStringValue(), callingDebugInfo->currentLine->fileName), rootTable, &debugInfo);
+            TuiRef* loadedRef = TuiRef::runScriptFile(Tui::getResourcePath(argPath, callingDebugInfo->currentLine->fileName), rootTable, &debugInfo);
+            if(loadedRef && loadedRef != TUI_NIL)
+            {
+                tui_requireCache->set(argPath, loadedRef);
+            }
+            return loadedRef;
+            
         }
         return TUI_NIL;
     });
@@ -1037,16 +1084,11 @@ void addMathTable(TuiTable* rootTable)
                 TuiRef* arg2 = args->arrayObjects[1];
                 if(arg2->type() == Tui_ref_type_NUMBER)
                 {
-                    seedRng.seed(((TuiNumber*)(arg2))->value);
-                    result = randDistribution(seedRng);
+                    result = Tui::random(((TuiNumber*)(arg2))->value);
                 }
                 else if(arg2->type() == Tui_ref_type_STRING)
                 {
-                    std::string sha1 = TuiSHA1::sha1(((TuiString*)arg2)->value);
-                    uint32_t randValue;
-                    memcpy(&randValue, &sha1[0], sizeof(randValue));
-                    seedRng.seed(randValue);
-                    result = randDistribution(seedRng);
+                    result = Tui::random(((TuiString*)arg2)->value);
                 }
                 else
                 {
@@ -1055,7 +1097,7 @@ void addMathTable(TuiTable* rootTable)
             }
             else
             {
-                result = randDistribution(rng);
+                result = Tui::random();
             }
             
             if(arg->type() == Tui_ref_type_NUMBER)
@@ -1066,7 +1108,7 @@ void addMathTable(TuiTable* rootTable)
             return new TuiNumber(result);
         }
         
-        return new TuiNumber(randDistribution(rng));
+        return new TuiNumber(Tui::random());
     });
     
     
@@ -1082,16 +1124,11 @@ void addMathTable(TuiTable* rootTable)
                 TuiRef* arg2 = args->arrayObjects[1];
                 if(arg2->type() == Tui_ref_type_NUMBER)
                 {
-                    seedRng.seed(((TuiNumber*)(arg2))->value);
-                    result = randDistribution(seedRng);
+                    result = Tui::random(((TuiNumber*)(arg2))->value);
                 }
                 else if(arg2->type() == Tui_ref_type_STRING)
                 {
-                    std::string sha1 = TuiSHA1::sha1(((TuiString*)arg2)->value);
-                    uint32_t randValue;
-                    memcpy(&randValue, &sha1[0], sizeof(randValue));
-                    seedRng.seed(randValue);
-                    result = randDistribution(seedRng);
+                    result = Tui::random(((TuiString*)arg2)->value);
                 }
                 else
                 {
@@ -1100,7 +1137,7 @@ void addMathTable(TuiTable* rootTable)
             }
             else
             {
-                result = randDistribution(rng);
+                result = Tui::random();
             }
             
             if(arg->type() == Tui_ref_type_NUMBER)
@@ -1111,7 +1148,7 @@ void addMathTable(TuiTable* rootTable)
             
             return new TuiNumber(floor(result));
         }
-        return new TuiNumber(min(1.0, floor(randDistribution(rng) * 2)));
+        return new TuiNumber(min(1.0, floor(Tui::random() * 2)));
     });
     
     mathTable->setFunction("pow", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
