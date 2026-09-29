@@ -436,7 +436,27 @@ testInPlace = function()
 testInPlace()
 
 assert(getLineNumber() == 438, "debug.getLineNumber()")
-assert(debug.getFileName() == "tests/tests.tui", getLineNumber())
+
+# Get current file name, check that the name and parent directory match
+fileName = debug.getFileName()
+fileName = string.replace(fileName, "\\", "/") # Normalize path
+# Find the 2nd-to-last slash in the file path
+i = string.length(fileName) - 1
+slashCount = 0
+for(i = i, i >= 0, i--) # If there was a string.rfind, this could be replaced with that
+{
+    char = string.subString(fileName, i, 1)
+    if(char == "/" or char == "\\")
+    {
+        slashCount += 1
+    }
+    if (slashCount == 2)
+    {
+        break
+    }
+}
+# Test passes when the slash was found and the sub-path matches the expected result
+assert(i >= 0 and string.subString(fileName, i + 1) == "tests/tests.tui", getLineNumber())
 
 testTuiNilEquality = function() {
     firstNil = string.find("abc", "d")
