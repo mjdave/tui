@@ -1,6 +1,7 @@
 
 #include "TuiRef.h"
 
+#include "TuiFileUtils.h"
 #include "TuiTable.h"
 #include "TuiNumber.h"
 
@@ -30,13 +31,16 @@ TuiRef* TuiRef::loadString(const std::string& inputString, TuiTable* parent, Tui
 
 TuiRef* TuiRef::runScriptFile(const std::string& path, TuiTable* parent, TuiDebugInfo* callingDebugInfo, TuiRef* resultRef)
 {
+    // Get absolute path from path
+    std::string absolutePath = Tui::getAbsolutePath(path);
+
     std::ifstream in(path.c_str(), std::ios::in | std::ios::binary);
     TuiDebugInfo debugInfo;
     if(callingDebugInfo)
     {
         TuiDebugInfoCopy(callingDebugInfo, &debugInfo);
     }
-    TuiDebugInfoPush(&debugInfo, path, 1);
+    TuiDebugInfoPush(&debugInfo, absolutePath, 1);
     if(in)
     {
         std::string contents;
