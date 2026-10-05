@@ -60,6 +60,15 @@ TuiRef* TuiRef::runScriptFile(const std::string& path, TuiTable* parent, TuiDebu
     return nullptr;
 }
 
+TuiRef* TuiRef::require(const std::string& path, TuiTable* rootTable)
+{
+    TuiFunction* requireFunction = rootTable->getFunction("require");
+    TuiString* arg = new TuiString(path);
+    TuiRef* result = requireFunction->call("requre", arg);
+    arg->release();
+    return result;
+}
+
 TuiRef* TuiRef::loadBinaryString(const char* inputString, int* currentOffset, TuiTable* parent)
 {
     uint8_t type = inputString[(*currentOffset)++];

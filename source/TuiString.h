@@ -22,7 +22,7 @@ public://functions
     virtual bool boolValue() override {return true;}
     virtual bool isEqual(TuiRef* other) override {return other && other->type() == Tui_ref_type_STRING && ((TuiString*)other)->value == value;}
     
-    virtual void printHumanReadableString(std::string& debugString, int indent = 0) {
+    virtual void printHumanReadableString(std::string& debugString, int indent = 0) override {
         debugString += "\"" + getStringValue() + "\"";
     }
     

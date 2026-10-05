@@ -97,6 +97,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
             else
             {
                 TuiTable* parentTable = this;
+                std::set<TuiTable*> found;
                 while(parentTable)
                 {
                     if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
@@ -108,6 +109,11 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                         break;
                     }
                     parentTable = parentTable->parentTable;
+                    if(found.count(parentTable) != 0)
+                    {
+                        break;
+                    }
+                    found.insert(parentTable);
                 }
             }
         }
@@ -714,7 +720,7 @@ void TuiTable::printHumanReadableString(std::string& debugString, int indent)
         {
             debugString += "nil";
         }
-        debugString += ",\n";
+        debugString += "\n";
     }
     
     for(auto& kv : objectsByNumberKey)
@@ -725,7 +731,7 @@ void TuiTable::printHumanReadableString(std::string& debugString, int indent)
         }
         debugString += Tui::string_format("%d = ", kv.first);
         printSingleSubObject(debugString, indent, kv.second);
-        debugString += ",\n";
+        debugString += "\n";
     }
     
     for(auto& kv : objectsByStringKey)
@@ -736,7 +742,7 @@ void TuiTable::printHumanReadableString(std::string& debugString, int indent)
         }
         debugString += kv.first + " = ";//"\"" + kv.first + "\" = "; //todo escape things correctly?
         printSingleSubObject(debugString, indent, kv.second);
-        debugString += ",\n";
+        debugString += "\n";
     }
     
     for(int i = 0; i < indent-4; i++)

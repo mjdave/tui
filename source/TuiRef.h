@@ -301,12 +301,15 @@ public: // public static functions to load tui refs from files and data.
     //load from human readable tui code files
     static TuiRef* runScriptFile(const std::string& path, TuiTable* parent = Tui::getRootTable(), TuiDebugInfo* callingDebugInfo = nullptr, TuiRef* resultRef = nullptr); // convenience method: as above, but human readable from file. If the file returns a result, it is stored in resultRef.
     
+    
     //deserialize from binary serialized tui data in memory
     static TuiRef* loadBinaryString(const char* str, int* currentOffset, TuiTable* parent = Tui::getRootTable()); // public method to read from data previously serialized with serializeBinary()
     static TuiRef* loadBinaryString(const std::string& inputString, TuiTable* parent = Tui::getRootTable()); // convenience method: as above, but std::string
     
     //deserialize from binary serialized tui data files
     static TuiRef* loadBinary(const std::string& path, TuiTable* parent = Tui::getRootTable()); // convenience method: as above, but load from file, calling loadBinaryString internally
+    
+    static TuiRef* require(const std::string& path, TuiTable* rootTable); //convenience method for the built-in require function, which caches the loaded result
     
     // below here are public methods for convenience, however they are generally only useful internally
     
