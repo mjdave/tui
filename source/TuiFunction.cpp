@@ -4736,6 +4736,8 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
         tokenAndRef.second->release();
     }
     
+    functionStateTable->parentTable = nullptr;
+    
     return functionStateTable;
 }
 
