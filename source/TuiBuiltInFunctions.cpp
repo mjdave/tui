@@ -612,6 +612,38 @@ void addStringTable(TuiTable* rootTable)
         return TUI_NIL;
     });
     
+    
+    // string.numberToHexString(number) returns a string containing the hexadecimal representation of the number interpreted as an 8 bit unsigned integer (0-255) eg. 0 - > "00", 15 - > "0f", 255 - > "ff"
+    stringTable->setFunction("numberToHexString", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->isNumber())
+        {
+            uint8_t byteValue = clamp(args->arrayObjects[0]->getNumberValue(), 0.0, 255.0);
+            
+            return new TuiString(Tui::string_format("%x%x", (byteValue >> 4), (byteValue & 0x0F)));
+        }
+        TuiParseError(callingDebugInfo, "string.numberToHexString expected number");
+        return TUI_NIL;
+    });
+    
+    
+    // string.hexStringToNumber(hexString) returns a standard number containing a 32 bit unsigned integer value by interpreting the given string eg. "FF" - > 255, "ffff" -> 65535
+    stringTable->setFunction("hexStringToNumber", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            try
+            {
+                uint32_t value = stoul(((TuiString*)args->arrayObjects[0])->value, 0, 16);
+                return new TuiNumber(value);
+            }
+            catch(const std::exception& ex)
+            {
+                return TUI_NIL;
+            }
+        }
+        TuiParseError(callingDebugInfo, "string.hexStringToNumber expected string");
+        return TUI_NIL;
+    });
+    
     // string.eachChar(string, charFunction) loops over each character, calling charFunction(charString, charIndex) for each
     stringTable->setFunction("eachChar", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_FUNCTION)

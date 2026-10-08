@@ -835,14 +835,7 @@ public://functions
         if(objectsByStringKey.count(key) != 0)
         {
             TuiRef* ref = objectsByStringKey[key];
-            if(ref->type() == Tui_ref_type_BOOL)
-            {
-                return ((TuiBool*)ref)->value;
-            }
-            else
-            {
-                TuiError("Found incorrect type (%s) when loading expected bool:%s", ref->getTypeName().c_str(), key.c_str());
-            }
+            return ref->boolValue();
         }
         return false;
     }
@@ -858,14 +851,7 @@ public://functions
         if(objectsByNumberKey.count(key) != 0)
         {
             TuiRef* ref = objectsByNumberKey[key];
-            if(ref->type() == Tui_ref_type_BOOL)
-            {
-                return ((TuiBool*)ref)->value;
-            }
-            else
-            {
-                TuiError("Found incorrect type (%s) when loading expected bool:%d", ref->getTypeName().c_str(), key);
-            }
+            return ref->boolValue();
         }
         return false;
     }

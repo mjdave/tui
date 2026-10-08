@@ -409,6 +409,15 @@ public://functions
     
     virtual bool boolValue() {return false;}
     
+    virtual bool isNumber() {
+        uint8_t thisType = type();
+        return (thisType == Tui_ref_type_NUMBER ||
+                thisType == Tui_ref_type_NUMBER_8 ||
+                thisType == Tui_ref_type_NUMBER_16 ||
+                thisType == Tui_ref_type_NUMBER_32 ||
+                thisType == Tui_ref_type_NUMBER_64);
+    }
+    
     std::string getDebugString() {
         std::string debugString;
         printHumanReadableString(debugString);
