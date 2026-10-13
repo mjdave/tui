@@ -2340,7 +2340,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 }
                 else
                 {
-                    if(keyConstant->type() != Tui_ref_type_NUMBER)
+                    if(!keyConstant->isNumber())
                     {
                         TuiParseError(debugInfo, "expected number");
                         return nullptr;
@@ -2348,7 +2348,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     
                     isNumberKey = true;
                     
-                    int64_t arrayIndex = ((TuiNumber*)keyConstant)->value;
+                    int64_t arrayIndex = keyConstant->getNumberValue();
                     if(arrayIndex >= 0 && arrayIndex < parent->arrayObjects.size())
                     {
                         child = parent->arrayObjects[arrayIndex];
@@ -2473,7 +2473,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         }
                         else if(isNumberKey && setIndex)
                         {
-                            *setIndex = ((TuiNumber*)keyConstant)->value;
+                            *setIndex = keyConstant->getNumberValue();
                         }
                     }
                     
@@ -4363,6 +4363,53 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                         TuiString* keyString = new TuiString(kv.first);
                         innerScopedCallData.locals[forStatement->indexInnerToken] = keyString;
                         innerFunctionStateTable->set(forStatement->keyOrIndexName, keyString);
+                    }
+                    
+                    innerScopedCallData.locals[forStatement->objectInnerToken] = kv.second;
+                    innerScopedCallData.localTokensByStringKey[forStatement->objectName] = forStatement->objectInnerToken;
+                    kv.second->retain();
+                    innerFunctionStateTable->set(forStatement->objectName, kv.second);
+                    
+                    bool breakFound = false;
+                    runResult = runStatementArray(forStatement->statements, result, innerFunctionStateTable, &forStatement->innerTokenMap, &innerScopedCallData, callingDebugInfo, &breakFound);
+                    
+                    for(auto& tokenAndRef : innerScopedCallData.locals)
+                    {
+                        tokenAndRef.second->release();
+                    }
+                    
+                    innerFunctionStateTable->release();
+                    for(TuiFunction* capturedFunction : innerScopedCallData.capturedFunctions)
+                    {
+                        capturedFunction->releaseAndRemoveTransientLoopTables();
+                    }
+                    
+                    if(runResult || breakFound)
+                    {
+                        break;
+                    }
+                }
+            }
+            
+            if(!runResult && !containerObject->objectsByNumberKey.empty())
+            {
+                for(auto& kv : containerObject->objectsByNumberKey)
+                {
+                    TuiTable* innerFunctionStateTable = new TuiTable(functionStateTable);
+                    TuiFunctionCallData innerScopedCallData;
+                    innerScopedCallData.thisTable = callData->thisTable;
+                    innerScopedCallData.parentCallData = &scopedCallData;
+                    innerScopedCallData.parentTable = innerFunctionStateTable;
+                    innerScopedCallData.transientLoopTables = scopedCallData.transientLoopTables;
+                    innerScopedCallData.transientLoopTables.push_back(innerFunctionStateTable);
+                    
+                    loadTokens(parent, &forStatement->innerTokenMap, &innerScopedCallData);
+                    
+                    if(forStatement->indexInnerToken != 0)
+                    {
+                        TuiNumber* keyNumber = new TuiNumber(kv.first);
+                        innerScopedCallData.locals[forStatement->indexInnerToken] = keyNumber;
+                        innerFunctionStateTable->set(forStatement->keyOrIndexName, keyNumber);
                     }
                     
                     innerScopedCallData.locals[forStatement->objectInnerToken] = kv.second;
