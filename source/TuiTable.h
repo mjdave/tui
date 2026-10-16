@@ -322,13 +322,35 @@ public://functions
             }
             else
             {
-                TuiError("Found incorrect type (%s) when loading expected table:%s", ref->getTypeName().c_str(), key.c_str());
+                TuiError("Found incorrect type (%s) when loading expected table for key:%s", ref->getTypeName().c_str(), key.c_str());
             }
         }
         return nullptr;
     }
     
     void setTable(const std::string& key, TuiTable* value)
+    {
+        set(key, value);
+    }
+    
+    TuiTable* getTable(uint32_t key)
+    {
+        if(objectsByNumberKey.count(key) != 0)
+        {
+            TuiRef* ref = objectsByNumberKey[key];
+            if(ref->type() == Tui_ref_type_TABLE)
+            {
+                return ((TuiTable*)ref);
+            }
+            else
+            {
+                TuiError("Found incorrect type (%s) when loading expected table for index:%d", ref->getTypeName().c_str(), key);
+            }
+        }
+        return nullptr;
+    }
+    
+    void setTable(uint32_t key, TuiTable* value)
     {
         set(key, value);
     }
