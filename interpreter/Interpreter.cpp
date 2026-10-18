@@ -5,7 +5,7 @@ Interpreter::Interpreter(std::vector<std::string>& args)
 {
     for(auto& arg : args)
     {
-        TuiPointer<TuiRef> scriptRunResult = nullptr;
+        Tui::ref scriptRunResult = nullptr;
         TuiRef::runScriptFile(Tui::getResourcePath(arg), Tui::getRootTable(), nullptr, scriptRunResult); //todo this should instead run the first arg, pass the rest to the script
         if(scriptRunResult)
         {

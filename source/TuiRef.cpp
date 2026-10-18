@@ -1,15 +1,16 @@
 
 #include "TuiRef.h"
+#include "TuiTypes.h"
 
 #include "TuiTable.h"
 #include "TuiNumber.h"
 
 
-TuiPointer<TuiBool> TUI_TRUE = Tui::createPointer<TuiBool>(true);
-TuiPointer<TuiBool> TUI_FALSE = Tui::createPointer<TuiBool>(false);
+Tui::boolean TUI_TRUE = Tui::createPointer<TuiBool>(true);
+Tui::boolean TUI_FALSE = Tui::createPointer<TuiBool>(false);
 
 
-TuiPointer<TuiRef> TuiRef::loadString(const std::string& inputString, const std::string& debugName, TuiPointer<TuiTable> parent) {
+Tui::ref TuiRef::loadString(const std::string& inputString, const std::string& debugName, Tui::table parent) {
     TuiDebugInfo debugInfo;
     TuiDebugInfoPush(&debugInfo, debugName, 1);
     const char* cString = inputString.c_str();
@@ -18,7 +19,7 @@ TuiPointer<TuiRef> TuiRef::loadString(const std::string& inputString, const std:
     return TuiRef::load(cString, &endPtr, parent, &debugInfo);
 }
 
-TuiPointer<TuiRef> TuiRef::loadString(const std::string& inputString, TuiPointer<TuiTable> parent, TuiDebugInfo* callingDebugInfo)
+Tui::ref TuiRef::loadString(const std::string& inputString, Tui::table parent, TuiDebugInfo* callingDebugInfo)
 {
     TuiDebugInfo debugInfo;
     TuiDebugInfoCopy(callingDebugInfo, &debugInfo);
@@ -28,7 +29,7 @@ TuiPointer<TuiRef> TuiRef::loadString(const std::string& inputString, TuiPointer
     return TuiRef::load(cString, &endPtr, parent, &debugInfo);
 }
 
-TuiPointer<TuiRef> TuiRef::runScriptFile(const std::string& path, TuiPointer<TuiTable> parent, TuiDebugInfo* callingDebugInfo, TuiPointer<TuiRef> resultRef)
+Tui::ref TuiRef::runScriptFile(const std::string& path, Tui::table parent, TuiDebugInfo* callingDebugInfo, Tui::ref resultRef)
 {
     std::ifstream in(path.c_str(), std::ios::in | std::ios::binary);
     TuiDebugInfo debugInfo;
@@ -56,7 +57,7 @@ TuiPointer<TuiRef> TuiRef::runScriptFile(const std::string& path, TuiPointer<Tui
     return nullptr;
 }
 
-TuiPointer<TuiRef> TuiRef::loadBinaryString(const char* inputString, int* currentOffset, TuiPointer<TuiTable> parent)
+Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, Tui::table parent)
 {
     uint8_t type = inputString[(*currentOffset)++];
     switch (type) {
@@ -182,7 +183,7 @@ TuiPointer<TuiRef> TuiRef::loadBinaryString(const char* inputString, int* curren
             memcpy(&stringLength, &inputString[(*currentOffset)], 4);
             (*currentOffset)+=4;
             
-            TuiPointer<TuiString> stringRef = Tui::createPointer<TuiString>("");
+            Tui::string stringRef = Tui::createPointer<TuiString>("");
             stringRef->value.resize(stringLength);
             memcpy(&stringRef->value[0], &inputString[(*currentOffset)], stringLength);
             (*currentOffset)+=stringLength;
@@ -192,7 +193,7 @@ TuiPointer<TuiRef> TuiRef::loadBinaryString(const char* inputString, int* curren
             break;
         case Tui_binary_type_TABLE:
         {
-            TuiPointer<TuiTable> table = Tui::createPointer<TuiTable>(parent);
+            Tui::table table = Tui::createPointer<TuiTable>(parent);
             
             if(inputString[(*currentOffset)] == Tui_binary_type_NUMBER_8_SET)
             {
@@ -248,15 +249,15 @@ TuiPointer<TuiRef> TuiRef::loadBinaryString(const char* inputString, int* curren
             
             while(inputString[(*currentOffset)] != Tui_binary_type_END_MARKER)
             {
-                TuiPointer<TuiRef> arrayObject = TuiRef::loadBinaryString(inputString, currentOffset);
+                Tui::ref arrayObject = TuiRef::loadBinaryString(inputString, currentOffset);
                 table->arrayObjects.push_back(arrayObject);
             }
             (*currentOffset)++;
             
             while(inputString[(*currentOffset)] != Tui_binary_type_END_MARKER)
             {
-                TuiPointer<TuiRef> keyObject = TuiRef::loadBinaryString(inputString, currentOffset);
-                TuiPointer<TuiRef> valueObject = TuiRef::loadBinaryString(inputString, currentOffset);
+                Tui::ref keyObject = TuiRef::loadBinaryString(inputString, currentOffset);
+                Tui::ref valueObject = TuiRef::loadBinaryString(inputString, currentOffset);
                 if(keyObject->type() == Tui_ref_type_NUMBER_32)
                 {
                     table->set(Tui::castPointer<TuiNumber32>(keyObject)->value, valueObject);
@@ -279,13 +280,13 @@ TuiPointer<TuiRef> TuiRef::loadBinaryString(const char* inputString, int* curren
     return nullptr;
 }
 
-TuiPointer<TuiRef> TuiRef::loadBinaryString(const std::string& inputString, TuiPointer<TuiTable> parent)
+Tui::ref TuiRef::loadBinaryString(const std::string& inputString, Tui::table parent)
 {
     int currentOffset = 0;
     return loadBinaryString(inputString.c_str(), &currentOffset);
 }
 
-TuiPointer<TuiRef> TuiRef::loadBinary(const std::string& path, TuiPointer<TuiTable> parent)
+Tui::ref TuiRef::loadBinary(const std::string& path, Tui::table parent)
 {
     std::ifstream in(path.c_str(), std::ios::in | std::ios::binary);
     if(in)
@@ -307,9 +308,9 @@ TuiPointer<TuiRef> TuiRef::loadBinary(const std::string& path, TuiPointer<TuiTab
 }
 
 
-TuiPointer<TuiRef> TuiRef::load(const char* str, char** endptr, TuiPointer<TuiTable> parent, TuiDebugInfo* debugInfo, TuiPointer<TuiRef>* resultRef) {
+Tui::ref TuiRef::load(const char* str, char** endptr, Tui::table parent, TuiDebugInfo* debugInfo, Tui::ref* resultRef) {
     
-    TuiPointer<TuiTable> table = Tui::createPointer<TuiTable>(parent);
+    Tui::table table = Tui::createPointer<TuiTable>(parent);
     
     const char* s = tuiSkipToNextChar(str, debugInfo);
     
@@ -351,7 +352,7 @@ TuiPointer<TuiRef> TuiRef::load(const char* str, char** endptr, TuiPointer<TuiTa
             int arrayObjectCount = (int)table->arrayObjects.size();
             if(arrayObjectCount == 1)
             {
-                TuiPointer<TuiRef> object = table->arrayObjects[0];
+                Tui::ref object = table->arrayObjects[0];
                 return object;
             }
             else if(arrayObjectCount == 0)
@@ -365,11 +366,11 @@ TuiPointer<TuiRef> TuiRef::load(const char* str, char** endptr, TuiPointer<TuiTa
 }
 
 // parses a single token and returns the result eg: foo, bar(), array, [1+2], x, 42
-static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
+static Tui::ref loadSingleValueInternal(const char* str,
                                        char** endptr,
-                                       TuiPointer<TuiRef> existingValue,
-                                       TuiPointer<TuiRef> parentRef,
-                                       TuiPointer<TuiRef> varChainParent,
+                                       Tui::ref existingValue,
+                                       Tui::ref parentRef,
+                                       Tui::ref varChainParent,
                                        TuiDebugInfo* debugInfo,
                                        
                                        std::string* onSetKey, //watch out, using the existance of this var to allow "x":5 json quoted key names only. For values, a quoted string is not a valid variable name
@@ -380,7 +381,7 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
 {
     const char* s = str;
     
-    TuiPointer<TuiTable> parent = Tui::castPointer<TuiTable>(parentRef);
+    Tui::table parent = Tui::castPointer<TuiTable>(parentRef);
     if(parentRef->type() != Tui_ref_type_TABLE)
     {
         TuiError("Unimplemented");
@@ -390,7 +391,7 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
     {
         if(*s == '(')
         {
-            TuiPointer<TuiRef> result = TuiRef::loadExpression(s,
+            Tui::ref result = TuiRef::loadExpression(s,
                                                     endptr,
                                                     existingValue,
                                                  nullptr,
@@ -403,7 +404,7 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
             s++;
             s = tuiSkipToNextChar(s, debugInfo);
             std::string subStringBuffer;
-            TuiPointer<TuiRef> result = loadSingleValueInternal(s,
+            Tui::ref result = loadSingleValueInternal(s,
                                                      endptr,
                                                      nullptr,
                                                      parent,
@@ -431,7 +432,7 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
                 Tui::castPointer<TuiNumber>(existingValue)->value = value;
                 return nullptr;
             }
-            TuiPointer<TuiNumber> number = Tui::createPointer<TuiNumber>(value);
+            Tui::number number = Tui::createPointer<TuiNumber>(value);
             return number;
         }
         
@@ -442,37 +443,37 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
         }
         
         //todo pull out these functions, set existing values correctly
-        TuiPointer<TuiFunction> functionRef = TuiFunction::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        Tui::function functionRef = TuiFunction::initWithHumanReadableString(s, endptr, parent, debugInfo);
         if(functionRef)
         {
             return functionRef;
         }
         
-        TuiPointer<TuiBool> boolRef = TuiBool::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        Tui::boolean boolRef = TuiBool::initWithHumanReadableString(s, endptr, parent, debugInfo);
         if(boolRef)
         {
             return boolRef;
         }
         
-        TuiPointer<TuiVec2> vec2Ref = TuiVec2::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        Tui::vec2 vec2Ref = TuiVec2::initWithHumanReadableString(s, endptr, parent, debugInfo);
         if(vec2Ref)
         {
             return vec2Ref;
         }
         
-        TuiPointer<TuiVec3> vec3Ref = TuiVec3::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        Tui::vec3 vec3Ref = TuiVec3::initWithHumanReadableString(s, endptr, parent, debugInfo);
         if(vec3Ref)
         {
             return vec3Ref;
         }
         
-        TuiPointer<TuiVec4> vec4Ref = TuiVec4::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        Tui::vec4 vec4Ref = TuiVec4::initWithHumanReadableString(s, endptr, parent, debugInfo);
         if(vec4Ref)
         {
             return vec4Ref;
         }
         
-        TuiPointer<TuiMat3> mat3Ref = TuiMat3::initWithHumanReadableString(s, endptr, parent, debugInfo);
+        Tui::mat3 mat3Ref = TuiMat3::initWithHumanReadableString(s, endptr, parent, debugInfo);
         if(mat3Ref)
         {
             return mat3Ref;
@@ -509,7 +510,7 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
         {
             s++;
             s = tuiSkipToNextChar(s, debugInfo);
-            TuiPointer<TuiRef> index = TuiRef::loadExpression(s,
+            Tui::ref index = TuiRef::loadExpression(s,
                                                    endptr,
                                                    nullptr,
                                                    nullptr,
@@ -540,7 +541,7 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
             
             if(indexValue >= 0 && indexValue < Tui::castPointer<TuiTable>(varChainParent)->arrayObjects.size())
             {
-                TuiPointer<TuiRef> result = (Tui::castPointer<TuiTable>(varChainParent)->arrayObjects[indexValue]);
+                Tui::ref result = (Tui::castPointer<TuiTable>(varChainParent)->arrayObjects[indexValue]);
                 if(result)
                 {
                 }
@@ -549,7 +550,7 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
             
             if(Tui::castPointer<TuiTable>(varChainParent)->objectsByNumberKey.count((uint32_t)indexValue) != 0)
             {
-                TuiPointer<TuiRef> result = (Tui::castPointer<TuiTable>(varChainParent)->objectsByNumberKey[(uint32_t)indexValue]);
+                Tui::ref result = (Tui::castPointer<TuiTable>(varChainParent)->objectsByNumberKey[(uint32_t)indexValue]);
                 return result;
             }
             
@@ -756,7 +757,7 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
     if(allowAsVariableName)
     {
         
-        TuiPointer<TuiRef> resultRef = nullptr;
+        Tui::ref resultRef = nullptr;
         if(varChainParent && varChainParent->type() != Tui_ref_type_TABLE)
         {
             switch(varChainParent->type())
@@ -822,7 +823,7 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
         }
         else
         {
-            TuiPointer<TuiTable> searchTable = (varChainParent ? Tui::castPointer<TuiTable>(varChainParent) :  parent);
+            Tui::table searchTable = (varChainParent ? Tui::castPointer<TuiTable>(varChainParent) :  parent);
             
             if(searchTable->objectsByStringKey.count(stringBuffer) != 0)
             {
@@ -861,11 +862,11 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
                     TuiParseError(debugInfo, "Expected function '%s', found %s.%s", stringBuffer.c_str(), resultRef->getTypeName().c_str(), extraInfo.c_str());
                     return nullptr;
                 }
-                TuiPointer<TuiTable> argsArrayTable = Tui::createPointer<TuiTable>(parent);//TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
+                Tui::table argsArrayTable = Tui::createPointer<TuiTable>(parent);//TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
                 
                 while(*s != ')')
                 {
-                    TuiPointer<TuiRef> valueRef = TuiRef::loadExpression(s,
+                    Tui::ref valueRef = TuiRef::loadExpression(s,
                                                               endptr,
                                                               nullptr,
                                                               nullptr,
@@ -891,7 +892,7 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
                 
                 s = tuiSkipToNextChar(s, debugInfo, true);
                 *endptr = (char*)s;
-                TuiPointer<TuiRef> newRef = Tui::castPointer<TuiFunction>(resultRef)->call(argsArrayTable, existingValue, nullptr, debugInfo);
+                Tui::ref newRef = Tui::castPointer<TuiFunction>(resultRef)->call(argsArrayTable, existingValue, nullptr, debugInfo);
                 resultRef = newRef;
             }
             
@@ -920,7 +921,7 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
     
     if(!stringBuffer.empty() || foundAnyQuote)
     {
-        TuiPointer<TuiString> tuiString = Tui::createPointer<TuiString>(stringBuffer);
+        Tui::string tuiString = Tui::createPointer<TuiString>(stringBuffer);
         return tuiString;
     }
     
@@ -929,22 +930,22 @@ static TuiPointer<TuiRef> loadSingleValueInternal(const char* str,
 
 // parses a variable chain and returns the result eg: foo.bar().array[1+2].x
 // optionally stores the enclosing ref and the final variable name if found
-TuiPointer<TuiRef> TuiRef::loadValue(const char* str,
+Tui::ref TuiRef::loadValue(const char* str,
                           char** endptr,
-                          TuiPointer<TuiRef> existingValue,
-                          TuiPointer<TuiTable> parentTable,
+                          Tui::ref existingValue,
+                          Tui::table parentTable,
                           TuiDebugInfo* debugInfo,
                           
                           //below are only passed if there is a chance we are finding a key in order to set its value, giving the caller quick access to the parent to set the value for an uninitialized variable
-                          TuiPointer<TuiRef>* onSetEnclosingRef,
+                          Tui::ref* onSetEnclosingRef,
                           std::string* onSetKey,
                           int* onSetIndex,
                           bool* accessedParentVariable)
 {
     const char* s = str;
     
-    TuiPointer<TuiRef> varChainParent = nullptr;
-    TuiPointer<TuiRef> result = nullptr;
+    Tui::ref varChainParent = nullptr;
+    Tui::ref result = nullptr;
     
     if(*s == '.')
     {
@@ -984,7 +985,7 @@ TuiPointer<TuiRef> TuiRef::loadValue(const char* str,
             TuiParseError(debugInfo, "Something went wrong");
         }
         
-        TuiPointer<TuiTable> parentToUse = parentTable->parentTable;
+        Tui::table parentToUse = parentTable->parentTable;
         
         s++;
         s = tuiSkipToNextChar(s, debugInfo);
@@ -1073,17 +1074,17 @@ TuiPointer<TuiRef> TuiRef::loadValue(const char* str,
     return result;
 }
 
-TuiPointer<TuiBool> TuiRef::logicalNot(TuiPointer<TuiRef> value)
+Tui::boolean TuiRef::logicalNot(Tui::ref value)
 {
     return TUI_BOOL(!value || !value->boolValue());
 }
 
 
-TuiPointer<TuiRef> TuiRef::loadExpression(const char* str,
+Tui::ref TuiRef::loadExpression(const char* str,
                                char** endptr,
-                               TuiPointer<TuiRef> existingValue,
-                               TuiPointer<TuiRef> leftValue,
-                               TuiPointer<TuiTable> parentTable,
+                               Tui::ref existingValue,
+                               Tui::ref leftValue,
+                               Tui::table parentTable,
                                TuiDebugInfo* debugInfo,
                                int operatorLevel)
 {
@@ -1096,7 +1097,7 @@ TuiPointer<TuiRef> TuiRef::loadExpression(const char* str,
         {
             s++;
             s = tuiSkipToNextChar(s, debugInfo, true);
-            TuiPointer<TuiRef> rightValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parentTable, debugInfo, Tui_operator_level_not);
+            Tui::ref rightValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parentTable, debugInfo, Tui_operator_level_not);
             if(rightValue)
             {
                 leftValue = TuiRef::logicalNot(rightValue);
@@ -1126,7 +1127,7 @@ TuiPointer<TuiRef> TuiRef::loadExpression(const char* str,
         {
             s++;
             s = tuiSkipToNextChar(s, debugInfo, true);
-            TuiPointer<TuiRef> rightValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parentTable, debugInfo, Tui_operator_level_not);
+            Tui::ref rightValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parentTable, debugInfo, Tui_operator_level_not);
             if(rightValue)
             {
                 switch (rightValue->type()) {
@@ -1239,7 +1240,7 @@ TuiPointer<TuiRef> TuiRef::loadExpression(const char* str,
         s+=2;
     }
     
-    TuiPointer<TuiRef> result = nullptr;
+    Tui::ref result = nullptr;
     
     if((operatorChar == '+' && (secondOperatorChar == '+' || secondOperatorChar == '=')) ||
        (operatorChar == '-' && (secondOperatorChar == '-' || secondOperatorChar == '=')) ||
@@ -1312,7 +1313,7 @@ TuiPointer<TuiRef> TuiRef::loadExpression(const char* str,
     
     int newOperatorLevel = TuiExpressionOperatorsToLevelMap[operatorChar];
     
-    TuiPointer<TuiRef> rightValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parentTable, debugInfo, newOperatorLevel);
+    Tui::ref rightValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parentTable, debugInfo, newOperatorLevel);
     s = tuiSkipToNextChar(*endptr, debugInfo, true);
     
     bool existingValueWasAssigned = false;

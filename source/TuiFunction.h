@@ -9,6 +9,7 @@
 #include <vector>
 #include "glm.hpp"
 #include "TuiLog.h"
+#include "TuiTypes.h"
 
 #include "TuiRef.h"
 #include "TuiStatement.h"
@@ -19,27 +20,27 @@ class TuiFunction;
 
 struct TuiFunctionCallData {
     TuiFunctionCallData* parentCallData = nullptr;
-    TuiPointer<TuiTable> parentTable = nullptr;
-    TuiPointer<TuiTable> thisTable = nullptr;
+    Tui::table parentTable = nullptr;
+    Tui::table thisTable = nullptr;
     std::map<std::string, uint32_t> localTokensByStringKey;
-    std::map<uint32_t, TuiPointer<TuiRef>> locals; //need to release
-    std::vector<TuiPointer<TuiTable>> transientLoopTables;
-    std::vector<TuiPointer<TuiFunction>> capturedFunctions;
+    std::map<uint32_t, Tui::ref> locals; //need to release
+    std::vector<Tui::table> transientLoopTables;
+    std::vector<Tui::function> capturedFunctions;
 };
 
 
 class TuiFunction : public TuiRef {
     
 public: //static functions
-    static TuiPointer<TuiFunction> initWithHumanReadableString(const char* str,
+    static Tui::function initWithHumanReadableString(const char* str,
                                                     char** endptr,
-                                                    const TuiPointer<TuiTable>& parent,
+                                                    const Tui::table& parent,
                                                     TuiDebugInfo* debugInfo);
     
     static bool recursivelySerializeExpression(const char* str,
                                                char** endptr,
                                                TuiExpression* expression,
-                                               const TuiPointer<TuiTable>& parent,
+                                               const Tui::table& parent,
                                                TuiTokenMap* tokenMap,
                                                TuiDebugInfo* debugInfo,
                                                int operatorLevel,
@@ -49,7 +50,7 @@ public: //static functions
     
     static bool serializeFunctionBody(const char* str,
                                       char** endptr,
-                                      const TuiPointer<TuiTable>& parent,
+                                      const Tui::table& parent,
                                       TuiTokenMap* tokenMap,
                                       TuiDebugInfo* debugInfo,
                                       bool sharesParentScope,
@@ -57,68 +58,68 @@ public: //static functions
     
     static TuiStatement* serializeForStatement(const char* str,
                                                   char** endptr,
-                                                  const TuiPointer<TuiTable>& parent,
+                                                  const Tui::table& parent,
                                                   TuiDebugInfo* debugInfo,
                                                bool sharesParentScope,
                                                bool isWhileLoop);
     
     
     
-    static TuiPointer<TuiRef> runExpression(TuiExpression* expression,
+    static Tui::ref runExpression(TuiExpression* expression,
                                  uint32_t* tokenPos,
-                                 const TuiPointer<TuiRef>& result,
-                                 const TuiPointer<TuiTable>& parent,
+                                 const Tui::ref& result,
+                                 const Tui::table& parent,
                                  TuiTokenMap* tokenMap,
                                  TuiFunctionCallData* callData,
                                  TuiDebugInfo* debugInfo,
                                  std::string* setKey = nullptr,
                                  int* setIndex = nullptr,
-                                 TuiPointer<TuiRef>* enclosingSetRef = nullptr,
+                                 Tui::ref* enclosingSetRef = nullptr,
                                  std::string* subTypeAccessKey = nullptr,
-                                 TuiPointer<TuiRef>* subTypeRef = nullptr);
+                                 Tui::ref* subTypeRef = nullptr);
     
-    static TuiPointer<TuiRef> runStatement(TuiStatement* statement,
-                                const TuiPointer<TuiRef>& result,
-                                const TuiPointer<TuiTable>& parent,
+    static Tui::ref runStatement(TuiStatement* statement,
+                                const Tui::ref& result,
+                                const Tui::table& parent,
                                 TuiTokenMap* tokenMap,
                                 TuiFunctionCallData* callData,
                                 TuiDebugInfo* debugInfo,
                                 bool* breakFound = nullptr);
     
-    static TuiPointer<TuiRef> runStatementArray(std::vector<TuiStatement*>& statements,
-                                     const TuiPointer<TuiRef>& result,
-                                     const TuiPointer<TuiTable>& parent,
+    static Tui::ref runStatementArray(std::vector<TuiStatement*>& statements,
+                                     const Tui::ref& result,
+                                     const Tui::table& parent,
                                      TuiTokenMap* tokenMap,
                                      TuiFunctionCallData* callData,
                                      TuiDebugInfo* debugInfo,
                                      bool* breakFound = nullptr);
 
 public: //class members
-    TuiPointer<TuiTable> parentTable = nullptr;
+    Tui::table parentTable = nullptr;
     std::vector<std::string> argNames;
     std::vector<TuiStatement*> statements;
-    std::function<TuiPointer<TuiRef>(const TuiPointer<TuiTable>& args, const TuiPointer<TuiRef>& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo)> func;
+    std::function<Tui::ref(const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo)> func;
     
     TuiTokenMap tokenMap;
-    std::vector<TuiPointer<TuiTable>> retainedTransientLoopTables;
+    std::vector<Tui::table> retainedTransientLoopTables;
     
     TuiDebugInfoLine debugInfoLine;
     
 public: //class functions
-    TuiFunction(TuiPointer<TuiTable> parentTable_);
-    TuiFunction(std::function<TuiPointer<TuiRef>(const TuiPointer<TuiTable>& args, const TuiPointer<TuiRef>& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo)> func_);
+    TuiFunction(Tui::table parentTable_);
+    TuiFunction(std::function<Tui::ref(const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo)> func_);
     virtual ~TuiFunction() {};
     
-    virtual TuiPointer<TuiRef> copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
+    virtual Tui::ref copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
         return createPointerFromThis();
     }
     
     void releaseAndRemoveTransientLoopTables();
     
-    TuiPointer<TuiFunction> trueCopy() //assumed to only be used for function construction from a pre-serialized prototype
+    Tui::function trueCopy() //assumed to only be used for function construction from a pre-serialized prototype
     {
-        TuiPointer<TuiFunction> copied = Tui::createPointer<TuiFunction>(parentTable);
+        Tui::function copied = Tui::createPointer<TuiFunction>(parentTable);
         copied->argNames = argNames;
         copied->statements = statements;
         for(TuiStatement* statement : copied->statements)
@@ -134,41 +135,41 @@ public: //class functions
     virtual uint8_t type() { return Tui_ref_type_FUNCTION; }
     virtual std::string getTypeName() {return "function";}
     virtual std::string getStringValue() {return "function";}
-    virtual bool isEqual(const TuiPointer<TuiRef>& other) {return other.get() == this;}
+    virtual bool isEqual(const Tui::ref& other) {return other.get() == this;}
     
     virtual bool boolValue() {return true;}
     
-    TuiPointer<TuiRef> call(const TuiPointer<TuiTable>& args,
-                 const TuiPointer<TuiRef>& existingResult,
+    Tui::ref call(const Tui::table& args,
+                 const Tui::ref& existingResult,
                  TuiFunctionCallData* incomingCallData,
                  TuiDebugInfo* callingDebugInfo);
     
-    TuiPointer<TuiRef> runTableConstruct(const TuiPointer<TuiTable>& state,
-                 const TuiPointer<TuiRef>& existingResult,
+    Tui::ref runTableConstruct(const Tui::table& state,
+                 const Tui::ref& existingResult,
                  TuiDebugInfo* callingDebugInfo);
     
-    TuiPointer<TuiRef> call(const std::string& debugName,
-                 const TuiPointer<TuiRef>& arg1 = nullptr,
-                 const TuiPointer<TuiRef>& arg2 = nullptr,
-                 const TuiPointer<TuiRef>& arg3 = nullptr,
-                 const TuiPointer<TuiRef>& arg4 = nullptr,
-                 const TuiPointer<TuiRef>& arg5 = nullptr,
-                 const TuiPointer<TuiRef>& arg6 = nullptr,
-                 const TuiPointer<TuiRef>& arg7 = nullptr,
-                 const TuiPointer<TuiRef>& arg8 = nullptr);
+    Tui::ref call(const std::string& debugName,
+                 const Tui::ref& arg1 = nullptr,
+                 const Tui::ref& arg2 = nullptr,
+                 const Tui::ref& arg3 = nullptr,
+                 const Tui::ref& arg4 = nullptr,
+                 const Tui::ref& arg5 = nullptr,
+                 const Tui::ref& arg6 = nullptr,
+                 const Tui::ref& arg7 = nullptr,
+                 const Tui::ref& arg8 = nullptr);
     
-    TuiPointer<TuiRef> call(TuiFunctionCallData* incomingCallData,
+    Tui::ref call(TuiFunctionCallData* incomingCallData,
                               TuiDebugInfo* callingDebugInfo,
-                              const TuiPointer<TuiRef>& arg1 = nullptr,
-                              const TuiPointer<TuiRef>& arg2 = nullptr,
-                              const TuiPointer<TuiRef>& arg3 = nullptr,
-                              const TuiPointer<TuiRef>& arg4 = nullptr,
-                              const TuiPointer<TuiRef>& arg5 = nullptr,
-                              const TuiPointer<TuiRef>& arg6 = nullptr,
-                              const TuiPointer<TuiRef>& arg7 = nullptr,
-                              const TuiPointer<TuiRef>& arg8 = nullptr);
+                              const Tui::ref& arg1 = nullptr,
+                              const Tui::ref& arg2 = nullptr,
+                              const Tui::ref& arg3 = nullptr,
+                              const Tui::ref& arg4 = nullptr,
+                              const Tui::ref& arg5 = nullptr,
+                              const Tui::ref& arg6 = nullptr,
+                              const Tui::ref& arg7 = nullptr,
+                              const Tui::ref& arg8 = nullptr);
     
-    //void call(TuiPointer<TuiTable> args, std::function<void(TuiPointer<TuiRef>)> callback); //todo async
+    //void call(Tui::table args, std::function<void(Tui::ref)> callback); //todo async
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
     {

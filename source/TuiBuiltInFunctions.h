@@ -5,6 +5,7 @@
 #include <string>
 #include <chrono>
 
+#include "TuiTypes.h"
 #include "TuiPointer.h"
 
 class TuiTable;
@@ -14,7 +15,7 @@ namespace Tui {
 
 
 //TODO WARNING! This is not fully implemented, not to be trusted yet
-TuiPointer<TuiTable> initSafeRootTable(const TuiPointer<TuiFunction>& permissionCallbackFunction = nullptr, const std::string& sandBoxDir = ""); //pass permissionCallbackFunction to selectively give permission for some sensitive functions. Pass sandbox dir to restrict all file operations to within that directory.
+Tui::table initSafeRootTable(const Tui::function& permissionCallbackFunction = nullptr, const std::string& sandBoxDir = ""); //pass permissionCallbackFunction to selectively give permission for some sensitive functions. Pass sandbox dir to restrict all file operations to within that directory.
 // eg. in tui: permissionCallbackFunction = function(functionName, args, hasPermissionCallback) {
 //      if(functionName == "system")
 //      {
@@ -26,7 +27,7 @@ TuiPointer<TuiTable> initSafeRootTable(const TuiPointer<TuiFunction>& permission
 //      }
 //  }
 
-TuiPointer<TuiTable> initRootTable();
+Tui::table initRootTable();
 
 inline double nowTime()
 {
@@ -35,20 +36,20 @@ inline double nowTime()
 }
 
 
-static inline const TuiPointer<TuiTable>& getRootTable()
+static inline const Tui::table& getRootTable()
 {
-    thread_local TuiPointer<TuiTable> rootTable = Tui::initRootTable();
+    thread_local Tui::table rootTable = Tui::initRootTable();
     return rootTable;
 }
 
 
-void addBaseFunctions(const TuiPointer<TuiTable>& rootTable, const TuiPointer<TuiFunction>& permissionCallbackFunction = nullptr);
-void addStringTable(const TuiPointer<TuiTable>& rootTable);
-void addTimeTable(const TuiPointer<TuiTable>& rootTable);
-void addTableTable(const TuiPointer<TuiTable>& rootTable);
-void addMathTable(const TuiPointer<TuiTable>& rootTable);
-void addFileTable(const TuiPointer<TuiTable>& rootTable, const std::string& sandBoxDir = "");
-void addDebugTable(const TuiPointer<TuiTable>& rootTable);
+void addBaseFunctions(const Tui::table& rootTable, const Tui::function& permissionCallbackFunction = nullptr);
+void addStringTable(const Tui::table& rootTable);
+void addTimeTable(const Tui::table& rootTable);
+void addTableTable(const Tui::table& rootTable);
+void addMathTable(const Tui::table& rootTable);
+void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir = "");
+void addDebugTable(const Tui::table& rootTable);
 
 }
 

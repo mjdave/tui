@@ -20,7 +20,7 @@ public://functions
     virtual std::string getStringValue() {return value;}
     virtual double getNumberValue() {return atof(value.c_str());}
     virtual bool boolValue() {return true;}
-    virtual bool isEqual(const TuiPointer<TuiRef>& other) {return other && other->type() == Tui_ref_type_STRING && Tui::castPointer<TuiString>(other)->value == value;}
+    virtual bool isEqual(const Tui::ref& other) {return other && other->type() == Tui_ref_type_STRING && Tui::castPointer<TuiString>(other)->value == value;}
     
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) {
         debugString += "\"" + getStringValue() + "\"";
@@ -29,11 +29,11 @@ public://functions
     TuiString(const std::string& value_) : TuiRef() {value = value_;}
     virtual ~TuiString() {};
     
-    virtual TuiPointer<TuiRef> copy()
+    virtual Tui::ref copy()
     {
         return Tui::createPointer<TuiString>(value);
     }
-    virtual void assign(const TuiPointer<TuiRef>& other) {
+    virtual void assign(const Tui::ref& other) {
         value = (Tui::castPointer<TuiString>(other)->value);
     };
     
