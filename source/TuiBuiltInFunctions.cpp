@@ -51,8 +51,8 @@ static std::function tui_system = [](const Tui::table& args, const Tui::ref& exi
 #else
     if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
     {
-        int result = system((Tui::castPointer<TuiString>(args->arrayObjects[0])->value.c_str()));
-        return Tui::createPointer<TuiNumber>(result);
+        int result = system((Tui::cast<TuiString>(args->arrayObjects[0])->value.c_str()));
+        return Tui::create<TuiNumber>(result);
     }
 #endif
     return TUI_NIL;
@@ -67,7 +67,7 @@ static std::function tui_exec = [](const Tui::table& args, const Tui::ref& exist
         std::array<char, 128> buffer;
         std::string result;
 #if defined _WIN32
-        std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(Tui::castPointer<TuiString>(args->arrayObjects[0])->value.c_str(), "r"), _pclose);
+        std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(Tui::cast<TuiString>(args->arrayObjects[0])->value.c_str(), "r"), _pclose);
 #else
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(Tui::castPointer<TuiString>(args->arrayObjects[0])->value.c_str(), "r"), pclose);
 #endif
@@ -79,7 +79,7 @@ static std::function tui_exec = [](const Tui::table& args, const Tui::ref& exist
             result += buffer.data();
         }
 
-        return Tui::createPointer<TuiString>(result);
+        return Tui::create<TuiString>(result);
     }
 #endif
     return TUI_NIL;
@@ -101,7 +101,7 @@ static std::function tui_print = [](const Tui::table& args, const Tui::ref& exis
 
 Tui::table initSafeRootTable(const Tui::function& permissionCallbackFunction, const std::string& sandBoxDir)
 {
-    Tui::table rootTable = Tui::createPointer<TuiTable>();
+    Tui::table rootTable = Tui::create<TuiTable>();
     
     addBaseFunctions(rootTable, permissionCallbackFunction);
     addStringTable(rootTable);
@@ -116,7 +116,7 @@ Tui::table initSafeRootTable(const Tui::function& permissionCallbackFunction, co
 
 Tui::table initRootTable()
 {
-    Tui::table rootTable = Tui::createPointer<TuiTable>();
+    Tui::table rootTable = Tui::create<TuiTable>();
     
     addBaseFunctions(rootTable);
     addStringTable(rootTable);
@@ -141,12 +141,12 @@ void addBaseFunctions(const Tui::table& rootTable, const Tui::function& permissi
             {
                 if(args->arrayObjects.size() > 1 && args->arrayObjects[args->arrayObjects.size() - 1]->type() == Tui_ref_type_FUNCTION)
                 {
-                    resultCallbackFunction = Tui::castPointer<TuiFunction>(args->arrayObjects[args->arrayObjects.size() - 1]);
+                    resultCallbackFunction = Tui::cast<TuiFunction>(args->arrayObjects[args->arrayObjects.size() - 1]);
                 }
             }
             
             
-            Tui::function gotPermissionResultFunction = Tui::createPointer<TuiFunction>([resultCallbackFunction, args](Tui::table permissionResultArgs, Tui::ref existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
+            Tui::function gotPermissionResultFunction = Tui::create<TuiFunction>([resultCallbackFunction, args](Tui::table permissionResultArgs, Tui::ref existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
                 if(permissionResultArgs && permissionResultArgs->arrayObjects.size() > 0 && permissionResultArgs->arrayObjects[0]->boolValue())
                 {
                     Tui::ref callResult = tui_system(args, existingResult, incomingCallData, callingDebugInfo);
@@ -160,7 +160,7 @@ void addBaseFunctions(const Tui::table& rootTable, const Tui::function& permissi
             
             if(permissionCallbackFunction)
             {
-                Tui::ref functionNameRef = Tui::createPointer<TuiString>("system");
+                Tui::ref functionNameRef = Tui::create<TuiString>("system");
                 permissionCallbackFunction->call("permissionCallbackFunction", functionNameRef, args, gotPermissionResultFunction);
             }
             else
@@ -199,7 +199,7 @@ void addBaseFunctions(const Tui::table& rootTable, const Tui::function& permissi
         int code = 0;
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            code = (Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value);
+            code = (Tui::cast<TuiNumber>(args->arrayObjects[0])->value);
         }
         exit(code);
     });
@@ -215,7 +215,7 @@ void addBaseFunctions(const Tui::table& rootTable, const Tui::function& permissi
             Tui::table tui_requireCache = rootTable->getTable("tui_requireCache");
             if(!tui_requireCache)
             {
-                tui_requireCache = Tui::createPointer<TuiTable>();
+                tui_requireCache = Tui::create<TuiTable>();
                 rootTable->setTable("tui_requireCache", tui_requireCache);
             }
             
@@ -227,10 +227,10 @@ void addBaseFunctions(const Tui::table& rootTable, const Tui::function& permissi
             TuiDebugInfo debugInfo;
             TuiDebugInfoCopy(callingDebugInfo, &debugInfo);
             
-            Tui::ref getResourcePathFunc = (Tui::castPointer<TuiTable>(rootTable->get("file"))->get("getResourcePath"));
+            Tui::ref getResourcePathFunc = (Tui::cast<TuiTable>(rootTable->get("file"))->get("getResourcePath"));
             if(getResourcePathFunc)
             {
-                Tui::ref pathResult = Tui::castPointer<TuiFunction>(getResourcePathFunc)->call("getResourcePathFunc", args->arrayObjects[0]);
+                Tui::ref pathResult = Tui::cast<TuiFunction>(getResourcePathFunc)->call("getResourcePathFunc", args->arrayObjects[0]);
                 if(pathResult)
                 {
                     Tui::ref loadedRef = TuiRef::runScriptFile(pathResult->getStringValue(), rootTable, &debugInfo);
@@ -260,11 +260,11 @@ void addBaseFunctions(const Tui::table& rootTable, const Tui::function& permissi
             Tui::table parentTable = nullptr;
             if(args->arrayObjects.size() > 1 && args->arrayObjects[1]->type() == Tui_ref_type_TABLE)
             {
-                parentTable = Tui::castPointer<TuiTable>(args->arrayObjects[1]);
+                parentTable = Tui::cast<TuiTable>(args->arrayObjects[1]);
             }
             TuiDebugInfo debugInfo;
             TuiDebugInfoCopy(callingDebugInfo, &debugInfo);
-            Tui::ref loadedRef = TuiRef::loadString(Tui::castPointer<TuiString>(args->arrayObjects[0])->value, parentTable, callingDebugInfo);
+            Tui::ref loadedRef = TuiRef::loadString(Tui::cast<TuiString>(args->arrayObjects[0])->value, parentTable, callingDebugInfo);
             return loadedRef;
         }
         TuiParseError(callingDebugInfo, "load expected string");
@@ -294,7 +294,7 @@ void addBaseFunctions(const Tui::table& rootTable, const Tui::function& permissi
                                            &finalIndex);
         if(!result && !finalKey.empty())
         {
-            result = Tui::createPointer<TuiString>(finalKey);
+            result = Tui::create<TuiString>(finalKey);
         }
         
         return result;
@@ -318,16 +318,16 @@ void addBaseFunctions(const Tui::table& rootTable, const Tui::function& permissi
     rootTable->setFunction("type", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0)
         {
-            return Tui::createPointer<TuiString>(args->arrayObjects[0]->getTypeName());
+            return Tui::create<TuiString>(args->arrayObjects[0]->getTypeName());
         }
-        return Tui::createPointer<TuiString>("nil");
+        return Tui::create<TuiString>("nil");
     });
     
     //sleep(seconds) puts the current thread to sleep for the duration given in seconds
     rootTable->setFunction("sleep", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0)
         {
-            std::this_thread::sleep_for(std::chrono::duration<double>((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            std::this_thread::sleep_for(std::chrono::duration<double>((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         return TUI_NIL;
     });
@@ -335,7 +335,7 @@ void addBaseFunctions(const Tui::table& rootTable, const Tui::function& permissi
     //platform() returns a string representing the current running platform, currently one of: ios, macos, windows, linux
     rootTable->setFunction("platform", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
 #if defined _WIN32
-        return Tui::createPointer<TuiString>("windows");
+        return Tui::create<TuiString>("windows");
 #elif defined (__LINUX__) || defined(__gnu_linux__) || defined(__linux__)
         return Tui::createPointer<TuiString>("linux");
 #elif TARGET_OS_IPHONE
@@ -351,7 +351,7 @@ void addStringTable(const Tui::table& rootTable)
     //************
     //string
     //************
-    Tui::table stringTable = Tui::createPointer<TuiTable>(rootTable);
+    Tui::table stringTable = Tui::create<TuiTable>(rootTable);
     rootTable->set("string", stringTable);
     static const std::set<int> integerChars = {
         'd','i','o','u','x','X','D','O','U','c','C'
@@ -363,7 +363,7 @@ void addStringTable(const Tui::table& rootTable)
     stringTable->setFunction("format", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            const char* s = (Tui::castPointer<TuiString>(args->arrayObjects[0])->value.c_str());
+            const char* s = (Tui::cast<TuiString>(args->arrayObjects[0])->value.c_str());
             //char* endPtr;
             
             std::string result = "";
@@ -406,7 +406,7 @@ void addStringTable(const Tui::table& rootTable)
                             }
                             else if(interpretAsPointer)
                             {
-                                result += Tui::string_format(currentString, (arg->type() == Tui_ref_type_USERDATA ? ((void*)(Tui::castPointer<TuiUserData>(arg)->value)) : (void*)arg.get()));
+                                result += Tui::string_format(currentString, (arg->type() == Tui_ref_type_USERDATA ? ((void*)(Tui::cast<TuiUserData>(arg)->value)) : (void*)arg.get()));
                             }
                             else
                             {
@@ -463,7 +463,7 @@ void addStringTable(const Tui::table& rootTable)
                 }
             }
             
-            return Tui::createPointer<TuiString>(result);
+            return Tui::create<TuiString>(result);
         }
         TuiParseError(callingDebugInfo, "string.format expected string, args");
         return TUI_NIL;
@@ -472,7 +472,7 @@ void addStringTable(const Tui::table& rootTable)
     stringTable->setFunction("length", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return Tui::createPointer<TuiNumber>(((Tui::castPointer<TuiString>(args->arrayObjects[0])->value).length()));
+            return Tui::create<TuiNumber>(((Tui::cast<TuiString>(args->arrayObjects[0])->value).length()));
         }
         TuiParseError(callingDebugInfo, "string.length expected string");
         return TUI_NIL;
@@ -484,16 +484,16 @@ void addStringTable(const Tui::table& rootTable)
             int length = -1;
             if(args->arrayObjects.size() > 2 && args->arrayObjects[2]->type() == Tui_ref_type_NUMBER)
             {
-                length = (Tui::castPointer<TuiNumber>(args->arrayObjects[2])->value);
+                length = (Tui::cast<TuiNumber>(args->arrayObjects[2])->value);
             }
-            int32_t pos = (Tui::castPointer<TuiNumber>(args->arrayObjects[1])->value);
-            Tui::string tuiString = Tui::castPointer<TuiString>(args->arrayObjects[0]);
+            int32_t pos = (Tui::cast<TuiNumber>(args->arrayObjects[1])->value);
+            Tui::string tuiString = Tui::cast<TuiString>(args->arrayObjects[0]);
             if(pos < 0 || pos >= tuiString->value.length())
             {
                 TuiParseError(callingDebugInfo, "string.subString pos:%d invalid for string length:%d", pos, (int)(tuiString->value.length()));
                 return TUI_NIL;
             }
-            return Tui::createPointer<TuiString>(tuiString->value.substr(pos, length));
+            return Tui::create<TuiString>(tuiString->value.substr(pos, length));
         }
         TuiParseError(callingDebugInfo, "string.subString expected string, start index, optional length");
         return TUI_NIL;
@@ -502,7 +502,7 @@ void addStringTable(const Tui::table& rootTable)
     stringTable->setFunction("sha1", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return Tui::createPointer<TuiString>(TuiSHA1::sha1((Tui::castPointer<TuiString>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiString>(TuiSHA1::sha1((Tui::cast<TuiString>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "string.sha1 expected string");
         return TUI_NIL;
@@ -515,15 +515,15 @@ void addStringTable(const Tui::table& rootTable)
             int startIndex = 0;
             if(args->arrayObjects.size() > 2 && args->arrayObjects[2]->type() == Tui_ref_type_NUMBER)
             {
-                startIndex = (Tui::castPointer<TuiNumber>(args->arrayObjects[2])->value);
+                startIndex = (Tui::cast<TuiNumber>(args->arrayObjects[2])->value);
             }
             
-            int location = (int)(Tui::castPointer<TuiString>(args->arrayObjects[0])->value).find(Tui::castPointer<TuiString>(args->arrayObjects[1])->value, startIndex);
+            int location = (int)(Tui::cast<TuiString>(args->arrayObjects[0])->value).find(Tui::cast<TuiString>(args->arrayObjects[1])->value, startIndex);
             if(location == std::string::npos)
             {
                 return TUI_NIL;
             }
-            return Tui::createPointer<TuiNumber>(location);
+            return Tui::create<TuiNumber>(location);
         }
         TuiParseError(callingDebugInfo, "string.find expected string");
         return TUI_NIL;
@@ -534,9 +534,9 @@ void addStringTable(const Tui::table& rootTable)
         if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
         {
             std::string foundString;
-            std::istringstream inputStringStream((Tui::castPointer<TuiString>(args->arrayObjects[0])->value));
+            std::istringstream inputStringStream((Tui::cast<TuiString>(args->arrayObjects[0])->value));
             
-            std::string& delimString = (Tui::castPointer<TuiString>(args->arrayObjects[1])->value);
+            std::string& delimString = (Tui::cast<TuiString>(args->arrayObjects[1])->value);
             if(delimString.length() != 1)
             {
                 TuiParseError(callingDebugInfo, "string.split: single split character expected, but got string of length:%d", (int)delimString.length());
@@ -544,10 +544,10 @@ void addStringTable(const Tui::table& rootTable)
             }
             char delim = delimString[0];
             
-            Tui::table result = Tui::createPointer<TuiTable>();
+            Tui::table result = Tui::create<TuiTable>();
             
             while (std::getline(inputStringStream, foundString, delim)) {
-                result->arrayObjects.push_back(Tui::createPointer<TuiString>(foundString));
+                result->arrayObjects.push_back(Tui::create<TuiString>(foundString));
             }
             
             return result;
@@ -563,7 +563,7 @@ void addStringTable(const Tui::table& rootTable)
         args->arrayObjects[1]->type() == Tui_ref_type_STRING &&
         args->arrayObjects[2]->type() == Tui_ref_type_STRING)
         {
-            return Tui::createPointer<TuiString>(Tui::stringByReplacingString(Tui::castPointer<TuiString>(args->arrayObjects[0])->value, Tui::castPointer<TuiString>(args->arrayObjects[1])->value, (Tui::castPointer<TuiString>(args->arrayObjects[2])->value)));
+            return Tui::create<TuiString>(Tui::stringByReplacingString(Tui::cast<TuiString>(args->arrayObjects[0])->value, Tui::cast<TuiString>(args->arrayObjects[1])->value, (Tui::cast<TuiString>(args->arrayObjects[2])->value)));
         }
         
         TuiParseError(callingDebugInfo, "string.replace expected string, search string, and replace string");
@@ -575,7 +575,7 @@ void addStringTable(const Tui::table& rootTable)
     stringTable->setFunction("lower", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            Tui::string result = Tui::castPointer<TuiString>(args->arrayObjects[0]->copy());
+            Tui::string result = Tui::cast<TuiString>(args->arrayObjects[0]->copy());
             std::transform(result->value.begin(), result->value.end(), result->value.begin(),
                 [](unsigned char c){ return std::tolower(c); });
             return result;
@@ -589,7 +589,7 @@ void addStringTable(const Tui::table& rootTable)
     stringTable->setFunction("upper", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            Tui::string result = Tui::castPointer<TuiString>(args->arrayObjects[0]->copy());
+            Tui::string result = Tui::cast<TuiString>(args->arrayObjects[0]->copy());
             std::transform(result->value.begin(), result->value.end(), result->value.begin(),
                 [](unsigned char c){ return std::toupper(c); });
             return result;
@@ -605,7 +605,7 @@ void addStringTable(const Tui::table& rootTable)
         {
             uint8_t byteValue = clamp(args->arrayObjects[0]->getNumberValue(), 0.0, 255.0);
             
-            return Tui::createPointer<TuiString>(Tui::string_format("%x%x", (byteValue >> 4), (byteValue & 0x0F)));
+            return Tui::create<TuiString>(Tui::string_format("%x%x", (byteValue >> 4), (byteValue & 0x0F)));
         }
         TuiParseError(callingDebugInfo, "string.numberToHexString expected number");
         return TUI_NIL;
@@ -618,8 +618,8 @@ void addStringTable(const Tui::table& rootTable)
         {
             try
             {
-                uint32_t value = stoul((Tui::castPointer<TuiString>(args->arrayObjects[0]))->value, 0, 16);
-                return Tui::createPointer<TuiNumber>(value);
+                uint32_t value = stoul((Tui::cast<TuiString>(args->arrayObjects[0]))->value, 0, 16);
+                return Tui::create<TuiNumber>(value);
             }
             catch(const std::exception& ex)
             {
@@ -634,11 +634,11 @@ void addStringTable(const Tui::table& rootTable)
     stringTable->setFunction("eachChar", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_FUNCTION)
         {
-            Tui::string inputString = Tui::castPointer<TuiString>(args->arrayObjects[0]);
-            Tui::function charFunction = Tui::castPointer<TuiFunction>(args->arrayObjects[1]);
+            Tui::string inputString = Tui::cast<TuiString>(args->arrayObjects[0]);
+            Tui::function charFunction = Tui::cast<TuiFunction>(args->arrayObjects[1]);
             
-            Tui::string charString = Tui::createPointer<TuiString>("");
-            Tui::number indexNumber = Tui::createPointer<TuiNumber>(0);
+            Tui::string charString = Tui::create<TuiString>("");
+            Tui::number indexNumber = Tui::create<TuiNumber>(0);
             for(indexNumber->value = 0; indexNumber->value < inputString->value.length(); indexNumber->value++)
             {
                 charString->value = inputString->value[(int)indexNumber->value];
@@ -659,12 +659,12 @@ void addStringTable(const Tui::table& rootTable)
     stringTable->setFunction("eachLine", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_FUNCTION)
         {
-            Tui::function lineFunction = Tui::castPointer<TuiFunction>(args->arrayObjects[1]);
+            Tui::function lineFunction = Tui::cast<TuiFunction>(args->arrayObjects[1]);
             
-            Tui::string lineString = Tui::createPointer<TuiString>("");
-            Tui::number indexNumber = Tui::createPointer<TuiNumber>(0);
+            Tui::string lineString = Tui::create<TuiString>("");
+            Tui::number indexNumber = Tui::create<TuiNumber>(0);
             
-            std::istringstream inputStringStream((Tui::castPointer<TuiString>(args->arrayObjects[0])->value));
+            std::istringstream inputStringStream((Tui::cast<TuiString>(args->arrayObjects[0])->value));
             
             while (std::getline(inputStringStream, lineString->value)) {
                 Tui::ref result = lineFunction->call(incomingCallData, callingDebugInfo, lineString, indexNumber);
@@ -689,12 +689,12 @@ void addTimeTable(const Tui::table& rootTable)
     //time
     //************
     
-    Tui::table timeTable = Tui::createPointer<TuiTable>(rootTable);
+    Tui::table timeTable = Tui::create<TuiTable>(rootTable);
     rootTable->set("time", timeTable);
     
     //time.now() current time in seconds since epoch
     timeTable->setFunction("now", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
-        return Tui::createPointer<TuiNumber>(Tui::nowTime());
+        return Tui::create<TuiNumber>(Tui::nowTime());
     });
 }
 
@@ -704,7 +704,7 @@ void addTableTable(const Tui::table& rootTable)
     //table
     //************
     
-    Tui::table tableTable = Tui::createPointer<TuiTable>(rootTable);
+    Tui::table tableTable = Tui::create<TuiTable>(rootTable);
     rootTable->set("table", tableTable);
     
     //table.insert(table, index, value) to specify the index or table.insert(table,value) to add to the end
@@ -726,16 +726,16 @@ void addTableTable(const Tui::table& rootTable)
                     TuiParseError(callingDebugInfo, "table.insert expected index for second argument. (object to add is third)");
                     return TUI_NIL;
                 }
-                int addIndex = (Tui::castPointer<TuiNumber>(indexObject)->value);
+                int addIndex = (Tui::cast<TuiNumber>(indexObject)->value);
                 Tui::ref addObject = args->arrayObjects[2];
                 
-                Tui::castPointer<TuiTable>(tableRef)->insert(addIndex, addObject);
+                Tui::cast<TuiTable>(tableRef)->insert(addIndex, addObject);
                 
             }
             else
             {
                 Tui::ref addObject = args->arrayObjects[1];
-                (Tui::castPointer<TuiTable>(tableRef)->arrayObjects.push_back(addObject->copy()));
+                (Tui::cast<TuiTable>(tableRef)->arrayObjects.push_back(addObject->copy()));
             }
         }
         else
@@ -762,11 +762,11 @@ void addTableTable(const Tui::table& rootTable)
                 TuiParseError(callingDebugInfo, "table.remove expected index for second argument.");
                 return TUI_NIL;
             }
-            int removeIndex = (Tui::castPointer<TuiNumber>(indexObject)->value);
+            int removeIndex = (Tui::cast<TuiNumber>(indexObject)->value);
             
-            if(!Tui::castPointer<TuiTable>(tableRef)->remove(removeIndex))
+            if(!Tui::cast<TuiTable>(tableRef)->remove(removeIndex))
             {
-                TuiParseError(callingDebugInfo, "table.remove index beyond bounds. index:%d array object count:%d", removeIndex, (int)(Tui::castPointer<TuiTable>(tableRef)->arrayObjects.size()));
+                TuiParseError(callingDebugInfo, "table.remove index beyond bounds. index:%d array object count:%d", removeIndex, (int)(Tui::cast<TuiTable>(tableRef)->arrayObjects.size()));
             }
         }
         else
@@ -791,7 +791,7 @@ void addTableTable(const Tui::table& rootTable)
             {
                 TuiParseError(callingDebugInfo, "table.set8Add expected number for second argument. got:%s", tableRef->getTypeName().c_str());
             }
-            (Tui::castPointer<TuiTable>(tableRef)->set8.insert(Tui::castPointer<TuiNumber>(addObject)->value));
+            (Tui::cast<TuiTable>(tableRef)->set8.insert(Tui::cast<TuiNumber>(addObject)->value));
         }
         else
         {
@@ -815,7 +815,7 @@ void addTableTable(const Tui::table& rootTable)
             {
                 TuiParseError(callingDebugInfo, "table.set8Remove expected number for second argument. got:%s", tableRef->getTypeName().c_str());
             }
-            (Tui::castPointer<TuiTable>(tableRef)->set8.erase(Tui::castPointer<TuiNumber>(addObject)->value));
+            (Tui::cast<TuiTable>(tableRef)->set8.erase(Tui::cast<TuiNumber>(addObject)->value));
         }
         else
         {
@@ -839,7 +839,7 @@ void addTableTable(const Tui::table& rootTable)
             {
                 TuiParseError(callingDebugInfo, "table.set16Add expected number for second argument. got:%s", tableRef->getTypeName().c_str());
             }
-            (Tui::castPointer<TuiTable>(tableRef)->set16.insert(Tui::castPointer<TuiNumber>(addObject)->value));
+            (Tui::cast<TuiTable>(tableRef)->set16.insert(Tui::cast<TuiNumber>(addObject)->value));
         }
         else
         {
@@ -863,7 +863,7 @@ void addTableTable(const Tui::table& rootTable)
             {
                 TuiParseError(callingDebugInfo, "table.set16Remove expected number for second argument. got:%s", tableRef->getTypeName().c_str());
             }
-            (Tui::castPointer<TuiTable>(tableRef)->set16.erase(Tui::castPointer<TuiNumber>(addObject)->value));
+            (Tui::cast<TuiTable>(tableRef)->set16.erase(Tui::cast<TuiNumber>(addObject)->value));
         }
         else
         {
@@ -888,7 +888,7 @@ void addTableTable(const Tui::table& rootTable)
             {
                 TuiParseError(callingDebugInfo, "table.set32Add expected number for second argument. got:%s", tableRef->getTypeName().c_str());
             }
-            (Tui::castPointer<TuiTable>(tableRef)->set32.insert(Tui::castPointer<TuiNumber>(addObject)->value));
+            (Tui::cast<TuiTable>(tableRef)->set32.insert(Tui::cast<TuiNumber>(addObject)->value));
         }
         else
         {
@@ -912,7 +912,7 @@ void addTableTable(const Tui::table& rootTable)
             {
                 TuiParseError(callingDebugInfo, "table.set32Remove expected number for second argument. got:%s", tableRef->getTypeName().c_str());
             }
-            (Tui::castPointer<TuiTable>(tableRef)->set32.erase(Tui::castPointer<TuiNumber>(addObject)->value));
+            (Tui::cast<TuiTable>(tableRef)->set32.erase(Tui::cast<TuiNumber>(addObject)->value));
         }
         else
         {
@@ -938,7 +938,7 @@ void addTableTable(const Tui::table& rootTable)
             {
                 TuiParseError(callingDebugInfo, "table.set64Add expected number for second argument. got:%s", tableRef->getTypeName().c_str());
             }
-            (Tui::castPointer<TuiTable>(tableRef)->set64.insert(Tui::castPointer<TuiNumber>(addObject)->value));
+            (Tui::cast<TuiTable>(tableRef)->set64.insert(Tui::cast<TuiNumber>(addObject)->value));
         }
         else
         {
@@ -962,7 +962,7 @@ void addTableTable(const Tui::table& rootTable)
             {
                 TuiParseError(callingDebugInfo, "table.set64Remove expected number for second argument. got:%s", tableRef->getTypeName().c_str());
             }
-            (Tui::castPointer<TuiTable>(tableRef)->set64.erase(Tui::castPointer<TuiNumber>(addObject)->value));
+            (Tui::cast<TuiTable>(tableRef)->set64.erase(Tui::cast<TuiNumber>(addObject)->value));
         }
         else
         {
@@ -982,7 +982,7 @@ void addTableTable(const Tui::table& rootTable)
                 return TUI_NIL;
             }
             
-            return Tui::createPointer<TuiNumber>((Tui::castPointer<TuiTable>(tableRef)->arrayObjects.size()));
+            return Tui::create<TuiNumber>((Tui::cast<TuiTable>(tableRef)->arrayObjects.size()));
         }
         else
         {
@@ -1001,7 +1001,7 @@ void addTableTable(const Tui::table& rootTable)
                 TuiParseError(callingDebugInfo, "table.shuffle expected table for first argument");
                 return TUI_NIL;
             }
-            auto& arrayObjects = (Tui::castPointer<TuiTable>(tableRef)->arrayObjects);
+            auto& arrayObjects = (Tui::cast<TuiTable>(tableRef)->arrayObjects);
             std::shuffle(std::begin(arrayObjects), std::end(arrayObjects), rng);
         }
         return TUI_NIL;
@@ -1017,7 +1017,7 @@ void addTableTable(const Tui::table& rootTable)
                 TuiParseError(callingDebugInfo, "table.clone expected table for first argument");
                 return TUI_NIL;
             }
-            return (Tui::castPointer<TuiTable>(tableRef)->trueCopy());
+            return (Tui::cast<TuiTable>(tableRef)->trueCopy());
         }
         return TUI_NIL;
     });
@@ -1032,13 +1032,13 @@ void addTableTable(const Tui::table& rootTable)
                 TuiParseError(callingDebugInfo, "table.sort expected table for first argument");
                 return TUI_NIL;
             }
-            auto& arrayObjects = (Tui::castPointer<TuiTable>(tableRef)->arrayObjects);
+            auto& arrayObjects = (Tui::cast<TuiTable>(tableRef)->arrayObjects);
             if(!arrayObjects.empty())
             {
                 
                 if(args->arrayObjects.size() >= 2 && args->arrayObjects[1]->type() == Tui_ref_type_FUNCTION)
                 {
-                    Tui::function compareFunction = Tui::castPointer<TuiFunction>(args->arrayObjects[1]);
+                    Tui::function compareFunction = Tui::cast<TuiFunction>(args->arrayObjects[1]);
                     
                     std::sort(arrayObjects.begin(), arrayObjects.end(), [compareFunction](Tui::ref a, Tui::ref b) {
                           return compareFunction->call("compare", a, b)->boolValue();
@@ -1053,10 +1053,10 @@ void addTableTable(const Tui::table& rootTable)
                         }
                         switch (a->type()) {
                             case Tui_ref_type_NUMBER:
-                                return Tui::castPointer<TuiNumber>(a)->value < (Tui::castPointer<TuiNumber>(b)->value);
+                                return Tui::cast<TuiNumber>(a)->value < (Tui::cast<TuiNumber>(b)->value);
                                 break;
                             case Tui_ref_type_STRING:
-                                return Tui::castPointer<TuiString>(a)->value < (Tui::castPointer<TuiString>(b)->value);
+                                return Tui::cast<TuiString>(a)->value < (Tui::cast<TuiString>(b)->value);
                                 break;
                                 
                             default:
@@ -1078,7 +1078,7 @@ void addMathTable(const Tui::table& rootTable)
     //************
     //math
     //************
-    Tui::table mathTable = Tui::createPointer<TuiTable>(rootTable);
+    Tui::table mathTable = Tui::create<TuiTable>(rootTable);
     rootTable->set("math", mathTable);
     
     //math.random(max, seedOrNil) provides a floating point value between 0 and max (default 1.0). Uses a random seed unless seedOrNil is provided
@@ -1093,11 +1093,11 @@ void addMathTable(const Tui::table& rootTable)
                 Tui::ref arg2 = args->arrayObjects[1];
                 if(arg2->type() == Tui_ref_type_NUMBER)
                 {
-                    result = Tui::random((Tui::castPointer<TuiNumber>(arg2))->value);
+                    result = Tui::random((Tui::cast<TuiNumber>(arg2))->value);
                 }
                 else if(arg2->type() == Tui_ref_type_STRING)
                 {
-                    result = Tui::random((Tui::castPointer<TuiString>(arg2))->value);
+                    result = Tui::random((Tui::cast<TuiString>(arg2))->value);
                 }
                 else
                 {
@@ -1111,13 +1111,13 @@ void addMathTable(const Tui::table& rootTable)
             
             if(arg->type() == Tui_ref_type_NUMBER)
             {
-                return Tui::createPointer<TuiNumber>(result * (Tui::castPointer<TuiNumber>((arg))->value));
+                return Tui::create<TuiNumber>(result * (Tui::cast<TuiNumber>((arg))->value));
             }
             
-            return Tui::createPointer<TuiNumber>(result);
+            return Tui::create<TuiNumber>(result);
         }
         
-        return  Tui::createPointer<TuiNumber>(Tui::random());
+        return  Tui::create<TuiNumber>(Tui::random());
     });
     
     
@@ -1133,11 +1133,11 @@ void addMathTable(const Tui::table& rootTable)
                 Tui::ref arg2 = args->arrayObjects[1];
                 if(arg2->type() == Tui_ref_type_NUMBER)
                 {
-                    result = Tui::random((Tui::castPointer<TuiNumber>(arg2))->value);
+                    result = Tui::random((Tui::cast<TuiNumber>(arg2))->value);
                 }
                 else if(arg2->type() == Tui_ref_type_STRING)
                 {
-                    result = Tui::random((Tui::castPointer<TuiString>(arg2))->value);
+                    result = Tui::random((Tui::cast<TuiString>(arg2))->value);
                 }
                 else
                 {
@@ -1151,19 +1151,19 @@ void addMathTable(const Tui::table& rootTable)
             
             if(arg->type() == Tui_ref_type_NUMBER)
             {
-                double flooredValue = floor((Tui::castPointer<TuiNumber>((arg))->value));
-                return Tui::createPointer<TuiNumber>(min(flooredValue - 1.0, floor(result * flooredValue)));
+                double flooredValue = floor((Tui::cast<TuiNumber>((arg))->value));
+                return Tui::create<TuiNumber>(min(flooredValue - 1.0, floor(result * flooredValue)));
             }
             
-            return Tui::createPointer<TuiNumber>(floor(result));
+            return Tui::create<TuiNumber>(floor(result));
         }
-        return Tui::createPointer<TuiNumber>(min(1.0, floor(Tui::random() * 2)));
+        return Tui::create<TuiNumber>(min(1.0, floor(Tui::random() * 2)));
     });
     
     mathTable->setFunction("pow", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(pow(Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value, (Tui::castPointer<TuiNumber>(args->arrayObjects[1])->value)));
+            return Tui::create<TuiNumber>(pow(Tui::cast<TuiNumber>(args->arrayObjects[0])->value, (Tui::cast<TuiNumber>(args->arrayObjects[1])->value)));
         }
         TuiParseError(callingDebugInfo, "math.pow expected 2 numbers");
         return TUI_NIL;
@@ -1172,7 +1172,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("sin", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(sin((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(sin((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "math.sin expected number");
         return TUI_NIL;
@@ -1181,7 +1181,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("cos", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(cos((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(cos((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "math.cos expected number");
         return TUI_NIL;
@@ -1190,7 +1190,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("tan", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(tan((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(tan((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "math.tan expected number");
         return TUI_NIL;
@@ -1199,7 +1199,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("asin", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(asin((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(asin((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "math.asin expected number");
         return TUI_NIL;
@@ -1208,7 +1208,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("acos", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(acos((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(acos((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "math.acos expected number");
         return TUI_NIL;
@@ -1217,7 +1217,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("atan", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(atan((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(atan((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "math.atan expected number");
         return TUI_NIL;
@@ -1226,7 +1226,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("atan2", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(atan2(Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value, (Tui::castPointer<TuiNumber>(args->arrayObjects[1])->value)));
+            return Tui::create<TuiNumber>(atan2(Tui::cast<TuiNumber>(args->arrayObjects[0])->value, (Tui::cast<TuiNumber>(args->arrayObjects[1])->value)));
         }
         TuiParseError(callingDebugInfo, "math.atan2 expected 2 numbers");
         return TUI_NIL;
@@ -1235,7 +1235,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("sqrt", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(sqrt((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(sqrt((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "math.sqrt expected number");
         return TUI_NIL;
@@ -1245,7 +1245,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("exp", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(exp((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(exp((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "math.exp expected number");
         return TUI_NIL;
@@ -1254,7 +1254,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("log", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(log((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(log((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "math.log expected number");
         return TUI_NIL;
@@ -1263,7 +1263,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("log10", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(log10((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(log10((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "math.log10 expected number");
         return TUI_NIL;
@@ -1272,7 +1272,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("floor", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(floor((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(floor((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "math.floor expected number");
         return TUI_NIL;
@@ -1281,7 +1281,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("ceil", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(ceil((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(ceil((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "math.ceil expected number");
         return TUI_NIL;
@@ -1290,7 +1290,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("abs", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(abs((Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(abs((Tui::cast<TuiNumber>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "math.abs expected number");
         return TUI_NIL;
@@ -1299,7 +1299,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("fmod", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(fmod(Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value, (Tui::castPointer<TuiNumber>(args->arrayObjects[1])->value)));
+            return Tui::create<TuiNumber>(fmod(Tui::cast<TuiNumber>(args->arrayObjects[0])->value, (Tui::cast<TuiNumber>(args->arrayObjects[1])->value)));
         }
         TuiParseError(callingDebugInfo, "math.fmod expected 2 numbers");
         return TUI_NIL;
@@ -1308,7 +1308,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("max", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(max(Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value, (Tui::castPointer<TuiNumber>(args->arrayObjects[1])->value)));
+            return Tui::create<TuiNumber>(max(Tui::cast<TuiNumber>(args->arrayObjects[0])->value, (Tui::cast<TuiNumber>(args->arrayObjects[1])->value)));
         }
         TuiParseError(callingDebugInfo, "math.max expected 2 numbers");
         return TUI_NIL;
@@ -1317,7 +1317,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("min", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(min(Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value, (Tui::castPointer<TuiNumber>(args->arrayObjects[1])->value)));
+            return Tui::create<TuiNumber>(min(Tui::cast<TuiNumber>(args->arrayObjects[0])->value, (Tui::cast<TuiNumber>(args->arrayObjects[1])->value)));
         }
         TuiParseError(callingDebugInfo, "math.min expected 2 numbers");
         return TUI_NIL;
@@ -1326,7 +1326,7 @@ void addMathTable(const Tui::table& rootTable)
     mathTable->setFunction("clamp", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 2 && args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER && args->arrayObjects[2]->type() == Tui_ref_type_NUMBER)
         {
-            return Tui::createPointer<TuiNumber>(clamp(Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value, Tui::castPointer<TuiNumber>(args->arrayObjects[1])->value, (Tui::castPointer<TuiNumber>(args->arrayObjects[2])->value)));
+            return Tui::create<TuiNumber>(clamp(Tui::cast<TuiNumber>(args->arrayObjects[0])->value, Tui::cast<TuiNumber>(args->arrayObjects[1])->value, (Tui::cast<TuiNumber>(args->arrayObjects[2])->value)));
         }
         TuiParseError(callingDebugInfo, "math.clamp expected 3 numbers");
         return TUI_NIL;
@@ -1337,19 +1337,19 @@ void addMathTable(const Tui::table& rootTable)
         {
             if(args->arrayObjects[0]->type() == Tui_ref_type_NUMBER)
             {
-                return Tui::createPointer<TuiNumber>(mix(Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value, Tui::castPointer<TuiNumber>(args->arrayObjects[1])->value, (Tui::castPointer<TuiNumber>(args->arrayObjects[2])->value)));
+                return Tui::create<TuiNumber>(mix(Tui::cast<TuiNumber>(args->arrayObjects[0])->value, Tui::cast<TuiNumber>(args->arrayObjects[1])->value, (Tui::cast<TuiNumber>(args->arrayObjects[2])->value)));
             }
             else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC2)
             {
-                return Tui::createPointer<TuiVec2>(mix(Tui::castPointer<TuiVec2>(args->arrayObjects[0])->value, Tui::castPointer<TuiVec2>(args->arrayObjects[1])->value, (Tui::castPointer<TuiNumber>(args->arrayObjects[2])->value)));
+                return Tui::create<TuiVec2>(mix(Tui::cast<TuiVec2>(args->arrayObjects[0])->value, Tui::cast<TuiVec2>(args->arrayObjects[1])->value, (Tui::cast<TuiNumber>(args->arrayObjects[2])->value)));
             }
             else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC3)
             {
-                return Tui::createPointer<TuiVec3>(mix(Tui::castPointer<TuiVec3>(args->arrayObjects[0])->value, Tui::castPointer<TuiVec3>(args->arrayObjects[1])->value, (Tui::castPointer<TuiNumber>(args->arrayObjects[2])->value)));
+                return Tui::create<TuiVec3>(mix(Tui::cast<TuiVec3>(args->arrayObjects[0])->value, Tui::cast<TuiVec3>(args->arrayObjects[1])->value, (Tui::cast<TuiNumber>(args->arrayObjects[2])->value)));
             }
             else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC4)
             {
-                return Tui::createPointer<TuiVec4>(mix(Tui::castPointer<TuiVec4>(args->arrayObjects[0])->value, Tui::castPointer<TuiVec4>(args->arrayObjects[1])->value, (Tui::castPointer<TuiNumber>(args->arrayObjects[2])->value)));
+                return Tui::create<TuiVec4>(mix(Tui::cast<TuiVec4>(args->arrayObjects[0])->value, Tui::cast<TuiVec4>(args->arrayObjects[1])->value, (Tui::cast<TuiNumber>(args->arrayObjects[2])->value)));
             }
         }
         TuiParseError(callingDebugInfo, "math.mix expected 2 numbers or vectors and a number");
@@ -1363,11 +1363,11 @@ void addMathTable(const Tui::table& rootTable)
         {
             if(args->arrayObjects[0]->type() == Tui_ref_type_VEC2)
             {
-                return Tui::createPointer<TuiVec2>(normalize((Tui::castPointer<TuiVec2>(args->arrayObjects[0])->value)));
+                return Tui::create<TuiVec2>(normalize((Tui::cast<TuiVec2>(args->arrayObjects[0])->value)));
             }
             else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC3)
             {
-                return Tui::createPointer<TuiVec3>(normalize((Tui::castPointer<TuiVec3>(args->arrayObjects[0])->value)));
+                return Tui::create<TuiVec3>(normalize((Tui::cast<TuiVec3>(args->arrayObjects[0])->value)));
             }
         }
         TuiParseError(callingDebugInfo, "math.normalize expected vec2 or vec3");
@@ -1379,11 +1379,11 @@ void addMathTable(const Tui::table& rootTable)
         {
             if(args->arrayObjects[0]->type() == Tui_ref_type_VEC2)
             {
-                return Tui::createPointer<TuiNumber>(length((Tui::castPointer<TuiVec2>(args->arrayObjects[0])->value)));
+                return Tui::create<TuiNumber>(length((Tui::cast<TuiVec2>(args->arrayObjects[0])->value)));
             }
             else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC3)
             {
-                return Tui::createPointer<TuiNumber>(length((Tui::castPointer<TuiVec3>(args->arrayObjects[0])->value)));
+                return Tui::create<TuiNumber>(length((Tui::cast<TuiVec3>(args->arrayObjects[0])->value)));
             }
         }
         TuiParseError(callingDebugInfo, "math.length expected vec2 or vec3");
@@ -1395,11 +1395,11 @@ void addMathTable(const Tui::table& rootTable)
         {
             if(args->arrayObjects[0]->type() == Tui_ref_type_VEC2)
             {
-                return Tui::createPointer<TuiNumber>(dot(Tui::castPointer<TuiVec2>(args->arrayObjects[0])->value, (Tui::castPointer<TuiVec2>(args->arrayObjects[0])->value)));
+                return Tui::create<TuiNumber>(dot(Tui::cast<TuiVec2>(args->arrayObjects[0])->value, (Tui::cast<TuiVec2>(args->arrayObjects[0])->value)));
             }
             else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC3)
             {
-                return Tui::createPointer<TuiNumber>(dot(Tui::castPointer<TuiVec3>(args->arrayObjects[0])->value, (Tui::castPointer<TuiVec3>(args->arrayObjects[0])->value)));
+                return Tui::create<TuiNumber>(dot(Tui::cast<TuiVec3>(args->arrayObjects[0])->value, (Tui::cast<TuiVec3>(args->arrayObjects[0])->value)));
             }
         }
         TuiParseError(callingDebugInfo, "math.length2 expected vec2 or vec3");
@@ -1411,11 +1411,11 @@ void addMathTable(const Tui::table& rootTable)
         {
             if(args->arrayObjects[0]->type() == Tui_ref_type_VEC2 && args->arrayObjects[1]->type() == Tui_ref_type_VEC2)
             {
-                return Tui::createPointer<TuiNumber>(dot(Tui::castPointer<TuiVec2>(args->arrayObjects[0])->value, (Tui::castPointer<TuiVec2>(args->arrayObjects[1])->value)));
+                return Tui::create<TuiNumber>(dot(Tui::cast<TuiVec2>(args->arrayObjects[0])->value, (Tui::cast<TuiVec2>(args->arrayObjects[1])->value)));
             }
             else if(args->arrayObjects[0]->type() == Tui_ref_type_VEC3 && args->arrayObjects[1]->type() == Tui_ref_type_VEC3)
             {
-                return Tui::createPointer<TuiNumber>(dot(Tui::castPointer<TuiVec3>(args->arrayObjects[0])->value, (Tui::castPointer<TuiVec3>(args->arrayObjects[1])->value)));
+                return Tui::create<TuiNumber>(dot(Tui::cast<TuiVec3>(args->arrayObjects[0])->value, (Tui::cast<TuiVec3>(args->arrayObjects[1])->value)));
             }
         }
         TuiParseError(callingDebugInfo, "math.dot expected two vec2 or vec3s");
@@ -1427,7 +1427,7 @@ void addMathTable(const Tui::table& rootTable)
         {
             if(args->arrayObjects[0]->type() == Tui_ref_type_VEC3 && args->arrayObjects[1]->type() == Tui_ref_type_VEC3)
             {
-                return Tui::createPointer<TuiVec3>(cross(Tui::castPointer<TuiVec3>(args->arrayObjects[0])->value, (Tui::castPointer<TuiVec3>(args->arrayObjects[1])->value)));
+                return Tui::create<TuiVec3>(cross(Tui::cast<TuiVec3>(args->arrayObjects[0])->value, (Tui::cast<TuiVec3>(args->arrayObjects[1])->value)));
             }
         }
         TuiParseError(callingDebugInfo, "math.cross expected two vec3s");
@@ -1441,11 +1441,11 @@ void addMathTable(const Tui::table& rootTable)
         {
             if(args->arrayObjects[0]->type() == Tui_ref_type_MAT3 && args->arrayObjects[1]->type() == Tui_ref_type_NUMBER && args->arrayObjects[2]->type() == Tui_ref_type_VEC3)
             {
-                return Tui::createPointer<TuiMat3>(Tui::castPointer<TuiMat3>(args->arrayObjects[0])->value * dmat3(rotate(Tui::castPointer<TuiNumber>(args->arrayObjects[1])->value, (Tui::castPointer<TuiVec3>(args->arrayObjects[2])->value))));
+                return Tui::create<TuiMat3>(Tui::cast<TuiMat3>(args->arrayObjects[0])->value * dmat3(rotate(Tui::cast<TuiNumber>(args->arrayObjects[1])->value, (Tui::cast<TuiVec3>(args->arrayObjects[2])->value))));
             }
             else if(args->arrayObjects[0]->type() == Tui_ref_type_NUMBER && args->arrayObjects[1]->type() == Tui_ref_type_VEC3)
             {
-                return Tui::createPointer<TuiMat3>(rotate(Tui::castPointer<TuiNumber>(args->arrayObjects[0])->value, (Tui::castPointer<TuiVec3>(args->arrayObjects[1])->value)));
+                return Tui::create<TuiMat3>(rotate(Tui::cast<TuiNumber>(args->arrayObjects[0])->value, (Tui::cast<TuiVec3>(args->arrayObjects[1])->value)));
             }
         }
         TuiParseError(callingDebugInfo, "math.rotate expected angleDegrees, axisVec3");
@@ -1459,7 +1459,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     //************
     //file
     //************
-    Tui::table fileTable = Tui::createPointer<TuiTable>(rootTable);
+    Tui::table fileTable = Tui::create<TuiTable>(rootTable);
     rootTable->set("file", fileTable);
     
     //file.directoryContents(path) returns an array of file names
@@ -1473,13 +1473,13 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
                 return TUI_NIL;
             }
             
-            std::vector<std::string> directoryContents = Tui::getDirectoryContents((Tui::castPointer<TuiString>(pathRef)->value));
+            std::vector<std::string> directoryContents = Tui::getDirectoryContents((Tui::cast<TuiString>(pathRef)->value));
             
-            Tui::table directroyContentsTable = Tui::createPointer<TuiTable>();
+            Tui::table directroyContentsTable = Tui::create<TuiTable>();
             
             for(auto& fileName : directoryContents)
             {
-                Tui::string fileNameRef = Tui::createPointer<TuiString>(fileName);
+                Tui::string fileNameRef = Tui::create<TuiString>(fileName);
                 directroyContentsTable->arrayObjects.push_back(fileNameRef);
             }
             
@@ -1495,7 +1495,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("sha1", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return Tui::createPointer<TuiString>(TuiSHA1::from_file((Tui::castPointer<TuiString>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiString>(TuiSHA1::from_file((Tui::cast<TuiString>(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "file.sha1 expected string");
         return TUI_NIL;
@@ -1505,7 +1505,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("load", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return TuiRef::runScriptFile(Tui::castPointer<TuiString>(args->arrayObjects[0])->value, nullptr, callingDebugInfo);
+            return TuiRef::runScriptFile(Tui::cast<TuiString>(args->arrayObjects[0])->value, nullptr, callingDebugInfo);
         }
         else
         {
@@ -1517,7 +1517,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("loadBinary", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return TuiRef::loadBinary((Tui::castPointer<TuiString>(args->arrayObjects[0])->value));
+            return TuiRef::loadBinary((Tui::cast<TuiString>(args->arrayObjects[0])->value));
         }
         else
         {
@@ -1529,7 +1529,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("save", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 2 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            (Tui::castPointer<TuiString>(args->arrayObjects[1])->saveToFile(Tui::castPointer<TuiString>(args->arrayObjects[0])->value));
+            (Tui::cast<TuiString>(args->arrayObjects[1])->saveToFile(Tui::cast<TuiString>(args->arrayObjects[0])->value));
             return TUI_NIL;
         }
         else
@@ -1542,7 +1542,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("saveBinary", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 2 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            (Tui::castPointer<TuiString>(args->arrayObjects[1])->saveBinary(Tui::castPointer<TuiString>(args->arrayObjects[0])->value));
+            (Tui::cast<TuiString>(args->arrayObjects[1])->saveBinary(Tui::cast<TuiString>(args->arrayObjects[0])->value));
             return TUI_NIL;
         }
         else
@@ -1556,11 +1556,11 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("loadData", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            Tui::string result = Tui::createPointer<TuiString>("");
-            bool success = Tui::getFileContents(Tui::castPointer<TuiString>(args->arrayObjects[0])->value, &(result->value));
+            Tui::string result = Tui::create<TuiString>("");
+            bool success = Tui::getFileContents(Tui::cast<TuiString>(args->arrayObjects[0])->value, &(result->value));
             if(!success)
             {
-                TuiWarn("file not found in file.loadData. path:%s", (Tui::castPointer<TuiString>(args->arrayObjects[0])->value.c_str()));
+                TuiWarn("file not found in file.loadData. path:%s", (Tui::cast<TuiString>(args->arrayObjects[0])->value.c_str()));
                 return TUI_NIL;
             }
             return result;
@@ -1575,7 +1575,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("saveData", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 2 && args->arrayObjects[0]->type() == Tui_ref_type_STRING  && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
         {
-            Tui::writeToFile(Tui::castPointer<TuiString>(args->arrayObjects[0])->value, ((Tui::castPointer<TuiString>(args->arrayObjects[1])->value)));
+            Tui::writeToFile(Tui::cast<TuiString>(args->arrayObjects[0])->value, ((Tui::cast<TuiString>(args->arrayObjects[1])->value)));
             return TUI_NIL;
         }
         else
@@ -1595,7 +1595,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
                 return TUI_NIL;
             }
             
-            if(Tui::isDirectoryAtPath(Tui::castPointer<TuiString>(pathRef)->value))
+            if(Tui::isDirectoryAtPath(Tui::cast<TuiString>(pathRef)->value))
             {
                 return TUI_TRUE;
             }
@@ -1611,7 +1611,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("fileName", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return Tui::createPointer<TuiString>(Tui::fileNameFromPath((Tui::castPointer<TuiString>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiString>(Tui::fileNameFromPath((Tui::cast<TuiString>(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1622,7 +1622,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("extension", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return Tui::createPointer<TuiString>(Tui::fileExtensionFromPath((Tui::castPointer<TuiString>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiString>(Tui::fileExtensionFromPath((Tui::cast<TuiString>(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1632,7 +1632,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("changeExtension", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
         {
-            return Tui::createPointer<TuiString>(Tui::changeExtensionForPath(Tui::castPointer<TuiString>(args->arrayObjects[0])->value, (Tui::castPointer<TuiString>(args->arrayObjects[1])->value)));
+            return Tui::create<TuiString>(Tui::changeExtensionForPath(Tui::cast<TuiString>(args->arrayObjects[0])->value, (Tui::cast<TuiString>(args->arrayObjects[1])->value)));
         }
         else
         {
@@ -1642,7 +1642,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("removeExtension", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return Tui::createPointer<TuiString>(Tui::removeExtensionForPath((Tui::castPointer<TuiString>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiString>(Tui::removeExtensionForPath((Tui::cast<TuiString>(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1652,7 +1652,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("removeLastPathComponent", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return Tui::createPointer<TuiString>(Tui::pathByRemovingLastPathComponent((Tui::castPointer<TuiString>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiString>(Tui::pathByRemovingLastPathComponent((Tui::cast<TuiString>(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1664,7 +1664,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("fileSize", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return Tui::createPointer<TuiNumber>(Tui::fileSizeAtPath((Tui::castPointer<TuiString>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiNumber>(Tui::fileSizeAtPath((Tui::cast<TuiString>(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1677,7 +1677,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("fileExists", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return TUI_BOOL(Tui::fileExistsAtPath((Tui::castPointer<TuiString>(args->arrayObjects[0])->value)));
+            return TUI_BOOL(Tui::fileExistsAtPath((Tui::cast<TuiString>(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1689,7 +1689,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("isSymLink", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return TUI_BOOL(Tui::isSymLinkAtPath((Tui::castPointer<TuiString>(args->arrayObjects[0])->value)));
+            return TUI_BOOL(Tui::isSymLinkAtPath((Tui::cast<TuiString>(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1701,7 +1701,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("createDirectoriesIfNeededForDirPath", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            Tui::createDirectoriesIfNeededForDirPath((Tui::castPointer<TuiString>(args->arrayObjects[0])->value));
+            Tui::createDirectoriesIfNeededForDirPath((Tui::cast<TuiString>(args->arrayObjects[0])->value));
             return TUI_NIL;
         }
         else
@@ -1714,7 +1714,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("createDirectoriesIfNeededForFilePath", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            Tui::createDirectoriesIfNeededForFilePath((Tui::castPointer<TuiString>(args->arrayObjects[0])->value));
+            Tui::createDirectoriesIfNeededForFilePath((Tui::cast<TuiString>(args->arrayObjects[0])->value));
             return TUI_NIL;
         }
         else
@@ -1727,7 +1727,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("getAbsolutePath", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return Tui::createPointer<TuiString>(Tui::getAbsolutePath((Tui::castPointer<TuiString>(args->arrayObjects[0])->value)));
+            return Tui::create<TuiString>(Tui::getAbsolutePath((Tui::cast<TuiString>(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1741,9 +1741,9 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
         {
             if(args->arrayObjects.size() >= 2 && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
             {
-                return TUI_BOOL(Tui::isSubPath(Tui::castPointer<TuiString>(args->arrayObjects[0])->value, (Tui::castPointer<TuiString>(args->arrayObjects[1])->value)));
+                return TUI_BOOL(Tui::isSubPath(Tui::cast<TuiString>(args->arrayObjects[0])->value, (Tui::cast<TuiString>(args->arrayObjects[1])->value)));
             }
-            return TUI_BOOL(Tui::isSubPath((Tui::castPointer<TuiString>(args->arrayObjects[0])->value)));
+            return TUI_BOOL(Tui::isSubPath((Tui::cast<TuiString>(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1755,7 +1755,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("move", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 2 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
         {
-            return TUI_BOOL(Tui::moveFile(Tui::castPointer<TuiString>(args->arrayObjects[0])->value, (Tui::castPointer<TuiString>(args->arrayObjects[1])->value)));
+            return TUI_BOOL(Tui::moveFile(Tui::cast<TuiString>(args->arrayObjects[0])->value, (Tui::cast<TuiString>(args->arrayObjects[1])->value)));
         }
         else
         {
@@ -1768,7 +1768,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("remove", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            const std::string path = (Tui::castPointer<TuiString>(args->arrayObjects[0])->value);
+            const std::string path = (Tui::cast<TuiString>(args->arrayObjects[0])->value);
             if(isDirectoryAtPath(path) && !isSymLinkAtPath(path))
             {
                 return TUI_BOOL(removeDirectory(path));
@@ -1790,7 +1790,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("copy", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 2 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
         {
-            return TUI_BOOL(Tui::copyFileOrDir(Tui::castPointer<TuiString>(args->arrayObjects[0])->value, (Tui::castPointer<TuiString>(args->arrayObjects[1])->value)));
+            return TUI_BOOL(Tui::copyFileOrDir(Tui::cast<TuiString>(args->arrayObjects[0])->value, (Tui::cast<TuiString>(args->arrayObjects[1])->value)));
         }
         else
         {
@@ -1803,7 +1803,7 @@ void addFileTable(const Tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("mkdir", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            const std::string path = (Tui::castPointer<TuiString>(args->arrayObjects[0])->value);
+            const std::string path = (Tui::cast<TuiString>(args->arrayObjects[0])->value);
             return TUI_BOOL(Tui::createDirectoriesIfNeededForDirPath(path));
         }
         else
@@ -1821,18 +1821,18 @@ void addDebugTable(const Tui::table& rootTable)
     //************
     //debug
     //************
-    Tui::table debugTable = Tui::createPointer<TuiTable>(rootTable);
+    Tui::table debugTable = Tui::create<TuiTable>(rootTable);
     rootTable->set("debug", debugTable);
     
     
     //debug.getFileName() returns the current script file name or debug identifier string
     debugTable->setFunction("getFileName", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
-        return Tui::createPointer<TuiString>(callingDebugInfo->currentLine->fileName);
+        return Tui::create<TuiString>(callingDebugInfo->currentLine->fileName);
     });
     
     //debug.getLineNumber() returns the line number in the current script file
     debugTable->setFunction("getLineNumber", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
-        return Tui::createPointer<TuiNumber>(callingDebugInfo->currentLine->lineNumber);
+        return Tui::create<TuiNumber>(callingDebugInfo->currentLine->lineNumber);
     });
     
     

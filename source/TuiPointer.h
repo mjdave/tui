@@ -18,14 +18,14 @@ namespace Tui
 {
     // Helper to create a TuiPointer instance from constructor arguments
     template<typename T, typename... Args>
-    inline TuiPointer<T> createPointer(Args&&... args)
+    inline TuiPointer<T> create(Args&&... args)
     {
         return std::make_shared<T>(std::forward<Args>(args)...);
     }
 
     // Helper to cast a TuiPointer<T> instance to another type
     template<typename T, typename U>
-    inline TuiPointer<T> castPointer(const TuiPointer<U>& ptr)
+    inline TuiPointer<T> cast(const TuiPointer<U>& ptr)
     {
         return std::static_pointer_cast<T>(ptr);
     }

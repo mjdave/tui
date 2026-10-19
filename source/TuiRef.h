@@ -428,8 +428,8 @@ protected:
     // NOTE: This can only be used if the TuiRef object is managed by a TuiPointer,
     // otherwise it will throw a weak pointer exception
     template<typename T = TuiRef>
-    inline TuiPointer<T> createPointerFromThis() {
-        return Tui::castPointer<T>(shared_from_this());
+    inline TuiPointer<T> createFromThis() {
+        return Tui::cast<T>(shared_from_this());
     }
 };
 
@@ -439,7 +439,7 @@ class TuiNil : public TuiRef {
 public:
     TuiNil() {}
     virtual ~TuiNil() {}
-    virtual Tui::ref copy() override {return createPointerFromThis();}
+    virtual Tui::ref copy() override {return createFromThis();}
     virtual void assign(const Tui::ref& other) override {}
 
     virtual uint8_t type() override { return Tui_ref_type_NIL; }
@@ -459,7 +459,7 @@ private:
 private:
 };
 
-static Tui::nil TUI_NIL = Tui::createPointer<TuiNil>();
+static Tui::nil TUI_NIL = Tui::create<TuiNil>();
 
 class TuiUserData : public TuiRef {
 public:
@@ -471,11 +471,11 @@ public:
     
     virtual Tui::ref copy() override //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
-        return createPointerFromThis();
+        return createFromThis();
     }
     
     virtual void assign(const Tui::ref& other) override {
-        value = (Tui::castPointer<TuiUserData>(other))->value;
+        value = (Tui::cast<TuiUserData>(other))->value;
     };
     
     virtual uint8_t type() override { return Tui_ref_type_USERDATA; }
@@ -484,7 +484,7 @@ public:
         return Tui::string_format("%p", value);
     }
     virtual bool boolValue() override {return value != nullptr;}
-    virtual bool isEqual(const Tui::ref& other) override {return other && other->type() == Tui_ref_type_USERDATA && (Tui::castPointer<TuiUserData>(other))->value == value;}
+    virtual bool isEqual(const Tui::ref& other) override {return other && other->type() == Tui_ref_type_USERDATA && (Tui::cast<TuiUserData>(other))->value == value;}
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
     {

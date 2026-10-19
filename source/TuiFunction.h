@@ -112,14 +112,14 @@ public: //class functions
     
     virtual Tui::ref copy() override //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
-        return createPointerFromThis();
+        return createFromThis();
     }
     
     void releaseAndRemoveTransientLoopTables();
     
     Tui::function trueCopy() //assumed to only be used for function construction from a pre-serialized prototype
     {
-        Tui::function copied = Tui::createPointer<TuiFunction>(parentTable);
+        Tui::function copied = Tui::create<TuiFunction>(parentTable);
         copied->argNames = argNames;
         copied->statements = statements;
         for(TuiStatement* statement : copied->statements)

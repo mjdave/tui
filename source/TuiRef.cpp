@@ -7,8 +7,8 @@
 #include "TuiNumber.h"
 
 
-Tui::boolean TUI_TRUE = Tui::createPointer<TuiBool>(true);
-Tui::boolean TUI_FALSE = Tui::createPointer<TuiBool>(false);
+Tui::boolean TUI_TRUE = Tui::create<TuiBool>(true);
+Tui::boolean TUI_FALSE = Tui::create<TuiBool>(false);
 
 
 Tui::ref TuiRef::loadString(const std::string& inputString, const std::string& debugName, Tui::table parent) {
@@ -64,7 +64,7 @@ Tui::ref TuiRef::runScriptFile(const std::string& path, Tui::table parent, TuiDe
 Tui::ref TuiRef::require(const std::string& path, Tui::table rootTable)
 {
     Tui::function requireFunction = rootTable->getFunction("require");
-    Tui::string arg = Tui::createPointer<TuiString>(path);
+    Tui::string arg = Tui::create<TuiString>(path);
     Tui::ref result = requireFunction->call("require", arg);
     return result;
 }
@@ -93,7 +93,7 @@ Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, T
             double value;
             memcpy(&value, &inputString[(*currentOffset)], 8);
             (*currentOffset)+=8;
-            return Tui::createPointer<TuiNumber>(value);
+            return Tui::create<TuiNumber>(value);
         }
             break;
         case Tui_binary_type_NUMBER_8:
@@ -101,7 +101,7 @@ Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, T
             uint8_t value;
             memcpy(&value, &inputString[(*currentOffset)], 1);
             (*currentOffset)+=1;
-            return Tui::createPointer<TuiNumber8>(value);
+            return Tui::create<TuiNumber8>(value);
         }
             break;
         case Tui_binary_type_NUMBER_16:
@@ -109,7 +109,7 @@ Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, T
             uint16_t value;
             memcpy(&value, &inputString[(*currentOffset)], 2);
             (*currentOffset)+=2;
-            return Tui::createPointer<TuiNumber16>(value);
+            return Tui::create<TuiNumber16>(value);
         }
             break;
         case Tui_binary_type_NUMBER_32:
@@ -117,7 +117,7 @@ Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, T
             uint32_t value;
             memcpy(&value, &inputString[(*currentOffset)], 4);
             (*currentOffset)+=4;
-            return Tui::createPointer<TuiNumber32>(value);
+            return Tui::create<TuiNumber32>(value);
         }
             break;
         case Tui_binary_type_NUMBER_64:
@@ -125,7 +125,7 @@ Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, T
             uint64_t value;
             memcpy(&value, &inputString[(*currentOffset)], 8);
             (*currentOffset)+=8;
-            return Tui::createPointer<TuiNumber64>(value);
+            return Tui::create<TuiNumber64>(value);
         }
             break;
         case Tui_binary_type_VEC2:
@@ -135,7 +135,7 @@ Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, T
             (*currentOffset)+=8;
             memcpy(&value.y, &inputString[(*currentOffset)], 8);
             (*currentOffset)+=8;
-            return Tui::createPointer<TuiVec2>(value);
+            return Tui::create<TuiVec2>(value);
         }
             break;
         case Tui_binary_type_VEC3:
@@ -147,7 +147,7 @@ Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, T
             (*currentOffset)+=8;
             memcpy(&value.z, &inputString[(*currentOffset)], 8);
             (*currentOffset)+=8;
-            return Tui::createPointer<TuiVec3>(value);
+            return Tui::create<TuiVec3>(value);
         }
             break;
         case Tui_binary_type_VEC4:
@@ -161,7 +161,7 @@ Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, T
             (*currentOffset)+=8;
             memcpy(&value.w, &inputString[(*currentOffset)], 8);
             (*currentOffset)+=8;
-            return Tui::createPointer<TuiVec4>(value);
+            return Tui::create<TuiVec4>(value);
         }
             break;
         case Tui_binary_type_MAT3:
@@ -186,7 +186,7 @@ Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, T
             memcpy(&value[2].z, &inputString[(*currentOffset)], 8);
             (*currentOffset)+=8;
             
-            return Tui::createPointer<TuiMat3>(value);
+            return Tui::create<TuiMat3>(value);
         }
             break;
         case Tui_binary_type_STRING:
@@ -195,7 +195,7 @@ Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, T
             memcpy(&stringLength, &inputString[(*currentOffset)], 4);
             (*currentOffset)+=4;
             
-            Tui::string stringRef = Tui::createPointer<TuiString>("");
+            Tui::string stringRef = Tui::create<TuiString>("");
             stringRef->value.resize(stringLength);
             memcpy(&stringRef->value[0], &inputString[(*currentOffset)], stringLength);
             (*currentOffset)+=stringLength;
@@ -205,7 +205,7 @@ Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, T
             break;
         case Tui_binary_type_TABLE:
         {
-            Tui::table table = Tui::createPointer<TuiTable>(parent);
+            Tui::table table = Tui::create<TuiTable>(parent);
             
             if(inputString[(*currentOffset)] == Tui_binary_type_NUMBER_8_SET)
             {
@@ -272,11 +272,11 @@ Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, T
                 Tui::ref valueObject = TuiRef::loadBinaryString(inputString, currentOffset);
                 if(keyObject->type() == Tui_ref_type_NUMBER_32)
                 {
-                    table->set(Tui::castPointer<TuiNumber32>(keyObject)->value, valueObject);
+                    table->set(Tui::cast<TuiNumber32>(keyObject)->value, valueObject);
                 }
                 else
                 {
-                    table->set(Tui::castPointer<TuiString>(keyObject)->value, valueObject);
+                    table->set(Tui::cast<TuiString>(keyObject)->value, valueObject);
                 }
             }
             (*currentOffset)++;
@@ -322,7 +322,7 @@ Tui::ref TuiRef::loadBinary(const std::string& path, Tui::table parent)
 
 Tui::ref TuiRef::load(const char* str, char** endptr, Tui::table parent, TuiDebugInfo* debugInfo, Tui::ref* resultRef) {
     
-    Tui::table table = Tui::createPointer<TuiTable>(parent);
+    Tui::table table = Tui::create<TuiTable>(parent);
     
     const char* s = tuiSkipToNextChar(str, debugInfo);
     
@@ -393,7 +393,7 @@ static Tui::ref loadSingleValueInternal(const char* str,
 {
     const char* s = str;
     
-    Tui::table parent = Tui::castPointer<TuiTable>(parentRef);
+    Tui::table parent = Tui::cast<TuiTable>(parentRef);
     if(parentRef->type() != Tui_ref_type_TABLE)
     {
         TuiError("Unimplemented");
@@ -441,10 +441,10 @@ static Tui::ref loadSingleValueInternal(const char* str,
             double value = strtod(s, endptr);
             if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
             {
-                Tui::castPointer<TuiNumber>(existingValue)->value = value;
+                Tui::cast<TuiNumber>(existingValue)->value = value;
                 return nullptr;
             }
-            Tui::number number = Tui::createPointer<TuiNumber>(value);
+            Tui::number number = Tui::create<TuiNumber>(value);
             return number;
         }
         
@@ -544,44 +544,44 @@ static Tui::ref loadSingleValueInternal(const char* str,
                 TuiError("Unimplemented");
             }
             
-            int64_t indexValue = (Tui::castPointer<TuiNumber>(index)->value);
+            int64_t indexValue = (Tui::cast<TuiNumber>(index)->value);
             
             if(onSetIndex)
             {
                 *onSetIndex = (uint32_t)indexValue;
             }
             
-            if(indexValue >= 0 && indexValue < Tui::castPointer<TuiTable>(varChainParent)->arrayObjects.size())
+            if(indexValue >= 0 && indexValue < Tui::cast<TuiTable>(varChainParent)->arrayObjects.size())
             {
-                Tui::ref result = (Tui::castPointer<TuiTable>(varChainParent)->arrayObjects[indexValue]);
+                Tui::ref result = (Tui::cast<TuiTable>(varChainParent)->arrayObjects[indexValue]);
                 if(result)
                 {
                 }
                 return result;
             }
             
-            if(Tui::castPointer<TuiTable>(varChainParent)->objectsByNumberKey.count((uint32_t)indexValue) != 0)
+            if(Tui::cast<TuiTable>(varChainParent)->objectsByNumberKey.count((uint32_t)indexValue) != 0)
             {
-                Tui::ref result = (Tui::castPointer<TuiTable>(varChainParent)->objectsByNumberKey[(uint32_t)indexValue]);
+                Tui::ref result = (Tui::cast<TuiTable>(varChainParent)->objectsByNumberKey[(uint32_t)indexValue]);
                 return result;
             }
             
-            if(Tui::castPointer<TuiTable>(varChainParent)->set8.count((uint8_t)indexValue) != 0)
+            if(Tui::cast<TuiTable>(varChainParent)->set8.count((uint8_t)indexValue) != 0)
             {
                 return TUI_TRUE;
             }
             
-            if(Tui::castPointer<TuiTable>(varChainParent)->set16.count((uint16_t)indexValue) != 0)
+            if(Tui::cast<TuiTable>(varChainParent)->set16.count((uint16_t)indexValue) != 0)
             {
                 return TUI_TRUE;
             }
             
-            if(Tui::castPointer<TuiTable>(varChainParent)->set32.count((uint32_t)indexValue) != 0)
+            if(Tui::cast<TuiTable>(varChainParent)->set32.count((uint32_t)indexValue) != 0)
             {
                 return TUI_TRUE;
             }
             
-            if(Tui::castPointer<TuiTable>(varChainParent)->set64.count(indexValue) != 0)
+            if(Tui::cast<TuiTable>(varChainParent)->set64.count(indexValue) != 0)
             {
                 return TUI_TRUE;
             }
@@ -779,10 +779,10 @@ static Tui::ref loadSingleValueInternal(const char* str,
                     switch(stringBuffer[0])
                     {
                         case 'x':
-                            resultRef = Tui::createPointer<TuiNumber>((Tui::castPointer<TuiVec2>(varChainParent)->value.x));
+                            resultRef = Tui::create<TuiNumber>((Tui::cast<TuiVec2>(varChainParent)->value.x));
                             break;
                         case 'y':
-                            resultRef = Tui::createPointer<TuiNumber>((Tui::castPointer<TuiVec2>(varChainParent)->value.y));
+                            resultRef = Tui::create<TuiNumber>((Tui::cast<TuiVec2>(varChainParent)->value.y));
                             break;
                         default:
                             TuiParseError(debugInfo, "Invalid value");
@@ -795,13 +795,13 @@ static Tui::ref loadSingleValueInternal(const char* str,
                     switch(stringBuffer[0])
                     {
                         case 'x':
-                            resultRef = Tui::createPointer<TuiNumber>((Tui::castPointer<TuiVec3>(varChainParent)->value.x));
+                            resultRef = Tui::create<TuiNumber>((Tui::cast<TuiVec3>(varChainParent)->value.x));
                             break;
                         case 'y':
-                            resultRef = Tui::createPointer<TuiNumber>((Tui::castPointer<TuiVec3>(varChainParent)->value.y));
+                            resultRef = Tui::create<TuiNumber>((Tui::cast<TuiVec3>(varChainParent)->value.y));
                             break;
                         case 'z':
-                            resultRef = Tui::createPointer<TuiNumber>((Tui::castPointer<TuiVec3>(varChainParent)->value.z));
+                            resultRef = Tui::create<TuiNumber>((Tui::cast<TuiVec3>(varChainParent)->value.z));
                             break;
                         default:
                             TuiParseError(debugInfo, "Invalid value");
@@ -814,16 +814,16 @@ static Tui::ref loadSingleValueInternal(const char* str,
                     switch(stringBuffer[0])
                     {
                         case 'x':
-                            resultRef = Tui::createPointer<TuiNumber>((Tui::castPointer<TuiVec4>(varChainParent)->value.x));
+                            resultRef = Tui::create<TuiNumber>((Tui::cast<TuiVec4>(varChainParent)->value.x));
                             break;
                         case 'y':
-                            resultRef = Tui::createPointer<TuiNumber>((Tui::castPointer<TuiVec4>(varChainParent)->value.y));
+                            resultRef = Tui::create<TuiNumber>((Tui::cast<TuiVec4>(varChainParent)->value.y));
                             break;
                         case 'z':
-                            resultRef = Tui::createPointer<TuiNumber>((Tui::castPointer<TuiVec4>(varChainParent)->value.z));
+                            resultRef = Tui::create<TuiNumber>((Tui::cast<TuiVec4>(varChainParent)->value.z));
                             break;
                         case 'w':
-                            resultRef = Tui::createPointer<TuiNumber>((Tui::castPointer<TuiVec4>(varChainParent)->value.w));
+                            resultRef = Tui::create<TuiNumber>((Tui::cast<TuiVec4>(varChainParent)->value.w));
                             break;
                         default:
                             TuiParseError(debugInfo, "Invalid value");
@@ -835,7 +835,7 @@ static Tui::ref loadSingleValueInternal(const char* str,
         }
         else
         {
-            Tui::table searchTable = (varChainParent ? Tui::castPointer<TuiTable>(varChainParent) :  parent);
+            Tui::table searchTable = (varChainParent ? Tui::cast<TuiTable>(varChainParent) :  parent);
             
             if(searchTable->objectsByStringKey.count(stringBuffer) != 0)
             {
@@ -874,7 +874,7 @@ static Tui::ref loadSingleValueInternal(const char* str,
                     TuiParseError(debugInfo, "Expected function '%s', found %s.%s", stringBuffer.c_str(), resultRef->getTypeName().c_str(), extraInfo.c_str());
                     return nullptr;
                 }
-                Tui::table argsArrayTable = Tui::createPointer<TuiTable>(parent);//TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
+                Tui::table argsArrayTable = Tui::create<TuiTable>(parent);//TuiTable::initWithHumanReadableString(s, endptr, parent, debugInfo);
                 
                 while(*s != ')')
                 {
@@ -904,7 +904,7 @@ static Tui::ref loadSingleValueInternal(const char* str,
                 
                 s = tuiSkipToNextChar(s, debugInfo, true);
                 *endptr = (char*)s;
-                Tui::ref newRef = Tui::castPointer<TuiFunction>(resultRef)->call(argsArrayTable, existingValue, nullptr, debugInfo);
+                Tui::ref newRef = Tui::cast<TuiFunction>(resultRef)->call(argsArrayTable, existingValue, nullptr, debugInfo);
                 resultRef = newRef;
             }
             
@@ -933,7 +933,7 @@ static Tui::ref loadSingleValueInternal(const char* str,
     
     if(!stringBuffer.empty() || foundAnyQuote)
     {
-        Tui::string tuiString = Tui::createPointer<TuiString>(stringBuffer);
+        Tui::string tuiString = Tui::create<TuiString>(stringBuffer);
         return tuiString;
     }
     
@@ -1145,22 +1145,22 @@ Tui::ref TuiRef::loadExpression(const char* str,
                 switch (rightValue->type()) {
                     case Tui_ref_type_NUMBER:
                     {
-                        leftValue = Tui::createPointer<TuiNumber>(-(Tui::castPointer<TuiNumber>(rightValue)->value));
+                        leftValue = Tui::create<TuiNumber>(-(Tui::cast<TuiNumber>(rightValue)->value));
                     }
                         break;
                     case Tui_ref_type_VEC2:
                     {
-                        leftValue = Tui::createPointer<TuiVec2>(-(Tui::castPointer<TuiVec2>(rightValue)->value));
+                        leftValue = Tui::create<TuiVec2>(-(Tui::cast<TuiVec2>(rightValue)->value));
                     }
                         break;
                     case Tui_ref_type_VEC3:
                     {
-                        leftValue = Tui::createPointer<TuiVec3>(-(Tui::castPointer<TuiVec3>(rightValue)->value));
+                        leftValue = Tui::create<TuiVec3>(-(Tui::cast<TuiVec3>(rightValue)->value));
                     }
                         break;
                     case Tui_ref_type_VEC4:
                     {
-                        leftValue = Tui::createPointer<TuiVec4>(-(Tui::castPointer<TuiVec4>(rightValue)->value));
+                        leftValue = Tui::create<TuiVec4>(-(Tui::cast<TuiVec4>(rightValue)->value));
                     }
                         break;
                         
@@ -1269,13 +1269,13 @@ Tui::ref TuiRef::loadExpression(const char* str,
                 {
                     case '+':
                     {
-                        (Tui::castPointer<TuiNumber>(leftValue)->value++);
+                        (Tui::cast<TuiNumber>(leftValue)->value++);
                         result = TUI_NIL; //todo returns a nil ref, otherwise the key is addded to an array
                     }
                         break;
                     case '-':
                     {
-                        (Tui::castPointer<TuiNumber>(leftValue)->value--);
+                        (Tui::cast<TuiNumber>(leftValue)->value--);
                         result = TUI_NIL; //todo returns a nil ref, otherwise the key is addded to an array
                     }
                         break;
@@ -1359,19 +1359,19 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(secondOperatorChar == '=')
                         {
-                            Tui::castPointer<TuiNumber>(leftValue)->value += (Tui::castPointer<TuiNumber>(rightValue)->value);
+                            Tui::cast<TuiNumber>(leftValue)->value += (Tui::cast<TuiNumber>(rightValue)->value);
                             result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array //todo this is a waste of an allocate
                         }
                         else
                         {
                             if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
                             {
-                                Tui::castPointer<TuiNumber>(existingValue)->value = Tui::castPointer<TuiNumber>(leftValue)->value + (Tui::castPointer<TuiNumber>(rightValue)->value);
+                                Tui::cast<TuiNumber>(existingValue)->value = Tui::cast<TuiNumber>(leftValue)->value + (Tui::cast<TuiNumber>(rightValue)->value);
                                 existingValueWasAssigned = true;
                             }
                             else
                             {
-                                result = Tui::createPointer<TuiNumber>(Tui::castPointer<TuiNumber>(leftValue)->value + (Tui::castPointer<TuiNumber>(rightValue)->value));
+                                result = Tui::create<TuiNumber>(Tui::cast<TuiNumber>(leftValue)->value + (Tui::cast<TuiNumber>(rightValue)->value));
                             }
                         }
                     }
@@ -1380,19 +1380,19 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(secondOperatorChar == '=')
                         {
-                            Tui::castPointer<TuiNumber>(leftValue)->value -= (Tui::castPointer<TuiNumber>(rightValue)->value);
+                            Tui::cast<TuiNumber>(leftValue)->value -= (Tui::cast<TuiNumber>(rightValue)->value);
                             result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array //todo no need to allocate this
                         }
                         else
                         {
                             if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
                             {
-                                Tui::castPointer<TuiNumber>(existingValue)->value = Tui::castPointer<TuiNumber>(leftValue)->value - (Tui::castPointer<TuiNumber>(rightValue)->value);
+                                Tui::cast<TuiNumber>(existingValue)->value = Tui::cast<TuiNumber>(leftValue)->value - (Tui::cast<TuiNumber>(rightValue)->value);
                                 existingValueWasAssigned = true;
                             }
                             else
                             {
-                                result = Tui::createPointer<TuiNumber>(Tui::castPointer<TuiNumber>(leftValue)->value - (Tui::castPointer<TuiNumber>(rightValue)->value));
+                                result = Tui::create<TuiNumber>(Tui::cast<TuiNumber>(leftValue)->value - (Tui::cast<TuiNumber>(rightValue)->value));
                             }
                         }
                     }
@@ -1401,19 +1401,19 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(secondOperatorChar == '=')
                         {
-                            Tui::castPointer<TuiNumber>(leftValue)->value *= (Tui::castPointer<TuiNumber>(rightValue)->value);
+                            Tui::cast<TuiNumber>(leftValue)->value *= (Tui::cast<TuiNumber>(rightValue)->value);
                             result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array
                         }
                         else
                         {
                             if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
                             {
-                                Tui::castPointer<TuiNumber>(existingValue)->value = Tui::castPointer<TuiNumber>(leftValue)->value * (Tui::castPointer<TuiNumber>(rightValue)->value);
+                                Tui::cast<TuiNumber>(existingValue)->value = Tui::cast<TuiNumber>(leftValue)->value * (Tui::cast<TuiNumber>(rightValue)->value);
                                 existingValueWasAssigned = true;
                             }
                             else
                             {
-                                result = Tui::createPointer<TuiNumber>(Tui::castPointer<TuiNumber>(leftValue)->value * (Tui::castPointer<TuiNumber>(rightValue)->value));
+                                result = Tui::create<TuiNumber>(Tui::cast<TuiNumber>(leftValue)->value * (Tui::cast<TuiNumber>(rightValue)->value));
                             }
                         }
                     }
@@ -1422,19 +1422,19 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(secondOperatorChar == '=')
                         {
-                            Tui::castPointer<TuiNumber>(leftValue)->value /= (Tui::castPointer<TuiNumber>(rightValue)->value);
+                            Tui::cast<TuiNumber>(leftValue)->value /= (Tui::cast<TuiNumber>(rightValue)->value);
                             result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array
                         }
                         else
                         {
                             if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
                             {
-                                Tui::castPointer<TuiNumber>(existingValue)->value = Tui::castPointer<TuiNumber>(leftValue)->value / (Tui::castPointer<TuiNumber>(rightValue)->value);
+                                Tui::cast<TuiNumber>(existingValue)->value = Tui::cast<TuiNumber>(leftValue)->value / (Tui::cast<TuiNumber>(rightValue)->value);
                                 existingValueWasAssigned = true;
                             }
                             else
                             {
-                                result = Tui::createPointer<TuiNumber>(Tui::castPointer<TuiNumber>(leftValue)->value / (Tui::castPointer<TuiNumber>(rightValue)->value));
+                                result = Tui::create<TuiNumber>(Tui::cast<TuiNumber>(leftValue)->value / (Tui::cast<TuiNumber>(rightValue)->value));
                             }
                         }
                     }
@@ -1443,12 +1443,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_NUMBER)
                         {
-                            Tui::castPointer<TuiNumber>(existingValue)->value = ((int)Tui::castPointer<TuiNumber>(leftValue)->value) % ((int)(Tui::castPointer<TuiNumber>(rightValue)->value));
+                            Tui::cast<TuiNumber>(existingValue)->value = ((int)Tui::cast<TuiNumber>(leftValue)->value) % ((int)(Tui::cast<TuiNumber>(rightValue)->value));
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiNumber>(((int)Tui::castPointer<TuiNumber>(leftValue)->value) % ((int)(Tui::castPointer<TuiNumber>(rightValue)->value)));
+                            result = Tui::create<TuiNumber>(((int)Tui::cast<TuiNumber>(leftValue)->value) % ((int)(Tui::cast<TuiNumber>(rightValue)->value)));
                         }
                     }
                         break;
@@ -1456,11 +1456,11 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(secondOperatorChar == '=')
                         {
-                            result = TUI_BOOL(Tui::castPointer<TuiNumber>(leftValue)->value >= (Tui::castPointer<TuiNumber>(rightValue)->value));
+                            result = TUI_BOOL(Tui::cast<TuiNumber>(leftValue)->value >= (Tui::cast<TuiNumber>(rightValue)->value));
                         }
                         else
                         {
-                            result = TUI_BOOL(Tui::castPointer<TuiNumber>(leftValue)->value > (Tui::castPointer<TuiNumber>(rightValue)->value));
+                            result = TUI_BOOL(Tui::cast<TuiNumber>(leftValue)->value > (Tui::cast<TuiNumber>(rightValue)->value));
                         }
                     }
                         break;
@@ -1468,11 +1468,11 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(secondOperatorChar == '=')
                         {
-                            result = TUI_BOOL(Tui::castPointer<TuiNumber>(leftValue)->value <= (Tui::castPointer<TuiNumber>(rightValue)->value));
+                            result = TUI_BOOL(Tui::cast<TuiNumber>(leftValue)->value <= (Tui::cast<TuiNumber>(rightValue)->value));
                         }
                         else
                         {
-                            result = TUI_BOOL(Tui::castPointer<TuiNumber>(leftValue)->value < (Tui::castPointer<TuiNumber>(rightValue)->value));
+                            result = TUI_BOOL(Tui::cast<TuiNumber>(leftValue)->value < (Tui::cast<TuiNumber>(rightValue)->value));
                         }
                     }
                         break;
@@ -1489,12 +1489,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
                         {
-                            Tui::castPointer<TuiVec2>(existingValue)->value = Tui::castPointer<TuiVec2>(rightValue)->value * (Tui::castPointer<TuiNumber>(leftValue)->value);
+                            Tui::cast<TuiVec2>(existingValue)->value = Tui::cast<TuiVec2>(rightValue)->value * (Tui::cast<TuiNumber>(leftValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec2>(Tui::castPointer<TuiVec2>(rightValue)->value * (Tui::castPointer<TuiNumber>(leftValue)->value));
+                            result = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(rightValue)->value * (Tui::cast<TuiNumber>(leftValue)->value));
                         }
                     }
                         break;
@@ -1502,12 +1502,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
                         {
-                            Tui::castPointer<TuiVec2>(existingValue)->value = Tui::castPointer<TuiVec2>(rightValue)->value / (Tui::castPointer<TuiNumber>(leftValue)->value);
+                            Tui::cast<TuiVec2>(existingValue)->value = Tui::cast<TuiVec2>(rightValue)->value / (Tui::cast<TuiNumber>(leftValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec2>(Tui::castPointer<TuiVec2>(rightValue)->value / (Tui::castPointer<TuiNumber>(leftValue)->value));
+                            result = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(rightValue)->value / (Tui::cast<TuiNumber>(leftValue)->value));
                         }
                     }
                         break;
@@ -1524,12 +1524,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
                         {
-                            Tui::castPointer<TuiVec3>(existingValue)->value = Tui::castPointer<TuiVec3>(rightValue)->value * (Tui::castPointer<TuiNumber>(leftValue)->value);
+                            Tui::cast<TuiVec3>(existingValue)->value = Tui::cast<TuiVec3>(rightValue)->value * (Tui::cast<TuiNumber>(leftValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec3>(Tui::castPointer<TuiVec3>(rightValue)->value * (Tui::castPointer<TuiNumber>(leftValue)->value));
+                            result = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(rightValue)->value * (Tui::cast<TuiNumber>(leftValue)->value));
                         }
                     }
                         break;
@@ -1537,12 +1537,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
                         {
-                            Tui::castPointer<TuiVec3>(existingValue)->value = Tui::castPointer<TuiVec3>(rightValue)->value / (Tui::castPointer<TuiNumber>(leftValue)->value);
+                            Tui::cast<TuiVec3>(existingValue)->value = Tui::cast<TuiVec3>(rightValue)->value / (Tui::cast<TuiNumber>(leftValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec3>(Tui::castPointer<TuiVec3>(rightValue)->value / (Tui::castPointer<TuiNumber>(leftValue)->value));
+                            result = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(rightValue)->value / (Tui::cast<TuiNumber>(leftValue)->value));
                         }
                     }
                         break;
@@ -1559,12 +1559,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
                         {
-                            Tui::castPointer<TuiVec4>(existingValue)->value = Tui::castPointer<TuiVec4>(rightValue)->value * (Tui::castPointer<TuiNumber>(leftValue)->value);
+                            Tui::cast<TuiVec4>(existingValue)->value = Tui::cast<TuiVec4>(rightValue)->value * (Tui::cast<TuiNumber>(leftValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec4>(Tui::castPointer<TuiVec4>(rightValue)->value * (Tui::castPointer<TuiNumber>(leftValue)->value));
+                            result = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(rightValue)->value * (Tui::cast<TuiNumber>(leftValue)->value));
                         }
                     }
                         break;
@@ -1572,12 +1572,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
                         {
-                            Tui::castPointer<TuiVec4>(existingValue)->value = Tui::castPointer<TuiVec4>(rightValue)->value / (Tui::castPointer<TuiNumber>(leftValue)->value);
+                            Tui::cast<TuiVec4>(existingValue)->value = Tui::cast<TuiVec4>(rightValue)->value / (Tui::cast<TuiNumber>(leftValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec4>(Tui::castPointer<TuiVec4>(rightValue)->value / (Tui::castPointer<TuiNumber>(leftValue)->value));
+                            result = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(rightValue)->value / (Tui::cast<TuiNumber>(leftValue)->value));
                         }
                     }
                         break;
@@ -1599,7 +1599,7 @@ Tui::ref TuiRef::loadExpression(const char* str,
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiString>(leftValue->getStringValue() + (Tui::castPointer<TuiString>(rightValue)->value));
+                            result = Tui::create<TuiString>(leftValue->getStringValue() + (Tui::cast<TuiString>(rightValue)->value));
                         }
                     }
                         break;
@@ -1619,12 +1619,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
                         {
-                            Tui::castPointer<TuiVec2>(existingValue)->value = Tui::castPointer<TuiVec2>(leftValue)->value * (Tui::castPointer<TuiNumber>(rightValue)->value);
+                            Tui::cast<TuiVec2>(existingValue)->value = Tui::cast<TuiVec2>(leftValue)->value * (Tui::cast<TuiNumber>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec2>(Tui::castPointer<TuiVec2>(leftValue)->value * (Tui::castPointer<TuiNumber>(rightValue)->value));
+                            result = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(leftValue)->value * (Tui::cast<TuiNumber>(rightValue)->value));
                         }
                     }
                         break;
@@ -1632,12 +1632,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
                         {
-                            Tui::castPointer<TuiVec2>(existingValue)->value = Tui::castPointer<TuiVec2>(leftValue)->value / (Tui::castPointer<TuiNumber>(rightValue)->value);
+                            Tui::cast<TuiVec2>(existingValue)->value = Tui::cast<TuiVec2>(leftValue)->value / (Tui::cast<TuiNumber>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec2>(Tui::castPointer<TuiVec2>(leftValue)->value / (Tui::castPointer<TuiNumber>(rightValue)->value));
+                            result = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(leftValue)->value / (Tui::cast<TuiNumber>(rightValue)->value));
                         }
                     }
                         break;
@@ -1654,12 +1654,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
                         {
-                            Tui::castPointer<TuiVec2>(existingValue)->value = Tui::castPointer<TuiVec2>(leftValue)->value + (Tui::castPointer<TuiVec2>(rightValue)->value);
+                            Tui::cast<TuiVec2>(existingValue)->value = Tui::cast<TuiVec2>(leftValue)->value + (Tui::cast<TuiVec2>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec2>(Tui::castPointer<TuiVec2>(leftValue)->value + (Tui::castPointer<TuiVec2>(rightValue)->value));
+                            result = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(leftValue)->value + (Tui::cast<TuiVec2>(rightValue)->value));
                         }
                     }
                         break;
@@ -1667,12 +1667,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
                         {
-                            Tui::castPointer<TuiVec2>(existingValue)->value = Tui::castPointer<TuiVec2>(leftValue)->value - (Tui::castPointer<TuiVec2>(rightValue)->value);
+                            Tui::cast<TuiVec2>(existingValue)->value = Tui::cast<TuiVec2>(leftValue)->value - (Tui::cast<TuiVec2>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec2>(Tui::castPointer<TuiVec2>(leftValue)->value - (Tui::castPointer<TuiVec2>(rightValue)->value));
+                            result = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(leftValue)->value - (Tui::cast<TuiVec2>(rightValue)->value));
                         }
                     }
                         break;
@@ -1680,12 +1680,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
                         {
-                            Tui::castPointer<TuiVec2>(existingValue)->value = Tui::castPointer<TuiVec2>(leftValue)->value * (Tui::castPointer<TuiVec2>(rightValue)->value);
+                            Tui::cast<TuiVec2>(existingValue)->value = Tui::cast<TuiVec2>(leftValue)->value * (Tui::cast<TuiVec2>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec2>(Tui::castPointer<TuiVec2>(leftValue)->value * (Tui::castPointer<TuiVec2>(rightValue)->value));
+                            result = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(leftValue)->value * (Tui::cast<TuiVec2>(rightValue)->value));
                         }
                     }
                         break;
@@ -1693,12 +1693,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC2)
                         {
-                            Tui::castPointer<TuiVec2>(existingValue)->value = Tui::castPointer<TuiVec2>(leftValue)->value / (Tui::castPointer<TuiVec2>(rightValue)->value);
+                            Tui::cast<TuiVec2>(existingValue)->value = Tui::cast<TuiVec2>(leftValue)->value / (Tui::cast<TuiVec2>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec2>(Tui::castPointer<TuiVec2>(leftValue)->value / (Tui::castPointer<TuiVec2>(rightValue)->value));
+                            result = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(leftValue)->value / (Tui::cast<TuiVec2>(rightValue)->value));
                         }
                     }
                         break;
@@ -1718,12 +1718,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
                         {
-                            Tui::castPointer<TuiVec3>(existingValue)->value = Tui::castPointer<TuiVec3>(leftValue)->value * (Tui::castPointer<TuiNumber>(rightValue)->value);
+                            Tui::cast<TuiVec3>(existingValue)->value = Tui::cast<TuiVec3>(leftValue)->value * (Tui::cast<TuiNumber>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec3>(Tui::castPointer<TuiVec3>(leftValue)->value * (Tui::castPointer<TuiNumber>(rightValue)->value));
+                            result = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(leftValue)->value * (Tui::cast<TuiNumber>(rightValue)->value));
                         }
                     }
                         break;
@@ -1731,12 +1731,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
                         {
-                            Tui::castPointer<TuiVec3>(existingValue)->value = Tui::castPointer<TuiVec3>(leftValue)->value / (Tui::castPointer<TuiNumber>(rightValue)->value);
+                            Tui::cast<TuiVec3>(existingValue)->value = Tui::cast<TuiVec3>(leftValue)->value / (Tui::cast<TuiNumber>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec3>(Tui::castPointer<TuiVec3>(leftValue)->value / (Tui::castPointer<TuiNumber>(rightValue)->value));
+                            result = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(leftValue)->value / (Tui::cast<TuiNumber>(rightValue)->value));
                         }
                     }
                         break;
@@ -1753,12 +1753,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
                         {
-                            Tui::castPointer<TuiVec3>(existingValue)->value = Tui::castPointer<TuiVec3>(leftValue)->value + (Tui::castPointer<TuiVec3>(rightValue)->value);
+                            Tui::cast<TuiVec3>(existingValue)->value = Tui::cast<TuiVec3>(leftValue)->value + (Tui::cast<TuiVec3>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec3>(Tui::castPointer<TuiVec3>(leftValue)->value + (Tui::castPointer<TuiVec3>(rightValue)->value));
+                            result = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(leftValue)->value + (Tui::cast<TuiVec3>(rightValue)->value));
                         }
                     }
                         break;
@@ -1766,12 +1766,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
                         {
-                            Tui::castPointer<TuiVec3>(existingValue)->value = Tui::castPointer<TuiVec3>(leftValue)->value - (Tui::castPointer<TuiVec3>(rightValue)->value);
+                            Tui::cast<TuiVec3>(existingValue)->value = Tui::cast<TuiVec3>(leftValue)->value - (Tui::cast<TuiVec3>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec3>(Tui::castPointer<TuiVec3>(leftValue)->value - (Tui::castPointer<TuiVec3>(rightValue)->value));
+                            result = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(leftValue)->value - (Tui::cast<TuiVec3>(rightValue)->value));
                         }
                     }
                         break;
@@ -1779,12 +1779,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
                         {
-                            Tui::castPointer<TuiVec3>(existingValue)->value = Tui::castPointer<TuiVec3>(leftValue)->value * (Tui::castPointer<TuiVec3>(rightValue)->value);
+                            Tui::cast<TuiVec3>(existingValue)->value = Tui::cast<TuiVec3>(leftValue)->value * (Tui::cast<TuiVec3>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec3>(Tui::castPointer<TuiVec3>(leftValue)->value * (Tui::castPointer<TuiVec3>(rightValue)->value));
+                            result = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(leftValue)->value * (Tui::cast<TuiVec3>(rightValue)->value));
                         }
                     }
                         break;
@@ -1792,12 +1792,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC3)
                         {
-                            Tui::castPointer<TuiVec3>(existingValue)->value = Tui::castPointer<TuiVec3>(leftValue)->value / (Tui::castPointer<TuiVec3>(rightValue)->value);
+                            Tui::cast<TuiVec3>(existingValue)->value = Tui::cast<TuiVec3>(leftValue)->value / (Tui::cast<TuiVec3>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec3>(Tui::castPointer<TuiVec3>(leftValue)->value / (Tui::castPointer<TuiVec3>(rightValue)->value));
+                            result = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(leftValue)->value / (Tui::cast<TuiVec3>(rightValue)->value));
                         }
                     }
                         break;
@@ -1817,12 +1817,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
                         {
-                            Tui::castPointer<TuiVec4>(existingValue)->value = Tui::castPointer<TuiVec4>(leftValue)->value * (Tui::castPointer<TuiNumber>(rightValue)->value);
+                            Tui::cast<TuiVec4>(existingValue)->value = Tui::cast<TuiVec4>(leftValue)->value * (Tui::cast<TuiNumber>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec4>(Tui::castPointer<TuiVec4>(leftValue)->value * (Tui::castPointer<TuiNumber>(rightValue)->value));
+                            result = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(leftValue)->value * (Tui::cast<TuiNumber>(rightValue)->value));
                         }
                     }
                         break;
@@ -1830,12 +1830,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
                         {
-                            Tui::castPointer<TuiVec4>(existingValue)->value = Tui::castPointer<TuiVec4>(leftValue)->value / (Tui::castPointer<TuiNumber>(rightValue)->value);
+                            Tui::cast<TuiVec4>(existingValue)->value = Tui::cast<TuiVec4>(leftValue)->value / (Tui::cast<TuiNumber>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec4>(Tui::castPointer<TuiVec4>(leftValue)->value / (Tui::castPointer<TuiNumber>(rightValue)->value));
+                            result = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(leftValue)->value / (Tui::cast<TuiNumber>(rightValue)->value));
                         }
                     }
                         break;
@@ -1852,12 +1852,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
                         {
-                            Tui::castPointer<TuiVec4>(existingValue)->value = Tui::castPointer<TuiVec4>(leftValue)->value + (Tui::castPointer<TuiVec4>(rightValue)->value);
+                            Tui::cast<TuiVec4>(existingValue)->value = Tui::cast<TuiVec4>(leftValue)->value + (Tui::cast<TuiVec4>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec4>(Tui::castPointer<TuiVec4>(leftValue)->value + (Tui::castPointer<TuiVec4>(rightValue)->value));
+                            result = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(leftValue)->value + (Tui::cast<TuiVec4>(rightValue)->value));
                         }
                     }
                         break;
@@ -1865,12 +1865,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
                         {
-                            Tui::castPointer<TuiVec4>(existingValue)->value = Tui::castPointer<TuiVec4>(leftValue)->value - (Tui::castPointer<TuiVec4>(rightValue)->value);
+                            Tui::cast<TuiVec4>(existingValue)->value = Tui::cast<TuiVec4>(leftValue)->value - (Tui::cast<TuiVec4>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec4>(Tui::castPointer<TuiVec4>(leftValue)->value - (Tui::castPointer<TuiVec4>(rightValue)->value));
+                            result = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(leftValue)->value - (Tui::cast<TuiVec4>(rightValue)->value));
                         }
                     }
                         break;
@@ -1878,12 +1878,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
                         {
-                            Tui::castPointer<TuiVec4>(existingValue)->value = Tui::castPointer<TuiVec4>(leftValue)->value * (Tui::castPointer<TuiVec4>(rightValue)->value);
+                            Tui::cast<TuiVec4>(existingValue)->value = Tui::cast<TuiVec4>(leftValue)->value * (Tui::cast<TuiVec4>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec4>(Tui::castPointer<TuiVec4>(leftValue)->value * (Tui::castPointer<TuiVec4>(rightValue)->value));
+                            result = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(leftValue)->value * (Tui::cast<TuiVec4>(rightValue)->value));
                         }
                     }
                         break;
@@ -1891,12 +1891,12 @@ Tui::ref TuiRef::loadExpression(const char* str,
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_VEC4)
                         {
-                            Tui::castPointer<TuiVec4>(existingValue)->value = Tui::castPointer<TuiVec4>(leftValue)->value / (Tui::castPointer<TuiVec4>(rightValue)->value);
+                            Tui::cast<TuiVec4>(existingValue)->value = Tui::cast<TuiVec4>(leftValue)->value / (Tui::cast<TuiVec4>(rightValue)->value);
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiVec4>(Tui::castPointer<TuiVec4>(leftValue)->value / (Tui::castPointer<TuiVec4>(rightValue)->value));
+                            result = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(leftValue)->value / (Tui::cast<TuiVec4>(rightValue)->value));
                         }
                     }
                         break;
@@ -1914,19 +1914,19 @@ Tui::ref TuiRef::loadExpression(const char* str,
                 {
                     if(secondOperatorChar == '=')
                     {
-                        Tui::castPointer<TuiString>(leftValue)->value += rightValue->getStringValue();
+                        Tui::cast<TuiString>(leftValue)->value += rightValue->getStringValue();
                         result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array //todo this is a waste of an allocate
                     }
                     else
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_STRING)
                         {
-                            Tui::castPointer<TuiString>(existingValue)->value = Tui::castPointer<TuiString>(leftValue)->value + rightValue->getStringValue();
+                            Tui::cast<TuiString>(existingValue)->value = Tui::cast<TuiString>(leftValue)->value + rightValue->getStringValue();
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = Tui::createPointer<TuiString>(Tui::castPointer<TuiString>(leftValue)->value + rightValue->getStringValue());
+                            result = Tui::create<TuiString>(Tui::cast<TuiString>(leftValue)->value + rightValue->getStringValue());
                         }
                     }
                 }
@@ -1935,11 +1935,11 @@ Tui::ref TuiRef::loadExpression(const char* str,
                 {
                     if(secondOperatorChar == '=')
                     {
-                        result = TUI_BOOL(Tui::castPointer<TuiString>(leftValue)->value >= (Tui::castPointer<TuiString>(rightValue)->value));
+                        result = TUI_BOOL(Tui::cast<TuiString>(leftValue)->value >= (Tui::cast<TuiString>(rightValue)->value));
                     }
                     else
                     {
-                        result = TUI_BOOL(Tui::castPointer<TuiString>(leftValue)->value > (Tui::castPointer<TuiString>(rightValue)->value));
+                        result = TUI_BOOL(Tui::cast<TuiString>(leftValue)->value > (Tui::cast<TuiString>(rightValue)->value));
                     }
                 }
                     break;
@@ -1947,11 +1947,11 @@ Tui::ref TuiRef::loadExpression(const char* str,
                 {
                     if(secondOperatorChar == '=')
                     {
-                        result = TUI_BOOL(Tui::castPointer<TuiString>(leftValue)->value <= (Tui::castPointer<TuiString>(rightValue)->value));
+                        result = TUI_BOOL(Tui::cast<TuiString>(leftValue)->value <= (Tui::cast<TuiString>(rightValue)->value));
                     }
                     else
                     {
-                        result = TUI_BOOL(Tui::castPointer<TuiString>(leftValue)->value < (Tui::castPointer<TuiString>(rightValue)->value));
+                        result = TUI_BOOL(Tui::cast<TuiString>(leftValue)->value < (Tui::cast<TuiString>(rightValue)->value));
                     }
                 }
                     break;
