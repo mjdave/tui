@@ -6,6 +6,7 @@
 #include <cstring>
 #include "glm.hpp"
 #include "TuiLog.h"
+#include "TuiTypes.h"
 
 #include "TuiRef.h"
 
@@ -25,12 +26,12 @@ public://functions
     TuiNumber(double value_) : TuiRef() {value = value_;}
     virtual ~TuiNumber() {};
     
-    virtual TuiRef* copy() override
+    virtual Tui::ref copy() override
     {
-        return new TuiNumber(value);
+        return Tui::create<TuiNumber>(value);
     }
-    virtual void assign(TuiRef* other) override {
-        value = ((TuiNumber*)other)->value;
+    virtual void assign(const Tui::ref& other) override {
+        value = Tui::cast<TuiNumber>(other)->value;
     }
     
     
@@ -45,7 +46,7 @@ public://functions
     }
     virtual bool boolValue() override {return true;}
     virtual double getNumberValue() override {return value;}
-    virtual bool isEqual(TuiRef* other) override {return other && other->type() == Tui_ref_type_NUMBER && ((TuiNumber*)other)->value == value;}
+    virtual bool isEqual(const Tui::ref& other) override {return other && other->type() == Tui_ref_type_NUMBER && Tui::cast<TuiNumber>(other)->value == value;}
     
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
@@ -68,12 +69,12 @@ public://functions
     TuiNumber8(uint8_t value_) : TuiRef() {value = value_;}
     virtual ~TuiNumber8() {};
     
-    virtual TuiRef* copy() override
+    virtual Tui::ref copy() override
     {
-        return new TuiNumber8(value);
+        return Tui::create<TuiNumber8>(value);
     }
-    virtual void assign(TuiRef* other) override {
-        value = ((TuiNumber8*)other)->value;
+    virtual void assign(const Tui::ref& other) override {
+        value = Tui::cast<TuiNumber8>(other)->value;
     }
     
     
@@ -84,8 +85,8 @@ public://functions
     }
     virtual bool boolValue() override {return true;}
     virtual double getNumberValue() override {return value;}
-    virtual bool isEqual(TuiRef* other) override {return other && (
-      (other->type() == Tui_ref_type_NUMBER_8 && ((TuiNumber8*)other)->value == value))
+    virtual bool isEqual(const Tui::ref& other) override {return other && (
+      (other->type() == Tui_ref_type_NUMBER_8 && Tui::cast<TuiNumber8>(other)->value == value))
         ;}
     
     
@@ -106,12 +107,12 @@ public://functions
     TuiNumber16(uint16_t value_) : TuiRef() {value = value_;}
     virtual ~TuiNumber16() {};
     
-    virtual TuiRef* copy() override
+    virtual Tui::ref copy() override
     {
-        return new TuiNumber16(value);
+        return Tui::create<TuiNumber16>(value);
     }
-    virtual void assign(TuiRef* other) override {
-        value = ((TuiNumber16*)other)->value;
+    virtual void assign(const Tui::ref& other) override {
+        value = Tui::cast<TuiNumber16>(other)->value;
     }
     
     
@@ -122,8 +123,8 @@ public://functions
     }
     virtual bool boolValue() override {return true;}
     virtual double getNumberValue() override {return value;}
-    virtual bool isEqual(TuiRef* other) override {return other && (
-      (other->type() == Tui_ref_type_NUMBER_16 && ((TuiNumber16*)other)->value == value))
+    virtual bool isEqual(const Tui::ref& other) override {return other && (
+      (other->type() == Tui_ref_type_NUMBER_16 && Tui::cast<TuiNumber16>(other)->value == value))
         ;}
     
     
@@ -145,12 +146,12 @@ public://functions
     TuiNumber32(uint32_t value_) : TuiRef() {value = value_;}
     virtual ~TuiNumber32() {};
     
-    virtual TuiRef* copy() override
+    virtual Tui::ref copy() override
     {
-        return new TuiNumber32(value);
+        return Tui::create<TuiNumber32>(value);
     }
-    virtual void assign(TuiRef* other) override {
-        value = ((TuiNumber32*)other)->value;
+    virtual void assign(const Tui::ref& other) override {
+        value = Tui::cast<TuiNumber32>(other)->value;
     }
     
     
@@ -161,8 +162,8 @@ public://functions
     }
     virtual bool boolValue() override {return true;}
     virtual double getNumberValue() override {return value;}
-    virtual bool isEqual(TuiRef* other) override {return other && (
-      (other->type() == Tui_ref_type_NUMBER_32 && ((TuiNumber32*)other)->value == value))
+    virtual bool isEqual(const Tui::ref& other) override {return other && (
+      (other->type() == Tui_ref_type_NUMBER_32 && Tui::cast<TuiNumber32>(other)->value == value))
         ;}
     
     
@@ -184,12 +185,12 @@ public://functions
     TuiNumber64(uint64_t value_) : TuiRef() {value = value_;}
     virtual ~TuiNumber64() {};
     
-    virtual TuiRef* copy() override
+    virtual Tui::ref copy() override
     {
-        return new TuiNumber64(value);
+        return Tui::create<TuiNumber64>(value);
     }
-    virtual void assign(TuiRef* other) override {
-        value = ((TuiNumber64*)other)->value;
+    virtual void assign(const Tui::ref& other) override {
+        value = Tui::cast<TuiNumber64>(other)->value;
     }
     
     virtual uint8_t type() override { return Tui_ref_type_NUMBER_64; }
@@ -199,8 +200,8 @@ public://functions
     }
     virtual bool boolValue() override {return true;}
     virtual double getNumberValue() override {return value;}
-    virtual bool isEqual(TuiRef* other) override {return other && (
-      (other->type() == Tui_ref_type_NUMBER_64 && ((TuiNumber64*)other)->value == value))
+    virtual bool isEqual(const Tui::ref& other) override {return other && (
+      (other->type() == Tui_ref_type_NUMBER_64 && Tui::cast<TuiNumber64>(other)->value == value))
         ;}
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
@@ -213,8 +214,8 @@ public://functions
 };
 
 class TuiBool;
-extern TuiBool* TUI_TRUE;
-extern TuiBool* TUI_FALSE;
+extern Tui::boolean TUI_TRUE;
+extern Tui::boolean TUI_FALSE;
 
 #define TUI_BOOL(__boolValue__) ((__boolValue__) ? TUI_TRUE : TUI_FALSE)
 
@@ -227,17 +228,15 @@ public://functions
     
     virtual ~TuiBool() {};
     
-    virtual TuiRef* copy() override
+    virtual Tui::ref copy() override
     {
-        return this;
+        return createFromThis();
     }
-    virtual void assign(TuiRef* other) override {
+    virtual void assign(const Tui::ref& other) override {
         TuiError("assign not supported for bool type");
     }
-    virtual void release() override {}
-    virtual TuiRef* retain() override { return this;}
     
-    static TuiBool* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
+    static Tui::boolean initWithHumanReadableString(const char* str, char** endptr, const Tui::table& parent, TuiDebugInfo* debugInfo) {
         const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == 't' && *(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e' && checkSymbolNameComplete(s + 4))
@@ -251,7 +250,9 @@ public://functions
             return TUI_FALSE;
         }
         
-        return nullptr;
+        {
+            return {};
+        }
     }
     
     virtual uint8_t type() override { return Tui_ref_type_BOOL; }
@@ -261,13 +262,13 @@ public://functions
     }
     virtual bool boolValue() override {return value;}
     virtual double getNumberValue() override {return value;}
-    virtual bool isEqual(TuiRef* other) override
+    virtual bool isEqual(const Tui::ref& other) override
     {
         if(!other)
         {
             return !value;
         }
-        return other == this;
+        return other.get() == this;
     }
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
@@ -296,15 +297,15 @@ public: //members
 public://functions
     TuiVec2(dvec2 value_) : TuiRef() {value = value_;}
     virtual ~TuiVec2() {};
-    virtual TuiRef* copy() override
+    virtual Tui::ref copy() override
     {
-        return new TuiVec2(value);
+        return Tui::create<TuiVec2>(value);
     }
-    virtual void assign(TuiRef* other) override {
-        value = ((TuiVec2*)other)->value;
+    virtual void assign(const Tui::ref& other) override {
+        value = Tui::cast<TuiVec2>(other)->value;
     }
     
-    static TuiVec2* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
+    static Tui::vec2 initWithHumanReadableString(const char* str, char** endptr, const Tui::table& parent, TuiDebugInfo* debugInfo) {
         const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '2' && *(s + 4) == '(')
@@ -315,21 +316,16 @@ public://functions
             double values[2] = {0.0,0.0};
             for(int i = 0; i < 2; i++)
             {
-                TuiRef* loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, (TuiTable*)parent, debugInfo);
+                Tui::ref loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parent, debugInfo);
                 s = tuiSkipToNextChar(*endptr, debugInfo);
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
                     TuiParseError(debugInfo, "uninitialized or non-number value in vec2 constructor:%c", *s);
-                    if(loadedValue)
-                    {
-                        loadedValue->release();
-                    }
                     return nullptr;
                 }
                 
-                values[i] = ((TuiNumber*)loadedValue)->value;
-                loadedValue->release();
+                values[i] = (Tui::cast<TuiNumber>(loadedValue)->value);
                 
                 if(*s == ',')
                 {
@@ -351,7 +347,7 @@ public://functions
             s = tuiSkipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
-            return new TuiVec2(dvec2(values[0], values[1]));
+            return Tui::create<TuiVec2>(dvec2(values[0], values[1]));
         }
         
         return nullptr;
@@ -363,7 +359,7 @@ public://functions
         return Tui::string_format("vec2(%s,%s)", Tui::doubleToString(value.x).c_str(), Tui::doubleToString(value.y).c_str());
     }
     virtual bool boolValue() override {return true;}
-    virtual bool isEqual(TuiRef* other) override {return other && other->type() == Tui_ref_type_VEC2 && ((TuiVec2*)other)->value == value;}
+    virtual bool isEqual(const Tui::ref& other) override {return other && other->type() == Tui_ref_type_VEC2 && Tui::cast<TuiVec2>(other)->value == value;}
 
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
@@ -389,15 +385,15 @@ public: //members
 public://functions
     TuiVec3(dvec3 value_) : TuiRef() {value = value_;}
     virtual ~TuiVec3() {};
-    virtual TuiRef* copy() override
+    virtual Tui::ref copy() override
     {
-        return new TuiVec3(value);
+        return Tui::create<TuiVec3>(value);
     }
-    virtual void assign(TuiRef* other) override {
-        value = ((TuiVec3*)other)->value;
+    virtual void assign(const Tui::ref& other) override {
+        value = Tui::cast<TuiVec3>(other)->value;
     }
     
-    static TuiVec3* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
+    static Tui::vec3 initWithHumanReadableString(const char* str, char** endptr, const Tui::table& parent, TuiDebugInfo* debugInfo) {
         const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '3' && *(s + 4) == '(')
@@ -408,21 +404,16 @@ public://functions
             double values[3] = {0.0,0.0,0.0};
             for(int i = 0; i < 3; i++)
             {
-                TuiRef* loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, (TuiTable*)parent, debugInfo);
+                Tui::ref loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parent, debugInfo);
                 s = tuiSkipToNextChar(*endptr, debugInfo);
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
                     TuiParseError(debugInfo, "uninitialized or non-number value in vec3 constructor:%c", *s);
-                    if(loadedValue)
-                    {
-                        loadedValue->release();
-                    }
                     return nullptr;
                 }
                 
-                values[i] = ((TuiNumber*)loadedValue)->value;
-                loadedValue->release();
+                values[i] = (Tui::cast<TuiNumber>(loadedValue)->value);
                 
                 if(*s == ',')
                 {
@@ -444,7 +435,7 @@ public://functions
             
             *endptr = (char*)s;
             
-            return new TuiVec3(dvec3(values[0], values[1], values[2]));
+            return Tui::create<TuiVec3>(dvec3(values[0], values[1], values[2]));
         }
         
         return nullptr;
@@ -456,7 +447,7 @@ public://functions
         return Tui::string_format("vec3(%s,%s,%s)", Tui::doubleToString(value.x).c_str(), Tui::doubleToString(value.y).c_str(), Tui::doubleToString(value.z).c_str());
     }
     virtual bool boolValue() override {return true;}
-    virtual bool isEqual(TuiRef* other) override {return other && other->type() == Tui_ref_type_VEC3 && ((TuiVec3*)other)->value == value;}
+    virtual bool isEqual(const Tui::ref& other) override {return other && other->type() == Tui_ref_type_VEC3 && Tui::cast<TuiVec3>(other)->value == value;}
 
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
     {
@@ -483,15 +474,15 @@ public: //members
 public://functions
     TuiVec4(dvec4 value_) : TuiRef() {value = value_;}
     virtual ~TuiVec4() {};
-    virtual TuiRef* copy() override
+    virtual Tui::ref copy() override
     {
-        return new TuiVec4(value);
+        return Tui::create<TuiVec4>(value);
     }
-    virtual void assign(TuiRef* other) override {
-        value = ((TuiVec4*)other)->value;
+    virtual void assign(const Tui::ref& other) override {
+        value = Tui::cast<TuiVec4>(other)->value;
     }
     
-    static TuiVec4* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
+    static Tui::vec4 initWithHumanReadableString(const char* str, char** endptr, const Tui::table& parent, TuiDebugInfo* debugInfo) {
         const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == 'v' && *(s + 1) == 'e' && *(s + 2) == 'c' && *(s + 3) == '4' && *(s + 4) == '(')
@@ -502,21 +493,16 @@ public://functions
             double values[4] = {0.0,0.0,0.0,0.0};
             for(int i = 0; i < 4; i++)
             {
-                TuiRef* loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, (TuiTable*)parent, debugInfo);
+                Tui::ref loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parent, debugInfo);
                 s = tuiSkipToNextChar(*endptr, debugInfo);
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
                     TuiParseError(debugInfo, "uninitialized or non-number value in vec4 constructor:%c", *s);
-                    if(loadedValue)
-                    {
-                        loadedValue->release();
-                    }
                     return nullptr;
                 }
                 
-                values[i] = ((TuiNumber*)loadedValue)->value;
-                loadedValue->release();
+                values[i] = (Tui::cast<TuiNumber>(loadedValue)->value);
                 
                 if(*s == ',')
                 {
@@ -538,7 +524,7 @@ public://functions
             s = tuiSkipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
-            return new TuiVec4(dvec4(values[0], values[1], values[2],  values[3]));
+            return Tui::create<TuiVec4>(dvec4(values[0], values[1], values[2],  values[3]));
         }
         
         return nullptr;
@@ -550,7 +536,7 @@ public://functions
         return Tui::string_format("vec4(%s,%s,%s,%s)", Tui::doubleToString(value.x).c_str(), Tui::doubleToString(value.y).c_str(), Tui::doubleToString(value.z).c_str(), Tui::doubleToString(value.w).c_str());
     }
     virtual bool boolValue() override {return true;}
-    virtual bool isEqual(TuiRef* other) override {return other && other->type() == Tui_ref_type_VEC4 && ((TuiVec4*)other)->value == value;}
+    virtual bool isEqual(const Tui::ref& other) override {return other && other->type() == Tui_ref_type_VEC4 && Tui::cast<TuiVec4>(other)->value == value;}
 
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
     {
@@ -577,15 +563,15 @@ public: //members
 public://functions
     TuiMat3(dmat3 value_) : TuiRef() {value = value_;}
     virtual ~TuiMat3() {};
-    virtual TuiRef* copy() override
+    virtual Tui::ref copy() override
     {
-        return new TuiMat3(value);
+        return Tui::create<TuiMat3>(value);
     }
-    virtual void assign(TuiRef* other) override {
-        value = ((TuiMat3*)other)->value;
+    virtual void assign(const Tui::ref& other) override {
+        value = Tui::cast<TuiMat3>(other)->value;
     }
     
-    static TuiMat3* initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) {
+    static Tui::mat3 initWithHumanReadableString(const char* str, char** endptr, const Tui::table& parent, TuiDebugInfo* debugInfo) {
         const char* s = tuiSkipToNextChar(str, debugInfo);
         
         if(*s == 'm' && *(s + 1) == 'a' && *(s + 2) == 't' && *(s + 3) == '3' && *(s + 4) == '(')
@@ -596,21 +582,16 @@ public://functions
             double values[9] = {0,0,0,0,0,0,0,0,0};
             for(int i = 0; i < 9; i++)
             {
-                TuiRef* loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, (TuiTable*)parent, debugInfo);
+                Tui::ref loadedValue = TuiRef::loadExpression(s, endptr, nullptr, nullptr, parent, debugInfo);
                 s = tuiSkipToNextChar(*endptr, debugInfo);
                 
                 if(!loadedValue || loadedValue->type() != Tui_ref_type_NUMBER)
                 {
                     TuiParseError(debugInfo, "uninitialized or non-number value in mat3 constructor:%c", *s);
-                    if(loadedValue)
-                    {
-                        loadedValue->release();
-                    }
                     return nullptr;
                 }
                 
-                values[i] = ((TuiNumber*)loadedValue)->value;
-                loadedValue->release();
+                values[i] = (Tui::cast<TuiNumber>(loadedValue)->value);
                 
                 if(*s == ',')
                 {
@@ -632,7 +613,7 @@ public://functions
             s = tuiSkipToNextChar(s, debugInfo, true);
             *endptr = (char*)s;
             
-            return new TuiMat3(dmat3(values[0],
+            return Tui::create<TuiMat3>(dmat3(values[0],
                                      values[1],
                                      values[2],
                                      values[3],
@@ -661,7 +642,7 @@ public://functions
                                   Tui::doubleToString(value[2].z).c_str());
     }
     virtual bool boolValue() override {return true;}
-    virtual bool isEqual(TuiRef* other) override {return other && other->type() == Tui_ref_type_MAT3 && ((TuiMat3*)other)->value == value;}
+    virtual bool isEqual(const Tui::ref& other) override {return other && other->type() == Tui_ref_type_MAT3 && Tui::cast<TuiMat3>(other)->value == value;}
 
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
     {

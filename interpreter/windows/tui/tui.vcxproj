@@ -160,6 +160,7 @@ xcopy "$(SolutionDir)..\..\..\tests" "$(TargetDir)\tests" /i /d /y </Command>
     <ClInclude Include="..\..\..\source\TuiStringUtils.h" />
     <ClInclude Include="..\..\..\source\TuiBuiltInFunctions.h" />
     <ClInclude Include="..\..\..\source\TuiTable.h" />
+    <ClInclude Include="..\..\..\source\TuiTypes.h" />
     <ClInclude Include="..\..\Interpreter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

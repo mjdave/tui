@@ -13,6 +13,7 @@
 #include "TuiStringUtils.h"
 #include "TuiStatement.h"
 #include "TuiBuiltInFunctions.h"
+#include "TuiPointer.h"
 
 class TuiTable;
 class TuiString;
@@ -289,55 +290,55 @@ inline void resizeBufferIfNeeded(std::string& buffer, int* currentOffset, int to
     }
 }
 
-class TuiRef {
+class TuiRef : public TuiPointerSource<TuiRef> {
     
 public: // public static functions to load tui refs from files and data.
     
     //load from human readable tui code in memory
-    static TuiRef* load(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo, TuiRef** resultRef = nullptr); //load human readable
-    static TuiRef* loadString(const std::string& inputString, TuiTable* parent = Tui::getRootTable(), TuiDebugInfo* callingDebugInfo = nullptr); //convenience method: std::string
-    static TuiRef* loadString(const std::string& inputString, const std::string& debugName = "loadString", TuiTable* parent = Tui::getRootTable()); //convenience method: alternative
+    static Tui::ref load(const char* str, char** endptr, Tui::table parent, TuiDebugInfo* debugInfo, Tui::ref* resultRef = nullptr); //load human readable
+    static Tui::ref loadString(const std::string& inputString, Tui::table parent = Tui::getRootTable(), TuiDebugInfo* callingDebugInfo = nullptr); //convenience method: std::string
+    static Tui::ref loadString(const std::string& inputString, const std::string& debugName = "loadString", Tui::table parent = Tui::getRootTable()); //convenience method: alternative
     
     //load from human readable tui code files
-    static TuiRef* runScriptFile(const std::string& path, TuiTable* parent = Tui::getRootTable(), TuiDebugInfo* callingDebugInfo = nullptr, TuiRef* resultRef = nullptr); // convenience method: as above, but human readable from file. If the file returns a result, it is stored in resultRef.
+    static Tui::ref runScriptFile(const std::string& path, Tui::table parent = Tui::getRootTable(), TuiDebugInfo* callingDebugInfo = nullptr, Tui::ref resultRef = nullptr); // convenience method: as above, but human readable from file. If the file returns a result, it is stored in resultRef.
     
     
     //deserialize from binary serialized tui data in memory
-    static TuiRef* loadBinaryString(const char* str, int* currentOffset, TuiTable* parent = Tui::getRootTable()); // public method to read from data previously serialized with serializeBinary()
-    static TuiRef* loadBinaryString(const std::string& inputString, TuiTable* parent = Tui::getRootTable()); // convenience method: as above, but std::string
+    static Tui::ref loadBinaryString(const char* str, int* currentOffset, Tui::table parent = Tui::getRootTable()); // public method to read from data previously serialized with serializeBinary()
+    static Tui::ref loadBinaryString(const std::string& inputString, Tui::table parent = Tui::getRootTable()); // convenience method: as above, but std::string
     
     //deserialize from binary serialized tui data files
-    static TuiRef* loadBinary(const std::string& path, TuiTable* parent = Tui::getRootTable()); // convenience method: as above, but load from file, calling loadBinaryString internally
+    static Tui::ref loadBinary(const std::string& path, Tui::table parent = Tui::getRootTable()); // convenience method: as above, but load from file, calling loadBinaryString internally
     
-    static TuiRef* require(const std::string& path, TuiTable* rootTable); //convenience method for the built-in require function, which caches the loaded result
+    static Tui::ref require(const std::string& path, Tui::table rootTable); //convenience method for the built-in require function, which caches the loaded result
     
     // below here are public methods for convenience, however they are generally only useful internally
     
 public: // internal static functions
-    static TuiRef* loadExpression(const char* str,
+    static Tui::ref loadExpression(const char* str,
                                   char** endptr,
-                                  TuiRef* existingValue,
-                                  TuiRef* leftValue,
-                                  TuiTable* parentTable,
+                                  Tui::ref existingValue,
+                                  Tui::ref leftValue,
+                                  Tui::table parentTable,
                                   TuiDebugInfo* debugInfo,
                                   int operatorLevel = Tui_operator_level_default); //this is a hack to allow quoted strings as variable names for keys only. This is specifically required to load json files, but applies for all table keys
     
     // parses a variable chain and returns the result eg: foo.bar().array[1+2].x
     // optionally stores the enclosing ref and the final variable name if found
     // call directly for table keys, but via loadExpression for values.
-    static TuiRef* loadValue(const char* str,
+    static Tui::ref loadValue(const char* str,
                              char** endptr,
-                             TuiRef* existingValue,
-                             TuiTable* parentTable,
+                             Tui::ref existingValue,
+                             Tui::table parentTable,
                              TuiDebugInfo* debugInfo,
                              
                              //below are only passed if we are setting a key, giving the caller quick access to the parent to set the value for an uninitialized variable
-                             TuiRef** onSetIfNilFoundEnclosingRef = nullptr,
+                             Tui::ref* onSetIfNilFoundEnclosingRef = nullptr,
                              std::string* onSetIfNilFoundKey = nullptr,
                              int* onSetIfNilFoundIndex = nullptr, //index todo
                              bool* accessedParentVariable = nullptr);
     
-    static TuiBool* logicalNot(TuiRef* value);
+    static Tui::boolean logicalNot(Tui::ref value);
     
 public: //members
 #if DEBUG_CHECK_FOR_OVER_RELEASE
@@ -382,24 +383,9 @@ public://functions
         Tui::writeToFile(filePath, exportString);
     };
     
-    
-    virtual void release() {refCount--; if(refCount == 0) {
-#if DEBUG_CHECK_FOR_OVER_RELEASE
-        TuiError("Over release");
-#else
-    delete this;
-#endif
-    }}
-    virtual TuiRef* retain() { refCount++;
-        //if(refCount > 50) //uncommenting this block can be useful to help track down leaks
-        //{
-            //TuiWarn("object is likely being leaked");
-        //}
-        return this;
-    }
-    virtual TuiRef* copy() = 0;
-    virtual void assign(TuiRef* other) {}
-    virtual bool isEqual(TuiRef* other) {
+    virtual Tui::ref copy() = 0;
+    virtual void assign(const Tui::ref& other) {}
+    virtual bool isEqual(const Tui::ref& other) {
         return (!other || other->type() == Tui_ref_type_NIL);
     }
     
@@ -436,6 +422,15 @@ public://functions
         debugString += getStringValue();
     }
 
+protected:
+    // Helper to create a TuiPointer instance from this object
+    // Has a built-in cast, defaults to TuiRef
+    // NOTE: This can only be used if the TuiRef object is managed by a TuiPointer,
+    // otherwise it will throw a weak pointer exception
+    template<typename T = TuiRef>
+    inline TuiPointer<T> createFromThis() {
+        return Tui::cast<T>(shared_from_this());
+    }
 };
 
 
@@ -444,17 +439,14 @@ class TuiNil : public TuiRef {
 public:
     TuiNil() {}
     virtual ~TuiNil() {}
-    virtual TuiRef* copy() override {return this;}
-    virtual void assign(TuiRef* other) override {}
-    
-    virtual void release() override {}
-    virtual TuiRef* retain() override {return this;}
-    
+    virtual Tui::ref copy() override {return createFromThis();}
+    virtual void assign(const Tui::ref& other) override {}
+
     virtual uint8_t type() override { return Tui_ref_type_NIL; }
     virtual std::string getTypeName() override {return "nil";}
     virtual std::string getStringValue() override {return "nil";}
     virtual bool boolValue() override {return false;}
-    virtual bool isEqual(TuiRef* other) override {return (!other || other->type() == Tui_ref_type_NIL );}
+    virtual bool isEqual(const Tui::ref& other) override {return (!other || other->type() == Tui_ref_type_NIL );}
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
     {
@@ -467,7 +459,7 @@ private:
 private:
 };
 
-static TuiNil* TUI_NIL = new TuiNil();
+static Tui::nil TUI_NIL = Tui::create<TuiNil>();
 
 class TuiUserData : public TuiRef {
 public:
@@ -477,15 +469,14 @@ public:
     TuiUserData(void* value_);
     virtual ~TuiUserData() {}
     
-    virtual TuiRef* copy() override //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
+    virtual Tui::ref copy() override //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
-        retain();
-        return this;
+        return createFromThis();
     }
     
-    virtual void assign(TuiRef* other) override {
-        value = ((TuiUserData*)other)->value;
-    }
+    virtual void assign(const Tui::ref& other) override {
+        value = (Tui::cast<TuiUserData>(other))->value;
+    };
     
     virtual uint8_t type() override { return Tui_ref_type_USERDATA; }
     virtual std::string getTypeName() override {return "userData";}
@@ -493,7 +484,7 @@ public:
         return Tui::string_format("%p", value);
     }
     virtual bool boolValue() override {return value != nullptr;}
-    virtual bool isEqual(TuiRef* other) override {return other && other->type() == Tui_ref_type_USERDATA && ((TuiUserData*)other)->value == value;}
+    virtual bool isEqual(const Tui::ref& other) override {return other && other->type() == Tui_ref_type_USERDATA && (Tui::cast<TuiUserData>(other))->value == value;}
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
     {

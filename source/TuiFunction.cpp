@@ -12,7 +12,7 @@
 void serializeValue(const char* str,
                     char** endptr,
                     TuiExpression* expression,
-                    TuiTable* parent,
+                    Tui::table parent,
                     TuiTokenMap* tokenMap,
                     uint32_t tokenStartPos,
                     TuiDebugInfo* debugInfo,
@@ -151,7 +151,7 @@ void serializeValue(const char* str,
                                 varChainStarted = true;
                             }
                             
-                            TuiString* stringConstant = new TuiString(stringBuffer);
+                            Tui::string stringConstant = Tui::create<TuiString>(stringBuffer);
                             uint32_t stringConstantToken = tokenMap->tokenIndex++;
                             varToken = stringConstantToken;
                             tokenMap->refsByToken[stringConstantToken] = stringConstant;
@@ -267,7 +267,7 @@ void serializeValue(const char* str,
         {
             double value = strtod(s, endptr);
             s = tuiSkipToNextChar(*endptr, debugInfo);
-            TuiNumber* number = new TuiNumber(value);
+            Tui::number number = Tui::create<TuiNumber>(value);
             uint32_t constantNumberToken = tokenMap->tokenIndex++;
             expression->tokens.insert(expression->tokens.begin() + tokenPos++, constantNumberToken);
             tokenMap->refsByToken[constantNumberToken] = number;
@@ -276,7 +276,7 @@ void serializeValue(const char* str,
         else if(*s == '{') // serialize table constructor
         {
             expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_tableConstruct);
-            TuiFunction* constructorFunction = new TuiFunction(parent);
+            Tui::function constructorFunction = Tui::create<TuiFunction>(parent);
             constructorFunction->debugInfoLine = *debugInfo->currentLine;
             uint32_t constructorFunctionToken = tokenMap->tokenIndex++;
             expression->tokens.insert(expression->tokens.begin() + tokenPos++, constructorFunctionToken);
@@ -393,7 +393,7 @@ void serializeValue(const char* str,
                 }
             }
             
-            TuiFunction* functionRef = TuiFunction::initWithHumanReadableString(s, endptr, parent, debugInfo);
+            Tui::function functionRef = TuiFunction::initWithHumanReadableString(s, endptr, parent, debugInfo);
             if(functionRef)
             {
                 foundBuiltInType = true;
@@ -441,7 +441,7 @@ void serializeValue(const char* str,
     
     if(singleQuote || doubleQuote)
     {
-        TuiString* stringConstant = new TuiString(stringBuffer);
+        Tui::string stringConstant = Tui::create<TuiString>(stringBuffer);
         uint32_t stringConstantToken = tokenMap->tokenIndex++;
         tokenMap->refsByToken[stringConstantToken] = stringConstant;
         expression->tokens.insert(expression->tokens.begin() + tokenPos++, stringConstantToken);
@@ -456,7 +456,7 @@ void serializeValue(const char* str,
                 tokenPos++;
                 varChainStarted = true;
             }
-            TuiString* stringConstant = new TuiString(stringBuffer);
+            Tui::string stringConstant = Tui::create<TuiString>(stringBuffer);
             uint32_t stringConstantToken = tokenMap->tokenIndex++;
             tokenMap->refsByToken[stringConstantToken] = stringConstant;
             expression->tokens.insert(expression->tokens.begin() + tokenPos++, Tui_token_childByString);
@@ -533,7 +533,7 @@ void serializeValue(const char* str,
 bool TuiFunction::recursivelySerializeExpression(const char* str,
                                                  char** endptr,
                                                  TuiExpression* expression,
-                                                 TuiTable* parent,
+                                                 const Tui::table& parent,
                                                  TuiTokenMap* tokenMap,
                                                  TuiDebugInfo* debugInfo,
                                                  int operatorLevel,
@@ -809,7 +809,7 @@ bool TuiFunction::recursivelySerializeExpression(const char* str,
 
 static TuiStatement* serializeBasicStatement(const char* str,
                                              char** endptr,
-                                             TuiTable* parent,
+                                             Tui::table parent,
                                              TuiTokenMap* tokenMap,
                                              TuiDebugInfo* debugInfo,
                                              bool sharesParentScope,
@@ -916,7 +916,7 @@ static TuiStatement* serializeBasicStatement(const char* str,
 
 TuiStatement* TuiFunction::serializeForStatement(const char* str,
                                                  char** endptr,
-                                                 TuiTable* parent,
+                                                 const Tui::table& parent,
                                                  TuiDebugInfo* debugInfo,
                                                  bool sharesParentScope,
                                                  bool isWhileLoop) //entry point is after 'for'
@@ -1106,7 +1106,7 @@ TuiStatement* TuiFunction::serializeForStatement(const char* str,
 
 bool TuiFunction::serializeFunctionBody(const char* str,
                                         char** endptr,
-                                        TuiTable* parent,
+                                        const Tui::table& parent,
                                         TuiTokenMap* tokenMap,
                                         TuiDebugInfo* debugInfo,
                                         bool sharesParentScope,
@@ -1300,7 +1300,7 @@ bool TuiFunction::serializeFunctionBody(const char* str,
     return true;
 }
 
-TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** endptr, TuiTable* parent, TuiDebugInfo* debugInfo) //assumes that '(' is currently in str.
+Tui::function TuiFunction::initWithHumanReadableString(const char* str, char** endptr, const Tui::table& parent, TuiDebugInfo* debugInfo) //assumes that '(' is currently in str.
 {
     const char* s = str;
     if(*s == 'f'
@@ -1318,7 +1318,7 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
         s = tuiSkipToNextChar(s, debugInfo);
         s++;
         
-        TuiFunction* mjFunction = new TuiFunction(parent);
+        Tui::function mjFunction = Tui::create<TuiFunction>(parent);
         mjFunction->debugInfoLine = *debugInfo->currentLine;
         
         //TuiDebugInfoCopy(debugInfo, &mjFunction->debugInfo);
@@ -1368,7 +1368,6 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
         bool success = serializeFunctionBody(s, endptr, parent, &mjFunction->tokenMap, debugInfo, false, &mjFunction->statements);
         if(!success)
         {
-            delete mjFunction;
             return nullptr;
         }
         
@@ -1382,18 +1381,18 @@ TuiFunction* TuiFunction::initWithHumanReadableString(const char* str, char** en
 }
 
 
-TuiRef* TuiFunction::runExpression(TuiExpression* expression,
+Tui::ref TuiFunction::runExpression(TuiExpression* expression,
                                    uint32_t* tokenPos,
-                                   TuiRef* result,
-                                   TuiTable* parent,
+                                   const Tui::ref& result,
+                                   const Tui::table& parent,
                                    TuiTokenMap* tokenMap,
                                    TuiFunctionCallData* callData,
                                    TuiDebugInfo* debugInfo,
                                    std::string* setKey,
                                    int* setIndex,
-                                   TuiRef** enclosingSetRef,
+                                   Tui::ref* enclosingSetRef,
                                    std::string* subTypeAccessKey,
-                                   TuiRef** subTypeRef)
+                                   Tui::ref* subTypeRef)
 {
     if(*tokenPos >= expression->tokens.size())
     {
@@ -1411,7 +1410,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_functionCall:
             {
                 (*tokenPos)++;
-                TuiFunction* functionVar = (TuiFunction*)runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::function functionVar = Tui::cast<TuiFunction>(runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef));
                 if(!functionVar || functionVar->type() != Tui_ref_type_FUNCTION)
                 {
                     
@@ -1439,12 +1438,12 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 }
                 (*tokenPos)++;
                 
-                TuiTable* args = nullptr;
-                TuiRef* arg = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::table args = nullptr;
+                Tui::ref arg = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 
                 if(arg)
                 {
-                    args = new TuiTable(parent);
+                    args = Tui::create<TuiTable>(parent);
                     args->arrayObjects.push_back(arg);
                     
                     (*tokenPos)++;
@@ -1464,13 +1463,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 }
                 
                 
-                TuiRef* functionResult = ((TuiFunction*)functionVar)->call(args, result, callData, debugInfo);
-                if(args)
-                {
-                    args->release();
-                }
-                
-                functionVar->release();
+                Tui::ref functionResult = Tui::cast<TuiFunction>(functionVar)->call(args, result, callData, debugInfo);
                 if(result && functionResult && result->type() == functionResult->type() && result->type() != Tui_ref_type_BOOL && result->type() != Tui_ref_type_TABLE && result->type() != Tui_ref_type_FUNCTION)
                 {
                     result->assign(functionResult);
@@ -1487,7 +1480,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_vec4:
             {
                 (*tokenPos)++;
-                TuiRef* x = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::ref x = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 
                 if(!x || x->type() != Tui_ref_type_NUMBER)
                 {
@@ -1496,7 +1489,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 }
                 
                 (*tokenPos)++;
-                TuiRef* y = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::ref y = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 
                 if(!y || y->type() != Tui_ref_type_NUMBER)
                 {
@@ -1509,16 +1502,12 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         {
                             if(result && result->type() == Tui_ref_type_VEC2)
                             {
-                                ((TuiVec2*)result)->value.x = ((TuiNumber*)x)->value;
-                                ((TuiVec2*)result)->value.y = ((TuiNumber*)y)->value;
-                                x->release();
-                                y->release();
+                                Tui::cast<TuiVec2>(result)->value.x = (Tui::cast<TuiNumber>(x)->value);
+                                Tui::cast<TuiVec2>(result)->value.y = (Tui::cast<TuiNumber>(y)->value);
                             }
                             else
                             {
-                                TuiVec2* newResultVec = new TuiVec2(dvec2(((TuiNumber*)x)->value, ((TuiNumber*)y)->value));
-                                x->release();
-                                y->release();
+                                Tui::vec2 newResultVec = Tui::create<TuiVec2>(dvec2(Tui::cast<TuiNumber>(x)->value, (Tui::cast<TuiNumber>(y)->value)));
                                 return newResultVec;
                             }
                         }
@@ -1527,7 +1516,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     case Tui_token_vec4:
                         {
                             (*tokenPos)++;
-                            TuiRef* z = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                            Tui::ref z = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                             
                             if(!z || z->type() != Tui_ref_type_NUMBER)
                             {
@@ -1539,26 +1528,20 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             {
                                 if(result && result->type() == Tui_ref_type_VEC3)
                                 {
-                                    ((TuiVec3*)result)->value.x = ((TuiNumber*)x)->value;
-                                    ((TuiVec3*)result)->value.y = ((TuiNumber*)y)->value;
-                                    ((TuiVec3*)result)->value.z = ((TuiNumber*)z)->value;
-                                    x->release();
-                                    y->release();
-                                    z->release();
+                                    Tui::cast<TuiVec3>(result)->value.x = (Tui::cast<TuiNumber>(x)->value);
+                                    Tui::cast<TuiVec3>(result)->value.y = (Tui::cast<TuiNumber>(y)->value);
+                                    Tui::cast<TuiVec3>(result)->value.z = (Tui::cast<TuiNumber>(z)->value);
                                 }
                                 else
                                 {
-                                    TuiVec3* newResultVec = new TuiVec3(dvec3(((TuiNumber*)x)->value, ((TuiNumber*)y)->value, ((TuiNumber*)z)->value));
-                                    x->release();
-                                    y->release();
-                                    z->release();
+                                    Tui::vec3 newResultVec = Tui::create<TuiVec3>(dvec3(Tui::cast<TuiNumber>(x)->value, Tui::cast<TuiNumber>(y)->value, (Tui::cast<TuiNumber>(z)->value)));
                                     return newResultVec;
                                 }
                             }
                             else
                             {
                                 (*tokenPos)++;
-                                TuiRef* w = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                                Tui::ref w = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                                 
                                 if(!w || w->type() != Tui_ref_type_NUMBER)
                                 {
@@ -1567,22 +1550,14 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 }
                                 if(result && result->type() == Tui_ref_type_VEC4)
                                 {
-                                    ((TuiVec4*)result)->value.x = ((TuiNumber*)x)->value;
-                                    ((TuiVec4*)result)->value.y = ((TuiNumber*)y)->value;
-                                    ((TuiVec4*)result)->value.z = ((TuiNumber*)z)->value;
-                                    ((TuiVec4*)result)->value.w = ((TuiNumber*)w)->value;
-                                    x->release();
-                                    y->release();
-                                    z->release();
-                                    w->release();
+                                    Tui::cast<TuiVec4>(result)->value.x = (Tui::cast<TuiNumber>(x)->value);
+                                    Tui::cast<TuiVec4>(result)->value.y = (Tui::cast<TuiNumber>(y)->value);
+                                    Tui::cast<TuiVec4>(result)->value.z = (Tui::cast<TuiNumber>(z)->value);
+                                    Tui::cast<TuiVec4>(result)->value.w = (Tui::cast<TuiNumber>(w)->value);
                                 }
                                 else
                                 {
-                                    TuiVec4* newResultVec = new TuiVec4(dvec4(((TuiNumber*)x)->value, ((TuiNumber*)y)->value, ((TuiNumber*)z)->value, ((TuiNumber*)w)->value));
-                                    x->release();
-                                    y->release();
-                                    z->release();
-                                    w->release();
+                                    Tui::vec4 newResultVec = Tui::create<TuiVec4>(dvec4(Tui::cast<TuiNumber>(x)->value, Tui::cast<TuiNumber>(y)->value, Tui::cast<TuiNumber>(z)->value, (Tui::cast<TuiNumber>(w)->value)));
                                     return newResultVec;
                                 }
                             }
@@ -1598,7 +1573,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 for(int i= 0; i < 9; i++)
                 {
                     (*tokenPos)++;
-                    TuiRef* x = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                    Tui::ref x = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                     
                     if(!x || x->type() != Tui_ref_type_NUMBER)
                     {
@@ -1606,25 +1581,24 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         return nullptr;
                     }
                     
-                    values[i] = ((TuiNumber*)x)->value;
-                    x->release();
+                    values[i] = (Tui::cast<TuiNumber>(x)->value);
                 }
                 
                 if(result && result->type() == Tui_ref_type_MAT3)
                 {
-                    ((TuiMat3*)result)->value[0].x = values[0];
-                    ((TuiMat3*)result)->value[0].y = values[1];
-                    ((TuiMat3*)result)->value[0].z = values[2];
-                    ((TuiMat3*)result)->value[1].x = values[3];
-                    ((TuiMat3*)result)->value[1].y = values[4];
-                    ((TuiMat3*)result)->value[1].z = values[5];
-                    ((TuiMat3*)result)->value[2].x = values[6];
-                    ((TuiMat3*)result)->value[2].y = values[7];
-                    ((TuiMat3*)result)->value[2].z = values[8];
+                    Tui::cast<TuiMat3>(result)->value[0].x = values[0];
+                    Tui::cast<TuiMat3>(result)->value[0].y = values[1];
+                    Tui::cast<TuiMat3>(result)->value[0].z = values[2];
+                    Tui::cast<TuiMat3>(result)->value[1].x = values[3];
+                    Tui::cast<TuiMat3>(result)->value[1].y = values[4];
+                    Tui::cast<TuiMat3>(result)->value[1].z = values[5];
+                    Tui::cast<TuiMat3>(result)->value[2].x = values[6];
+                    Tui::cast<TuiMat3>(result)->value[2].y = values[7];
+                    Tui::cast<TuiMat3>(result)->value[2].z = values[8];
                 }
                 else
                 {
-                    TuiMat3* newResult = new TuiMat3(dmat3(values[0],
+                    Tui::mat3 newResult = Tui::create<TuiMat3>(dmat3(values[0],
                                                   values[1],
                                                   values[2],
                                                   values[3],
@@ -1641,15 +1615,14 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_tableConstruct:
             {
                 (*tokenPos)++;
-                TuiFunction* functionVar = (TuiFunction*)runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::function functionVar = Tui::cast<TuiFunction>(runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef));
                 if(!functionVar || functionVar->type() != Tui_ref_type_FUNCTION)
                 {
                     TuiParseError(debugInfo, "expected function, got:%s", (functionVar ? functionVar->getDebugString().c_str() : "nil"));
                     return nullptr;
                 }
                 
-                TuiRef* functionResult = ((TuiFunction*)functionVar)->runTableConstruct(parent, result, debugInfo);
-                functionVar->release();
+                Tui::ref functionResult = Tui::cast<TuiFunction>(functionVar)->runTableConstruct(parent, result, debugInfo);
                 
                 return functionResult;
             }
@@ -1657,23 +1630,16 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_functionDeclaration:
             {
                 (*tokenPos)++;
-                TuiFunction* baseFunctionVar = (TuiFunction*)runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::function baseFunctionVar = Tui::cast<TuiFunction>(runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef));
                 if(!baseFunctionVar || baseFunctionVar->type() != Tui_ref_type_FUNCTION)
                 {
                     TuiParseError(debugInfo, "expected function, got:%s", (baseFunctionVar ? baseFunctionVar->getDebugString().c_str() : "nil"));
                     return nullptr;
                 }
                 
-                TuiFunction* functionCopy = baseFunctionVar->trueCopy();
-                baseFunctionVar->release();
+                Tui::function functionCopy = baseFunctionVar->trueCopy();
                 
                 functionCopy->parentTable = parent;
-                
-                for(TuiTable* transientTable : callData->transientLoopTables)
-                {
-                    transientTable->retain();
-                    functionCopy->retain();
-                }
                 functionCopy->retainedTransientLoopTables = callData->transientLoopTables;
                 
                 callData->capturedFunctions.push_back(functionCopy);
@@ -1682,20 +1648,20 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 {
                     if(callData->localTokensByStringKey.count(varNameAndToken.first) != 0)
                     {
-                        TuiRef* var = callData->locals[callData->localTokensByStringKey[varNameAndToken.first]];
-                        functionCopy->tokenMap.refsByToken[varNameAndToken.second] = var->retain();
+                        Tui::ref var = callData->locals[callData->localTokensByStringKey[varNameAndToken.first]];
+                        functionCopy->tokenMap.refsByToken[varNameAndToken.second] = var;
                     }
                     else
                     {
-                        TuiTable* parentTable = parent;
-                        std::set<TuiTable*> found;
+                        Tui::table parentTable = parent;
+                        std::set<Tui::table> found;
                         while(parentTable)
                         {
                             if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
                             {
-                                TuiRef* var = parentTable->objectsByStringKey[varNameAndToken.first];
+                                Tui::ref var = parentTable->objectsByStringKey[varNameAndToken.first];
                                 
-                                functionCopy->tokenMap.refsByToken[varNameAndToken.second] = var->retain();
+                                functionCopy->tokenMap.refsByToken[varNameAndToken.second] = var;
                                 break;
                             }
                             parentTable = parentTable->parentTable;
@@ -1714,26 +1680,17 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_equalTo:
             {
                 (*tokenPos)++;
-                TuiRef* leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::ref leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 (*tokenPos)++;
-                TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::ref rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 
                 if(!leftResult)
                 {
                     bool boolResult = !rightResult || rightResult->type() == Tui_ref_type_NIL;
-                    if(rightResult)
-                    {
-                        rightResult->release();
-                    }
                     return TUI_BOOL(boolResult);
                 }
                 
                 bool boolResult = leftResult->isEqual(rightResult);
-                if(rightResult)
-                {
-                    rightResult->release();
-                }
-                leftResult->release();
                 
                 return TUI_BOOL(boolResult);
             }
@@ -1741,26 +1698,17 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_or:
             {
                 (*tokenPos)++;
-                TuiRef* leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::ref leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 (*tokenPos)++;
                 
                 if(leftResult && leftResult->boolValue())
                 {
-                    leftResult->release();
                     return TUI_TRUE;
                 }
                 else
                 {
-                    if(leftResult)
-                    {
-                        leftResult->release();
-                    }
-                    TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
-                    TuiBool* returnValue = TUI_BOOL(rightResult && rightResult->boolValue());
-                    if(rightResult)
-                    {
-                        rightResult->release();
-                    }
+                    Tui::ref rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                    Tui::boolean returnValue = TUI_BOOL(rightResult && rightResult->boolValue());
                     return returnValue;
                 }
                 
@@ -1769,28 +1717,19 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_and:
             {
                 (*tokenPos)++;
-                TuiRef* leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::ref leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 (*tokenPos)++;
                 
                 if(!leftResult || !leftResult->boolValue())
                 {
-                    if(leftResult)
-                    {
-                        leftResult->release();
-                    }
                     return TUI_FALSE;
                 }
                 else
                 {
-                    leftResult->release();
                     
-                    TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                    Tui::ref rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                     
-                    TuiBool* returnValue = TUI_BOOL(rightResult && rightResult->boolValue());
-                    if(rightResult)
-                    {
-                        rightResult->release();
-                    }
+                    Tui::boolean returnValue = TUI_BOOL(rightResult && rightResult->boolValue());
                     return returnValue;
                     
                 }
@@ -1800,29 +1739,23 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_notEqualTo:
             {
                 (*tokenPos)++;
-                TuiRef* leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::ref leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 (*tokenPos)++;
-                TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::ref rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 
                 if(!leftResult)
                 {
-                    TuiBool* returnValue = TUI_BOOL(rightResult && rightResult->type() != Tui_ref_type_NIL);
-                    rightResult->release();
+                    Tui::boolean returnValue = TUI_BOOL(rightResult && rightResult->type() != Tui_ref_type_NIL);
                     return returnValue;
                 }
-                TuiBool* returnValue = TUI_BOOL(!leftResult->isEqual(rightResult));
-                leftResult->release();
-                if(rightResult)
-                {
-                    rightResult->release();
-                }
+                Tui::boolean returnValue = TUI_BOOL(!leftResult->isEqual(rightResult));
                 return returnValue;
             }
                 break;
             case Tui_token_not:
             {
                 (*tokenPos)++;
-                TuiRef* leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::ref leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 if(expression->tokens[*tokenPos+1] == Tui_token_end)
                 {
                     (*tokenPos)++; //Tui_token_end
@@ -1831,15 +1764,14 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 {
                     TuiError("expected Tui_token_end");
                 }
-                TuiBool* returnValue = TuiRef::logicalNot(leftResult);
-                leftResult->release();
+                Tui::boolean returnValue = TuiRef::logicalNot(leftResult);
                 return returnValue;
             }
                 break;
             case Tui_token_negate:
             {
                 (*tokenPos)++;
-                TuiRef* leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::ref leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 if(expression->tokens[*tokenPos+1] == Tui_token_end)
                 {
                     (*tokenPos)++; //Tui_token_end
@@ -1860,12 +1792,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     {
                         if(result && result->type() == Tui_ref_type_NUMBER)
                         {
-                            ((TuiNumber*)result)->value = -((TuiNumber*)leftResult)->value;
-                            leftResult->release();
+                            Tui::cast<TuiNumber>(result)->value = -(Tui::cast<TuiNumber>(leftResult)->value);
                             return nullptr;
                         }
-                        TuiNumber* returnResult = new TuiNumber(-((TuiNumber*)leftResult)->value);
-                        leftResult->release();
+                        Tui::number returnResult = Tui::create<TuiNumber>(-(Tui::cast<TuiNumber>(leftResult)->value));
                         return returnResult;
                     }
                         break;
@@ -1873,12 +1803,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     {
                         if(result && result->type() == Tui_ref_type_VEC2)
                         {
-                            ((TuiVec2*)result)->value = -((TuiVec2*)leftResult)->value;
-                            leftResult->release();
+                            Tui::cast<TuiVec2>(result)->value = -(Tui::cast<TuiVec2>(leftResult)->value);
                             return nullptr;
                         }
-                        TuiVec2* returnResult = new TuiVec2(-((TuiVec2*)leftResult)->value);
-                        leftResult->release();
+                        Tui::vec2 returnResult = Tui::create<TuiVec2>(-(Tui::cast<TuiVec2>(leftResult)->value));
                         return returnResult;
                     }
                         break;
@@ -1886,12 +1814,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     {
                         if(result && result->type() == Tui_ref_type_VEC3)
                         {
-                            ((TuiVec3*)result)->value = -((TuiVec3*)leftResult)->value;
-                            leftResult->release();
+                            Tui::cast<TuiVec3>(result)->value = -(Tui::cast<TuiVec3>(leftResult)->value);
                             return nullptr;
                         }
-                        TuiVec3* returnResult = new TuiVec3(-((TuiVec3*)leftResult)->value);
-                        leftResult->release();
+                        Tui::vec3 returnResult = Tui::create<TuiVec3>(-(Tui::cast<TuiVec3>(leftResult)->value));
                         return returnResult;
                     }
                         break;
@@ -1899,12 +1825,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     {
                         if(result && result->type() == Tui_ref_type_VEC4)
                         {
-                            ((TuiVec4*)result)->value = -((TuiVec4*)leftResult)->value;
-                            leftResult->release();
+                            Tui::cast<TuiVec4>(result)->value = -(Tui::cast<TuiVec4>(leftResult)->value);
                             return nullptr;
                         }
-                        TuiVec4* returnResult = new TuiVec4(-((TuiVec4*)leftResult)->value);
-                        leftResult->release();
+                        Tui::vec4 returnResult = Tui::create<TuiVec4>(-(Tui::cast<TuiVec4>(leftResult)->value));
                         return returnResult;
                     }
                         break;
@@ -1923,10 +1847,9 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 break;
             case Tui_token_this:
             {
-                TuiTable* parentToReturn = callData->thisTable;
+                Tui::table parentToReturn = callData->thisTable;
                 if(parentToReturn)
                 {
-                    parentToReturn->retain();
                     return parentToReturn;
                 }
                 return TUI_NIL;
@@ -1941,8 +1864,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_parentCaptureVarChain:
             {
                 (*tokenPos)++;
-                TuiTable* chainParent = nullptr;
-                TuiTable* chainResult = parent;
+                Tui::table chainParent = nullptr;
+                Tui::table chainResult = parent;
                 
                 if(token == Tui_token_parentCaptureVarChain)
                 {
@@ -1956,13 +1879,13 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             TuiParseError(debugInfo, "Function call not supported here");
                         }
                         
-                        TuiRef* keyConstant = runExpression(expression, &subTokenPos, nullptr, parent, tokenMap, callData, debugInfo);
+                        Tui::ref keyConstant = runExpression(expression, &subTokenPos, nullptr, parent, tokenMap, callData, debugInfo);
                         
                         if(keyConstant->type() == Tui_ref_type_STRING)
                         {
                             while(chainResult->parentTable)
                             {
-                                if(chainResult->objectsByStringKey.count(((TuiString*)keyConstant)->value) != 0)
+                                if(chainResult->objectsByStringKey.count(Tui::cast<TuiString>(keyConstant)->value) != 0)
                                 {
                                     break;
                                 }
@@ -1972,10 +1895,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         }
                     }
                 }
-                    
-                    
-                chainResult->retain();
-                TuiRef* keyConstant = nullptr;
+                Tui::ref keyConstant = nullptr;
                 
                 while(1)
                 {
@@ -1983,30 +1903,26 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     {
                         case Tui_ref_type_TABLE:
                         {
-                            if(chainParent)
-                            {
-                                chainParent->release();
-                            }
                             chainParent = chainResult;
-                            chainResult = (TuiTable*)runExpression(expression, tokenPos, nullptr, chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef); //todo should pass result here
+                            chainResult = Tui::cast<TuiTable>(runExpression(expression, tokenPos, nullptr, chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef)); //todo should pass result here
                         }
                             break;
                         case Tui_ref_type_VEC2:
                         {
                             (*tokenPos)++;
-                            keyConstant = runExpression(expression, tokenPos, nullptr, (TuiTable*)chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                            keyConstant = runExpression(expression, tokenPos, nullptr, Tui::cast<TuiTable>(chainParent), tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         }
                             break;
                         case Tui_ref_type_VEC3:
                         {
                             (*tokenPos)++;
-                            keyConstant = runExpression(expression, tokenPos, nullptr, (TuiTable*)chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                            keyConstant = runExpression(expression, tokenPos, nullptr, (Tui::table)chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         }
                             break;
                         case Tui_ref_type_VEC4:
                         {
                             (*tokenPos)++;
-                            keyConstant = runExpression(expression, tokenPos, nullptr, (TuiTable*)chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                            keyConstant = runExpression(expression, tokenPos, nullptr, (Tui::table)chainParent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         }
                             break;
                         default:
@@ -2056,23 +1972,17 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 {
                     if(subTypeRef)
                     {
-                        TuiRef* prevRef = *subTypeRef;
+                        Tui::ref prevRef = *subTypeRef;
                         *subTypeRef = chainResult;
-                        chainResult->retain();
-                        if(prevRef)
-                        {
-                            prevRef->release();
-                        }
                         
                         if(subTypeAccessKey)
                         {
-                            *subTypeAccessKey = ((TuiString*)keyConstant)->value;
+                            *subTypeAccessKey = (Tui::cast<TuiString>(keyConstant)->value);
                         }
                     }
                     
                     if(chainParent)
                     {
-                        chainParent->release();
                         chainParent = nullptr;
                     }
                     
@@ -2080,43 +1990,35 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     {
                         case Tui_ref_type_VEC2:
                         {
-                            switch(((TuiString*)keyConstant)->value[0])
+                            switch(Tui::cast<TuiString>(keyConstant)->value[0])
                             {
                                 case 'x':
                                 {
-                                    keyConstant->release();
                                     if(result && result->type() == Tui_ref_type_NUMBER)
                                     {
-                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.x;
-                                        chainResult->release();
+                                        Tui::cast<TuiNumber>(result)->value = (Tui::cast<TuiVec3>(Tui::cast<TuiRef>(chainResult))->value.x);
                                         return nullptr;
                                     }
                                     else if(!enclosingSetRef)
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((TuiVec2*)chainResult)->value.x);
-                                        chainResult->release();
+                                        Tui::number returnResult = Tui::create<TuiNumber>((Tui::cast<TuiVec2>(Tui::cast<TuiRef>(chainResult))->value.x));
                                         return returnResult;
                                     }
-                                    chainResult->release();
                                     return nullptr;
                                 }
                                     break;
                                 case 'y':
                                 {
-                                    keyConstant->release();
                                     if(result && result->type() == Tui_ref_type_NUMBER)
                                     {
-                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.y;
-                                        chainResult->release();
+                                        Tui::cast<TuiNumber>(result)->value = (Tui::cast<TuiVec3>(Tui::cast<TuiRef>(chainResult))->value.y);
                                         return nullptr;
                                     }
                                     else if(!enclosingSetRef)
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((TuiVec2*)chainResult)->value.y);
-                                        chainResult->release();
+                                        Tui::number returnResult = Tui::create<TuiNumber>((Tui::cast<TuiVec2>(Tui::cast<TuiRef>(chainResult))->value.y));
                                         return returnResult;
                                     }
-                                    chainResult->release();
                                     return nullptr;
                                 }
                                     break;
@@ -2125,62 +2027,50 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             break;
                         case Tui_ref_type_VEC3:
                         {
-                            switch(((TuiString*)keyConstant)->value[0])
+                            switch(Tui::cast<TuiString>(keyConstant)->value[0])
                             {
                                 case 'x':
                                 {
-                                    keyConstant->release();
                                     if(result && result->type() == Tui_ref_type_NUMBER)
                                     {
-                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.x;
-                                        chainResult->release();
+                                        Tui::cast<TuiNumber>(result)->value = (Tui::cast<TuiVec3>(Tui::cast<TuiRef>(chainResult))->value.x);
                                         return nullptr;
                                     }
                                     else if(!enclosingSetRef)
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((TuiVec3*)chainResult)->value.x);
-                                        chainResult->release();
+                                        Tui::number returnResult = Tui::create<TuiNumber>((Tui::cast<TuiVec3>(Tui::cast<TuiRef>(chainResult))->value.x));
                                         return returnResult;
                                     }
-                                    chainResult->release();
                                     return nullptr;
                                 }
                                     break;
                                 case 'y':
                                 {
-                                    keyConstant->release();
                                     if(result && result->type() == Tui_ref_type_NUMBER)
                                     {
-                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.y;
-                                        chainResult->release();
+                                        Tui::cast<TuiNumber>(result)->value = (Tui::cast<TuiVec3>(Tui::cast<TuiRef>(chainResult))->value.y);
                                         return nullptr;
                                     }
                                     else if(!enclosingSetRef)
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((TuiVec3*)chainResult)->value.y);
-                                        chainResult->release();
+                                        Tui::number returnResult = Tui::create<TuiNumber>((Tui::cast<TuiVec3>(Tui::cast<TuiRef>(chainResult))->value.y));
                                         return returnResult;
                                     }
-                                    chainResult->release();
                                     return nullptr;
                                 }
                                     break;
                                 case 'z':
                                 {
-                                    keyConstant->release();
                                     if(result && result->type() == Tui_ref_type_NUMBER)
                                     {
-                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.z;
-                                        chainResult->release();
+                                        Tui::cast<TuiNumber>(result)->value = (Tui::cast<TuiVec3>(Tui::cast<TuiRef>(chainResult))->value.z);
                                         return nullptr;
                                     }
                                     else if(!enclosingSetRef)
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((TuiVec3*)chainResult)->value.z);
-                                        chainResult->release();
+                                        Tui::number returnResult = Tui::create<TuiNumber>((Tui::cast<TuiVec3>(Tui::cast<TuiRef>(chainResult))->value.z));
                                         return returnResult;
                                     }
-                                    chainResult->release();
                                     return nullptr;
                                 }
                                     break;
@@ -2189,81 +2079,65 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             break;
                         case Tui_ref_type_VEC4:
                         {
-                            switch(((TuiString*)keyConstant)->value[0])
+                            switch(Tui::cast<TuiString>(keyConstant)->value[0])
                             {
                                 case 'x':
                                 {
-                                    keyConstant->release();
                                     if(result && result->type() == Tui_ref_type_NUMBER)
                                     {
-                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.x;
-                                        chainResult->release();
+                                        Tui::cast<TuiNumber>(result)->value = (Tui::cast<TuiVec4>(Tui::cast<TuiRef>(chainResult))->value.x);
                                         return nullptr;
                                     }
                                     else if(!enclosingSetRef)
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((TuiVec4*)chainResult)->value.x);
-                                        chainResult->release();
+                                        Tui::number returnResult = Tui::create<TuiNumber>((Tui::cast<TuiVec4>(Tui::cast<TuiRef>(chainResult))->value.x));
                                         return returnResult;
                                     }
-                                    chainResult->release();
                                     return nullptr;
                                 }
                                     break;
                                 case 'y':
                                 {
-                                    keyConstant->release();
                                     if(result && result->type() == Tui_ref_type_NUMBER)
                                     {
-                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.y;
-                                        chainResult->release();
+                                        Tui::cast<TuiNumber>(result)->value = (Tui::cast<TuiVec4>(Tui::cast<TuiRef>(chainResult))->value.y);
                                         return nullptr;
                                     }
                                     else if(!enclosingSetRef)
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((TuiVec4*)chainResult)->value.y);
-                                        chainResult->release();
+                                        Tui::number returnResult = Tui::create<TuiNumber>((Tui::cast<TuiVec4>(Tui::cast<TuiRef>(chainResult))->value.y));
                                         return returnResult;
                                     }
-                                    chainResult->release();
                                     return nullptr;
                                 }
                                     break;
                                 case 'z':
                                 {
-                                    keyConstant->release();
                                     if(result && result->type() == Tui_ref_type_NUMBER)
                                     {
-                                        ((TuiNumber*)result)->value = ((TuiVec3*)chainResult)->value.z;
-                                        chainResult->release();
+                                        Tui::cast<TuiNumber>(result)->value = (Tui::cast<TuiVec4>(Tui::cast<TuiRef>(chainResult))->value.z);
                                         return nullptr;
                                     }
                                     else if(!enclosingSetRef)
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((TuiVec4*)chainResult)->value.z);
-                                        chainResult->release();
+                                        Tui::number returnResult = Tui::create<TuiNumber>((Tui::cast<TuiVec4>(Tui::cast<TuiRef>(chainResult))->value.z));
                                         return returnResult;
                                     }
-                                    chainResult->release();
                                     return nullptr;
                                 }
                                     break;
                                 case 'w':
                                 {
-                                    keyConstant->release();
                                     if(result && result->type() == Tui_ref_type_NUMBER)
                                     {
-                                        ((TuiNumber*)result)->value = ((TuiVec4*)chainResult)->value.w;
-                                        chainResult->release();
+                                        Tui::cast<TuiNumber>(result)->value = (Tui::cast<TuiVec4>(Tui::cast<TuiRef>(chainResult))->value.w);
                                         return nullptr;
                                     }
                                     else if(!enclosingSetRef)
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((TuiVec4*)chainResult)->value.w);
-                                        chainResult->release();
+                                        Tui::number returnResult = Tui::create<TuiNumber>((Tui::cast<TuiVec4>(Tui::cast<TuiRef>(chainResult))->value.w));
                                         return returnResult;
                                     }
-                                    chainResult->release();
                                     return nullptr;
                                 }
                                     break;
@@ -2282,16 +2156,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 
                 if(enclosingSetRef)
                 {
-                    TuiRef* prevRef = *enclosingSetRef;
+                    Tui::ref prevRef = *enclosingSetRef;
                     *enclosingSetRef = chainParent;
-                    if(prevRef)
-                    {
-                        prevRef->release();
-                    }
-                }
-                else if(chainParent)
-                {
-                    chainParent->release();
                 }
                 
                 return chainResult;
@@ -2308,8 +2174,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     (*tokenPos)++;
                 }
                 
-                TuiRef* keyConstant = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
-                TuiRef* child = nullptr;
+                Tui::ref keyConstant = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
+                Tui::ref child = nullptr;
                 bool isStringKey = false;
                 bool isNumberKey = false;
                 
@@ -2317,25 +2183,20 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 {
                     isStringKey = true;
                     
-                    if(parent->objectsByStringKey.count(((TuiString*)keyConstant)->value) != 0)
+                    if(parent->objectsByStringKey.count(Tui::cast<TuiString>(keyConstant)->value) != 0)
                     {
-                        child = parent->objectsByStringKey[((TuiString*)keyConstant)->value];
+                        child = parent->objectsByStringKey[Tui::cast<TuiString>(keyConstant)->value];
                     }
                     
                     if(setKey)
                     {
-                        *setKey = ((TuiString*)keyConstant)->value;
+                        *setKey = (Tui::cast<TuiString>(keyConstant)->value);
                     }
                     
                     if(enclosingSetRef)
                     {
-                        TuiRef* prevRef = *enclosingSetRef;
+                        Tui::ref prevRef = *enclosingSetRef;
                         *enclosingSetRef = parent;
-                        parent->retain();
-                        if(prevRef)
-                        {
-                            prevRef->release();
-                        }
                     }
                 }
                 else
@@ -2348,7 +2209,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     
                     isNumberKey = true;
                     
-                    int64_t arrayIndex = keyConstant->getNumberValue();
+                    int64_t arrayIndex = Tui::cast<TuiNumber>(keyConstant)->getNumberValue();
                     if(arrayIndex >= 0 && arrayIndex < parent->arrayObjects.size())
                     {
                         child = parent->arrayObjects[arrayIndex];
@@ -2381,13 +2242,8 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     
                     if(enclosingSetRef)
                     {
-                        TuiRef* prevRef = *enclosingSetRef;
+                        Tui::ref prevRef = *enclosingSetRef;
                         *enclosingSetRef = parent;
-                        parent->retain();
-                        if(prevRef)
-                        {
-                            prevRef->release();
-                        }
                     }
                 }
                 
@@ -2395,10 +2251,9 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 {
                     if(isFunctionCall)
                     {
-                        TuiParseError(debugInfo, "Attempt to call missing function '%s'.", (keyConstant ? ((TuiString*)keyConstant)->value.c_str() : "nil"));
+                        TuiParseError(debugInfo, "Attempt to call missing function '%s'.", (keyConstant ? Tui::cast<TuiString>(keyConstant)->value.c_str() : "nil"));
                         return nullptr;
                     }
-                    keyConstant->release();
                     return TUI_NIL;
                 }
                 
@@ -2407,19 +2262,17 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     
                     if(child->type() != Tui_ref_type_FUNCTION)
                     {
-                        TuiParseError(debugInfo, "Expected function '%s', found %s. 'table.%s' is not a function", ((TuiString*)keyConstant)->value.c_str(), (child ? child->getTypeName().c_str() : "nil"), ((TuiString*)keyConstant)->value.c_str());
+                        TuiParseError(debugInfo, "Expected function '%s', found %s. 'table.%s' is not a function", Tui::cast<TuiString>(keyConstant)->value.c_str(), (child ? child->getTypeName().c_str() : "nil"), (Tui::cast<TuiString>(keyConstant)->value.c_str()));
                         return nullptr;
                     }
                     
-                    keyConstant->release();
-                    
-                    TuiTable* args = nullptr;
+                    Tui::table args = nullptr;
                     (*tokenPos)++;
-                    TuiRef* arg = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                    Tui::ref arg = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                     
                     if(arg)
                     {
-                        args = new TuiTable(parent);
+                        args = Tui::create<TuiTable>(parent);
                         args->arrayObjects.push_back(arg);
                         
                         (*tokenPos)++;
@@ -2439,10 +2292,9 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     }
                     
                     
-                    TuiRef* functionResult = ((TuiFunction*)child)->call(args, result, callData, debugInfo);
+                    Tui::ref functionResult = Tui::cast<TuiFunction>(child)->call(args, result, callData, debugInfo);
                     if(args)
                     {
-                        args->release(); //release 2, 5->4
                     }
                     
                     if(result && result->type() == functionResult->type() && result->type() != Tui_ref_type_BOOL && result->type() != Tui_ref_type_TABLE && result->type() != Tui_ref_type_FUNCTION)
@@ -2459,25 +2311,18 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     // todo maybe ++
                     if(enclosingSetRef && (isStringKey || isNumberKey))
                     {
-                        TuiRef* prevRef = *enclosingSetRef;
+                        Tui::ref prevRef = *enclosingSetRef;
                         *enclosingSetRef = parent;
-                        parent->retain();
-                        if(prevRef)
-                        {
-                            prevRef->release();
-                        }
                         
                         if(isStringKey)
                         {
-                            *setKey = ((TuiString*)keyConstant)->value;
+                            *setKey = (Tui::cast<TuiString>(keyConstant)->value);
                         }
                         else if(isNumberKey && setIndex)
                         {
-                            *setIndex = keyConstant->getNumberValue();
+                            *setIndex = Tui::cast<TuiNumber>(keyConstant)->getNumberValue();
                         }
                     }
-                    
-                    keyConstant->release();
                     
                     if(result && result->type() == child->type() && result->type() != Tui_ref_type_BOOL && result->type() != Tui_ref_type_TABLE && result->type() != Tui_ref_type_FUNCTION)
                     {
@@ -2485,7 +2330,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     }
                     else
                     {
-                        child->retain();
                         return child;
                     }
                 }
@@ -2499,14 +2343,14 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             case Tui_token_lessEqualTo:
             {
                 (*tokenPos)++;
-                TuiRef* leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                Tui::ref leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                 uint32_t leftType = leftResult->type();
                 switch (leftType) {
                     case Tui_ref_type_NUMBER:
                     {
                         (*tokenPos)++;
                         
-                        TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                        Tui::ref rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         if(rightResult->type() != leftType)
                         {
                             TuiParseError(debugInfo, "expected number");
@@ -2516,33 +2360,25 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         switch (token) {
                             case Tui_token_greaterThan:
                             {
-                                TuiBool* returnResult = TUI_BOOL(((TuiNumber*)leftResult)->value > ((TuiNumber*)rightResult)->value);
-                                leftResult->release();
-                                rightResult->release();
+                                Tui::boolean returnResult = TUI_BOOL(Tui::cast<TuiNumber>(leftResult)->value > (Tui::cast<TuiNumber>(rightResult)->value));
                                 return returnResult;
                             }
                                 break;
                             case Tui_token_lessThan:
                             {
-                                TuiBool* returnResult = TUI_BOOL(((TuiNumber*)leftResult)->value < ((TuiNumber*)rightResult)->value);
-                                leftResult->release();
-                                rightResult->release();
+                                Tui::boolean returnResult = TUI_BOOL(Tui::cast<TuiNumber>(leftResult)->value < (Tui::cast<TuiNumber>(rightResult)->value));
                                 return returnResult;
                             }
                                 break;
                             case Tui_token_greaterEqualTo:
                             {
-                                TuiBool* returnResult = TUI_BOOL(((TuiNumber*)leftResult)->value >= ((TuiNumber*)rightResult)->value);
-                                leftResult->release();
-                                rightResult->release();
+                                Tui::boolean returnResult = TUI_BOOL(Tui::cast<TuiNumber>(leftResult)->value >= (Tui::cast<TuiNumber>(rightResult)->value));
                                 return returnResult;
                             }
                                 break;
                             case Tui_token_lessEqualTo:
                             {
-                                TuiBool* returnResult = TUI_BOOL(((TuiNumber*)leftResult)->value <= ((TuiNumber*)rightResult)->value);
-                                leftResult->release();
-                                rightResult->release();
+                                Tui::boolean returnResult = TUI_BOOL(Tui::cast<TuiNumber>(leftResult)->value <= (Tui::cast<TuiNumber>(rightResult)->value));
                                 return returnResult;
                             }
                                 break;
@@ -2554,7 +2390,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     {
                         (*tokenPos)++;
                         
-                        TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                        Tui::ref rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         if(rightResult->type() != leftType)
                         {
                             TuiParseError(debugInfo, "expected string");
@@ -2564,33 +2400,25 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         switch (token) {
                             case Tui_token_greaterThan:
                             {
-                                TuiBool* returnResult = TUI_BOOL(((TuiString*)leftResult)->value > ((TuiString*)rightResult)->value);
-                                leftResult->release();
-                                rightResult->release();
+                                Tui::boolean returnResult = TUI_BOOL(Tui::cast<TuiString>(leftResult)->value > (Tui::cast<TuiString>(rightResult)->value));
                                 return returnResult;
                             }
                                 break;
                             case Tui_token_lessThan:
                             {
-                                TuiBool* returnResult = TUI_BOOL(((TuiString*)leftResult)->value < ((TuiString*)rightResult)->value);
-                                leftResult->release();
-                                rightResult->release();
+                                Tui::boolean returnResult = TUI_BOOL(Tui::cast<TuiString>(leftResult)->value < (Tui::cast<TuiString>(rightResult)->value));
                                 return returnResult;
                             }
                                 break;
                             case Tui_token_greaterEqualTo:
                             {
-                                TuiBool* returnResult = TUI_BOOL(((TuiString*)leftResult)->value >= ((TuiString*)rightResult)->value);
-                                leftResult->release();
-                                rightResult->release();
+                                Tui::boolean returnResult = TUI_BOOL(Tui::cast<TuiString>(leftResult)->value >= (Tui::cast<TuiString>(rightResult)->value));
                                 return returnResult;
                             }
                                 break;
                             case Tui_token_lessEqualTo:
                             {
-                                TuiBool* returnResult = TUI_BOOL(((TuiString*)leftResult)->value <= ((TuiString*)rightResult)->value);
-                                leftResult->release();
-                                rightResult->release();
+                                Tui::boolean returnResult = TUI_BOOL(Tui::cast<TuiString>(leftResult)->value <= (Tui::cast<TuiString>(rightResult)->value));
                                 return returnResult;
                             }
                                 break;
@@ -2624,10 +2452,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 
                 std::string inPlaceSetKey;
                 std::string inPlaceSubTypeAccessKey;
-                TuiRef* inPlaceSubRef = nullptr;
-                TuiRef* inPlaceEnclosingSetRef = nullptr;
+                Tui::ref inPlaceSubRef = nullptr;
+                Tui::ref inPlaceEnclosingSetRef = nullptr;
                 
-                TuiRef* leftResult;
+                Tui::ref leftResult;
                 if(token <= Tui_token_modulo) //covers Tui_token_add, Tui_token_subtract, Tui_token_divide, Tui_token_multiply, Tui_token_modulo
                 {
                     leftResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
@@ -2641,7 +2469,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                 {
                     if(inPlaceSubRef)
                     {
-                        TuiRef* rightResult = nullptr;
+                        Tui::ref rightResult = nullptr;
                         if(token != Tui_token_increment && token != Tui_token_decrement)
                         {
                             (*tokenPos)++;
@@ -2663,10 +2491,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec2*)inPlaceSubRef)->value.x++;
+                                                (Tui::cast<TuiVec2>(inPlaceSubRef)->value.x++);
                                                 break;
                                             case 'y':
-                                                ((TuiVec2*)inPlaceSubRef)->value.y++;
+                                                (Tui::cast<TuiVec2>(inPlaceSubRef)->value.y++);
                                                 break;
                                         }
                                         break;
@@ -2674,10 +2502,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec2*)inPlaceSubRef)->value.x--;
+                                                (Tui::cast<TuiVec2>(inPlaceSubRef)->value.x--);
                                                 break;
                                             case 'y':
-                                                ((TuiVec2*)inPlaceSubRef)->value.y--;
+                                                (Tui::cast<TuiVec2>(inPlaceSubRef)->value.y--);
                                                 break;
                                         }
                                         break;
@@ -2685,10 +2513,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec2*)inPlaceSubRef)->value.x += ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec2>(inPlaceSubRef)->value.x += (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'y':
-                                                ((TuiVec2*)inPlaceSubRef)->value.y += ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec2>(inPlaceSubRef)->value.y += (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                         }
                                         break;
@@ -2696,10 +2524,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec2*)inPlaceSubRef)->value.x -= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec2>(inPlaceSubRef)->value.x -= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'y':
-                                                ((TuiVec2*)inPlaceSubRef)->value.y -= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec2>(inPlaceSubRef)->value.y -= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                         }
                                     break;
@@ -2707,10 +2535,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec2*)inPlaceSubRef)->value.x *= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec2>(inPlaceSubRef)->value.x *= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'y':
-                                                ((TuiVec2*)inPlaceSubRef)->value.y *= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec2>(inPlaceSubRef)->value.y *= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                         }
                                     break;
@@ -2718,10 +2546,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec2*)inPlaceSubRef)->value.x /= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec2>(inPlaceSubRef)->value.x /= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'y':
-                                                ((TuiVec2*)inPlaceSubRef)->value.y /= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec2>(inPlaceSubRef)->value.y /= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                         }
                                     break;
@@ -2736,13 +2564,13 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec3*)inPlaceSubRef)->value.x++;
+                                                (Tui::cast<TuiVec3>(inPlaceSubRef)->value.x++);
                                                 break;
                                             case 'y':
-                                                ((TuiVec3*)inPlaceSubRef)->value.y++;
+                                                (Tui::cast<TuiVec3>(inPlaceSubRef)->value.y++);
                                                 break;
                                             case 'z':
-                                                ((TuiVec3*)inPlaceSubRef)->value.z++;
+                                                (Tui::cast<TuiVec3>(inPlaceSubRef)->value.z++);
                                                 break;
                                         }
                                         break;
@@ -2750,13 +2578,13 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec3*)inPlaceSubRef)->value.x--;
+                                                (Tui::cast<TuiVec3>(inPlaceSubRef)->value.x--);
                                                 break;
                                             case 'y':
-                                                ((TuiVec3*)inPlaceSubRef)->value.y--;
+                                                (Tui::cast<TuiVec3>(inPlaceSubRef)->value.y--);
                                                 break;
                                             case 'z':
-                                                ((TuiVec3*)inPlaceSubRef)->value.z--;
+                                                (Tui::cast<TuiVec3>(inPlaceSubRef)->value.z--);
                                                 break;
                                         }
                                         break;
@@ -2764,13 +2592,13 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec3*)inPlaceSubRef)->value.x += ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec3>(inPlaceSubRef)->value.x += (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'y':
-                                                ((TuiVec3*)inPlaceSubRef)->value.y += ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec3>(inPlaceSubRef)->value.y += (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'z':
-                                                ((TuiVec3*)inPlaceSubRef)->value.z += ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec3>(inPlaceSubRef)->value.z += (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                         }
                                         break;
@@ -2778,13 +2606,13 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec3*)inPlaceSubRef)->value.x -= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec3>(inPlaceSubRef)->value.x -= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'y':
-                                                ((TuiVec3*)inPlaceSubRef)->value.y -= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec3>(inPlaceSubRef)->value.y -= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'z':
-                                                ((TuiVec3*)inPlaceSubRef)->value.z -= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec3>(inPlaceSubRef)->value.z -= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                         }
                                     break;
@@ -2792,13 +2620,13 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec3*)inPlaceSubRef)->value.x *= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec3>(inPlaceSubRef)->value.x *= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'y':
-                                                ((TuiVec3*)inPlaceSubRef)->value.y *= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec3>(inPlaceSubRef)->value.y *= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'z':
-                                                ((TuiVec3*)inPlaceSubRef)->value.z *= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec3>(inPlaceSubRef)->value.z *= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                         }
                                     break;
@@ -2806,13 +2634,13 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec3*)inPlaceSubRef)->value.x /= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec3>(inPlaceSubRef)->value.x /= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'y':
-                                                ((TuiVec3*)inPlaceSubRef)->value.y /= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec3>(inPlaceSubRef)->value.y /= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'z':
-                                                ((TuiVec3*)inPlaceSubRef)->value.z /= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec3>(inPlaceSubRef)->value.z /= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                         }
                                     break;
@@ -2827,16 +2655,16 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec4*)inPlaceSubRef)->value.x++;
+                                                (Tui::cast<TuiVec4>(inPlaceSubRef)->value.x++);
                                                 break;
                                             case 'y':
-                                                ((TuiVec4*)inPlaceSubRef)->value.y++;
+                                                (Tui::cast<TuiVec4>(inPlaceSubRef)->value.y++);
                                                 break;
                                             case 'z':
-                                                ((TuiVec4*)inPlaceSubRef)->value.z++;
+                                                (Tui::cast<TuiVec4>(inPlaceSubRef)->value.z++);
                                                 break;
                                             case 'w':
-                                                ((TuiVec4*)inPlaceSubRef)->value.w++;
+                                                (Tui::cast<TuiVec4>(inPlaceSubRef)->value.w++);
                                                 break;
                                         }
                                         break;
@@ -2844,16 +2672,16 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec4*)inPlaceSubRef)->value.x--;
+                                                (Tui::cast<TuiVec4>(inPlaceSubRef)->value.x--);
                                                 break;
                                             case 'y':
-                                                ((TuiVec4*)inPlaceSubRef)->value.y--;
+                                                (Tui::cast<TuiVec4>(inPlaceSubRef)->value.y--);
                                                 break;
                                             case 'z':
-                                                ((TuiVec4*)inPlaceSubRef)->value.z--;
+                                                (Tui::cast<TuiVec4>(inPlaceSubRef)->value.z--);
                                                 break;
                                             case 'w':
-                                                ((TuiVec4*)inPlaceSubRef)->value.w--;
+                                                (Tui::cast<TuiVec4>(inPlaceSubRef)->value.w--);
                                                 break;
                                         }
                                         break;
@@ -2861,16 +2689,16 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec4*)inPlaceSubRef)->value.x += ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.x += (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'y':
-                                                ((TuiVec4*)inPlaceSubRef)->value.y += ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.y += (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'z':
-                                                ((TuiVec4*)inPlaceSubRef)->value.z += ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.z += (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'w':
-                                                ((TuiVec4*)inPlaceSubRef)->value.w += ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.w += (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                         }
                                         break;
@@ -2878,16 +2706,16 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec4*)inPlaceSubRef)->value.x -= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.x -= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'y':
-                                                ((TuiVec4*)inPlaceSubRef)->value.y -= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.y -= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'z':
-                                                ((TuiVec4*)inPlaceSubRef)->value.z -= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.z -= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'w':
-                                                ((TuiVec4*)inPlaceSubRef)->value.w -= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.w -= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                         }
                                     break;
@@ -2895,16 +2723,16 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec4*)inPlaceSubRef)->value.x *= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.x *= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'y':
-                                                ((TuiVec4*)inPlaceSubRef)->value.y *= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.y *= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'z':
-                                                ((TuiVec4*)inPlaceSubRef)->value.z *= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.z *= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'w':
-                                                ((TuiVec4*)inPlaceSubRef)->value.w *= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.w *= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                         }
                                     break;
@@ -2912,16 +2740,16 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         switch(inPlaceSubTypeAccessKey[0])
                                         {
                                             case 'x':
-                                                ((TuiVec4*)inPlaceSubRef)->value.x /= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.x /= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'y':
-                                                ((TuiVec4*)inPlaceSubRef)->value.y /= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.y /= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'z':
-                                                ((TuiVec4*)inPlaceSubRef)->value.z /= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.z /= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                             case 'w':
-                                                ((TuiVec4*)inPlaceSubRef)->value.w /= ((TuiNumber*)rightResult)->value;
+                                                Tui::cast<TuiVec4>(inPlaceSubRef)->value.w /= (Tui::cast<TuiNumber>(rightResult)->value);
                                                 break;
                                         }
                                     break;
@@ -2930,22 +2758,13 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 break;
                         }
                         
-                        if(rightResult)
-                        {
-                            rightResult->release();
-                        }
-                        
                         if(inPlaceEnclosingSetRef)
                         {
-                            if(((TuiTable*)inPlaceEnclosingSetRef)->onSet)
+                            if(Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet)
                             {
-                                ((TuiTable*)inPlaceEnclosingSetRef)->onSet(inPlaceEnclosingSetRef, inPlaceSetKey, inPlaceSubRef);
+                                Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet(inPlaceEnclosingSetRef, inPlaceSetKey, inPlaceSubRef);
                             }
-                            
-                            inPlaceEnclosingSetRef->release();
                         }
-                        
-                        inPlaceSubRef->release();
                         
                         return nullptr;
                     }
@@ -2972,28 +2791,23 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         {
                             if(token == Tui_token_increment)
                             {
-                                ((TuiNumber*)leftResult)->value++;
+                                (Tui::cast<TuiNumber>(leftResult)->value++);
                             }
                             else //Tui_token_decrement
                             {
-                                ((TuiNumber*)leftResult)->value--;
+                                (Tui::cast<TuiNumber>(leftResult)->value--);
                             }
                             
-                            if(inPlaceEnclosingSetRef && ((TuiTable*)inPlaceEnclosingSetRef)->onSet && !inPlaceSetKey.empty())
+                            if(inPlaceEnclosingSetRef && Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet && !inPlaceSetKey.empty())
                             {
-                                ((TuiTable*)inPlaceEnclosingSetRef)->onSet(((TuiTable*)inPlaceEnclosingSetRef), inPlaceSetKey, leftResult);
+                                Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet(Tui::cast<TuiTable>(inPlaceEnclosingSetRef), inPlaceSetKey, leftResult);
                             }
-                            if(inPlaceEnclosingSetRef)
-                            {
-                                inPlaceEnclosingSetRef->release();
-                            }
-                            leftResult->release();
                             return nullptr;
                         }
                         else
                         {
                             (*tokenPos)++;
-                            TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
+                            Tui::ref rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo);
                             if(!rightResult || (rightResult->type() != leftType && rightResult->type() != Tui_ref_type_STRING))
                             {
                                 TuiParseError(debugInfo, "expected number");
@@ -3002,13 +2816,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             
                             if(rightResult->type() == Tui_ref_type_STRING)
                             {
-                                TuiString* returnResult = new TuiString(((TuiNumber*)leftResult)->getStringValue() + ((TuiString*)rightResult)->value);
-                                leftResult->release();
-                                rightResult->release();
-                                if(inPlaceEnclosingSetRef)
-                                {
-                                    inPlaceEnclosingSetRef->release();
-                                }
+                                Tui::string returnResult = Tui::create<TuiString>(Tui::cast<TuiNumber>(leftResult)->getStringValue() + (Tui::cast<TuiString>(rightResult)->value));
                                 return returnResult;
                             }
                             
@@ -3016,31 +2824,31 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             {
                                 switch (token) {
                                     case Tui_token_add:
-                                        ((TuiNumber*)result)->value = ((TuiNumber*)leftResult)->value + ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiNumber>(result)->value = Tui::cast<TuiNumber>(leftResult)->value + (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_addInPlace:
-                                        ((TuiNumber*)result)->value += ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiNumber>(result)->value += (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_subtract:
-                                        ((TuiNumber*)result)->value = ((TuiNumber*)leftResult)->value - ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiNumber>(result)->value = Tui::cast<TuiNumber>(leftResult)->value - (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_subtractInPlace:
-                                        ((TuiNumber*)result)->value -= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiNumber>(result)->value -= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_multiply:
-                                        ((TuiNumber*)result)->value = ((TuiNumber*)leftResult)->value * ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiNumber>(result)->value = Tui::cast<TuiNumber>(leftResult)->value * (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiNumber*)result)->value *= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiNumber>(result)->value *= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_divide:
-                                        ((TuiNumber*)result)->value = ((TuiNumber*)leftResult)->value / ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiNumber>(result)->value = Tui::cast<TuiNumber>(leftResult)->value / (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiNumber*)result)->value /= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiNumber>(result)->value /= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_modulo:
-                                        ((TuiNumber*)result)->value = ((int)((TuiNumber*)leftResult)->value) % ((int)((TuiNumber*)rightResult)->value);
+                                        Tui::cast<TuiNumber>(result)->value = ((int)Tui::cast<TuiNumber>(leftResult)->value) % ((int)(Tui::cast<TuiNumber>(rightResult)->value));
                                         break;
                                 };
                             }
@@ -3049,76 +2857,46 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 switch (token) {
                                     case Tui_token_add:
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((TuiNumber*)leftResult)->value + ((TuiNumber*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::number returnResult = Tui::create<TuiNumber>(Tui::cast<TuiNumber>(leftResult)->value + (Tui::cast<TuiNumber>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_subtract:
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((TuiNumber*)leftResult)->value - ((TuiNumber*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::number returnResult = Tui::create<TuiNumber>(Tui::cast<TuiNumber>(leftResult)->value - (Tui::cast<TuiNumber>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_multiply:
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((TuiNumber*)leftResult)->value * ((TuiNumber*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::number returnResult = Tui::create<TuiNumber>(Tui::cast<TuiNumber>(leftResult)->value * (Tui::cast<TuiNumber>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_divide:
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((TuiNumber*)leftResult)->value / ((TuiNumber*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::number returnResult = Tui::create<TuiNumber>(Tui::cast<TuiNumber>(leftResult)->value / (Tui::cast<TuiNumber>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_modulo:
                                     {
-                                        TuiNumber* returnResult = new TuiNumber(((int)((TuiNumber*)leftResult)->value) % ((int)((TuiNumber*)rightResult)->value));
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::number returnResult = Tui::create<TuiNumber>(((int)Tui::cast<TuiNumber>(leftResult)->value) % ((int)(Tui::cast<TuiNumber>(rightResult)->value)));
                                         return returnResult;
                                     }
                                         break;
                                         
                                     case Tui_token_addInPlace:
-                                        ((TuiNumber*)leftResult)->value += ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiNumber>(leftResult)->value += (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_subtractInPlace:
-                                        ((TuiNumber*)leftResult)->value -= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiNumber>(leftResult)->value -= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiNumber*)leftResult)->value *= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiNumber>(leftResult)->value *= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiNumber*)leftResult)->value /= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiNumber>(leftResult)->value /= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                         
                                     default:
@@ -3128,12 +2906,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             }
                             
                             
-                            if(inPlaceEnclosingSetRef && ((TuiTable*)inPlaceEnclosingSetRef)->onSet && !inPlaceSetKey.empty())
+                            if(inPlaceEnclosingSetRef && Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet && !inPlaceSetKey.empty())
                             {
-                                ((TuiTable*)inPlaceEnclosingSetRef)->onSet(((TuiTable*)inPlaceEnclosingSetRef), inPlaceSetKey, leftResult);
+                                Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet(Tui::cast<TuiTable>(inPlaceEnclosingSetRef), inPlaceSetKey, leftResult);
                             }
-                            
-                            rightResult->release();
                         }
                         
                     }
@@ -3141,7 +2917,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     case Tui_ref_type_VEC2:
                     {
                         (*tokenPos)++;
-                        TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                        Tui::ref rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         if(!rightResult)
                         {
                             TuiParseError(debugInfo, "expected value");
@@ -3155,28 +2931,28 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             {
                                 switch (token) {
                                     case Tui_token_add:
-                                        ((TuiVec2*)result)->value = ((TuiVec2*)leftResult)->value + ((TuiVec2*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(result)->value = Tui::cast<TuiVec2>(leftResult)->value + (Tui::cast<TuiVec2>(rightResult)->value);
                                         break;
                                     case Tui_token_addInPlace:
-                                        ((TuiVec2*)result)->value += ((TuiVec2*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(result)->value += (Tui::cast<TuiVec2>(rightResult)->value);
                                         break;
                                     case Tui_token_subtract:
-                                        ((TuiVec2*)result)->value = ((TuiVec2*)leftResult)->value - ((TuiVec2*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(result)->value = Tui::cast<TuiVec2>(leftResult)->value - (Tui::cast<TuiVec2>(rightResult)->value);
                                         break;
                                     case Tui_token_subtractInPlace:
-                                        ((TuiVec2*)result)->value -= ((TuiVec2*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(result)->value -= (Tui::cast<TuiVec2>(rightResult)->value);
                                         break;
                                     case Tui_token_multiply:
-                                        ((TuiVec2*)result)->value = ((TuiVec2*)leftResult)->value * ((TuiVec2*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(result)->value = Tui::cast<TuiVec2>(leftResult)->value * (Tui::cast<TuiVec2>(rightResult)->value);
                                         break;
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiVec2*)result)->value *= ((TuiVec2*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(result)->value *= (Tui::cast<TuiVec2>(rightResult)->value);
                                         break;
                                     case Tui_token_divide:
-                                        ((TuiVec2*)result)->value = ((TuiVec2*)leftResult)->value / ((TuiVec2*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(result)->value = Tui::cast<TuiVec2>(leftResult)->value / (Tui::cast<TuiVec2>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiVec2*)result)->value /= ((TuiVec2*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(result)->value /= (Tui::cast<TuiVec2>(rightResult)->value);
                                         break;
                                 };
                             }
@@ -3185,64 +2961,40 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 switch (token) {
                                     case Tui_token_add:
                                     {
-                                        TuiVec2* returnResult = new TuiVec2(((TuiVec2*)leftResult)->value + ((TuiVec2*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec2 returnResult = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(leftResult)->value + (Tui::cast<TuiVec2>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_subtract:
                                     {
-                                        TuiVec2* returnResult = new TuiVec2(((TuiVec2*)leftResult)->value - ((TuiVec2*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec2 returnResult = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(leftResult)->value - (Tui::cast<TuiVec2>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_multiply:
                                     {
-                                        TuiVec2* returnResult = new TuiVec2(((TuiVec2*)leftResult)->value * ((TuiVec2*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec2 returnResult = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(leftResult)->value * (Tui::cast<TuiVec2>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_divide:
                                     {
-                                        TuiVec2* returnResult = new TuiVec2(((TuiVec2*)leftResult)->value / ((TuiVec2*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec2 returnResult = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(leftResult)->value / (Tui::cast<TuiVec2>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                         
                                     case Tui_token_addInPlace:
-                                        ((TuiVec2*)leftResult)->value += ((TuiVec2*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(leftResult)->value += (Tui::cast<TuiVec2>(rightResult)->value);
                                         break;
                                     case Tui_token_subtractInPlace:
-                                        ((TuiVec2*)leftResult)->value -= ((TuiVec2*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(leftResult)->value -= (Tui::cast<TuiVec2>(rightResult)->value);
                                         break;
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiVec2*)leftResult)->value *= ((TuiVec2*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(leftResult)->value *= (Tui::cast<TuiVec2>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiVec2*)leftResult)->value /= ((TuiVec2*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(leftResult)->value /= (Tui::cast<TuiVec2>(rightResult)->value);
                                         break;
                                 }
                             }
@@ -3254,16 +3006,16 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 switch (token) {
                                         
                                     case Tui_token_multiply:
-                                        ((TuiVec2*)result)->value = ((TuiVec2*)leftResult)->value * ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(result)->value = Tui::cast<TuiVec2>(leftResult)->value * (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiVec2*)result)->value *= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(result)->value *= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_divide:
-                                        ((TuiVec2*)result)->value = ((TuiVec2*)leftResult)->value / ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(result)->value = Tui::cast<TuiVec2>(leftResult)->value / (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiVec2*)result)->value /= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(result)->value /= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                         
                                     default:
@@ -3281,34 +3033,22 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         
                                     case Tui_token_multiply:
                                     {
-                                        TuiVec2* returnResult = new TuiVec2(((TuiVec2*)leftResult)->value * ((TuiNumber*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec2 returnResult = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(leftResult)->value * (Tui::cast<TuiNumber>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_divide:
                                     {
-                                        TuiVec2* returnResult = new TuiVec2(((TuiVec2*)leftResult)->value / ((TuiNumber*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec2 returnResult = Tui::create<TuiVec2>(Tui::cast<TuiVec2>(leftResult)->value / (Tui::cast<TuiNumber>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                         
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiVec2*)leftResult)->value *= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(leftResult)->value *= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiVec2*)leftResult)->value /= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec2>(leftResult)->value /= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     default:
                                     {
@@ -3327,19 +3067,17 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         
                         
                         
-                        if(inPlaceEnclosingSetRef && ((TuiTable*)inPlaceEnclosingSetRef)->onSet && !inPlaceSetKey.empty())
+                        if(inPlaceEnclosingSetRef && Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet && !inPlaceSetKey.empty())
                         {
-                            ((TuiTable*)inPlaceEnclosingSetRef)->onSet(((TuiTable*)inPlaceEnclosingSetRef), inPlaceSetKey, leftResult);
+                            Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet(Tui::cast<TuiTable>(inPlaceEnclosingSetRef), inPlaceSetKey, leftResult);
                         }
-                        
-                        rightResult->release();
                         
                     }
                         break;
                     case Tui_ref_type_VEC3:
                     {
                         (*tokenPos)++;
-                        TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                        Tui::ref rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         if(!rightResult)
                         {
                             TuiParseError(debugInfo, "expected value");
@@ -3353,28 +3091,28 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             {
                                 switch (token) {
                                     case Tui_token_add:
-                                        ((TuiVec3*)result)->value = ((TuiVec3*)leftResult)->value + ((TuiVec3*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(result)->value = Tui::cast<TuiVec3>(leftResult)->value + (Tui::cast<TuiVec3>(rightResult)->value);
                                         break;
                                     case Tui_token_addInPlace:
-                                        ((TuiVec3*)result)->value += ((TuiVec3*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(result)->value += (Tui::cast<TuiVec3>(rightResult)->value);
                                         break;
                                     case Tui_token_subtract:
-                                        ((TuiVec3*)result)->value = ((TuiVec3*)leftResult)->value - ((TuiVec3*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(result)->value = Tui::cast<TuiVec3>(leftResult)->value - (Tui::cast<TuiVec3>(rightResult)->value);
                                         break;
                                     case Tui_token_subtractInPlace:
-                                        ((TuiVec3*)result)->value -= ((TuiVec3*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(result)->value -= (Tui::cast<TuiVec3>(rightResult)->value);
                                         break;
                                     case Tui_token_multiply:
-                                        ((TuiVec3*)result)->value = ((TuiVec3*)leftResult)->value * ((TuiVec3*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(result)->value = Tui::cast<TuiVec3>(leftResult)->value * (Tui::cast<TuiVec3>(rightResult)->value);
                                         break;
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiVec3*)result)->value *= ((TuiVec3*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(result)->value *= (Tui::cast<TuiVec3>(rightResult)->value);
                                         break;
                                     case Tui_token_divide:
-                                        ((TuiVec3*)result)->value = ((TuiVec3*)leftResult)->value / ((TuiVec3*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(result)->value = Tui::cast<TuiVec3>(leftResult)->value / (Tui::cast<TuiVec3>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiVec3*)result)->value /= ((TuiVec3*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(result)->value /= (Tui::cast<TuiVec3>(rightResult)->value);
                                         break;
                                 };
                             }
@@ -3383,64 +3121,40 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 switch (token) {
                                     case Tui_token_add:
                                     {
-                                        TuiVec3* returnResult = new TuiVec3(((TuiVec3*)leftResult)->value + ((TuiVec3*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec3 returnResult = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(leftResult)->value + (Tui::cast<TuiVec3>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_subtract:
                                     {
-                                        TuiVec3* returnResult = new TuiVec3(((TuiVec3*)leftResult)->value - ((TuiVec3*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec3 returnResult = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(leftResult)->value - (Tui::cast<TuiVec3>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_multiply:
                                     {
-                                        TuiVec3* returnResult = new TuiVec3(((TuiVec3*)leftResult)->value * ((TuiVec3*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec3 returnResult = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(leftResult)->value * (Tui::cast<TuiVec3>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_divide:
                                     {
-                                        TuiVec3* returnResult = new TuiVec3(((TuiVec3*)leftResult)->value / ((TuiVec3*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec3 returnResult = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(leftResult)->value / (Tui::cast<TuiVec3>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                         
                                     case Tui_token_addInPlace:
-                                        ((TuiVec3*)leftResult)->value += ((TuiVec3*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(leftResult)->value += (Tui::cast<TuiVec3>(rightResult)->value);
                                         break;
                                     case Tui_token_subtractInPlace:
-                                        ((TuiVec3*)leftResult)->value -= ((TuiVec3*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(leftResult)->value -= (Tui::cast<TuiVec3>(rightResult)->value);
                                         break;
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiVec3*)leftResult)->value *= ((TuiVec3*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(leftResult)->value *= (Tui::cast<TuiVec3>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiVec3*)leftResult)->value /= ((TuiVec3*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(leftResult)->value /= (Tui::cast<TuiVec3>(rightResult)->value);
                                         break;
                                 }
                             }
@@ -3452,16 +3166,16 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 switch (token) {
                                         
                                     case Tui_token_multiply:
-                                        ((TuiVec3*)result)->value = ((TuiVec3*)leftResult)->value * ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(result)->value = Tui::cast<TuiVec3>(leftResult)->value * (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiVec3*)result)->value *= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(result)->value *= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_divide:
-                                        ((TuiVec3*)result)->value = ((TuiVec3*)leftResult)->value / ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(result)->value = Tui::cast<TuiVec3>(leftResult)->value / (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiVec3*)result)->value /= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(result)->value /= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                         
                                     default:
@@ -3479,34 +3193,22 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         
                                     case Tui_token_multiply:
                                     {
-                                        TuiVec3* returnResult = new TuiVec3(((TuiVec3*)leftResult)->value * ((TuiNumber*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec3 returnResult = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(leftResult)->value * (Tui::cast<TuiNumber>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_divide:
                                     {
-                                        TuiVec3* returnResult = new TuiVec3(((TuiVec3*)leftResult)->value / ((TuiNumber*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec3 returnResult = Tui::create<TuiVec3>(Tui::cast<TuiVec3>(leftResult)->value / (Tui::cast<TuiNumber>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                         
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiVec3*)leftResult)->value *= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(leftResult)->value *= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiVec3*)leftResult)->value /= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec3>(leftResult)->value /= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     default:
                                     {
@@ -3524,20 +3226,17 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         }
                         
                         
-                        if(inPlaceEnclosingSetRef && ((TuiTable*)inPlaceEnclosingSetRef)->onSet && !inPlaceSetKey.empty())
+                        if(inPlaceEnclosingSetRef && Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet && !inPlaceSetKey.empty())
                         {
-                            ((TuiTable*)inPlaceEnclosingSetRef)->onSet(((TuiTable*)inPlaceEnclosingSetRef), inPlaceSetKey, leftResult);
+                            Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet(Tui::cast<TuiTable>(inPlaceEnclosingSetRef), inPlaceSetKey, leftResult);
                         }
-                        
-                        
-                        rightResult->release();
                         
                     }
                         break;
                     case Tui_ref_type_VEC4:
                     {
                         (*tokenPos)++;
-                        TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                        Tui::ref rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         if(!rightResult)
                         {
                             TuiParseError(debugInfo, "expected value");
@@ -3551,28 +3250,28 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             {
                                 switch (token) {
                                     case Tui_token_add:
-                                        ((TuiVec4*)result)->value = ((TuiVec4*)leftResult)->value + ((TuiVec4*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(result)->value = Tui::cast<TuiVec4>(leftResult)->value + (Tui::cast<TuiVec4>(rightResult)->value);
                                         break;
                                     case Tui_token_addInPlace:
-                                        ((TuiVec4*)result)->value += ((TuiVec4*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(result)->value += (Tui::cast<TuiVec4>(rightResult)->value);
                                         break;
                                     case Tui_token_subtract:
-                                        ((TuiVec4*)result)->value = ((TuiVec4*)leftResult)->value - ((TuiVec4*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(result)->value = Tui::cast<TuiVec4>(leftResult)->value - (Tui::cast<TuiVec4>(rightResult)->value);
                                         break;
                                     case Tui_token_subtractInPlace:
-                                        ((TuiVec4*)result)->value -= ((TuiVec4*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(result)->value -= (Tui::cast<TuiVec4>(rightResult)->value);
                                         break;
                                     case Tui_token_multiply:
-                                        ((TuiVec4*)result)->value = ((TuiVec4*)leftResult)->value * ((TuiVec4*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(result)->value = Tui::cast<TuiVec4>(leftResult)->value * (Tui::cast<TuiVec4>(rightResult)->value);
                                         break;
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiVec4*)result)->value *= ((TuiVec4*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(result)->value *= (Tui::cast<TuiVec4>(rightResult)->value);
                                         break;
                                     case Tui_token_divide:
-                                        ((TuiVec4*)result)->value = ((TuiVec4*)leftResult)->value / ((TuiVec4*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(result)->value = Tui::cast<TuiVec4>(leftResult)->value / (Tui::cast<TuiVec4>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiVec4*)result)->value /= ((TuiVec4*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(result)->value /= (Tui::cast<TuiVec4>(rightResult)->value);
                                         break;
                                 };
                             }
@@ -3581,64 +3280,40 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 switch (token) {
                                     case Tui_token_add:
                                     {
-                                        TuiVec4* returnResult = new TuiVec4(((TuiVec4*)leftResult)->value + ((TuiVec4*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec4 returnResult = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(leftResult)->value + (Tui::cast<TuiVec4>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_subtract:
                                     {
-                                        TuiVec4* returnResult = new TuiVec4(((TuiVec4*)leftResult)->value - ((TuiVec4*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec4 returnResult = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(leftResult)->value - (Tui::cast<TuiVec4>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_multiply:
                                     {
-                                        TuiVec4* returnResult = new TuiVec4(((TuiVec4*)leftResult)->value * ((TuiVec4*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec4 returnResult = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(leftResult)->value * (Tui::cast<TuiVec4>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_divide:
                                     {
-                                        TuiVec4* returnResult = new TuiVec4(((TuiVec4*)leftResult)->value / ((TuiVec4*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec4 returnResult = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(leftResult)->value / (Tui::cast<TuiVec4>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                         
                                     case Tui_token_addInPlace:
-                                        ((TuiVec4*)leftResult)->value += ((TuiVec4*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(leftResult)->value += (Tui::cast<TuiVec4>(rightResult)->value);
                                         break;
                                     case Tui_token_subtractInPlace:
-                                        ((TuiVec4*)leftResult)->value -= ((TuiVec4*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(leftResult)->value -= (Tui::cast<TuiVec4>(rightResult)->value);
                                         break;
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiVec4*)leftResult)->value *= ((TuiVec4*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(leftResult)->value *= (Tui::cast<TuiVec4>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiVec4*)leftResult)->value /= ((TuiVec4*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(leftResult)->value /= (Tui::cast<TuiVec4>(rightResult)->value);
                                         break;
                                 }
                             }
@@ -3650,16 +3325,16 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                 switch (token) {
                                         
                                     case Tui_token_multiply:
-                                        ((TuiVec4*)result)->value = ((TuiVec4*)leftResult)->value * ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(result)->value = Tui::cast<TuiVec4>(leftResult)->value * (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiVec4*)result)->value *= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(result)->value *= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_divide:
-                                        ((TuiVec4*)result)->value = ((TuiVec4*)leftResult)->value / ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(result)->value = Tui::cast<TuiVec4>(leftResult)->value / (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiVec4*)result)->value /= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(result)->value /= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                         
                                     default:
@@ -3677,34 +3352,22 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                                         
                                     case Tui_token_multiply:
                                     {
-                                        TuiVec4* returnResult = new TuiVec4(((TuiVec4*)leftResult)->value * ((TuiNumber*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec4 returnResult = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(leftResult)->value * (Tui::cast<TuiNumber>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                     case Tui_token_divide:
                                     {
-                                        TuiVec4* returnResult = new TuiVec4(((TuiVec4*)leftResult)->value / ((TuiNumber*)rightResult)->value);
-                                        leftResult->release();
-                                        rightResult->release();
-                                        if(inPlaceEnclosingSetRef)
-                                        {
-                                            inPlaceEnclosingSetRef->release();
-                                        }
+                                        Tui::vec4 returnResult = Tui::create<TuiVec4>(Tui::cast<TuiVec4>(leftResult)->value / (Tui::cast<TuiNumber>(rightResult)->value));
                                         return returnResult;
                                     }
                                         break;
                                         
                                     case Tui_token_multiplyInPlace:
-                                        ((TuiVec4*)leftResult)->value *= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(leftResult)->value *= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     case Tui_token_divideInPlace:
-                                        ((TuiVec4*)leftResult)->value /= ((TuiNumber*)rightResult)->value;
+                                        Tui::cast<TuiVec4>(leftResult)->value /= (Tui::cast<TuiNumber>(rightResult)->value);
                                         break;
                                     default:
                                     {
@@ -3721,12 +3384,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             return nullptr;
                         }
                         
-                        if(inPlaceEnclosingSetRef && ((TuiTable*)inPlaceEnclosingSetRef)->onSet && !inPlaceSetKey.empty())
+                        if(inPlaceEnclosingSetRef && Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet && !inPlaceSetKey.empty())
                         {
-                            ((TuiTable*)inPlaceEnclosingSetRef)->onSet(((TuiTable*)inPlaceEnclosingSetRef), inPlaceSetKey, leftResult);
+                            Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet(Tui::cast<TuiTable>(inPlaceEnclosingSetRef), inPlaceSetKey, leftResult);
                         }
-                        
-                        rightResult->release();
                         
                     }
                         break;
@@ -3734,7 +3395,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                     case Tui_ref_type_STRING: //left type string
                     {
                         (*tokenPos)++;
-                        TuiRef* rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
+                        Tui::ref rightResult = runExpression(expression, tokenPos, nullptr, parent, tokenMap, callData, debugInfo, setKey, setIndex, enclosingSetRef, subTypeAccessKey, subTypeRef);
                         if(!rightResult)
                         {
                             rightResult = result;
@@ -3744,10 +3405,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         {
                             switch (token) {
                                 case Tui_token_add:
-                                    ((TuiString*)result)->value = ((TuiString*)leftResult)->value + rightResult->getStringValue();
+                                    Tui::cast<TuiString>(result)->value = Tui::cast<TuiString>(leftResult)->value + rightResult->getStringValue();
                                     break;
                                 case Tui_token_addInPlace:
-                                    ((TuiString*)result)->value += rightResult->getStringValue();
+                                    Tui::cast<TuiString>(result)->value += rightResult->getStringValue();
                                     break;
                             };
                         }
@@ -3756,17 +3417,11 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                             switch (token) {
                                 case Tui_token_add:
                                 {
-                                    TuiString* returnResult = new TuiString(((TuiString*)leftResult)->value + rightResult->getStringValue());
-                                    leftResult->release();
-                                    rightResult->release();
-                                    if(inPlaceEnclosingSetRef)
-                                    {
-                                        inPlaceEnclosingSetRef->release();
-                                    }
+                                    Tui::string returnResult = Tui::create<TuiString>(Tui::cast<TuiString>(leftResult)->value + rightResult->getStringValue());
                                     return returnResult;
                                 }
                                 case Tui_token_addInPlace:
-                                    ((TuiString*)leftResult)->value += rightResult->getStringValue();
+                                    Tui::cast<TuiString>(leftResult)->value += rightResult->getStringValue();
                                     break;
                                     
                                 default:
@@ -3777,12 +3432,10 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         
                         
                         
-                        if(inPlaceEnclosingSetRef && ((TuiTable*)inPlaceEnclosingSetRef)->onSet && !inPlaceSetKey.empty())
+                        if(inPlaceEnclosingSetRef && Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet && !inPlaceSetKey.empty())
                         {
-                            ((TuiTable*)inPlaceEnclosingSetRef)->onSet(((TuiTable*)inPlaceEnclosingSetRef), inPlaceSetKey, leftResult);
+                            Tui::cast<TuiTable>(inPlaceEnclosingSetRef)->onSet(Tui::cast<TuiTable>(inPlaceEnclosingSetRef), inPlaceSetKey, leftResult);
                         }
-                        
-                        rightResult->release();
                     }
                         break;
                         
@@ -3791,13 +3444,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
                         TuiParseError(debugInfo, "invalid left value:%s", leftResult->getDebugString().c_str());
                     }
                         break;
-                }
-                
-                
-                leftResult->release();
-                if(inPlaceEnclosingSetRef)
-                {
-                    inPlaceEnclosingSetRef->release();
                 }
                 
             }
@@ -3812,16 +3458,14 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
     }
     else
     {
-        TuiRef* foundValue = nullptr;
+        Tui::ref foundValue = nullptr;
         if(callData->locals.count(token) != 0)
         {
             foundValue = callData->locals[token];
-            foundValue->retain();
         }
         else if(tokenMap->refsByToken.count(token) != 0)
         {
             foundValue = tokenMap->refsByToken[token];
-            foundValue->retain();
         }
         
         if(foundValue)
@@ -3829,7 +3473,6 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
             if(result && result->type() == foundValue->type() && result->type() != Tui_ref_type_BOOL && result->type() != Tui_ref_type_TABLE && result->type() != Tui_ref_type_FUNCTION)
             {
                 result->assign(foundValue);
-                foundValue->release();
             }
             else
             {
@@ -3845,7 +3488,7 @@ TuiRef* TuiFunction::runExpression(TuiExpression* expression,
     return nullptr;
 }
 
-void loadTokens(TuiTable* parent,
+void loadTokens(Tui::table parent,
                 TuiTokenMap* tokenMap,
                 TuiFunctionCallData* callData)
 {
@@ -3853,14 +3496,13 @@ void loadTokens(TuiTable* parent,
     {
         if(callData->localTokensByStringKey.count(varNameAndToken.first) == 0)
         {
-            TuiTable* parentTable = callData->parentTable;
-            std::set<TuiTable*> found;
+            Tui::table parentTable = callData->parentTable;
+            std::set<Tui::table> found;
             while(parentTable)
             {
                 if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
                 {
-                    TuiRef* var = parentTable->objectsByStringKey[varNameAndToken.first];
-                    var->retain();
+                    Tui::ref var = parentTable->objectsByStringKey[varNameAndToken.first];
                     callData->locals[varNameAndToken.second] = var;
                     callData->localTokensByStringKey[varNameAndToken.first] = varNameAndToken.second;
                     break;
@@ -3876,9 +3518,9 @@ void loadTokens(TuiTable* parent,
     }
 }
 
-TuiRef* TuiFunction::runStatement(TuiStatement* statement,
-                                  TuiRef* result,
-                                  TuiTable* parent,
+Tui::ref TuiFunction::runStatement(TuiStatement* statement,
+                                  const Tui::ref& result,
+                                  const Tui::table& parent,
                                   TuiTokenMap* tokenMap,
                                   TuiFunctionCallData* callData,
                                   TuiDebugInfo* callingDebugInfo,
@@ -3904,10 +3546,10 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             break;
         case Tui_statement_type_returnExpression:
         {
-            TuiRef* existingValue = result;
+            Tui::ref existingValue = result;
             uint32_t tokenPos = 0;
             TuiDebugInfoPush(callingDebugInfo, debugInfoLine->fileName, debugInfoLine->lineNumber);
-            TuiRef* newResult = runExpression(statement->expression, &tokenPos, existingValue, parent, tokenMap, callData, callingDebugInfo);
+            Tui::ref newResult = runExpression(statement->expression, &tokenPos, existingValue, parent, tokenMap, callData, callingDebugInfo);
             TuiDebugInfoPop(callingDebugInfo);
             if(newResult)
             {
@@ -3926,8 +3568,8 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             std::string setKey = ""; //this is set only if a Tui_token_childByString is found eg. color.x
             std::string subTypeSetKey = ""; //this is set only if a Tui_token_childByString is found eg. color.x
             int setIndex = -1;
-            TuiRef* enclosingSetRef = nullptr;
-            TuiRef* subTypeRef = nullptr; //this is set only if a Tui_token_childByString is found eg. color.x or foo.table
+            Tui::ref enclosingSetRef = nullptr;
+            Tui::ref subTypeRef = nullptr; //this is set only if a Tui_token_childByString is found eg. color.x or foo.table
             
             TuiDebugInfoPush(callingDebugInfo, debugInfoLine->fileName, debugInfoLine->lineNumber);
             runExpression(statement->expression, &tokenPos, nullptr, parent, tokenMap, callData, callingDebugInfo, &setKey, &setIndex, &enclosingSetRef, &subTypeSetKey, &subTypeRef);
@@ -3936,14 +3578,9 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             if(enclosingSetRef)
             {
-                if(((TuiTable*)enclosingSetRef)->onSet && !setKey.empty())
+                if(Tui::cast<TuiTable>(enclosingSetRef)->onSet && !setKey.empty())
                 {
-                    ((TuiTable*)enclosingSetRef)->onSet(enclosingSetRef, setKey, subTypeRef);
-                }
-                enclosingSetRef->release();
-                if(subTypeRef)
-                {
-                    subTypeRef->release();
+                    Tui::cast<TuiTable>(enclosingSetRef)->onSet(enclosingSetRef, setKey, subTypeRef);
                 }
             }
         }
@@ -3952,13 +3589,12 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
         {
             uint32_t tokenPos = 0;
             TuiDebugInfoPush(callingDebugInfo, debugInfoLine->fileName, debugInfoLine->lineNumber);
-            TuiRef* newResult = runExpression(statement->expression, &tokenPos, nullptr, parent, tokenMap, callData, callingDebugInfo);
+            Tui::ref newResult = runExpression(statement->expression, &tokenPos, nullptr, parent, tokenMap, callData, callingDebugInfo);
             TuiDebugInfoPop(callingDebugInfo);
             if(newResult)
             {
-                TuiRef* copiedResult = newResult->copy();
+                Tui::ref copiedResult = newResult->copy();
                 parent->arrayObjects.push_back(copiedResult);
-                newResult->release();
             }
         }
             break;
@@ -3970,15 +3606,15 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             std::string setKey = "";
             std::string subTypeSetKey = ""; //this is set only if a Tui_token_childByString is found eg. color.x
             int setIndex = -1;
-            TuiRef* enclosingSetRef = nullptr;
-            TuiRef* subTypeRef = nullptr; //this is set only if a Tui_token_childByString is found eg. color.x or foo.table
+            Tui::ref enclosingSetRef = nullptr;
+            Tui::ref subTypeRef = nullptr; //this is set only if a Tui_token_childByString is found eg. color.x or foo.table
             
             TuiDebugInfoPush(callingDebugInfo, debugInfoLine->fileName, debugInfoLine->lineNumber);
             
-            TuiRef* existingValue = runExpression(statement->expression, &tokenPos, nullptr, parent, tokenMap, callData, callingDebugInfo, &setKey, &setIndex, &enclosingSetRef, &subTypeSetKey, &subTypeRef);
+            Tui::ref existingValue = runExpression(statement->expression, &tokenPos, nullptr, parent, tokenMap, callData, callingDebugInfo, &setKey, &setIndex, &enclosingSetRef, &subTypeSetKey, &subTypeRef);
             tokenPos++;
             
-            TuiRef* newValue = runExpression(statement->expression, &tokenPos, existingValue, parent, tokenMap, callData, callingDebugInfo);
+            Tui::ref newValue = runExpression(statement->expression, &tokenPos, existingValue, parent, tokenMap, callData, callingDebugInfo);
             
             if(newValue)
             {
@@ -4000,16 +3636,16 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                             switch(subTypeSetKey[0])
                             {
                                 case 'x':
-                                    ((TuiVec2*)subTypeRef)->value.x = ((TuiNumber*)newValue)->value;
+                                    Tui::cast<TuiVec2>(subTypeRef)->value.x = (Tui::cast<TuiNumber>(newValue)->value);
                                     break;
                                 case 'y':
-                                    ((TuiVec2*)subTypeRef)->value.y = ((TuiNumber*)newValue)->value;
+                                    Tui::cast<TuiVec2>(subTypeRef)->value.y = (Tui::cast<TuiNumber>(newValue)->value);
                                     break;
                             }
                             
-                            if(enclosingSetRef && ((TuiTable*)enclosingSetRef)->onSet && !setKey.empty())
+                            if(enclosingSetRef && Tui::cast<TuiTable>(enclosingSetRef)->onSet && !setKey.empty())
                             {
-                                ((TuiTable*)enclosingSetRef)->onSet(enclosingSetRef, setKey, subTypeRef);
+                                Tui::cast<TuiTable>(enclosingSetRef)->onSet(enclosingSetRef, setKey, subTypeRef);
                             }
                         }
                             break;
@@ -4022,19 +3658,19 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                             switch(subTypeSetKey[0])
                             {
                                 case 'x':
-                                    ((TuiVec3*)subTypeRef)->value.x = ((TuiNumber*)newValue)->value;
+                                    Tui::cast<TuiVec3>(subTypeRef)->value.x = (Tui::cast<TuiNumber>(newValue)->value);
                                     break;
                                 case 'y':
-                                    ((TuiVec3*)subTypeRef)->value.y = ((TuiNumber*)newValue)->value;
+                                    Tui::cast<TuiVec3>(subTypeRef)->value.y = (Tui::cast<TuiNumber>(newValue)->value);
                                     break;
                                 case 'z':
-                                    ((TuiVec3*)subTypeRef)->value.z = ((TuiNumber*)newValue)->value;
+                                    Tui::cast<TuiVec3>(subTypeRef)->value.z = (Tui::cast<TuiNumber>(newValue)->value);
                                     break;
                             }
                             
-                            if(enclosingSetRef && ((TuiTable*)enclosingSetRef)->onSet && !setKey.empty())
+                            if(enclosingSetRef && Tui::cast<TuiTable>(enclosingSetRef)->onSet && !setKey.empty())
                             {
-                                ((TuiTable*)enclosingSetRef)->onSet(enclosingSetRef, setKey, subTypeRef);
+                                Tui::cast<TuiTable>(enclosingSetRef)->onSet(enclosingSetRef, setKey, subTypeRef);
                             }
                         }
                             break;
@@ -4047,22 +3683,22 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                             switch(subTypeSetKey[0])
                             {
                                 case 'x':
-                                    ((TuiVec4*)subTypeRef)->value.x = ((TuiNumber*)newValue)->value;
+                                    Tui::cast<TuiVec4>(subTypeRef)->value.x = (Tui::cast<TuiNumber>(newValue)->value);
                                     break;
                                 case 'y':
-                                    ((TuiVec4*)subTypeRef)->value.y = ((TuiNumber*)newValue)->value;
+                                    Tui::cast<TuiVec4>(subTypeRef)->value.y = (Tui::cast<TuiNumber>(newValue)->value);
                                     break;
                                 case 'z':
-                                    ((TuiVec4*)subTypeRef)->value.z = ((TuiNumber*)newValue)->value;
+                                    Tui::cast<TuiVec4>(subTypeRef)->value.z = (Tui::cast<TuiNumber>(newValue)->value);
                                     break;
                                 case 'w':
-                                    ((TuiVec4*)subTypeRef)->value.w = ((TuiNumber*)newValue)->value;
+                                    Tui::cast<TuiVec4>(subTypeRef)->value.w = (Tui::cast<TuiNumber>(newValue)->value);
                                     break;
                             }
                             
-                            if(enclosingSetRef && ((TuiTable*)enclosingSetRef)->onSet && !setKey.empty())
+                            if(enclosingSetRef && Tui::cast<TuiTable>(enclosingSetRef)->onSet && !setKey.empty())
                             {
-                                ((TuiTable*)enclosingSetRef)->onSet(enclosingSetRef, setKey, subTypeRef);
+                                Tui::cast<TuiTable>(enclosingSetRef)->onSet(enclosingSetRef, setKey, subTypeRef);
                             }
                         }
                             break;
@@ -4076,24 +3712,21 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 }
                 else if(enclosingSetRef)
                 {
-                    TuiRef* copiedValue = newValue->copy();
+                    Tui::ref copiedValue = newValue->copy();
                     if(setIndex != -1)
                     {
-                        ((TuiTable*)enclosingSetRef)->replace(setIndex, copiedValue);
+                        Tui::cast<TuiTable>(enclosingSetRef)->replace(setIndex, copiedValue);
                     }
                     else
                     {
-                        ((TuiTable*)enclosingSetRef)->set(setKey, copiedValue, false);
+                        Tui::cast<TuiTable>(enclosingSetRef)->set(setKey, copiedValue, false);
                     }
-                    copiedValue->release();
                 }
                 else
                 {
-                    TuiRef* copiedValue = newValue->copy();
+                    Tui::ref copiedValue = newValue->copy();
                     
                     parent->set(statement->varName, copiedValue, false); //set a new local
-                    
-                    newValue->release(); //first release, 4->3
                     newValue = copiedValue;
                 }
             }
@@ -4101,9 +3734,9 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             {
                 if(!setKey.empty())
                 {
-                    if(((TuiTable*)enclosingSetRef)->onSet)
+                    if(Tui::cast<TuiTable>(enclosingSetRef)->onSet)
                     {
-                        ((TuiTable*)enclosingSetRef)->onSet(((TuiTable*)enclosingSetRef), setKey, existingValue);
+                        Tui::cast<TuiTable>(enclosingSetRef)->onSet(Tui::cast<TuiTable>(enclosingSetRef), setKey, existingValue);
                     }
                 }
             }
@@ -4132,15 +3765,15 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     token = tokenMap->capturedTokensByVarName[varName];
                 }
                 
-                TuiRef* newValueToUse = newValue;
+                Tui::ref newValueToUse = newValue;
                 if(!newValue && existingValue)
                 {
-                    newValueToUse = existingValue->retain();
+                    newValueToUse = existingValue;
                 }
                 
                 if(token != 0)
                 {
-                    TuiRef* prevValue = nullptr;
+                    Tui::ref prevValue = nullptr;
                     if(callData->locals.count(token) != 0)
                     {
                         prevValue = callData->locals[token];
@@ -4158,10 +3791,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                             callData->locals.erase(token);
                             callData->localTokensByStringKey.erase(varName);
                         }
-                        if(prevValue)
-                        {
-                            prevValue->release();
-                        }
                         
                         
                         if(enclosingSetRef)
@@ -4174,9 +3803,8 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                                 if(parentCallData && parentCallData->localTokensByStringKey.count(varName) != 0)
                                 {
                                     uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
-                                    TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
-                                    parentCallData->locals[parentLocalSetToken] = (newValueToUse ? newValueToUse->retain() : TUI_NIL);
-                                    prevParentLocal->release();
+                                    Tui::ref prevParentLocal = parentCallData->locals[parentLocalSetToken];
+                                    parentCallData->locals[parentLocalSetToken] = (newValueToUse ? newValueToUse : TUI_NIL);
                                 }
                                 
                                 if(thisCallData->parentTable == enclosingSetRef && (!parentCallData || parentCallData->parentTable != enclosingSetRef))
@@ -4190,7 +3818,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     }
                     else if(newValueToUse)
                     {
-                        newValueToUse->release();
                         newValueToUse = nullptr;
                     }
                 }
@@ -4206,9 +3833,8 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                             if(parentCallData && parentCallData->localTokensByStringKey.count(varName) != 0)
                             {
                                 uint32_t parentLocalSetToken = parentCallData->localTokensByStringKey[varName];
-                                TuiRef* prevParentLocal = parentCallData->locals[parentLocalSetToken];
-                                parentCallData->locals[parentLocalSetToken] = (newValueToUse ? newValueToUse->retain() : TUI_NIL);
-                                prevParentLocal->release();
+                                Tui::ref prevParentLocal = parentCallData->locals[parentLocalSetToken];
+                                parentCallData->locals[parentLocalSetToken] = (newValueToUse ? newValueToUse : TUI_NIL);
                             }
                             
                             if(thisCallData->parentTable == enclosingSetRef && (!parentCallData || parentCallData->parentTable != enclosingSetRef))
@@ -4221,20 +3847,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 }
             }
             
-            if(existingValue)
-            {
-                existingValue->release();
-            }
-            
-            if(enclosingSetRef)
-            {
-                enclosingSetRef->release();
-            }
-            if(subTypeRef)
-            {
-                subTypeRef->release();
-            }
-            
             TuiDebugInfoPop(callingDebugInfo);
             
         }
@@ -4244,12 +3856,8 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             uint32_t tokenPos = 0;
             //debugInfo->lineNumber = statement->lineNumber; //?
             TuiDebugInfoPush(callingDebugInfo, debugInfoLine->fileName, debugInfoLine->lineNumber);
-            TuiRef* result = runExpression(statement->expression, &tokenPos, nullptr, parent, tokenMap, callData, callingDebugInfo);
+            Tui::ref result = runExpression(statement->expression, &tokenPos, nullptr, parent, tokenMap, callData, callingDebugInfo);
             TuiDebugInfoPop(callingDebugInfo);
-            if(result)
-            {
-                result->release();
-            }
         }
             break;
             
@@ -4259,7 +3867,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             TuiForContainerLoopStatement* forStatement = (TuiForContainerLoopStatement*)statement;
             
             
-            TuiTable* functionStateTable = new TuiTable(parent);
+            Tui::table functionStateTable = Tui::create<TuiTable>(parent);
             TuiFunctionCallData scopedCallData;
             scopedCallData.thisTable = callData->thisTable;
             scopedCallData.parentCallData = callData;
@@ -4278,7 +3886,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             TuiDebugInfoPush(callingDebugInfo, debugInfoLine->fileName, debugInfoLine->lineNumber);
             
-            TuiRef* collectionRef = runExpression(forStatement->expression, &containerTokenPos, nullptr, functionStateTable, &forStatement->outerTokenMap, &scopedCallData, callingDebugInfo);
+            Tui::ref collectionRef = runExpression(forStatement->expression, &containerTokenPos, nullptr, functionStateTable, &forStatement->outerTokenMap, &scopedCallData, callingDebugInfo);
             
             if(!collectionRef || collectionRef->type() != Tui_ref_type_TABLE)
             {
@@ -4286,16 +3894,16 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 return nullptr;
             }
             
-            TuiTable* containerObject = (TuiTable*)collectionRef;
+            Tui::table containerObject = Tui::cast<TuiTable>(collectionRef);
             
-            TuiRef* runResult = nullptr;
+            Tui::ref runResult = nullptr;
             
             if(!containerObject->arrayObjects.empty())
             {
                 int i = 0;
-                for(TuiRef* object : containerObject->arrayObjects)
+                for(Tui::ref object : containerObject->arrayObjects)
                 {
-                    TuiTable* innerFunctionStateTable = new TuiTable(functionStateTable);
+                    Tui::table innerFunctionStateTable = Tui::create<TuiTable>(functionStateTable);
                     TuiFunctionCallData innerScopedCallData;
                     innerScopedCallData.thisTable = callData->thisTable;
                     innerScopedCallData.parentCallData = &scopedCallData;
@@ -4307,7 +3915,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     
                     if(forStatement->indexInnerToken != 0)
                     {
-                        TuiNumber* indexNumber = new TuiNumber(i);
+                        Tui::number indexNumber = Tui::create<TuiNumber>(i);
                         innerScopedCallData.locals[forStatement->indexInnerToken] = indexNumber;
                         innerScopedCallData.localTokensByStringKey[forStatement->keyOrIndexName] = forStatement->indexInnerToken;
                         innerFunctionStateTable->set(forStatement->keyOrIndexName, indexNumber);
@@ -4318,7 +3926,6 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     {
                         innerScopedCallData.locals[forStatement->objectInnerToken] = object;
                         innerScopedCallData.localTokensByStringKey[forStatement->objectName] = forStatement->objectInnerToken;
-                        object->retain();
                         innerFunctionStateTable->set(forStatement->objectName, object);
                     }
                     
@@ -4327,11 +3934,9 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     
                     for(auto& tokenAndRef : innerScopedCallData.locals)
                     {
-                        tokenAndRef.second->release(); //release 3 4->3
+                        tokenAndRef.second = nullptr; //release 3 4->3
                     }
-                    
-                    innerFunctionStateTable->release();
-                    for(TuiFunction* capturedFunction : innerScopedCallData.capturedFunctions)
+                    for(Tui::function capturedFunction : innerScopedCallData.capturedFunctions)
                     {
                         capturedFunction->releaseAndRemoveTransientLoopTables(); //delete if needed maybe, and if so remove retain when this is added //release 4 3->2
                     }
@@ -4348,7 +3953,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 
                 for(auto& kv : containerObject->objectsByStringKey)
                 {
-                    TuiTable* innerFunctionStateTable = new TuiTable(functionStateTable);
+                    Tui::table innerFunctionStateTable = Tui::create<TuiTable>(functionStateTable);
                     TuiFunctionCallData innerScopedCallData;
                     innerScopedCallData.thisTable = callData->thisTable;
                     innerScopedCallData.parentCallData = &scopedCallData;
@@ -4360,14 +3965,13 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     
                     if(forStatement->indexInnerToken != 0)
                     {
-                        TuiString* keyString = new TuiString(kv.first);
+                        Tui::string keyString = Tui::create<TuiString>(kv.first);
                         innerScopedCallData.locals[forStatement->indexInnerToken] = keyString;
                         innerFunctionStateTable->set(forStatement->keyOrIndexName, keyString);
                     }
                     
                     innerScopedCallData.locals[forStatement->objectInnerToken] = kv.second;
                     innerScopedCallData.localTokensByStringKey[forStatement->objectName] = forStatement->objectInnerToken;
-                    kv.second->retain();
                     innerFunctionStateTable->set(forStatement->objectName, kv.second);
                     
                     bool breakFound = false;
@@ -4375,11 +3979,9 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     
                     for(auto& tokenAndRef : innerScopedCallData.locals)
                     {
-                        tokenAndRef.second->release();
+                        tokenAndRef.second = nullptr;
                     }
-                    
-                    innerFunctionStateTable->release();
-                    for(TuiFunction* capturedFunction : innerScopedCallData.capturedFunctions)
+                    for(Tui::function capturedFunction : innerScopedCallData.capturedFunctions)
                     {
                         capturedFunction->releaseAndRemoveTransientLoopTables();
                     }
@@ -4395,7 +3997,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             {
                 for(auto& kv : containerObject->objectsByNumberKey)
                 {
-                    TuiTable* innerFunctionStateTable = new TuiTable(functionStateTable);
+                    Tui::table innerFunctionStateTable = Tui::create<TuiTable>(functionStateTable);
                     TuiFunctionCallData innerScopedCallData;
                     innerScopedCallData.thisTable = callData->thisTable;
                     innerScopedCallData.parentCallData = &scopedCallData;
@@ -4407,26 +4009,19 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                     
                     if(forStatement->indexInnerToken != 0)
                     {
-                        TuiNumber* keyNumber = new TuiNumber(kv.first);
+                        Tui::ref keyNumber = Tui::create<TuiNumber>(kv.first);
                         innerScopedCallData.locals[forStatement->indexInnerToken] = keyNumber;
                         innerFunctionStateTable->set(forStatement->keyOrIndexName, keyNumber);
                     }
                     
                     innerScopedCallData.locals[forStatement->objectInnerToken] = kv.second;
                     innerScopedCallData.localTokensByStringKey[forStatement->objectName] = forStatement->objectInnerToken;
-                    kv.second->retain();
                     innerFunctionStateTable->set(forStatement->objectName, kv.second);
                     
                     bool breakFound = false;
                     runResult = runStatementArray(forStatement->statements, result, innerFunctionStateTable, &forStatement->innerTokenMap, &innerScopedCallData, callingDebugInfo, &breakFound);
                     
-                    for(auto& tokenAndRef : innerScopedCallData.locals)
-                    {
-                        tokenAndRef.second->release();
-                    }
-                    
-                    innerFunctionStateTable->release();
-                    for(TuiFunction* capturedFunction : innerScopedCallData.capturedFunctions)
+                    for(Tui::function const& capturedFunction : innerScopedCallData.capturedFunctions)
                     {
                         capturedFunction->releaseAndRemoveTransientLoopTables();
                     }
@@ -4441,14 +4036,12 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             for(auto& tokenAndRef : scopedCallData.locals)
             {
-                tokenAndRef.second->release();
+                tokenAndRef.second= nullptr;
             }
-            functionStateTable->release();
-            for(TuiFunction* capturedFunction : scopedCallData.capturedFunctions)
+            for(Tui::function capturedFunction : scopedCallData.capturedFunctions)
             {
                 capturedFunction->releaseAndRemoveTransientLoopTables();
             }
-            collectionRef->release();
             
             TuiDebugInfoPop(callingDebugInfo);
             
@@ -4467,7 +4060,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             uint32_t tokenPos = 0;
             //debugInfo->lineNumber = statement->lineNumber; //?
             
-            TuiTable* functionStateTable = new TuiTable(parent);
+            Tui::table functionStateTable = Tui::create<TuiTable>(parent);
             TuiFunctionCallData scopedCallData;
             scopedCallData.thisTable = callData->thisTable;
             scopedCallData.parentCallData = callData;
@@ -4480,20 +4073,16 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             
             if(forStatement->initialStatement)
             {
-                TuiRef* runResult = runStatement(forStatement->initialStatement, nullptr, functionStateTable, &forStatement->outerTokenMap, &scopedCallData, callingDebugInfo);
-                if(runResult)
-                {
-                    runResult->release();
-                }
+                Tui::ref runResult = runStatement(forStatement->initialStatement, nullptr, functionStateTable, &forStatement->outerTokenMap, &scopedCallData, callingDebugInfo);
             }
             
             tokenPos = 0;
-            TuiRef* continueResult = runExpression(forStatement->continueExpression, &tokenPos, nullptr, functionStateTable, &forStatement->outerTokenMap, &scopedCallData, callingDebugInfo);
-            TuiRef* runResult = nullptr;
+            Tui::ref continueResult = runExpression(forStatement->continueExpression, &tokenPos, nullptr, functionStateTable, &forStatement->outerTokenMap, &scopedCallData, callingDebugInfo);
+            Tui::ref runResult = nullptr;
             
             while(continueResult && continueResult->boolValue())
             {
-                TuiTable* innerFunctionStateTable = new TuiTable(functionStateTable);
+                Tui::table innerFunctionStateTable = Tui::create<TuiTable>(functionStateTable);
                 TuiFunctionCallData innerScopedCallData;
                 innerScopedCallData.thisTable = callData->thisTable;
                 innerScopedCallData.parentCallData = &scopedCallData;
@@ -4509,10 +4098,9 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 
                 for(auto& tokenAndRef : innerScopedCallData.locals)
                 {
-                    tokenAndRef.second->release();
+                    tokenAndRef.second= nullptr;
                 }
-                innerFunctionStateTable->release();
-                for(TuiFunction* capturedFunction : innerScopedCallData.capturedFunctions)
+                for(Tui::function capturedFunction : innerScopedCallData.capturedFunctions)
                 {
                     capturedFunction->releaseAndRemoveTransientLoopTables();
                 }
@@ -4525,33 +4113,22 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                 
                 if(forStatement->incrementStatement)
                 {
-                    TuiRef* runResult = runStatement(forStatement->incrementStatement, nullptr, functionStateTable, &forStatement->outerTokenMap, &scopedCallData,callingDebugInfo);
-                    if(runResult)
-                    {
-                        runResult->release();
-                    }
+                    Tui::ref runResult = runStatement(forStatement->incrementStatement, nullptr, functionStateTable, &forStatement->outerTokenMap, &scopedCallData,callingDebugInfo);
                 }
                 
                 tokenPos = 0;
-                TuiRef* newResult = runExpression(forStatement->continueExpression, &tokenPos, continueResult, functionStateTable, &forStatement->outerTokenMap, &scopedCallData, callingDebugInfo);
+                Tui::ref newResult = runExpression(forStatement->continueExpression, &tokenPos, continueResult, functionStateTable, &forStatement->outerTokenMap, &scopedCallData, callingDebugInfo);
                 if(newResult)
                 {
-                    continueResult->release();
                     continueResult = newResult;
                 }
-            }
-            if(continueResult)
-            {
-                continueResult->release();
             }
             
             for(auto& tokenAndRef : scopedCallData.locals)
             {
-                tokenAndRef.second->release();
+                tokenAndRef.second= nullptr;
             }
-            
-            functionStateTable->release();
-            for(TuiFunction* capturedFunction : scopedCallData.capturedFunctions)
+            for(Tui::function capturedFunction : scopedCallData.capturedFunctions)
             {
                 capturedFunction->releaseAndRemoveTransientLoopTables();
             }
@@ -4572,18 +4149,17 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
             while(currentSatement)
             {
                 uint32_t tokenPos = 0;
-                TuiRef* expressionResult = runExpression(currentSatement->expression, &tokenPos, nullptr, parent, tokenMap, callData, callingDebugInfo);
+                Tui::ref expressionResult = runExpression(currentSatement->expression, &tokenPos, nullptr, parent, tokenMap, callData, callingDebugInfo);
                 
                 bool expressionPass = true;
                 if(expressionResult)
                 {
                     expressionPass = expressionResult->boolValue();
-                    expressionResult->release();
                 }
                 
                 if(expressionPass)
                 {
-                    TuiRef* runResult = runStatementArray(currentSatement->statements, result, parent, tokenMap, callData, callingDebugInfo, breakFound);
+                    Tui::ref runResult = runStatementArray(currentSatement->statements, result, parent, tokenMap, callData, callingDebugInfo, breakFound);
                     
                     if(runResult)
                     {
@@ -4602,7 +4178,7 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
                         }
                         else
                         {
-                            TuiRef* runResult = runStatementArray(currentSatement->elseIfStatement->statements, result, parent, tokenMap, callData,callingDebugInfo, breakFound);
+                            Tui::ref runResult = runStatementArray(currentSatement->elseIfStatement->statements, result, parent, tokenMap, callData,callingDebugInfo, breakFound);
                             if(runResult)
                             {
                                 TuiDebugInfoPop(callingDebugInfo);
@@ -4627,9 +4203,9 @@ TuiRef* TuiFunction::runStatement(TuiStatement* statement,
 }
 
     
-TuiRef* TuiFunction::runStatementArray(std::vector<TuiStatement*>& statements_,
-                                       TuiRef* result,
-                                       TuiTable* parent,
+Tui::ref TuiFunction::runStatementArray(std::vector<TuiStatement*>& statements_,
+                                       const Tui::ref& result,
+                                       const Tui::table& parent,
                                        TuiTokenMap* tokenMap,
                                        TuiFunctionCallData* callData,
                                        TuiDebugInfo* debugInfo,
@@ -4641,7 +4217,7 @@ TuiRef* TuiFunction::runStatementArray(std::vector<TuiStatement*>& statements_,
         {
             return nullptr;
         }
-        TuiRef* newResult = TuiFunction::runStatement(statement, result, parent, tokenMap, callData, debugInfo, breakFound);
+        Tui::ref newResult = TuiFunction::runStatement(statement, result, parent, tokenMap, callData, debugInfo, breakFound);
         if(newResult)
         {
             return newResult;
@@ -4652,86 +4228,29 @@ TuiRef* TuiFunction::runStatementArray(std::vector<TuiStatement*>& statements_,
 }
 
     
-TuiFunction::TuiFunction(TuiTable* parentTable_)
+TuiFunction::TuiFunction(Tui::table parentTable_)
 :TuiRef()
 {
     parentTable = parentTable_;
 }
 
 
-TuiFunction::TuiFunction(std::function<TuiRef*(TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo)> func_)
+TuiFunction::TuiFunction(std::function<Tui::ref(const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo)> func_)
 :TuiRef()
 {
     func = func_;
 }
 
-
-void TuiFunction::deleteIfNeeded()
-{
-    if(refCount - retainedTransientLoopTables.size() == 0)
-    {
-#if DEBUG_CHECK_FOR_OVER_RELEASE
-        TuiError("Over release");
-#else
-        for(TuiTable* retainedTransientLoopTable : retainedTransientLoopTables)
-        {
-            retainedTransientLoopTable->release();
-        }
-        delete this;
-#endif
-    }
-}
-
-void TuiFunction::release()
-{
-    refCount--;
-    deleteIfNeeded();
-}
-
 void TuiFunction::releaseAndRemoveTransientLoopTables()
 {
-    refCount--;
-    if(refCount - retainedTransientLoopTables.size() == 0)
-    {
-#if DEBUG_CHECK_FOR_OVER_RELEASE
-        TuiError("Over release");
-#else
-        for(TuiTable* retainedTransientLoopTable : retainedTransientLoopTables)
-        {
-            retainedTransientLoopTable->release();
-        }
-        delete this;
-#endif
-    }
-    else
-    {
-        retainedTransientLoopTables.clear();
-    }
+    retainedTransientLoopTables.clear();
 }
 
-TuiFunction::~TuiFunction()
-{
-    for(TuiStatement* statement : statements)
-    {
-        statement->refCount--;
-        if(statement->refCount <= 0)
-        {
-            delete statement;
-        }
-    }
-    
-    for(auto& tokenAndRef : tokenMap.refsByToken)
-    {
-        tokenAndRef.second->release();
-    }
-}
-
-
-TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
-             TuiRef* existingResult,
+Tui::ref TuiFunction::runTableConstruct(const Tui::table& state,
+             const Tui::ref& existingResult,
              TuiDebugInfo* callingDebugInfo)
 {
-    TuiTable* functionStateTable = new TuiTable(state);
+    Tui::table functionStateTable = Tui::create<TuiTable>(state);
     TuiFunctionCallData callData;
     callData.parentTable = parentTable;
     callData.thisTable = parentTable;
@@ -4742,20 +4261,18 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
         {
             if(tokenMap.refsByToken.count(varNameAndToken.second) != 0)
             {
-                TuiRef* var = tokenMap.refsByToken[varNameAndToken.second];
-                var->retain();
+                Tui::ref var = tokenMap.refsByToken[varNameAndToken.second];
                 callData.locals[varNameAndToken.second] = var;
             }
             else
             {
-                TuiTable* parentTable = state;
-                std::set<TuiTable*> found; //I am not entirely sure what is causing circular references, but I think it is unavoidable sometimes, this ensures no infinite loop here.
+                Tui::table parentTable = state;
+                std::set<Tui::table> found; //I am not entirely sure what is causing circular references, but I think it is unavoidable sometimes, this ensures no infinite loop here.
                 while(parentTable)
                 {
                     if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
                     {
-                        TuiRef* var = parentTable->objectsByStringKey[varNameAndToken.first];
-                        var->retain();
+                        Tui::ref var = parentTable->objectsByStringKey[varNameAndToken.first];
                         callData.locals[varNameAndToken.second] = var;
                         break;
                     }
@@ -4772,15 +4289,11 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
     
     loadTokens(parentTable, &tokenMap, &callData); //not sure if this is required
     
-    TuiRef* result = runStatementArray(statements,  existingResult, functionStateTable, &tokenMap, &callData, callingDebugInfo);
-    if(result)
-    {
-        result->release();
-    }
+    Tui::ref result = runStatementArray(statements,  existingResult, functionStateTable, &tokenMap, &callData, callingDebugInfo);
     
     for(auto& tokenAndRef : callData.locals)
     {
-        tokenAndRef.second->release();
+        tokenAndRef.second= nullptr;
     }
     
     functionStateTable->parentTable = nullptr;
@@ -4789,20 +4302,20 @@ TuiRef* TuiFunction::runTableConstruct(TuiTable* state,
 }
 
 
-TuiRef* TuiFunction::call(TuiTable* args,
-                          TuiRef* existingResult,
+Tui::ref TuiFunction::call(const Tui::table& args,
+                          const Tui::ref& existingResult,
                           TuiFunctionCallData* incomingCallData,
                           TuiDebugInfo* callingDebugInfo)
 {
     if(func)
     {
-        TuiRef* result = func(args, existingResult, incomingCallData, callingDebugInfo);
+        Tui::ref result = func(args, existingResult, incomingCallData, callingDebugInfo);
         return result;
     }
     else
     {
         
-        TuiTable* functionStateTable = new TuiTable(parentTable);
+        Tui::table functionStateTable = Tui::create<TuiTable>(parentTable);
         TuiFunctionCallData callData;
         callData.parentCallData = incomingCallData;
         callData.parentTable = parentTable;
@@ -4817,7 +4330,7 @@ TuiRef* TuiFunction::call(TuiTable* args,
         {
             int i = 0;
             int maxArgs = (int)argNames.size();
-            for(TuiRef* arg : args->arrayObjects)
+            for(Tui::ref arg : args->arrayObjects)
             {
                 if(i >= maxArgs)
                 {
@@ -4825,16 +4338,14 @@ TuiRef* TuiFunction::call(TuiTable* args,
                     continue;
                 }
                 const std::string& argName = argNames[i];
-                TuiRef* copiedArg = arg->copy();
+                Tui::ref copiedArg = arg->copy();
                 if(tokenMap.capturedTokensByVarName.count(argName) != 0)
                 {
                     uint32_t token = tokenMap.capturedTokensByVarName[argName];
-                    copiedArg->retain();
                     callData.locals[token] = copiedArg;
                     callData.localTokensByStringKey[argName] = token;
                 }
                 functionStateTable->set(argName, copiedArg, false);
-                copiedArg->release();
                 i++;
             }
         }
@@ -4849,17 +4360,15 @@ TuiRef* TuiFunction::call(TuiTable* args,
         }
         TuiDebugInfoPush(&debugInfoToUse, debugInfoLine.fileName, debugInfoLine.lineNumber);
         
-        TuiRef* result = runStatementArray(statements,  existingResult, functionStateTable, &tokenMap, &callData, &debugInfoToUse);
+        Tui::ref result = runStatementArray(statements,  existingResult, functionStateTable, &tokenMap, &callData, &debugInfoToUse);
         
         
         
         for(auto& tokenAndRef : callData.locals)
         {
-            tokenAndRef.second->release();
+            tokenAndRef.second= nullptr;
         }
-        
-        functionStateTable->release();
-        for(TuiFunction* capturedFunction : callData.capturedFunctions)
+        for(Tui::function capturedFunction : callData.capturedFunctions)
         {
             capturedFunction->releaseAndRemoveTransientLoopTables();
         }
@@ -4870,44 +4379,44 @@ TuiRef* TuiFunction::call(TuiTable* args,
 }
 
 
-TuiRef* TuiFunction::call(const std::string& debugName,
-                          TuiRef* arg1,
-                          TuiRef* arg2,
-                          TuiRef* arg3,
-                          TuiRef* arg4,
-                          TuiRef* arg5,
-                          TuiRef* arg6,
-                          TuiRef* arg7,
-                          TuiRef* arg8)
+Tui::ref TuiFunction::call(const std::string& debugName,
+                          const Tui::ref& arg1,
+                          const Tui::ref& arg2,
+                          const Tui::ref& arg3,
+                          const Tui::ref& arg4,
+                          const Tui::ref& arg5,
+                          const Tui::ref& arg6,
+                          const Tui::ref& arg7,
+                          const Tui::ref& arg8)
 {
     TuiDebugInfo debugInfo;
     TuiDebugInfoPush(&debugInfo, debugName, 1);
-    TuiTable* args = nullptr;
+    Tui::table args = nullptr;
     if(arg1)
     {
-        args = new TuiTable(nullptr);
-        args->arrayObjects.push_back(arg1->retain());
+        args = Tui::create<TuiTable>();
+        args->arrayObjects.push_back(arg1);
         if(arg2)
         {
-            args->arrayObjects.push_back(arg2->retain());
+            args->arrayObjects.push_back(arg2);
             if(arg3)
             {
-                args->arrayObjects.push_back(arg3->retain());
+                args->arrayObjects.push_back(arg3);
                 if(arg4)
                 {
-                    args->arrayObjects.push_back(arg4->retain());
+                    args->arrayObjects.push_back(arg4);
                     if(arg5)
                     {
-                        args->arrayObjects.push_back(arg5->retain());
+                        args->arrayObjects.push_back(arg5);
                         if(arg6)
                         {
-                            args->arrayObjects.push_back(arg6->retain());
+                            args->arrayObjects.push_back(arg6);
                             if(arg7)
                             {
-                                args->arrayObjects.push_back(arg7->retain());
+                                args->arrayObjects.push_back(arg7);
                                 if(arg8)
                                 {
-                                    args->arrayObjects.push_back(arg8->retain());
+                                    args->arrayObjects.push_back(arg8);
                                 }
                             }
                         }
@@ -4917,54 +4426,49 @@ TuiRef* TuiFunction::call(const std::string& debugName,
         }
     }
     
-    TuiRef* result = call(args, nullptr, nullptr, &debugInfo);
-    
-    if(args)
-    {
-        args->release();
-    }
+    Tui::ref result = call(args, nullptr, nullptr, &debugInfo);
     
     return result;
 }
 
 
-TuiRef* TuiFunction::call(TuiFunctionCallData* incomingCallData,
+Tui::ref TuiFunction::call(TuiFunctionCallData* incomingCallData,
                           TuiDebugInfo* callingDebugInfo,
-                          TuiRef* arg1,
-                          TuiRef* arg2,
-                          TuiRef* arg3,
-                          TuiRef* arg4,
-                          TuiRef* arg5,
-                          TuiRef* arg6,
-                          TuiRef* arg7,
-                          TuiRef* arg8)
+                          const Tui::ref& arg1,
+                          const Tui::ref& arg2,
+                          const Tui::ref& arg3,
+                          const Tui::ref& arg4,
+                          const Tui::ref& arg5,
+                          const Tui::ref& arg6,
+                          const Tui::ref& arg7,
+                          const Tui::ref& arg8)
 {
-    TuiTable* args = nullptr;
+    Tui::table args = nullptr;
     if(arg1)
     {
-        args = new TuiTable(nullptr);
-        args->arrayObjects.push_back(arg1->retain());
+        args = Tui::create<TuiTable>();
+        args->arrayObjects.push_back(arg1);
         if(arg2)
         {
-            args->arrayObjects.push_back(arg2->retain());
+            args->arrayObjects.push_back(arg2);
             if(arg3)
             {
-                args->arrayObjects.push_back(arg3->retain());
+                args->arrayObjects.push_back(arg3);
                 if(arg4)
                 {
-                    args->arrayObjects.push_back(arg4->retain());
+                    args->arrayObjects.push_back(arg4);
                     if(arg5)
                     {
-                        args->arrayObjects.push_back(arg5->retain());
+                        args->arrayObjects.push_back(arg5);
                         if(arg6)
                         {
-                            args->arrayObjects.push_back(arg6->retain());
+                            args->arrayObjects.push_back(arg6);
                             if(arg7)
                             {
-                                args->arrayObjects.push_back(arg7->retain());
+                                args->arrayObjects.push_back(arg7);
                                 if(arg8)
                                 {
-                                    args->arrayObjects.push_back(arg8->retain());
+                                    args->arrayObjects.push_back(arg8);
                                 }
                             }
                         }
@@ -4974,12 +4478,7 @@ TuiRef* TuiFunction::call(TuiFunctionCallData* incomingCallData,
         }
     }
     
-    TuiRef* result = call(args, nullptr, incomingCallData, callingDebugInfo);
-    
-    if(args)
-    {
-        args->release();
-    }
+    Tui::ref result = call(args, nullptr, incomingCallData, callingDebugInfo);
     
     return result;
 }

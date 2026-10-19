@@ -1,5 +1,4 @@
 
-
 #ifndef TuiStringUtils_h
 #define TuiStringUtils_h
 
@@ -17,6 +16,12 @@
 #include "TuiSha1.h"
 
 #include <stdexcept>
+
+#ifdef _MSC_VER
+#define _WINSOCKAPI_    // stops windows.h including winsock.h
+#define NOMINMAX
+#include <windows.h>
+#endif // _MSC_VER
 
 
 namespace Tui {
@@ -48,9 +53,6 @@ inline std::string string_format(const std::string fmt, ...) {
 //void printBits(size_t const size, void const * const ptr);
 
 #ifdef _MSC_VER
-#define _WINSOCKAPI_    // stops windows.h including winsock.h
-#define NOMINMAX
-#include <windows.h>
 
 inline std::wstring convertUtf8ToWide(const std::string& str)
 {
