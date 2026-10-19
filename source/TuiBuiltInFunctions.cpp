@@ -212,18 +212,16 @@ void addBaseFunctions(const Tui::table& rootTable, const Tui::function& permissi
         {
             std::string argPath = args->arrayObjects[0]->getStringValue();
             
-            TuiTable* tui_requireCache = rootTable->getTable("tui_requireCache");
+            Tui::table tui_requireCache = rootTable->getTable("tui_requireCache");
             if(!tui_requireCache)
             {
-                tui_requireCache = new TuiTable();
+                tui_requireCache = Tui::createPointer<TuiTable>();
                 rootTable->setTable("tui_requireCache", tui_requireCache);
-                tui_requireCache->release();
             }
             
             if(tui_requireCache->hasKey(argPath))
             {
-                TuiRef* result = tui_requireCache->objectsByStringKey[argPath];
-                result->retain();
+                Tui::ref result = tui_requireCache->get(argPath);
                 return result;
             }
             TuiDebugInfo debugInfo;
@@ -235,8 +233,7 @@ void addBaseFunctions(const Tui::table& rootTable, const Tui::function& permissi
                 Tui::ref pathResult = Tui::castPointer<TuiFunction>(getResourcePathFunc)->call("getResourcePathFunc", args->arrayObjects[0]);
                 if(pathResult)
                 {
-                    TuiRef* loadedRef = TuiRef::runScriptFile(pathResult->getStringValue(), rootTable, &debugInfo);
-                    pathResult->release();
+                    Tui::ref loadedRef = TuiRef::runScriptFile(pathResult->getStringValue(), rootTable, &debugInfo);
                     if(loadedRef && loadedRef != TUI_NIL)
                     {
                         tui_requireCache->set(argPath, loadedRef);
@@ -245,7 +242,7 @@ void addBaseFunctions(const Tui::table& rootTable, const Tui::function& permissi
                 }
                 return TUI_NIL;
             }
-            TuiRef* loadedRef = TuiRef::runScriptFile(Tui::getResourcePath(argPath, callingDebugInfo->currentLine->fileName), rootTable, &debugInfo);
+            Tui::ref loadedRef = TuiRef::runScriptFile(Tui::getResourcePath(argPath, callingDebugInfo->currentLine->fileName), rootTable, &debugInfo);
             if(loadedRef && loadedRef != TUI_NIL)
             {
                 tui_requireCache->set(argPath, loadedRef);
@@ -603,12 +600,12 @@ void addStringTable(const Tui::table& rootTable)
     
     
     // string.numberToHexString(number) returns a string containing the hexadecimal representation of the number interpreted as an 8 bit unsigned integer (0-255) eg. 0 - > "00", 15 - > "0f", 255 - > "ff"
-    stringTable->setFunction("numberToHexString", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    stringTable->setFunction("numberToHexString", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->isNumber())
         {
             uint8_t byteValue = clamp(args->arrayObjects[0]->getNumberValue(), 0.0, 255.0);
             
-            return new TuiString(Tui::string_format("%x%x", (byteValue >> 4), (byteValue & 0x0F)));
+            return Tui::createPointer<TuiString>(Tui::string_format("%x%x", (byteValue >> 4), (byteValue & 0x0F)));
         }
         TuiParseError(callingDebugInfo, "string.numberToHexString expected number");
         return TUI_NIL;
@@ -616,13 +613,13 @@ void addStringTable(const Tui::table& rootTable)
     
     
     // string.hexStringToNumber(hexString) returns a standard number containing a 32 bit unsigned integer value by interpreting the given string eg. "FF" - > 255, "ffff" -> 65535
-    stringTable->setFunction("hexStringToNumber", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    stringTable->setFunction("hexStringToNumber", [](const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> Tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
             try
             {
-                uint32_t value = stoul(((TuiString*)args->arrayObjects[0])->value, 0, 16);
-                return new TuiNumber(value);
+                uint32_t value = stoul((Tui::castPointer<TuiString>(args->arrayObjects[0]))->value, 0, 16);
+                return Tui::createPointer<TuiNumber>(value);
             }
             catch(const std::exception& ex)
             {

@@ -95,7 +95,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
             else
             {
                 Tui::table parentTable = createPointerFromThis<TuiTable>();
-                std::set<TuiTable*> found;
+                std::set<Tui::table> found;
                 while(parentTable)
                 {
                     if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)

@@ -3997,7 +3997,7 @@ Tui::ref TuiFunction::runStatement(TuiStatement* statement,
             {
                 for(auto& kv : containerObject->objectsByNumberKey)
                 {
-                    TuiTable* innerFunctionStateTable = new TuiTable(functionStateTable);
+                    Tui::table innerFunctionStateTable = Tui::createPointer<TuiTable>(functionStateTable);
                     TuiFunctionCallData innerScopedCallData;
                     innerScopedCallData.thisTable = callData->thisTable;
                     innerScopedCallData.parentCallData = &scopedCallData;
@@ -4009,26 +4009,19 @@ Tui::ref TuiFunction::runStatement(TuiStatement* statement,
                     
                     if(forStatement->indexInnerToken != 0)
                     {
-                        TuiNumber* keyNumber = new TuiNumber(kv.first);
+                        Tui::ref keyNumber = Tui::createPointer<TuiNumber>(kv.first);
                         innerScopedCallData.locals[forStatement->indexInnerToken] = keyNumber;
                         innerFunctionStateTable->set(forStatement->keyOrIndexName, keyNumber);
                     }
                     
                     innerScopedCallData.locals[forStatement->objectInnerToken] = kv.second;
                     innerScopedCallData.localTokensByStringKey[forStatement->objectName] = forStatement->objectInnerToken;
-                    kv.second->retain();
                     innerFunctionStateTable->set(forStatement->objectName, kv.second);
                     
                     bool breakFound = false;
                     runResult = runStatementArray(forStatement->statements, result, innerFunctionStateTable, &forStatement->innerTokenMap, &innerScopedCallData, callingDebugInfo, &breakFound);
                     
-                    for(auto& tokenAndRef : innerScopedCallData.locals)
-                    {
-                        tokenAndRef.second->release();
-                    }
-                    
-                    innerFunctionStateTable->release();
-                    for(TuiFunction* capturedFunction : innerScopedCallData.capturedFunctions)
+                    for(Tui::function const& capturedFunction : innerScopedCallData.capturedFunctions)
                     {
                         capturedFunction->releaseAndRemoveTransientLoopTables();
                     }

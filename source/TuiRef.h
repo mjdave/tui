@@ -310,7 +310,7 @@ public: // public static functions to load tui refs from files and data.
     //deserialize from binary serialized tui data files
     static Tui::ref loadBinary(const std::string& path, Tui::table parent = Tui::getRootTable()); // convenience method: as above, but load from file, calling loadBinaryString internally
     
-    static TuiRef* require(const std::string& path, TuiTable* rootTable); //convenience method for the built-in require function, which caches the loaded result
+    static Tui::ref require(const std::string& path, Tui::table rootTable); //convenience method for the built-in require function, which caches the loaded result
     
     // below here are public methods for convenience, however they are generally only useful internally
     

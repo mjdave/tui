@@ -115,7 +115,6 @@ public: //class functions
         return createPointerFromThis();
     }
     
-    virtual void release() override;
     void releaseAndRemoveTransientLoopTables();
     
     Tui::function trueCopy() //assumed to only be used for function construction from a pre-serialized prototype

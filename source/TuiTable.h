@@ -302,14 +302,14 @@ public://functions
         set(key, value);
     }
     
-    TuiTable* getTable(uint32_t key)
+    Tui::table getTable(uint32_t key)
     {
         if(objectsByNumberKey.count(key) != 0)
         {
-            TuiRef* ref = objectsByNumberKey[key];
+            Tui::ref ref = objectsByNumberKey[key];
             if(ref->type() == Tui_ref_type_TABLE)
             {
-                return ((TuiTable*)ref);
+                return Tui::castPointer<TuiTable>(ref);
             }
             else
             {
@@ -319,7 +319,7 @@ public://functions
         return nullptr;
     }
     
-    void setTable(uint32_t key, TuiTable* value)
+    void setTable(uint32_t key, const Tui::table& value)
     {
         set(key, value);
     }

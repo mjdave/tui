@@ -65,7 +65,7 @@ Tui::ref TuiRef::require(const std::string& path, Tui::table rootTable)
 {
     Tui::function requireFunction = rootTable->getFunction("require");
     Tui::string arg = Tui::createPointer<TuiString>(path);
-    Tui::ref result = requireFunction->call("requre", arg);
+    Tui::ref result = requireFunction->call("require", arg);
     return result;
 }
 
