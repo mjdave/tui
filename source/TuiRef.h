@@ -302,12 +302,15 @@ public: // public static functions to load tui refs from files and data.
     //load from human readable tui code files
     static Tui::ref runScriptFile(const std::string& path, Tui::table parent = Tui::getRootTable(), TuiDebugInfo* callingDebugInfo = nullptr, Tui::ref resultRef = nullptr); // convenience method: as above, but human readable from file. If the file returns a result, it is stored in resultRef.
     
+    
     //deserialize from binary serialized tui data in memory
     static Tui::ref loadBinaryString(const char* str, int* currentOffset, Tui::table parent = Tui::getRootTable()); // public method to read from data previously serialized with serializeBinary()
     static Tui::ref loadBinaryString(const std::string& inputString, Tui::table parent = Tui::getRootTable()); // convenience method: as above, but std::string
     
     //deserialize from binary serialized tui data files
     static Tui::ref loadBinary(const std::string& path, Tui::table parent = Tui::getRootTable()); // convenience method: as above, but load from file, calling loadBinaryString internally
+    
+    static TuiRef* require(const std::string& path, TuiTable* rootTable); //convenience method for the built-in require function, which caches the loaded result
     
     // below here are public methods for convenience, however they are generally only useful internally
     
@@ -381,7 +384,7 @@ public://functions
     };
     
     virtual Tui::ref copy() = 0;
-    virtual void assign(const Tui::ref& other) {};
+    virtual void assign(const Tui::ref& other) {}
     virtual bool isEqual(const Tui::ref& other) {
         return (!other || other->type() == Tui_ref_type_NIL);
     }
@@ -391,6 +394,15 @@ public://functions
     virtual std::string getTypeName() {return "undefined";}
     
     virtual bool boolValue() {return false;}
+    
+    virtual bool isNumber() {
+        uint8_t thisType = type();
+        return (thisType == Tui_ref_type_NUMBER ||
+                thisType == Tui_ref_type_NUMBER_8 ||
+                thisType == Tui_ref_type_NUMBER_16 ||
+                thisType == Tui_ref_type_NUMBER_32 ||
+                thisType == Tui_ref_type_NUMBER_64);
+    }
     
     std::string getDebugString() {
         std::string debugString;
@@ -427,18 +439,16 @@ class TuiNil : public TuiRef {
 public:
     TuiNil() {}
     virtual ~TuiNil() {}
-    virtual Tui::ref copy() {return createPointerFromThis();}
-    virtual void assign(const Tui::ref& other) {};
-    
-    virtual void release() {}
+    virtual Tui::ref copy() override {return createPointerFromThis();}
+    virtual void assign(const Tui::ref& other) override {}
 
-    virtual uint8_t type() { return Tui_ref_type_NIL; }
-    virtual std::string getTypeName() {return "nil";}
-    virtual std::string getStringValue() {return "nil";}
-    virtual bool boolValue() {return false;}
-    virtual bool isEqual(const Tui::ref& other) {return (!other || other->type() == Tui_ref_type_NIL );}
+    virtual uint8_t type() override { return Tui_ref_type_NIL; }
+    virtual std::string getTypeName() override {return "nil";}
+    virtual std::string getStringValue() override {return "nil";}
+    virtual bool boolValue() override {return false;}
+    virtual bool isEqual(const Tui::ref& other) override {return (!other || other->type() == Tui_ref_type_NIL );}
     
-    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
     {
         resizeBufferIfNeeded(buffer, currentOffset, 1);
         buffer[(*currentOffset)++] = Tui_binary_type_NIL;
@@ -459,24 +469,24 @@ public:
     TuiUserData(void* value_);
     virtual ~TuiUserData() {}
     
-    virtual Tui::ref copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
+    virtual Tui::ref copy() override //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
         return createPointerFromThis();
     }
     
-    virtual void assign(const Tui::ref& other) {
+    virtual void assign(const Tui::ref& other) override {
         value = (Tui::castPointer<TuiUserData>(other))->value;
     };
     
-    virtual uint8_t type() { return Tui_ref_type_USERDATA; }
-    virtual std::string getTypeName() {return "userData";}
-    virtual std::string getStringValue() {
+    virtual uint8_t type() override { return Tui_ref_type_USERDATA; }
+    virtual std::string getTypeName() override {return "userData";}
+    virtual std::string getStringValue() override {
         return Tui::string_format("%p", value);
     }
-    virtual bool boolValue() {return value != nullptr;}
-    virtual bool isEqual(const Tui::ref& other) {return other && other->type() == Tui_ref_type_USERDATA && (Tui::castPointer<TuiUserData>(other))->value == value;}
+    virtual bool boolValue() override {return value != nullptr;}
+    virtual bool isEqual(const Tui::ref& other) override {return other && other->type() == Tui_ref_type_USERDATA && (Tui::castPointer<TuiUserData>(other))->value == value;}
     
-    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
     {
         TuiError("Userdata objects do not support binary serialization");
     }

@@ -198,6 +198,8 @@ string.split(string, splitChar) // returns an array of substrings split by the g
 string.replace(string, searchString, replacementString) // replaces all occurrences of searchSting within string with replacementString
 string.lower(string) // returns the lower case transformation of string
 string.upper(string) // returns the upper case transformation of string
+string.numberToHexString(number) // returns a string containing the hexadecimal representation of the number interpreted as an 8 bit unsigned integer (0-255) eg. 0 - > "00", 15 - > "0f", 255 - > "ff"
+string.hexStringToNumber(hexString) // returns a standard number containing a 32 bit unsigned integer value by interpreting the given string eg. "FF" - > 255, "ffff" -> 65535
 string.eachChar(string, charFunction) // loops over each character, calling charFunction(charString, charIndex) for each
 string.eachLine(string, lineFunction) // loops over each line, calling lineFunction(lineString, lineIndex) for each
 

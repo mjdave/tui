@@ -50,14 +50,14 @@ public://functions
     virtual ~TuiTable() {}
 
     
-    virtual uint8_t type() { return Tui_ref_type_TABLE; }
-    virtual std::string getTypeName() {return "table";}
-    virtual std::string getStringValue() {return "table";}
-    virtual std::string getDebugStringValue() {return getDebugString();}
-    virtual bool boolValue() {return true;}
-    virtual bool isEqual(const Tui::ref& other) {return other.get() == this;}
+    virtual uint8_t type() override { return Tui_ref_type_TABLE; }
+    virtual std::string getTypeName() override {return "table";}
+    virtual std::string getStringValue() override {return "table";}
+    virtual std::string getDebugStringValue() override {return getDebugString();}
+    virtual bool boolValue() override {return true;}
+    virtual bool isEqual(const Tui::ref& other) override {return other.get() == this;}
     
-    virtual Tui::ref copy() //NOTE! This is not a true copy, use trueCopy() below. copy() is called internally when assigning vars, but tables, function, and userdata are treated like pointers
+    virtual Tui::ref copy() override //NOTE! This is not a true copy, use trueCopy() below. copy() is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
         return createPointerFromThis();
     }
@@ -91,8 +91,8 @@ public://functions
     
     bool addHumanReadableKeyValuePair(const char* str, char** endptr, TuiDebugInfo* debugInfo, Tui::ref* resultRef = nullptr);
     
-    virtual void printHumanReadableString(std::string& debugString, int indent = 0);
-    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset);
+    virtual void printHumanReadableString(std::string& debugString, int indent = 0) override;
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override;
     
     void set(const std::string& key, const Tui::ref& value, bool useCopy = true)
     {
@@ -291,13 +291,35 @@ public://functions
             }
             else
             {
-                TuiError("Found incorrect type (%s) when loading expected table:%s", ref->getTypeName().c_str(), key.c_str());
+                TuiError("Found incorrect type (%s) when loading expected table for key:%s", ref->getTypeName().c_str(), key.c_str());
             }
         }
         return nullptr;
     }
     
     void setTable(const std::string& key, const Tui::table& value)
+    {
+        set(key, value);
+    }
+    
+    TuiTable* getTable(uint32_t key)
+    {
+        if(objectsByNumberKey.count(key) != 0)
+        {
+            TuiRef* ref = objectsByNumberKey[key];
+            if(ref->type() == Tui_ref_type_TABLE)
+            {
+                return ((TuiTable*)ref);
+            }
+            else
+            {
+                TuiError("Found incorrect type (%s) when loading expected table for index:%d", ref->getTypeName().c_str(), key);
+            }
+        }
+        return nullptr;
+    }
+    
+    void setTable(uint32_t key, TuiTable* value)
     {
         set(key, value);
     }
@@ -784,14 +806,7 @@ public://functions
         if(objectsByStringKey.count(key) != 0)
         {
             Tui::ref ref = objectsByStringKey[key];
-            if(ref->type() == Tui_ref_type_BOOL)
-            {
-                return (Tui::castPointer<TuiBool>(ref)->value);
-            }
-            else
-            {
-                TuiError("Found incorrect type (%s) when loading expected bool:%s", ref->getTypeName().c_str(), key.c_str());
-            }
+            return ref->boolValue();
         }
         return false;
     }
@@ -807,14 +822,7 @@ public://functions
         if(objectsByNumberKey.count(key) != 0)
         {
             Tui::ref ref = objectsByNumberKey[key];
-            if(ref->type() == Tui_ref_type_BOOL)
-            {
-                return (Tui::castPointer<TuiBool>(ref)->value);
-            }
-            else
-            {
-                TuiError("Found incorrect type (%s) when loading expected bool:%d", ref->getTypeName().c_str(), key);
-            }
+            return ref->boolValue();
         }
         return false;
     }

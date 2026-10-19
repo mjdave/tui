@@ -110,11 +110,12 @@ public: //class functions
     TuiFunction(std::function<Tui::ref(const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo)> func_);
     virtual ~TuiFunction() {};
     
-    virtual Tui::ref copy() //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
+    virtual Tui::ref copy() override //NOTE! This is not a true copy, copy is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
         return createPointerFromThis();
     }
     
+    virtual void release() override;
     void releaseAndRemoveTransientLoopTables();
     
     Tui::function trueCopy() //assumed to only be used for function construction from a pre-serialized prototype
@@ -132,12 +133,12 @@ public: //class functions
         return copied;
     }
     
-    virtual uint8_t type() { return Tui_ref_type_FUNCTION; }
-    virtual std::string getTypeName() {return "function";}
-    virtual std::string getStringValue() {return "function";}
-    virtual bool isEqual(const Tui::ref& other) {return other.get() == this;}
+    virtual uint8_t type() override { return Tui_ref_type_FUNCTION; }
+    virtual std::string getTypeName() override {return "function";}
+    virtual std::string getStringValue() override {return "function";}
+    virtual bool isEqual(const Tui::ref& other) override {return other.get() == this;}
     
-    virtual bool boolValue() {return true;}
+    virtual bool boolValue() override {return true;}
     
     Tui::ref call(const Tui::table& args,
                  const Tui::ref& existingResult,
@@ -171,7 +172,7 @@ public: //class functions
     
     //void call(Tui::table args, std::function<void(Tui::ref)> callback); //todo async
     
-    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
+    virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
     {
         TuiError("TuiFunction does not support binary serialization");
     }

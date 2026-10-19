@@ -4,6 +4,10 @@
 #include "TuiRef.h"
 
 
+#define CAPTURE_TYPE_NONE 0
+#define CAPTURE_TYPE_EXISTING 1
+#define CAPTURE_TYPE_NEW 2
+
 // tokenize a value chain eg foo.bar().x[3].y
 void serializeValue(const char* str,
                     char** endptr,
@@ -14,7 +18,7 @@ void serializeValue(const char* str,
                     TuiDebugInfo* debugInfo,
                     std::string* foundVarName = nullptr,
                     int* foundVarIndex = nullptr,
-                    bool* foundVarWasCapture = nullptr)
+                    int* foundVarCaptureType = nullptr)
 {
     const char* s = str;
     
@@ -180,9 +184,9 @@ void serializeValue(const char* str,
                                     *foundVarName = stringBuffer;
                                 }
                                 
-                                if(foundVarWasCapture)
+                                if(foundVarCaptureType)
                                 {
-                                    *foundVarWasCapture = true;
+                                    *foundVarCaptureType = CAPTURE_TYPE_EXISTING;
                                 }
                             }
                             else
@@ -195,9 +199,9 @@ void serializeValue(const char* str,
                                     *foundVarName = stringBuffer;
                                 }
                                 
-                                if(foundVarWasCapture)
+                                if(foundVarCaptureType)
                                 {
-                                    *foundVarWasCapture = true;
+                                    *foundVarCaptureType = CAPTURE_TYPE_NEW;
                                 }
                             }
                         }
@@ -280,7 +284,7 @@ void serializeValue(const char* str,
             
             constructorFunction->tokenMap.tokenIndex = tokenMap->tokenIndex + 1;
             
-            bool success = TuiFunction::serializeFunctionBody(s, endptr, parent, &constructorFunction->tokenMap, debugInfo, true, &constructorFunction->statements);
+            bool success = TuiFunction::serializeFunctionBody(s, endptr, parent, &constructorFunction->tokenMap, debugInfo, false, &constructorFunction->statements);
             
             if(!success)
             {
@@ -492,9 +496,9 @@ void serializeValue(const char* str,
                     *foundVarName = stringBuffer;
                 }
                 
-                if(foundVarWasCapture)
+                if(foundVarCaptureType)
                 {
-                    *foundVarWasCapture = true;
+                    *foundVarCaptureType = CAPTURE_TYPE_EXISTING;
                 }
             }
             else
@@ -507,9 +511,9 @@ void serializeValue(const char* str,
                     *foundVarName = stringBuffer;
                 }
                 
-                if(foundVarWasCapture)
+                if(foundVarCaptureType)
                 {
-                    *foundVarWasCapture = true;
+                    *foundVarCaptureType = CAPTURE_TYPE_NEW;
                 }
             }
         }
@@ -818,11 +822,11 @@ static TuiStatement* serializeBasicStatement(const char* str,
     TuiExpression* expression = optionalPreloadedExpression;
     std::string localSetKey;
     int localSetIndex;
-    bool wasLocalCapture = false;
+    int foundVarCaptureType = CAPTURE_TYPE_NONE;
     if(!expression)
     {
         expression = new TuiExpression();
-        serializeValue(s, endptr, expression, parent, tokenMap, 0, debugInfo, &localSetKey, &localSetIndex, &wasLocalCapture);
+        serializeValue(s, endptr, expression, parent, tokenMap, 0, debugInfo, &localSetKey, &localSetIndex, &foundVarCaptureType);
         s = tuiSkipToNextChar(*endptr, debugInfo, true);
     }
     TuiStatement* statement = nullptr;
@@ -844,13 +848,20 @@ static TuiStatement* serializeBasicStatement(const char* str,
         if(*s == '=' && *(s + 1) != '=') // standard x = y assignment
         {
             uint32_t variableTokenToAddToLocals = 0;
-            if(wasLocalCapture && (!sharesParentScope || parent->objectsByStringKey.count(localSetKey) == 0) && expression->tokens[0] != Tui_token_varChain)
+            
+            if(foundVarCaptureType != CAPTURE_TYPE_NONE && (!sharesParentScope || parent->objectsByStringKey.count(localSetKey) == 0) && expression->tokens[0] != Tui_token_varChain)
             {
                 expression->tokens.clear(); //remove parent capture. assumes a few things
                 
                 if(tokenMap->localTokensByVarName.count(localSetKey) != 0)
                 {
                     expression->tokens.push_back(tokenMap->localTokensByVarName[localSetKey]);
+                }
+                else if(foundVarCaptureType != CAPTURE_TYPE_EXISTING && tokenMap->capturedTokensByVarName.count(localSetKey) != 0)
+                {
+                    variableTokenToAddToLocals = tokenMap->capturedTokensByVarName[localSetKey];
+                    tokenMap->capturedTokensByVarName.erase(localSetKey);//erase so that it is not visible when assigning. assigned local later.
+                    expression->tokens.push_back(variableTokenToAddToLocals);
                 }
                 else
                 {
@@ -1643,6 +1654,7 @@ Tui::ref TuiFunction::runExpression(TuiExpression* expression,
                     else
                     {
                         Tui::table parentTable = parent;
+                        std::set<Tui::table> found;
                         while(parentTable)
                         {
                             if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
@@ -1653,6 +1665,11 @@ Tui::ref TuiFunction::runExpression(TuiExpression* expression,
                                 break;
                             }
                             parentTable = parentTable->parentTable;
+                            if(found.count(parentTable) != 0)
+                            {
+                                break;
+                            }
+                            found.insert(parentTable);
                         }
                     }
                 }
@@ -2184,7 +2201,7 @@ Tui::ref TuiFunction::runExpression(TuiExpression* expression,
                 }
                 else
                 {
-                    if(keyConstant->type() != Tui_ref_type_NUMBER)
+                    if(!keyConstant->isNumber())
                     {
                         TuiParseError(debugInfo, "expected number");
                         return nullptr;
@@ -2192,7 +2209,7 @@ Tui::ref TuiFunction::runExpression(TuiExpression* expression,
                     
                     isNumberKey = true;
                     
-                    int64_t arrayIndex = (Tui::castPointer<TuiNumber>(keyConstant)->value);
+                    int64_t arrayIndex = Tui::castPointer<TuiNumber>(keyConstant)->getNumberValue();
                     if(arrayIndex >= 0 && arrayIndex < parent->arrayObjects.size())
                     {
                         child = parent->arrayObjects[arrayIndex];
@@ -2303,7 +2320,7 @@ Tui::ref TuiFunction::runExpression(TuiExpression* expression,
                         }
                         else if(isNumberKey && setIndex)
                         {
-                            *setIndex = (Tui::castPointer<TuiNumber>(keyConstant)->value);
+                            *setIndex = Tui::castPointer<TuiNumber>(keyConstant)->getNumberValue();
                         }
                     }
                     
@@ -3480,6 +3497,7 @@ void loadTokens(Tui::table parent,
         if(callData->localTokensByStringKey.count(varNameAndToken.first) == 0)
         {
             Tui::table parentTable = callData->parentTable;
+            std::set<Tui::table> found;
             while(parentTable)
             {
                 if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
@@ -3490,6 +3508,11 @@ void loadTokens(Tui::table parent,
                     break;
                 }
                 parentTable = parentTable->parentTable;
+                if(found.count(parentTable) != 0)
+                {
+                    break;
+                }
+                found.insert(parentTable);
             }
         }
     }
@@ -3970,6 +3993,53 @@ Tui::ref TuiFunction::runStatement(TuiStatement* statement,
                 }
             }
             
+            if(!runResult && !containerObject->objectsByNumberKey.empty())
+            {
+                for(auto& kv : containerObject->objectsByNumberKey)
+                {
+                    TuiTable* innerFunctionStateTable = new TuiTable(functionStateTable);
+                    TuiFunctionCallData innerScopedCallData;
+                    innerScopedCallData.thisTable = callData->thisTable;
+                    innerScopedCallData.parentCallData = &scopedCallData;
+                    innerScopedCallData.parentTable = innerFunctionStateTable;
+                    innerScopedCallData.transientLoopTables = scopedCallData.transientLoopTables;
+                    innerScopedCallData.transientLoopTables.push_back(innerFunctionStateTable);
+                    
+                    loadTokens(parent, &forStatement->innerTokenMap, &innerScopedCallData);
+                    
+                    if(forStatement->indexInnerToken != 0)
+                    {
+                        TuiNumber* keyNumber = new TuiNumber(kv.first);
+                        innerScopedCallData.locals[forStatement->indexInnerToken] = keyNumber;
+                        innerFunctionStateTable->set(forStatement->keyOrIndexName, keyNumber);
+                    }
+                    
+                    innerScopedCallData.locals[forStatement->objectInnerToken] = kv.second;
+                    innerScopedCallData.localTokensByStringKey[forStatement->objectName] = forStatement->objectInnerToken;
+                    kv.second->retain();
+                    innerFunctionStateTable->set(forStatement->objectName, kv.second);
+                    
+                    bool breakFound = false;
+                    runResult = runStatementArray(forStatement->statements, result, innerFunctionStateTable, &forStatement->innerTokenMap, &innerScopedCallData, callingDebugInfo, &breakFound);
+                    
+                    for(auto& tokenAndRef : innerScopedCallData.locals)
+                    {
+                        tokenAndRef.second->release();
+                    }
+                    
+                    innerFunctionStateTable->release();
+                    for(TuiFunction* capturedFunction : innerScopedCallData.capturedFunctions)
+                    {
+                        capturedFunction->releaseAndRemoveTransientLoopTables();
+                    }
+                    
+                    if(runResult || breakFound)
+                    {
+                        break;
+                    }
+                }
+            }
+            
             
             for(auto& tokenAndRef : scopedCallData.locals)
             {
@@ -4204,6 +4274,7 @@ Tui::ref TuiFunction::runTableConstruct(const Tui::table& state,
             else
             {
                 Tui::table parentTable = state;
+                std::set<Tui::table> found; //I am not entirely sure what is causing circular references, but I think it is unavoidable sometimes, this ensures no infinite loop here.
                 while(parentTable)
                 {
                     if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
@@ -4213,6 +4284,11 @@ Tui::ref TuiFunction::runTableConstruct(const Tui::table& state,
                         break;
                     }
                     parentTable = parentTable->parentTable;
+                    if(found.count(parentTable) != 0)
+                    {
+                        break;
+                    }
+                    found.insert(parentTable);
                 }
             }
         }
@@ -4226,6 +4302,8 @@ Tui::ref TuiFunction::runTableConstruct(const Tui::table& state,
     {
         tokenAndRef.second= nullptr;
     }
+    
+    functionStateTable->parentTable = nullptr;
     
     return functionStateTable;
 }

@@ -2,6 +2,7 @@
 #include "TuiRef.h"
 #include "TuiTypes.h"
 
+#include "TuiFileUtils.h"
 #include "TuiTable.h"
 #include "TuiNumber.h"
 
@@ -31,13 +32,16 @@ Tui::ref TuiRef::loadString(const std::string& inputString, Tui::table parent, T
 
 Tui::ref TuiRef::runScriptFile(const std::string& path, Tui::table parent, TuiDebugInfo* callingDebugInfo, Tui::ref resultRef)
 {
+    // Get absolute path from path
+    std::string absolutePath = Tui::getAbsolutePath(path);
+
     std::ifstream in(path.c_str(), std::ios::in | std::ios::binary);
     TuiDebugInfo debugInfo;
     if(callingDebugInfo)
     {
         TuiDebugInfoCopy(callingDebugInfo, &debugInfo);
     }
-    TuiDebugInfoPush(&debugInfo, path, 1);
+    TuiDebugInfoPush(&debugInfo, absolutePath, 1);
     if(in)
     {
         std::string contents;
@@ -55,6 +59,14 @@ Tui::ref TuiRef::runScriptFile(const std::string& path, Tui::table parent, TuiDe
         TuiError("File not found in TuiRef::runScriptFile at:%s", path.c_str());
     }
     return nullptr;
+}
+
+Tui::ref TuiRef::require(const std::string& path, Tui::table rootTable)
+{
+    Tui::function requireFunction = rootTable->getFunction("require");
+    Tui::string arg = Tui::createPointer<TuiString>(path);
+    Tui::ref result = requireFunction->call("requre", arg);
+    return result;
 }
 
 Tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, Tui::table parent)
