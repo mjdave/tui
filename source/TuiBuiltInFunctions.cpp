@@ -509,7 +509,8 @@ void addStringTable(const tui::table& rootTable)
         return TUI_NIL;
     });
     
-    //returns nil if not found
+    //string.find(string, searchTermString) // searches string, returns the character index of the first occurrence of searchTermString, or nil if not found.
+    //string.find(string, searchTermString, pos) // as above, but starts searching at the character at index pos
     stringTable->setFunction("find", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
         {
@@ -530,8 +531,8 @@ void addStringTable(const tui::table& rootTable)
         return TUI_NIL;
     });
     
-    //string.findBetween(string, startString, endString)
-    //returns nil if wither of the search terms are not found, and empty string if they are found but nothing inbetween.
+    //string.findBetween(string, startString, endString) //returns nil if either of the search terms are not found, and empty string if they are found but nothing in-between.
+    //string.findBetween(string, startString, endString, pos)
     stringTable->setFunction("findBetween", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() > 2 &&
            args->arrayObjects[0]->type() == Tui_ref_type_STRING &&
