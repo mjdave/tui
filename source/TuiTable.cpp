@@ -1,6 +1,6 @@
 #include "TuiTable.h"
 
-bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiDebugInfo* debugInfo, Tui::ref* resultRef)
+bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiDebugInfo* debugInfo, tui::ref* resultRef)
 {
     const char* s = tuiSkipToNextChar(str, debugInfo);
     
@@ -27,7 +27,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
         else
         {
             
-            Tui::ref valueRef = TuiRef::loadExpression(s,
+            tui::ref valueRef = TuiRef::loadExpression(s,
                                                       endptr,
                                                       nullptr,
                                                       nullptr,
@@ -88,19 +88,19 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
         {
             if(tokenMap.refsByToken.count(varNameAndToken.second) != 0)
             {
-                Tui::ref var = tokenMap.refsByToken[varNameAndToken.second];
+                tui::ref var = tokenMap.refsByToken[varNameAndToken.second];
                 callData.locals[varNameAndToken.second] = var;
                 callData.localTokensByStringKey[varNameAndToken.first] = varNameAndToken.second;
             }
             else
             {
-                Tui::table parentTable = createFromThis<TuiTable>();
-                std::set<Tui::table> found;
+                tui::table parentTable = createFromThis<TuiTable>();
+                std::set<tui::table> found;
                 while(parentTable)
                 {
                     if(parentTable->objectsByStringKey.count(varNameAndToken.first) != 0)
                     {
-                        Tui::ref var = parentTable->objectsByStringKey[varNameAndToken.first];
+                        tui::ref var = parentTable->objectsByStringKey[varNameAndToken.first];
                         callData.locals[varNameAndToken.second] = var;
                         callData.localTokensByStringKey[varNameAndToken.first] = varNameAndToken.second;
                         break;
@@ -115,7 +115,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
             }
         }
         
-        Tui::ref result = TuiFunction::runStatement(statement,  nullptr, createFromThis<TuiTable>(), &tokenMap, &callData, debugInfo);
+        tui::ref result = TuiFunction::runStatement(statement,  nullptr, createFromThis<TuiTable>(), &tokenMap, &callData, debugInfo);
         
         if(result)
         {
@@ -134,7 +134,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
         
         bool expressionPass = true;
         
-        Tui::ref expressionResult = TuiRef::loadExpression(s,
+        tui::ref expressionResult = TuiRef::loadExpression(s,
                                                           endptr,
                                                           nullptr, //existing
                                                           nullptr, //leftValue
@@ -237,7 +237,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                         
                         bool expressionPass = true;
                         
-                        Tui::ref expressionResult = TuiRef::loadExpression(s,
+                        tui::ref expressionResult = TuiRef::loadExpression(s,
                                                                          endptr,
                                                                          nullptr, //existing
                                                                          nullptr, //leftValue
@@ -309,13 +309,13 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
         return true; //return now, we are done
     }
     
-    Tui::ref enclosingRef = nullptr;
+    tui::ref enclosingRef = nullptr;
     std::string finalKey = "";
     int finalIndex = -1; //todo this probably isn't actually used, wasn't needed?
     bool accessedParentVariable = false;
     
     //todo should this be released?
-    Tui::ref existingObjectRef = loadValue(s,
+    tui::ref existingObjectRef = loadValue(s,
                                           endptr,
                                           nullptr,
                                           createFromThis<TuiTable>(),
@@ -336,7 +336,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
             existingObjectRef = nullptr;
         }
         
-        Tui::ref valueRef = TuiRef::loadExpression(s,
+        tui::ref valueRef = TuiRef::loadExpression(s,
                                                   endptr,
                                                   existingObjectRef,
                                                   nullptr,
@@ -356,8 +356,8 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                     {
                         TuiError("Unimplemented");
                     }
-                    Tui::ref copyRef = valueRef->copy();
-                    Tui::cast<TuiTable>(enclosingRef)->set(finalKey, copyRef);
+                    tui::ref copyRef = valueRef->copy();
+                    tui::cast<TuiTable>(enclosingRef)->set(finalKey, copyRef);
                 }
                 else if(finalIndex >= 0)
                 {
@@ -365,21 +365,21 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                     {
                         TuiError("Unimplemented");
                     }
-                    Tui::ref copyRef = valueRef->copy();
-                    Tui::cast<TuiTable>(enclosingRef)->replace(finalIndex, copyRef);
+                    tui::ref copyRef = valueRef->copy();
+                    tui::cast<TuiTable>(enclosingRef)->replace(finalIndex, copyRef);
                 }
-                else if(existingObjectRef && existingObjectRef->type() == Tui_ref_type_TABLE && Tui::cast<TuiTable>(existingObjectRef)->arrayObjects.size() == 1)
+                else if(existingObjectRef && existingObjectRef->type() == Tui_ref_type_TABLE && tui::cast<TuiTable>(existingObjectRef)->arrayObjects.size() == 1)
                 {
-                    Tui::ref arrayObject = (Tui::cast<TuiTable>(existingObjectRef)->arrayObjects[0]);
+                    tui::ref arrayObject = (tui::cast<TuiTable>(existingObjectRef)->arrayObjects[0]);
                     if(arrayObject->type() == Tui_ref_type_NUMBER)
                     {
                         if(enclosingRef->type() != Tui_ref_type_TABLE)
                         {
                             TuiError("Unimplemented");
                         }
-                        int indexToUse = (Tui::cast<TuiNumber>(arrayObject)->value);
-                        Tui::ref copyRef = valueRef->copy();
-                        Tui::cast<TuiTable>(enclosingRef)->replace(indexToUse, copyRef);
+                        int indexToUse = (tui::cast<TuiNumber>(arrayObject)->value);
+                        tui::ref copyRef = valueRef->copy();
+                        tui::cast<TuiTable>(enclosingRef)->replace(indexToUse, copyRef);
                     }
                 }
             }
@@ -394,7 +394,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                     {
                         TuiError("Unimplemented");
                     }
-                    Tui::cast<TuiTable>(enclosingRef)->set(finalKey, valueRef);
+                    tui::cast<TuiTable>(enclosingRef)->set(finalKey, valueRef);
                 }
                 else if(finalIndex >= 0)
                 {
@@ -402,7 +402,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                     {
                         TuiError("Unimplemented");
                     }
-                    Tui::cast<TuiTable>(enclosingRef)->replace(finalIndex, valueRef);
+                    tui::cast<TuiTable>(enclosingRef)->replace(finalIndex, valueRef);
                 }
             }
             else
@@ -413,7 +413,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                     {
                         TuiError("Unimplemented");
                     }
-                    Tui::cast<TuiTable>(enclosingRef)->set(finalKey, nullptr);
+                    tui::cast<TuiTable>(enclosingRef)->set(finalKey, nullptr);
                 }
                 else if(finalIndex >= 0)
                 {
@@ -421,7 +421,7 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
                     {
                         TuiError("Unimplemented");
                     }
-                    Tui::cast<TuiTable>(enclosingRef)->replace(finalIndex, valueRef);
+                    tui::cast<TuiTable>(enclosingRef)->replace(finalIndex, valueRef);
                 }
             }
         }
@@ -477,14 +477,14 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
         if(*s == '\0' || operatorOr || operatorAnd || *s == ',' || *s == '\n' || *s == '}' || *s == ']' || *s == ')' || TuiExpressionOperatorsSet.count(*s) != 0)
         {
             //todo memory problems in here
-            Tui::ref leftValue = existingObjectRef;
+            tui::ref leftValue = existingObjectRef;
             
             if(!leftValue && !finalKey.empty())
             {
-                leftValue = Tui::create<TuiString>(finalKey);
+                leftValue = tui::create<TuiString>(finalKey);
             }
             
-            Tui::ref valueRef = leftValue;
+            tui::ref valueRef = leftValue;
             if(valueRef)
             {
                 valueRef = TuiRef::loadExpression(s,
@@ -538,13 +538,13 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
 }
 
 
-Tui::table TuiTable::initWithHumanReadableString(const char* str, char** endptr, const Tui::table& parent, TuiDebugInfo* debugInfo, Tui::ref* resultRef, const Tui::table& inTable)
+tui::table TuiTable::initWithHumanReadableString(const char* str, char** endptr, const tui::table& parent, TuiDebugInfo* debugInfo, tui::ref* resultRef, const tui::table& inTable)
 {
-    Tui::table table = inTable;
+    tui::table table = inTable;
     
     if(!table)
     {
-        table = Tui::create<TuiTable>(parent);
+        table = tui::create<TuiTable>(parent);
     }
     
     const char* s = tuiSkipToNextChar(str, debugInfo);
@@ -584,7 +584,7 @@ Tui::table TuiTable::initWithHumanReadableString(const char* str, char** endptr,
 }
 
 
-void TuiTable::printSingleSubObject(std::string& debugString, int indent, const Tui::ref& object)
+void TuiTable::printSingleSubObject(std::string& debugString, int indent, const tui::ref& object)
 {
     if(indent > 128)
     {
@@ -623,7 +623,7 @@ void TuiTable::printHumanReadableString(std::string& debugString, int indent)
                 debugString+=",";
             }
             first = false;
-            debugString += Tui::string_format("%u", v);
+            debugString += tui::string_format("%u", v);
         }
         debugString += "}\n";
     }
@@ -643,7 +643,7 @@ void TuiTable::printHumanReadableString(std::string& debugString, int indent)
                 debugString+=",";
             }
             first = false;
-            debugString += Tui::string_format("%u", v);
+            debugString += tui::string_format("%u", v);
         }
         debugString += "}\n";
     }
@@ -663,7 +663,7 @@ void TuiTable::printHumanReadableString(std::string& debugString, int indent)
                 debugString+=",";
             }
             first = false;
-            debugString += Tui::string_format("%u", v);
+            debugString += tui::string_format("%u", v);
         }
         debugString += "}\n";
     }
@@ -683,13 +683,13 @@ void TuiTable::printHumanReadableString(std::string& debugString, int indent)
                 debugString+=",";
             }
             first = false;
-            debugString += Tui::string_format("%llu", v);
+            debugString += tui::string_format("%llu", v);
         }
         debugString += "}\n";
     }
     
     
-    for(Tui::ref object : arrayObjects)
+    for(tui::ref object : arrayObjects)
     {
         for(int i = 0; i < indent; i++)
         {
@@ -712,7 +712,7 @@ void TuiTable::printHumanReadableString(std::string& debugString, int indent)
         {
             debugString += " ";
         }
-        debugString += Tui::string_format("%d = ", kv.first);
+        debugString += tui::string_format("%d = ", kv.first);
         printSingleSubObject(debugString, indent, kv.second);
         debugString += "\n";
     }
@@ -789,7 +789,7 @@ void TuiTable::serializeBinaryToBuffer(std::string& buffer, int* currentOffset)
         buffer[(*currentOffset)++] = Tui_binary_type_END_MARKER;
     }
     
-    for(Tui::ref object : arrayObjects)
+    for(tui::ref object : arrayObjects)
     {
         if(object)
         {

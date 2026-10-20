@@ -9,6 +9,14 @@
 
 #include "TuiRef.h"
 
+namespace tui {
+
+    inline tui::string toString(const std::string& value)
+    {
+        return tui::create<TuiString>(value);
+    }
+}
+
 class TuiString : public TuiRef {
 public: //members
     std::string value;
@@ -20,7 +28,7 @@ public://functions
     virtual std::string getStringValue() override {return value;}
     virtual double getNumberValue() override {return atof(value.c_str());}
     virtual bool boolValue() override {return true;}
-    virtual bool isEqual(const Tui::ref& other) override {return other && other->type() == Tui_ref_type_STRING && Tui::cast<TuiString>(other)->value == value;}
+    virtual bool isEqual(const tui::ref& other) override {return other && other->type() == Tui_ref_type_STRING && tui::cast<TuiString>(other)->value == value;}
     
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) override {
         debugString += "\"" + getStringValue() + "\"";
@@ -29,12 +37,12 @@ public://functions
     TuiString(const std::string& value_) : TuiRef() {value = value_;}
     virtual ~TuiString() {};
     
-    virtual Tui::ref copy() override
+    virtual tui::ref copy() override
     {
-        return Tui::create<TuiString>(value);
+        return tui::create<TuiString>(value);
     }
-    virtual void assign(const Tui::ref& other) override {
-        value = (Tui::cast<TuiString>(other)->value);
+    virtual void assign(const tui::ref& other) override {
+        value = (tui::cast<TuiString>(other)->value);
     };
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override

@@ -9,7 +9,7 @@
 #include <filesystem> //c++17
 #include "TuiLog.h"
 
-namespace Tui {
+namespace tui {
 
 std::string getFileContents(const std::string& filename);
 bool getFileContents(const std::string& filename, std::string* contents);

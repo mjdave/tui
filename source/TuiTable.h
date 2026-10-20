@@ -14,29 +14,43 @@
 #include "TuiString.h"
 #include "TuiFunction.h"
 
+namespace tui {
+
+    inline tui::table newTable(const std::string& tableString, const tui::table& parentTable_ = nullptr)
+    {
+        return tui::create<TuiTable>(tableString, parentTable_);
+    }
+
+    inline tui::table newTable(const tui::table& parentTable_ = nullptr) //let's call this newTable, beacuse that makes sense, it's empty
+    {
+        return tui::create<TuiTable>(parentTable_);
+    }
+
+}
+
 class TuiTable : public TuiRef {
 public:
-    Tui::table parentTable = nullptr;
+    tui::table parentTable = nullptr;
     
-    std::vector<Tui::ref> arrayObjects; // these members are public for ease/speed of iteration, but it's often best to use the get/set methods instead
-    std::map<uint32_t, Tui::ref> objectsByNumberKey;
-    std::map<std::string, Tui::ref> objectsByStringKey;
+    std::vector<tui::ref> arrayObjects; // these members are public for ease/speed of iteration, but it's often best to use the get/set methods instead
+    std::map<uint32_t, tui::ref> objectsByNumberKey;
+    std::map<std::string, tui::ref> objectsByStringKey;
     
     std::set<uint8_t> set8; //these sets are for when you need small and fast. Use table.set8Add(t, 32) and table.set8Remove(t, 32)
     std::set<uint16_t> set16;
     std::set<uint32_t> set32;
     std::set<uint64_t> set64; //note currently all numbers in tui scripts are read as doubles and stored in TuiNumbers, so a very large integer can loose precision
     
-    std::function<void(const Tui::ref& table, const std::string& key, const Tui::ref& value)> onSet;
+    std::function<void(const tui::ref& table, const std::string& key, const tui::ref& value)> onSet;
     
 private:
     
-    void printSingleSubObject(std::string& debugString, int indent, const Tui::ref& object);
+    void printSingleSubObject(std::string& debugString, int indent, const tui::ref& object);
 
 public://functions
     
-    TuiTable(Tui::table parentTable_ = nullptr) : TuiRef() {parentTable = parentTable_;}
-    TuiTable(const std::string& tableString, Tui::table parentTable_ = nullptr) : TuiRef() {
+    TuiTable(tui::table parentTable_ = nullptr) : TuiRef() {parentTable = parentTable_;}
+    TuiTable(const std::string& tableString, tui::table parentTable_ = nullptr) : TuiRef() {
         TuiDebugInfo debugInfo;
         TuiDebugInfoPush(&debugInfo, "table string construct", 1);
         const char* cString = tableString.c_str();
@@ -45,7 +59,7 @@ public://functions
         TuiTable::initWithHumanReadableString(cString, &endPtr, parentTable_, &debugInfo, nullptr, createFromThis<TuiTable>());
     }
     
-    static Tui::table initWithHumanReadableString(const char* str, char** endptr, const Tui::table& parent, TuiDebugInfo* debugInfo, Tui::ref* resultRef = nullptr, const Tui::table& inTable = nullptr);
+    static tui::table initWithHumanReadableString(const char* str, char** endptr, const tui::table& parent, TuiDebugInfo* debugInfo, tui::ref* resultRef = nullptr, const tui::table& inTable = nullptr);
     
     virtual ~TuiTable() {}
 
@@ -55,16 +69,16 @@ public://functions
     virtual std::string getStringValue() override {return "table";}
     virtual std::string getDebugStringValue() override {return getDebugString();}
     virtual bool boolValue() override {return true;}
-    virtual bool isEqual(const Tui::ref& other) override {return other.get() == this;}
+    virtual bool isEqual(const tui::ref& other) override {return other.get() == this;}
     
-    virtual Tui::ref copy() override //NOTE! This is not a true copy, use trueCopy() below. copy() is called internally when assigning vars, but tables, function, and userdata are treated like pointers
+    virtual tui::ref copy() override //NOTE! This is not a true copy, use trueCopy() below. copy() is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
         return createFromThis();
     }
     
-    Tui::table trueCopy()
+    tui::table trueCopy()
     {
-        Tui::table tableCopy = Tui::create<TuiTable>(parentTable);
+        tui::table tableCopy = tui::create<TuiTable>(parentTable);
         tableCopy->arrayObjects = arrayObjects;
         tableCopy->objectsByStringKey = objectsByStringKey;
         tableCopy->objectsByNumberKey = objectsByNumberKey;
@@ -73,7 +87,7 @@ public://functions
         tableCopy->set32 = set32;
         tableCopy->set64 = set64;
         
-        for(Tui::ref ref : arrayObjects)
+        for(tui::ref ref : arrayObjects)
         {
             tableCopy->arrayObjects.push_back(ref->copy());
         }
@@ -89,16 +103,16 @@ public://functions
     }
 
     
-    bool addHumanReadableKeyValuePair(const char* str, char** endptr, TuiDebugInfo* debugInfo, Tui::ref* resultRef = nullptr);
+    bool addHumanReadableKeyValuePair(const char* str, char** endptr, TuiDebugInfo* debugInfo, tui::ref* resultRef = nullptr);
     
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) override;
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override;
     
-    void set(const std::string& key, const Tui::ref& value, bool useCopy = true)
+    void set(const std::string& key, const tui::ref& value, bool useCopy = true)
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref oldValue = objectsByStringKey[key];
+            tui::ref oldValue = objectsByStringKey[key];
             if(oldValue == value)
             {
                 return;
@@ -121,11 +135,11 @@ public://functions
         }
     }
     
-    void set(uint32_t key, const Tui::ref& value)
+    void set(uint32_t key, const tui::ref& value)
     {
         if(objectsByNumberKey.count(key) != 0)
         {
-            Tui::ref oldValue = objectsByNumberKey[key];
+            tui::ref oldValue = objectsByNumberKey[key];
             if(oldValue == value)
             {
                 return;
@@ -143,19 +157,19 @@ public://functions
         }
     }
     
-    void push(const Tui::ref& value)
+    void push(const tui::ref& value)
     {
         arrayObjects.push_back(value->copy());
     }
     
     void pushString(const std::string& value)
     {
-        arrayObjects.push_back(Tui::create<TuiString>(value));
+        arrayObjects.push_back(tui::create<TuiString>(value));
     }
     
     void pushDouble(const double& value)
     {
-        arrayObjects.push_back(Tui::create<TuiNumber>(value));
+        arrayObjects.push_back(tui::create<TuiNumber>(value));
     }
     
     void pushBool(const bool& value)
@@ -165,25 +179,25 @@ public://functions
     
     void pushVec2(const dvec2& value)
     {
-        arrayObjects.push_back(Tui::create<TuiVec2>(value));
+        arrayObjects.push_back(tui::create<TuiVec2>(value));
     }
     
     void pushVec3(const dvec3& value)
     {
-        arrayObjects.push_back(Tui::create<TuiVec3>(value));
+        arrayObjects.push_back(tui::create<TuiVec3>(value));
     }
     
     void pushVec4(const dvec4& value)
     {
-        arrayObjects.push_back(Tui::create<TuiVec4>(value));
+        arrayObjects.push_back(tui::create<TuiVec4>(value));
     }
     
     void pushMat3(const dmat3& value)
     {
-        arrayObjects.push_back(Tui::create<TuiMat3>(value));
+        arrayObjects.push_back(tui::create<TuiMat3>(value));
     }
     
-    void insert(int insertIndex, const Tui::ref& value)
+    void insert(int insertIndex, const tui::ref& value)
     {
         if(insertIndex < arrayObjects.size())
         {
@@ -207,12 +221,12 @@ public://functions
         return true;
     }
     
-    void replace(int replaceIndex, const Tui::ref& value) //this is used by table[x] = y. if x <= array.size(), then we will replace the object in the array, otherwise, set an objectByNumberKey value. Generally not a good idea to mix arrays and sets, we just do our best
+    void replace(int replaceIndex, const tui::ref& value) //this is used by table[x] = y. if x <= array.size(), then we will replace the object in the array, otherwise, set an objectByNumberKey value. Generally not a good idea to mix arrays and sets, we just do our best
     {
         
         if(replaceIndex < arrayObjects.size())
         {
-            Tui::ref existing = arrayObjects[replaceIndex];
+            tui::ref existing = arrayObjects[replaceIndex];
             arrayObjects[replaceIndex] = value->copy();
         }
         else if(replaceIndex == arrayObjects.size())
@@ -235,7 +249,7 @@ public://functions
         return objectsByNumberKey.count(key) != 0;
     }
     
-    Tui::ref get(const std::string& key)
+    tui::ref get(const std::string& key)
     {
         if(objectsByStringKey.count(key) != 0)
         {
@@ -244,7 +258,7 @@ public://functions
         return nullptr;
     }
     
-    Tui::ref get(const uint32_t numberKey)
+    tui::ref get(const uint32_t numberKey)
     {
         if(objectsByNumberKey.count(numberKey) != 0)
         {
@@ -253,7 +267,7 @@ public://functions
         return nullptr;
     }
     
-    Tui::ref getArray(int arrayIndex)
+    tui::ref getArray(int arrayIndex)
     {
         if(arrayIndex >= 0 && arrayIndex < arrayObjects.size())
         {
@@ -262,14 +276,14 @@ public://functions
         return nullptr;
     }
     
-    Tui::table tableAtArrayIndex(int index)
+    tui::table tableAtArrayIndex(int index)
     {
         if(index >= 0 && index < arrayObjects.size())
         {
-            Tui::ref ref = arrayObjects[index];
+            tui::ref ref = arrayObjects[index];
             if(ref->type() == Tui_ref_type_TABLE)
             {
-                return (Tui::cast<TuiTable>(ref));
+                return (tui::cast<TuiTable>(ref));
             }
             else
             {
@@ -280,14 +294,14 @@ public://functions
     }
     
     
-    Tui::table getTable(const std::string& key)
+    tui::table getTable(const std::string& key)
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             if(ref->type() == Tui_ref_type_TABLE)
             {
-                return (Tui::cast<TuiTable>(ref));
+                return (tui::cast<TuiTable>(ref));
             }
             else
             {
@@ -297,19 +311,19 @@ public://functions
         return nullptr;
     }
     
-    void setTable(const std::string& key, const Tui::table& value)
+    void setTable(const std::string& key, const tui::table& value)
     {
         set(key, value);
     }
     
-    Tui::table getTable(uint32_t key)
+    tui::table getTable(uint32_t key)
     {
         if(objectsByNumberKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByNumberKey[key];
+            tui::ref ref = objectsByNumberKey[key];
             if(ref->type() == Tui_ref_type_TABLE)
             {
-                return Tui::cast<TuiTable>(ref);
+                return tui::cast<TuiTable>(ref);
             }
             else
             {
@@ -319,7 +333,7 @@ public://functions
         return nullptr;
     }
     
-    void setTable(uint32_t key, const Tui::table& value)
+    void setTable(uint32_t key, const tui::table& value)
     {
         set(key, value);
     }
@@ -329,10 +343,10 @@ public://functions
         static const std::string nilString = "";
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             if(ref->type() == Tui_ref_type_STRING)
             {
-                return (Tui::cast<TuiString>(ref)->value);
+                return (tui::cast<TuiString>(ref)->value);
             }
             else
             {
@@ -344,7 +358,7 @@ public://functions
     
     void setString(const std::string& key, const std::string& value)
     {
-        Tui::string ref = Tui::create<TuiString>(value);
+        tui::string ref = tui::create<TuiString>(value);
         set(key, ref);
     }
     
@@ -353,10 +367,10 @@ public://functions
         static const std::string nilString = "";
         if(objectsByNumberKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByNumberKey[key];
+            tui::ref ref = objectsByNumberKey[key];
             if(ref->type() == Tui_ref_type_STRING)
             {
-                return (Tui::cast<TuiString>(ref)->value);
+                return (tui::cast<TuiString>(ref)->value);
             }
             else
             {
@@ -368,7 +382,7 @@ public://functions
     
     void setString(uint32_t key, const std::string& value)
     {
-        Tui::string ref = Tui::create<TuiString>(value);
+        tui::string ref = tui::create<TuiString>(value);
         set(key, ref);
     }
     
@@ -377,10 +391,10 @@ public://functions
         static const dvec2 nilVec2 = dvec2(0.0,0.0);
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             if(ref->type() == Tui_ref_type_VEC2)
             {
-                return (Tui::cast<TuiVec2>(ref)->value);
+                return (tui::cast<TuiVec2>(ref)->value);
             }
             else
             {
@@ -392,7 +406,7 @@ public://functions
     
     void setVec2(const std::string& key, const dvec2& value)
     {
-        Tui::vec2 ref = Tui::create<TuiVec2>(value);
+        tui::vec2 ref = tui::create<TuiVec2>(value);
         set(key, ref);
     }
     
@@ -401,10 +415,10 @@ public://functions
         static const dvec2 nilVec2 = dvec2(0.0,0.0);
         if(objectsByNumberKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByNumberKey[key];
+            tui::ref ref = objectsByNumberKey[key];
             if(ref->type() == Tui_ref_type_VEC2)
             {
-                return (Tui::cast<TuiVec2>(ref)->value);
+                return (tui::cast<TuiVec2>(ref)->value);
             }
             else
             {
@@ -416,7 +430,7 @@ public://functions
     
     void setVec2(uint32_t key, const dvec2& value)
     {
-        Tui::vec2 ref = Tui::create<TuiVec2>(value);
+        tui::vec2 ref = tui::create<TuiVec2>(value);
         set(key, ref);
     }
     
@@ -425,10 +439,10 @@ public://functions
         static const dvec3 nilVec3 = dvec3(0.0,0.0,0.0);
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             if(ref->type() == Tui_ref_type_VEC3)
             {
-                return (Tui::cast<TuiVec3>(ref)->value);
+                return (tui::cast<TuiVec3>(ref)->value);
             }
             else
             {
@@ -440,7 +454,7 @@ public://functions
     
     void setVec3(const std::string& key, const dvec3& value)
     {
-        Tui::vec3 ref = Tui::create<TuiVec3>(value);
+        tui::vec3 ref = tui::create<TuiVec3>(value);
         set(key, ref);
     }
     
@@ -449,10 +463,10 @@ public://functions
         static const dvec3 nilVec3 = dvec3(0.0,0.0,0.0);
         if(objectsByNumberKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByNumberKey[key];
+            tui::ref ref = objectsByNumberKey[key];
             if(ref->type() == Tui_ref_type_VEC3)
             {
-                return (Tui::cast<TuiVec3>(ref)->value);
+                return (tui::cast<TuiVec3>(ref)->value);
             }
             else
             {
@@ -464,7 +478,7 @@ public://functions
     
     void setVec3(uint32_t key, const dvec3& value)
     {
-        Tui::vec3 ref = Tui::create<TuiVec3>(value);
+        tui::vec3 ref = tui::create<TuiVec3>(value);
         set(key, ref);
     }
     
@@ -473,10 +487,10 @@ public://functions
         static const dvec4 nilVec4 = dvec4(0.0,0.0,0.0,0.0);
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             if(ref->type() == Tui_ref_type_VEC4)
             {
-                return (Tui::cast<TuiVec4>(ref)->value);
+                return (tui::cast<TuiVec4>(ref)->value);
             }
             else
             {
@@ -488,7 +502,7 @@ public://functions
     
     void setVec4(const std::string& key, const dvec4& value)
     {
-        Tui::vec4 ref = Tui::create<TuiVec4>(value);
+        tui::vec4 ref = tui::create<TuiVec4>(value);
         set(key, ref);
     }
     
@@ -497,10 +511,10 @@ public://functions
         static const dvec4 nilVec4 = dvec4(0.0,0.0,0.0,0.0);
         if(objectsByNumberKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByNumberKey[key];
+            tui::ref ref = objectsByNumberKey[key];
             if(ref->type() == Tui_ref_type_VEC4)
             {
-                return (Tui::cast<TuiVec4>(ref)->value);
+                return (tui::cast<TuiVec4>(ref)->value);
             }
             else
             {
@@ -512,7 +526,7 @@ public://functions
     
     void setVec4(uint32_t key, const dvec4& value)
     {
-        Tui::vec4 ref = Tui::create<TuiVec4>(value);
+        tui::vec4 ref = tui::create<TuiVec4>(value);
         set(key, ref);
     }
     
@@ -521,10 +535,10 @@ public://functions
         static const dmat3 identity = dmat3(1.0);
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             if(ref->type() == Tui_ref_type_MAT3)
             {
-                return (Tui::cast<TuiMat3>(ref)->value);
+                return (tui::cast<TuiMat3>(ref)->value);
             }
             else
             {
@@ -536,7 +550,7 @@ public://functions
     
     void setMat3(const std::string& key, const dmat3& value)
     {
-        Tui::mat3 ref = Tui::create<TuiMat3>(value);
+        tui::mat3 ref = tui::create<TuiMat3>(value);
         set(key, ref);
     }
     
@@ -545,10 +559,10 @@ public://functions
         static const dmat3 identity = dmat3(1.0);
         if(objectsByNumberKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByNumberKey[key];
+            tui::ref ref = objectsByNumberKey[key];
             if(ref->type() == Tui_ref_type_MAT3)
             {
-                return (Tui::cast<TuiMat3>(ref)->value);
+                return (tui::cast<TuiMat3>(ref)->value);
             }
             else
             {
@@ -560,7 +574,7 @@ public://functions
     
     void setMat3(uint32_t key, const dmat3& value)
     {
-        Tui::mat3 ref = Tui::create<TuiMat3>(value);
+        tui::mat3 ref = tui::create<TuiMat3>(value);
         set(key, ref);
     }
     
@@ -568,10 +582,10 @@ public://functions
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             if(ref->type() == Tui_ref_type_NUMBER)
             {
-                return (Tui::cast<TuiNumber>(ref)->value);
+                return (tui::cast<TuiNumber>(ref)->value);
             }
             else
             {
@@ -583,7 +597,7 @@ public://functions
     
     void setDouble(const std::string& key, double value)
     {
-        Tui::number ref = Tui::create<TuiNumber>(value);
+        tui::number ref = tui::create<TuiNumber>(value);
         set(key, ref);
     }
     
@@ -591,10 +605,10 @@ public://functions
     {
         if(objectsByNumberKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByNumberKey[key];
+            tui::ref ref = objectsByNumberKey[key];
             if(ref->type() == Tui_ref_type_NUMBER)
             {
-                return (Tui::cast<TuiNumber>(ref)->value);
+                return (tui::cast<TuiNumber>(ref)->value);
             }
             else
             {
@@ -606,7 +620,7 @@ public://functions
     
     void setDouble(uint32_t key, double value)
     {
-        Tui::number ref = Tui::create<TuiNumber>(value);
+        tui::number ref = tui::create<TuiNumber>(value);
         set(key, ref);
     }
     
@@ -614,10 +628,10 @@ public://functions
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             if(ref->type() == Tui_ref_type_NUMBER_8)
             {
-                return (Tui::cast<TuiNumber8>(ref)->value);
+                return (tui::cast<TuiNumber8>(ref)->value);
             }
             else
             {
@@ -629,7 +643,7 @@ public://functions
     
     void setInt8(const std::string& key, uint8_t value)
     {
-        Tui::number8 ref = Tui::create<TuiNumber8>(value);
+        tui::number8 ref = tui::create<TuiNumber8>(value);
         set(key, ref);
     }
     
@@ -638,10 +652,10 @@ public://functions
     {
         if(objectsByNumberKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByNumberKey[key];
+            tui::ref ref = objectsByNumberKey[key];
             if(ref->type() == Tui_ref_type_NUMBER_8)
             {
-                return (Tui::cast<TuiNumber8>(ref)->value);
+                return (tui::cast<TuiNumber8>(ref)->value);
             }
             else
             {
@@ -653,7 +667,7 @@ public://functions
     
     void setInt8(uint32_t key, uint8_t value)
     {
-        Tui::number8 ref = Tui::create<TuiNumber8>(value);
+        tui::number8 ref = tui::create<TuiNumber8>(value);
         set(key, ref);
     }
     
@@ -661,10 +675,10 @@ public://functions
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             if(ref->type() == Tui_ref_type_NUMBER_16)
             {
-                return (Tui::cast<TuiNumber16>(ref)->value);
+                return (tui::cast<TuiNumber16>(ref)->value);
             }
             else
             {
@@ -677,7 +691,7 @@ public://functions
     
     void setInt16(const std::string& key, uint16_t value)
     {
-        Tui::number16 ref = Tui::create<TuiNumber16>(value);
+        tui::number16 ref = tui::create<TuiNumber16>(value);
         set(key, ref);
     }
     
@@ -686,10 +700,10 @@ public://functions
     {
         if(objectsByNumberKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByNumberKey[key];
+            tui::ref ref = objectsByNumberKey[key];
             if(ref->type() == Tui_ref_type_NUMBER_16)
             {
-                return (Tui::cast<TuiNumber16>(ref)->value);
+                return (tui::cast<TuiNumber16>(ref)->value);
             }
             else
             {
@@ -701,7 +715,7 @@ public://functions
     
     void setInt16(uint32_t key, uint16_t value)
     {
-        Tui::number16 ref = Tui::create<TuiNumber16>(value);
+        tui::number16 ref = tui::create<TuiNumber16>(value);
         set(key, ref);
     }
     
@@ -709,10 +723,10 @@ public://functions
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             if(ref->type() == Tui_ref_type_NUMBER_32)
             {
-                return (Tui::cast<TuiNumber32>(ref)->value);
+                return (tui::cast<TuiNumber32>(ref)->value);
             }
             else
             {
@@ -724,7 +738,7 @@ public://functions
     
     void setInt32(const std::string& key, uint32_t value)
     {
-        Tui::number32 ref = Tui::create<TuiNumber32>(value);
+        tui::number32 ref = tui::create<TuiNumber32>(value);
         set(key, ref);
     }
     
@@ -734,10 +748,10 @@ public://functions
     {
         if(objectsByNumberKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByNumberKey[key];
+            tui::ref ref = objectsByNumberKey[key];
             if(ref->type() == Tui_ref_type_NUMBER_32)
             {
-                return (Tui::cast<TuiNumber32>(ref)->value);
+                return (tui::cast<TuiNumber32>(ref)->value);
             }
             else
             {
@@ -749,7 +763,7 @@ public://functions
     
     void setInt32(uint32_t key, uint32_t value)
     {
-        Tui::number32 ref = Tui::create<TuiNumber32>(value);
+        tui::number32 ref = tui::create<TuiNumber32>(value);
         set(key, ref);
     }
     
@@ -757,10 +771,10 @@ public://functions
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             if(ref->type() == Tui_ref_type_NUMBER_64)
             {
-                return (Tui::cast<TuiNumber64>(ref)->value);
+                return (tui::cast<TuiNumber64>(ref)->value);
             }
             else
             {
@@ -772,7 +786,7 @@ public://functions
     
     void setInt64(const std::string& key, uint64_t value)
     {
-        Tui::number64 ref = Tui::create<TuiNumber64>(value);
+        tui::number64 ref = tui::create<TuiNumber64>(value);
         set(key, ref);
     }
     
@@ -781,10 +795,10 @@ public://functions
     {
         if(objectsByNumberKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByNumberKey[key];
+            tui::ref ref = objectsByNumberKey[key];
             if(ref->type() == Tui_ref_type_NUMBER_64)
             {
-                return (Tui::cast<TuiNumber64>(ref)->value);
+                return (tui::cast<TuiNumber64>(ref)->value);
             }
             else
             {
@@ -796,7 +810,7 @@ public://functions
     
     void setInt64(uint32_t key, uint64_t value)
     {
-        Tui::number64 ref = Tui::create<TuiNumber64>(value);
+        tui::number64 ref = tui::create<TuiNumber64>(value);
         set(key, ref);
     }
     
@@ -805,7 +819,7 @@ public://functions
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             return ref->boolValue();
         }
         return false;
@@ -813,7 +827,7 @@ public://functions
     
     void setBool(const std::string& key, bool value)
     {
-        Tui::boolean ref = TUI_BOOL(value);
+        tui::boolean ref = TUI_BOOL(value);
         set(key, ref);
     }
     
@@ -821,7 +835,7 @@ public://functions
     {
         if(objectsByNumberKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByNumberKey[key];
+            tui::ref ref = objectsByNumberKey[key];
             return ref->boolValue();
         }
         return false;
@@ -829,18 +843,18 @@ public://functions
     
     void setBool(uint32_t key, bool value)
     {
-        Tui::boolean ref = TUI_BOOL(value);
+        tui::boolean ref = TUI_BOOL(value);
         set(key, ref);
     }
     
-    Tui::function getFunction(const std::string& key)
+    tui::function getFunction(const std::string& key)
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             if(ref->type() == Tui_ref_type_FUNCTION)
             {
-                return (Tui::cast<TuiFunction>(ref));
+                return (tui::cast<TuiFunction>(ref));
             }
             else
             {
@@ -850,13 +864,13 @@ public://functions
         return nullptr;
     }
     
-    void setFunction(const std::string& key, std::function<Tui::ref(const Tui::table& args, const Tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo)> value)
+    void setFunction(const std::string& key, std::function<tui::ref(const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo)> value)
     {
-        Tui::function ref = Tui::create<TuiFunction>(value);
+        tui::function ref = tui::create<TuiFunction>(value);
         set(key, ref);
     }
     
-    void setFunction(const std::string& key, const Tui::function& value)
+    void setFunction(const std::string& key, const tui::function& value)
     {
         set(key, value);
     }
@@ -865,10 +879,10 @@ public://functions
     {
         if(objectsByStringKey.count(key) != 0)
         {
-            Tui::ref ref = objectsByStringKey[key];
+            tui::ref ref = objectsByStringKey[key];
             if(ref->type() == Tui_ref_type_USERDATA)
             {
-                return (Tui::cast<TuiUserData>(ref))->value;
+                return (tui::cast<TuiUserData>(ref))->value;
             }
             else
             {
@@ -880,7 +894,7 @@ public://functions
     
     void setUserData(const std::string& key, void* value)
     {
-        Tui::userData ref = Tui::create<TuiUserData>(value);
+        tui::userData ref = tui::create<TuiUserData>(value);
         set(key, ref);
     }
     

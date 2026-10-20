@@ -24,7 +24,7 @@
 #endif // _MSC_VER
 
 
-namespace Tui {
+namespace tui {
 
 inline std::string string_format(const std::string fmt, ...) {
     int size = ((int)fmt.size()) * 2 + 50;   // Use a rubric appropriate for your code
@@ -83,7 +83,7 @@ inline std::string convertWideToUtf8(const std::string& wstr)
 #endif
 
 
-//#define Tui::string_format(__fmt__, ...) fmt::sprintf(__fmt__, ##__VA_ARGS__)
+//#define tui::string_format(__fmt__, ...) fmt::sprintf(__fmt__, ##__VA_ARGS__)
 
 inline std::string stringByReplacingString(const std::string& input, const std::string& search, const std::string& replace)
 {

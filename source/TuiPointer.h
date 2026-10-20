@@ -14,7 +14,7 @@ template<typename T>
 using TuiPointerSource = std::enable_shared_from_this<T>;
 
 // Helper functions
-namespace Tui
+namespace tui
 {
     // Helper to create a TuiPointer instance from constructor arguments
     template<typename T, typename... Args>

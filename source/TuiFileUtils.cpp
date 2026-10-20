@@ -14,7 +14,7 @@
 #include <unistd.h>
 #endif
 
-namespace Tui {
+namespace tui {
 
 std::string getFileContents(const std::string& filename)
 {
