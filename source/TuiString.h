@@ -11,7 +11,7 @@
 
 namespace tui {
 
-    inline tui::string toString(const std::string& value)
+    inline tui::string newString(const std::string& value)
     {
         return tui::create<TuiString>(value);
     }

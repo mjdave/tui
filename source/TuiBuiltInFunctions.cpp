@@ -80,7 +80,7 @@ static std::function tui_exec = [](const tui::table& args, const tui::ref& exist
             result += buffer.data();
         }
 
-        return toString(result);
+        return newString(result);
     }
 #endif
     return TUI_NIL;
@@ -161,7 +161,7 @@ void addBaseFunctions(const tui::table& rootTable, const tui::function& permissi
             
             if(permissionCallbackFunction)
             {
-                tui::ref functionNameRef = toString("system");
+                tui::ref functionNameRef = newString("system");
                 permissionCallbackFunction->call("permissionCallbackFunction", functionNameRef, args, gotPermissionResultFunction);
             }
             else
@@ -295,7 +295,7 @@ void addBaseFunctions(const tui::table& rootTable, const tui::function& permissi
                                            &finalIndex);
         if(!result && !finalKey.empty())
         {
-            result = toString(finalKey);
+            result = newString(finalKey);
         }
         
         return result;
@@ -319,9 +319,9 @@ void addBaseFunctions(const tui::table& rootTable, const tui::function& permissi
     rootTable->setFunction("type", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() > 0)
         {
-            return toString(args->arrayObjects[0]->getTypeName());
+            return newString(args->arrayObjects[0]->getTypeName());
         }
-        return toString("nil");
+        return newString("nil");
     });
     
     //sleep(seconds) puts the current thread to sleep for the duration given in seconds
@@ -336,13 +336,13 @@ void addBaseFunctions(const tui::table& rootTable, const tui::function& permissi
     //platform() returns a string representing the current running platform, currently one of: ios, macos, windows, linux
     rootTable->setFunction("platform", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
 #if defined _WIN32
-        return toString("windows");
+        return newString("windows");
 #elif defined (__LINUX__) || defined(__gnu_linux__) || defined(__linux__)
-        return toString("linux");
+        return newString("linux");
 #elif TARGET_OS_IPHONE
-        return toString("ios");
+        return newString("ios");
 #elif (__APPLE__)
-        return toString("macos");
+        return newString("macos");
 #endif
     });
 }
@@ -464,7 +464,7 @@ void addStringTable(const tui::table& rootTable)
                 }
             }
             
-            return toString(result);
+            return newString(result);
         }
         TuiParseError(callingDebugInfo, "string.format expected string, args");
         return TUI_NIL;
@@ -494,7 +494,7 @@ void addStringTable(const tui::table& rootTable)
                 TuiParseError(callingDebugInfo, "string.subString pos:%d invalid for string length:%d", pos, (int)(tuiString->value.length()));
                 return TUI_NIL;
             }
-            return toString(tuiString->value.substr(pos, length));
+            return newString(tuiString->value.substr(pos, length));
         }
         TuiParseError(callingDebugInfo, "string.subString expected string, start index, optional length");
         return TUI_NIL;
@@ -503,7 +503,7 @@ void addStringTable(const tui::table& rootTable)
     stringTable->setFunction("sha1", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return toString(TuiSHA1::sha1((toString(args->arrayObjects[0])->value)));
+            return newString(TuiSHA1::sha1((toString(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "string.sha1 expected string");
         return TUI_NIL;
@@ -561,10 +561,10 @@ void addStringTable(const tui::table& rootTable)
             
             if(secondFindLocation - foundStringStartLocation == 0)
             {
-                return toString("");
+                return newString("");
             }
             
-            return toString((toString(args->arrayObjects[0])->value).substr(foundStringStartLocation, secondFindLocation - foundStringStartLocation));
+            return newString((toString(args->arrayObjects[0])->value).substr(foundStringStartLocation, secondFindLocation - foundStringStartLocation));
         }
         TuiParseError(callingDebugInfo, "string.findBetween expected string, startString, endString");
         return TUI_NIL;
@@ -590,7 +590,7 @@ void addStringTable(const tui::table& rootTable)
             tui::table result = tui::create<TuiTable>();
             
             while (std::getline(inputStringStream, foundString, delim)) {
-                result->arrayObjects.push_back(toString(foundString));
+                result->arrayObjects.push_back(newString(foundString));
             }
             
             return result;
@@ -606,7 +606,7 @@ void addStringTable(const tui::table& rootTable)
         args->arrayObjects[1]->type() == Tui_ref_type_STRING &&
         args->arrayObjects[2]->type() == Tui_ref_type_STRING)
         {
-            return toString(tui::stringByReplacingString(toString(args->arrayObjects[0])->value, toString(args->arrayObjects[1])->value, (toString(args->arrayObjects[2])->value)));
+            return newString(tui::stringByReplacingString(toString(args->arrayObjects[0])->value, toString(args->arrayObjects[1])->value, (toString(args->arrayObjects[2])->value)));
         }
         
         TuiParseError(callingDebugInfo, "string.replace expected string, search string, and replace string");
@@ -648,7 +648,7 @@ void addStringTable(const tui::table& rootTable)
         {
             uint8_t byteValue = clamp(args->arrayObjects[0]->getNumberValue(), 0.0, 255.0);
             
-            return toString(tui::string_format("%x%x", (byteValue >> 4), (byteValue & 0x0F)));
+            return newString(tui::string_format("%x%x", (byteValue >> 4), (byteValue & 0x0F)));
         }
         TuiParseError(callingDebugInfo, "string.numberToHexString expected number");
         return TUI_NIL;
@@ -680,7 +680,7 @@ void addStringTable(const tui::table& rootTable)
             tui::string inputString = toString(args->arrayObjects[0]);
             tui::function charFunction = tui::cast<TuiFunction>(args->arrayObjects[1]);
             
-            tui::string charString = toString("");
+            tui::string charString = newString("");
             tui::number indexNumber = tui::create<TuiNumber>(0);
             for(indexNumber->value = 0; indexNumber->value < inputString->value.length(); indexNumber->value++)
             {
@@ -704,7 +704,7 @@ void addStringTable(const tui::table& rootTable)
         {
             tui::function lineFunction = tui::cast<TuiFunction>(args->arrayObjects[1]);
             
-            tui::string lineString = toString("");
+            tui::string lineString = newString("");
             tui::number indexNumber = tui::create<TuiNumber>(0);
             
             std::istringstream inputStringStream((toString(args->arrayObjects[0])->value));
@@ -1522,7 +1522,7 @@ void addFileTable(const tui::table& rootTable, const std::string& sandBoxDir) //
             
             for(auto& fileName : directoryContents)
             {
-                tui::string fileNameRef = toString(fileName);
+                tui::string fileNameRef = newString(fileName);
                 directroyContentsTable->arrayObjects.push_back(fileNameRef);
             }
             
@@ -1538,7 +1538,7 @@ void addFileTable(const tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("sha1", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return toString(TuiSHA1::from_file((toString(args->arrayObjects[0])->value)));
+            return newString(TuiSHA1::from_file((toString(args->arrayObjects[0])->value)));
         }
         TuiParseError(callingDebugInfo, "file.sha1 expected string");
         return TUI_NIL;
@@ -1599,7 +1599,7 @@ void addFileTable(const tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("loadData", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            tui::string result = toString("");
+            tui::string result = newString("");
             bool success = tui::getFileContents(toString(args->arrayObjects[0])->value, &(result->value));
             if(!success)
             {
@@ -1654,7 +1654,7 @@ void addFileTable(const tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("fileName", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return toString(tui::fileNameFromPath((toString(args->arrayObjects[0])->value)));
+            return newString(tui::fileNameFromPath((toString(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1665,7 +1665,7 @@ void addFileTable(const tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("extension", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return toString(tui::fileExtensionFromPath((toString(args->arrayObjects[0])->value)));
+            return newString(tui::fileExtensionFromPath((toString(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1675,7 +1675,7 @@ void addFileTable(const tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("changeExtension", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
         {
-            return toString(tui::changeExtensionForPath(toString(args->arrayObjects[0])->value, (toString(args->arrayObjects[1])->value)));
+            return newString(tui::changeExtensionForPath(toString(args->arrayObjects[0])->value, (toString(args->arrayObjects[1])->value)));
         }
         else
         {
@@ -1685,7 +1685,7 @@ void addFileTable(const tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("removeExtension", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return toString(tui::removeExtensionForPath((toString(args->arrayObjects[0])->value)));
+            return newString(tui::removeExtensionForPath((toString(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1695,7 +1695,7 @@ void addFileTable(const tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("removeLastPathComponent", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return toString(tui::pathByRemovingLastPathComponent((toString(args->arrayObjects[0])->value)));
+            return newString(tui::pathByRemovingLastPathComponent((toString(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1707,7 +1707,7 @@ void addFileTable(const tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("fileSize", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return tui::create<TuiNumber>(tui::fileSizeAtPath((toString(args->arrayObjects[0])->value)));
+            return newNumber(tui::fileSizeAtPath((toString(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1770,7 +1770,7 @@ void addFileTable(const tui::table& rootTable, const std::string& sandBoxDir) //
     fileTable->setFunction("getAbsolutePath", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
-            return toString(tui::getAbsolutePath((toString(args->arrayObjects[0])->value)));
+            return newString(tui::getAbsolutePath((toString(args->arrayObjects[0])->value)));
         }
         else
         {
@@ -1870,12 +1870,12 @@ void addDebugTable(const tui::table& rootTable)
     
     //debug.getFileName() returns the current script file name or debug identifier string
     debugTable->setFunction("getFileName", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
-        return toString(callingDebugInfo->currentLine->fileName);
+        return newString(callingDebugInfo->currentLine->fileName);
     });
     
     //debug.getLineNumber() returns the line number in the current script file
     debugTable->setFunction("getLineNumber", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
-        return tui::create<TuiNumber>(callingDebugInfo->currentLine->lineNumber);
+        return newNumber(callingDebugInfo->currentLine->lineNumber);
     });
     
     

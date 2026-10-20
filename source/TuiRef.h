@@ -459,7 +459,8 @@ private:
 private:
 };
 
-static tui::nil TUI_NIL = tui::create<TuiNil>();
+static TuiPointer<TuiNil> TUI_NIL = tui::create<TuiNil>();
+
 
 class TuiUserData : public TuiRef {
 public:

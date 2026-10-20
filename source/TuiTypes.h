@@ -41,7 +41,6 @@ namespace tui
     using vec4 = TuiPointer<TuiVec4>;
     using mat3 = TuiPointer<TuiMat3>;
     using ref = TuiPointer<TuiRef>;
-    using nil = TuiPointer<TuiNil>;
     using userData = TuiPointer<TuiUserData>;
     using statement = TuiPointer<TuiStatement>;
     using ifStatement = TuiPointer<TuiIfStatement>;

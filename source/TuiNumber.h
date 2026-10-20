@@ -20,43 +20,43 @@ class TuiNumber64;
 
 namespace tui {
 
-    inline tui::number toNumber(const double& value)
+    inline tui::number newNumber(const double& value)
     {
         return tui::create<TuiNumber>(value);
     }
-    inline tui::number8 toNumber8(uint8_t value)
+    inline tui::number8 newNumber8(uint8_t value)
     {
         return tui::create<TuiNumber8>(value);
     }
-    inline tui::number16 toNumber16(uint16_t value)
+    inline tui::number16 newNumber16(uint16_t value)
     {
         return tui::create<TuiNumber16>(value);
     }
-    inline tui::number32 toNumber32(uint32_t value)
+    inline tui::number32 newNumber32(uint32_t value)
     {
         return tui::create<TuiNumber32>(value);
     }
-    inline tui::number64 toNumber64(uint64_t value)
+    inline tui::number64 newNumber64(uint64_t value)
     {
         return tui::create<TuiNumber64>(value);
     }
-    inline tui::boolean toBool(bool value)
+    inline tui::boolean newBool(bool value)
     {
         return tui::create<TuiBool>(value);
     }
-    inline tui::vec2 toVec2(const dvec2& value)
+    inline tui::vec2 newVec2(const dvec2& value)
     {
         return tui::create<TuiVec2>(value);
     }
-    inline tui::vec3 toVec3(const dvec3& value)
+    inline tui::vec3 newVec3(const dvec3& value)
     {
         return tui::create<TuiVec3>(value);
     }
-    inline tui::vec4 toVec4(const dvec4& value)
+    inline tui::vec4 newVec4(const dvec4& value)
     {
         return tui::create<TuiVec4>(value);
     }
-    inline tui::mat3 toMat3(const dmat3& value)
+    inline tui::mat3 newMat3(const dmat3& value)
     {
         return tui::create<TuiMat3>(value);
     }
