@@ -1,6 +1,6 @@
 # Tui Coding Language
 
-NOTE (September 2026):
+NOTE (October 2026):
 >Tui still has a few issues but is nearing feature completion and is actively being used and improved as the foundation of the [katipo](https://ktp.nz) protocol, including [Waraki Music Player](https://ktp.nz/waraki/index.html) and [Blockheads 2](https://theblockheads.net/2026/09/10/blockheads-2.html).
 >
 >There is a fully functional Solitaire game written in tui, you can download the [Koru browser](https://github.com/mjdave/katipoBrowser/releases) to play it, or have a look at the the [Solitaire tui source code](https://github.com/mjdave/daves-katipo-sites/blob/main/solitaire/clientSite/scripts/code.tui) for a good working example.
@@ -266,28 +266,8 @@ math.rotate(matrix, angleDegrees, axisVec3) //rotates a given mat3 rotation matr
 
 ```
 
-### Supplying custom functions in C++
-
-You can supply your own functions in C++ easily by providing a std::function that takes tables for args and any parent state, and gives you the result, eg. here is the code that adds the print function:
-```c++
-
-rootTable->setFunction("print", [](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-    if(args && args->arrayObjects.size() > 0)
-    {
-        std::string printString = "";
-        for(TuiRef* arg : args->arrayObjects)
-        {
-            printString += arg->getDebugStringValue();
-        }
-        TuiLog("%s", printString.c_str());
-    }
-    return TUI_NIL;
-});
-
-```
-
 ## Vectors
-The only dependency of tui is glm, which currently exposes vec2, vec3, vec4, and mat3(WIP) types, as well as a number of builtin math functions (not yet implemented)
+The only dependency of tui is glm, which currently exposes vec2, vec3, vec4, and mat3 types, as well as a number of builtin math functions
 ```javascript
 size = vec2(400,200)
 color = vec4(0.0,1.0,0.0,1.0)
@@ -377,13 +357,30 @@ You can add the files to your c++ project, run a script, and access the output e
 
 int main()
 {
-    TuiTable* table = (TuiTable*)TuiRef::runScriptFile("config.tui"); // load a human readable tui file
+    tui::table table = tui::toTable(TuiRef::runScriptFile("config.tui")); // load a human readable tui file
     std::string playerName = table->getString("playerName"); // get a string
     double playDuration = table->getDouble("playDuration"); // get a number
     table->setDouble("playDuration", playDuration + 1.0); // set a number
     table->saveToFile("config.tui"); // save a human readable tui file
-    table->release(); // cleanup
 }
+
+```
+
+You can supply your own functions in C++ by providing a std::function. Here is the code that adds the print function:
+```c++
+
+rootTable->setFunction("print", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
+    if(args && args->arrayObjects.size() > 0)
+    {
+        std::string printString = "";
+        for(tui::ref arg : args->arrayObjects)
+        {
+            printString += arg->getDebugStringValue();
+        }
+        TuiLog("%s", printString.c_str());
+    }
+    return TUI_NIL;
+});
 
 ```
 
@@ -398,10 +395,10 @@ Tui supports fast serialization to and from both binary and human readable forma
 ```c++
 //binary:
 std::string binaryData = table->serializeBinary();
-TuiRef* unserializedValue = TuiRef::loadBinary(binaryData);
+tui::ref unserializedValue = TuiRef::loadBinary(binaryData);
 //human readable:
 std::string humanReadableData = table->serializeHumanReadable();
-TuiRef* unserializedValue = TuiRef::loadString(humanReadableData);
+tui::ref unserializedValue = TuiRef::loadString(humanReadableData);
 ```
 
 # onSet notifications for tables in C++
@@ -412,20 +409,20 @@ Instead of implementing get/set bindings strictly as functions, with tui you can
 
 void View::init()
 {
-    stateTable = new TuiTable(nullptr);
-    stateTable->onSet = [this](TuiRef* table, const std::string& key, TuiRef* value) {
+    stateTable = tui::newTable();
+    stateTable->onSet = [this](const tui::ref& table, const std::string& key, const tui::ref& value) {
         tableKeyChanged(key, value);
     };
     stateTable->setVec2("size", size); // this will call tableKeyChanged
 }
 
-void View::tableKeyChanged(const std::string& key, TuiRef* valueRef)
+void View::tableKeyChanged(const std::string& key, const tui::ref& value)
 {
     if(key == "size")
     {
         switch (value->type()) {
             case Tui_ref_type_VEC2:
-                setSize(((TuiVec2*)valueRef)->value); // value is a dvec2
+                setSize(valueRef->vec2Value()); // vec2Value() returns a dvec2
                 break;
             default:
                 error("Expected vec2");
