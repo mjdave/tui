@@ -82,7 +82,7 @@ public://functions
     
     virtual uint8_t type() override { return Tui_ref_type_NUMBER; }
     virtual std::string getTypeName() override {return "number";}
-    virtual std::string getStringValue() override {
+    virtual std::string stringValue() override {
         if(value == floor(value))
         {
             return tui::string_format("%.0f", value);
@@ -90,7 +90,7 @@ public://functions
         return tui::string_format("%s", tui::doubleToString(value).c_str());
     }
     virtual bool boolValue() override {return true;}
-    virtual double getNumberValue() override {return value;}
+    virtual double numberValue() override {return value;}
     virtual bool isEqual(const tui::ref& other) override {return other && other->type() == Tui_ref_type_NUMBER && tui::cast<TuiNumber>(other)->value == value;}
     
     
@@ -125,11 +125,11 @@ public://functions
     
     virtual uint8_t type() override { return Tui_ref_type_NUMBER_8; }
     virtual std::string getTypeName() override {return "number8";}
-    virtual std::string getStringValue() override {
+    virtual std::string stringValue() override {
         return tui::string_format("%u", value);
     }
     virtual bool boolValue() override {return true;}
-    virtual double getNumberValue() override {return value;}
+    virtual double numberValue() override {return value;}
     virtual bool isEqual(const tui::ref& other) override {return other && (
       (other->type() == Tui_ref_type_NUMBER_8 && tui::cast<TuiNumber8>(other)->value == value))
         ;}
@@ -163,11 +163,11 @@ public://functions
     
     virtual uint8_t type() override { return Tui_ref_type_NUMBER_16; }
     virtual std::string getTypeName() override {return "number16";}
-    virtual std::string getStringValue() override {
+    virtual std::string stringValue() override {
         return tui::string_format("%lu", value);
     }
     virtual bool boolValue() override {return true;}
-    virtual double getNumberValue() override {return value;}
+    virtual double numberValue() override {return value;}
     virtual bool isEqual(const tui::ref& other) override {return other && (
       (other->type() == Tui_ref_type_NUMBER_16 && tui::cast<TuiNumber16>(other)->value == value))
         ;}
@@ -202,11 +202,11 @@ public://functions
     
     virtual uint8_t type() override { return Tui_ref_type_NUMBER_32; }
     virtual std::string getTypeName() override {return "number32";}
-    virtual std::string getStringValue() override {
+    virtual std::string stringValue() override {
         return tui::string_format("%lu", value);
     }
     virtual bool boolValue() override {return true;}
-    virtual double getNumberValue() override {return value;}
+    virtual double numberValue() override {return value;}
     virtual bool isEqual(const tui::ref& other) override {return other && (
       (other->type() == Tui_ref_type_NUMBER_32 && tui::cast<TuiNumber32>(other)->value == value))
         ;}
@@ -240,11 +240,11 @@ public://functions
     
     virtual uint8_t type() override { return Tui_ref_type_NUMBER_64; }
     virtual std::string getTypeName() override {return "number64";}
-    virtual std::string getStringValue() override {
+    virtual std::string stringValue() override {
         return tui::string_format("%llu", value);
     }
     virtual bool boolValue() override {return true;}
-    virtual double getNumberValue() override {return value;}
+    virtual double numberValue() override {return value;}
     virtual bool isEqual(const tui::ref& other) override {return other && (
       (other->type() == Tui_ref_type_NUMBER_64 && tui::cast<TuiNumber64>(other)->value == value))
         ;}
@@ -302,11 +302,11 @@ public://functions
     
     virtual uint8_t type() override { return Tui_ref_type_BOOL; }
     virtual std::string getTypeName() override {return "bool";}
-    virtual std::string getStringValue() override {
+    virtual std::string stringValue() override {
         return (value ? "true" : "false");
     }
     virtual bool boolValue() override {return value;}
-    virtual double getNumberValue() override {return value;}
+    virtual double numberValue() override {return value;}
     virtual bool isEqual(const tui::ref& other) override
     {
         if(!other)
@@ -400,10 +400,15 @@ public://functions
     
     virtual uint8_t type() override { return Tui_ref_type_VEC2; }
     virtual std::string getTypeName() override {return "vec2";}
-    virtual std::string getStringValue() override {
+    virtual std::string stringValue() override {
         return tui::string_format("vec2(%s,%s)", tui::doubleToString(value.x).c_str(), tui::doubleToString(value.y).c_str());
     }
     virtual bool boolValue() override {return true;}
+    
+    virtual dvec2 vec2Value() override {return value;}
+    virtual dvec3 vec3Value() override {return dvec3(value, 0);}
+    virtual dvec4 vec4Value() override {return dvec4(value, 0,0);}
+    
     virtual bool isEqual(const tui::ref& other) override {return other && other->type() == Tui_ref_type_VEC2 && tui::cast<TuiVec2>(other)->value == value;}
 
     
@@ -488,10 +493,15 @@ public://functions
     
     virtual uint8_t type() override { return Tui_ref_type_VEC3; }
     virtual std::string getTypeName() override {return "vec3";}
-    virtual std::string getStringValue() override {
+    virtual std::string stringValue() override {
         return tui::string_format("vec3(%s,%s,%s)", tui::doubleToString(value.x).c_str(), tui::doubleToString(value.y).c_str(), tui::doubleToString(value.z).c_str());
     }
     virtual bool boolValue() override {return true;}
+    
+    virtual dvec2 vec2Value() override {return value;}
+    virtual dvec3 vec3Value() override {return value;}
+    virtual dvec4 vec4Value() override {return dvec4(value,0);}
+    
     virtual bool isEqual(const tui::ref& other) override {return other && other->type() == Tui_ref_type_VEC3 && tui::cast<TuiVec3>(other)->value == value;}
 
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
@@ -577,10 +587,16 @@ public://functions
     
     virtual uint8_t type() override { return Tui_ref_type_VEC4; }
     virtual std::string getTypeName() override {return "vec4";}
-    virtual std::string getStringValue() override {
+    virtual std::string stringValue() override {
         return tui::string_format("vec4(%s,%s,%s,%s)", tui::doubleToString(value.x).c_str(), tui::doubleToString(value.y).c_str(), tui::doubleToString(value.z).c_str(), tui::doubleToString(value.w).c_str());
     }
     virtual bool boolValue() override {return true;}
+    
+    
+    virtual dvec2 vec2Value() override {return value;}
+    virtual dvec3 vec3Value() override {return value;}
+    virtual dvec4 vec4Value() override {return value;}
+    
     virtual bool isEqual(const tui::ref& other) override {return other && other->type() == Tui_ref_type_VEC4 && tui::cast<TuiVec4>(other)->value == value;}
 
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
@@ -674,7 +690,7 @@ public://functions
     
     virtual uint8_t type() override { return Tui_ref_type_MAT3; }
     virtual std::string getTypeName() override {return "mat3";}
-    virtual std::string getStringValue() override {
+    virtual std::string stringValue() override {
         return tui::string_format("mat3((%s,%s,%s), (%s,%s,%s), (%s,%s,%s))",
                                   tui::doubleToString(value[0].x).c_str(),
                                   tui::doubleToString(value[0].y).c_str(),

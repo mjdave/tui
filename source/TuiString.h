@@ -25,13 +25,13 @@ public://functions
     
     virtual uint8_t type() override { return Tui_ref_type_STRING; }
     virtual std::string getTypeName() override {return "string";}
-    virtual std::string getStringValue() override {return value;}
-    virtual double getNumberValue() override {return atof(value.c_str());}
+    virtual std::string stringValue() override {return value;}
+    virtual double numberValue() override {return atof(value.c_str());}
     virtual bool boolValue() override {return true;}
     virtual bool isEqual(const tui::ref& other) override {return other && other->type() == Tui_ref_type_STRING && tui::cast<TuiString>(other)->value == value;}
     
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) override {
-        debugString += "\"" + getStringValue() + "\"";
+        debugString += "\"" + stringValue() + "\"";
     }
     
     TuiString(const std::string& value_) : TuiRef() {value = value_;}

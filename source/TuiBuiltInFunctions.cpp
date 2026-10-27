@@ -211,7 +211,7 @@ void addBaseFunctions(const tui::table& rootTable, const tui::function& permissi
     rootTable->setFunction("require", [rootTable](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() > 0)
         {
-            std::string argPath = args->arrayObjects[0]->getStringValue();
+            std::string argPath = args->arrayObjects[0]->stringValue();
             
             tui::table tui_requireCache = rootTable->getTable("tui_requireCache");
             if(!tui_requireCache)
@@ -234,7 +234,7 @@ void addBaseFunctions(const tui::table& rootTable, const tui::function& permissi
                 tui::ref pathResult = tui::cast<TuiFunction>(getResourcePathFunc)->call("getResourcePathFunc", args->arrayObjects[0]);
                 if(pathResult)
                 {
-                    tui::ref loadedRef = TuiRef::runScriptFile(pathResult->getStringValue(), rootTable, &debugInfo);
+                    tui::ref loadedRef = TuiRef::runScriptFile(pathResult->stringValue(), rootTable, &debugInfo);
                     if(loadedRef && loadedRef != TUI_NIL)
                     {
                         tui_requireCache->set(argPath, loadedRef);
@@ -399,11 +399,11 @@ void addStringTable(const tui::table& rootTable)
                             tui::ref arg = args->arrayObjects[argIndex++];
                             if(interpretAsInteger)
                             {
-                                result += tui::string_format(currentString, (int)arg->getNumberValue());
+                                result += tui::string_format(currentString, (int)arg->numberValue());
                             }
                             else if(interpretAsFloatingPoint)
                             {
-                                result += tui::string_format(currentString, arg->getNumberValue());
+                                result += tui::string_format(currentString, arg->numberValue());
                             }
                             else if(interpretAsPointer)
                             {
@@ -411,7 +411,7 @@ void addStringTable(const tui::table& rootTable)
                             }
                             else
                             {
-                                result += tui::string_format(currentString, arg->getStringValue().c_str());
+                                result += tui::string_format(currentString, arg->stringValue().c_str());
                             }
                             currentString = "";
                         }
@@ -646,7 +646,7 @@ void addStringTable(const tui::table& rootTable)
     stringTable->setFunction("numberToHexString", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         if(args && args->arrayObjects.size() > 0 && args->arrayObjects[0]->isNumber())
         {
-            uint8_t byteValue = clamp(args->arrayObjects[0]->getNumberValue(), 0.0, 255.0);
+            uint8_t byteValue = clamp(args->arrayObjects[0]->numberValue(), 0.0, 255.0);
             
             return newString(tui::string_format("%x%x", (byteValue >> 4), (byteValue & 0x0F)));
         }

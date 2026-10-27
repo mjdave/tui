@@ -1390,7 +1390,7 @@ tui::ref TuiFunction::runExpression(TuiExpression* expression,
                                    TuiDebugInfo* debugInfo,
                                    std::string* setKey,
                                    int* setIndex,
-                                   tui::ref* enclosingSetRef,
+                                   tui::table* enclosingSetRef,
                                    std::string* subTypeAccessKey,
                                    tui::ref* subTypeRef)
 {
@@ -2209,7 +2209,7 @@ tui::ref TuiFunction::runExpression(TuiExpression* expression,
                     
                     isNumberKey = true;
                     
-                    int64_t arrayIndex = tui::cast<TuiNumber>(keyConstant)->getNumberValue();
+                    int64_t arrayIndex = tui::cast<TuiNumber>(keyConstant)->numberValue();
                     if(arrayIndex >= 0 && arrayIndex < parent->arrayObjects.size())
                     {
                         child = parent->arrayObjects[arrayIndex];
@@ -2320,7 +2320,7 @@ tui::ref TuiFunction::runExpression(TuiExpression* expression,
                         }
                         else if(isNumberKey && setIndex)
                         {
-                            *setIndex = tui::cast<TuiNumber>(keyConstant)->getNumberValue();
+                            *setIndex = tui::cast<TuiNumber>(keyConstant)->numberValue();
                         }
                     }
                     
@@ -2453,7 +2453,7 @@ tui::ref TuiFunction::runExpression(TuiExpression* expression,
                 std::string inPlaceSetKey;
                 std::string inPlaceSubTypeAccessKey;
                 tui::ref inPlaceSubRef = nullptr;
-                tui::ref inPlaceEnclosingSetRef = nullptr;
+                tui::table inPlaceEnclosingSetRef = nullptr;
                 
                 tui::ref leftResult;
                 if(token <= Tui_token_modulo) //covers Tui_token_add, Tui_token_subtract, Tui_token_divide, Tui_token_multiply, Tui_token_modulo
@@ -2816,7 +2816,7 @@ tui::ref TuiFunction::runExpression(TuiExpression* expression,
                             
                             if(rightResult->type() == Tui_ref_type_STRING)
                             {
-                                tui::string returnResult = tui::create<TuiString>(tui::cast<TuiNumber>(leftResult)->getStringValue() + (tui::cast<TuiString>(rightResult)->value));
+                                tui::string returnResult = tui::create<TuiString>(tui::cast<TuiNumber>(leftResult)->stringValue() + (tui::cast<TuiString>(rightResult)->value));
                                 return returnResult;
                             }
                             
@@ -3405,10 +3405,10 @@ tui::ref TuiFunction::runExpression(TuiExpression* expression,
                         {
                             switch (token) {
                                 case Tui_token_add:
-                                    tui::cast<TuiString>(result)->value = tui::cast<TuiString>(leftResult)->value + rightResult->getStringValue();
+                                    tui::cast<TuiString>(result)->value = tui::cast<TuiString>(leftResult)->value + rightResult->stringValue();
                                     break;
                                 case Tui_token_addInPlace:
-                                    tui::cast<TuiString>(result)->value += rightResult->getStringValue();
+                                    tui::cast<TuiString>(result)->value += rightResult->stringValue();
                                     break;
                             };
                         }
@@ -3417,11 +3417,11 @@ tui::ref TuiFunction::runExpression(TuiExpression* expression,
                             switch (token) {
                                 case Tui_token_add:
                                 {
-                                    tui::string returnResult = tui::create<TuiString>(tui::cast<TuiString>(leftResult)->value + rightResult->getStringValue());
+                                    tui::string returnResult = tui::create<TuiString>(tui::cast<TuiString>(leftResult)->value + rightResult->stringValue());
                                     return returnResult;
                                 }
                                 case Tui_token_addInPlace:
-                                    tui::cast<TuiString>(leftResult)->value += rightResult->getStringValue();
+                                    tui::cast<TuiString>(leftResult)->value += rightResult->stringValue();
                                     break;
                                     
                                 default:
@@ -3568,7 +3568,7 @@ tui::ref TuiFunction::runStatement(TuiStatement* statement,
             std::string setKey = ""; //this is set only if a Tui_token_childByString is found eg. color.x
             std::string subTypeSetKey = ""; //this is set only if a Tui_token_childByString is found eg. color.x
             int setIndex = -1;
-            tui::ref enclosingSetRef = nullptr;
+            tui::table enclosingSetRef = nullptr;
             tui::ref subTypeRef = nullptr; //this is set only if a Tui_token_childByString is found eg. color.x or foo.table
             
             TuiDebugInfoPush(callingDebugInfo, debugInfoLine->fileName, debugInfoLine->lineNumber);
@@ -3606,7 +3606,7 @@ tui::ref TuiFunction::runStatement(TuiStatement* statement,
             std::string setKey = "";
             std::string subTypeSetKey = ""; //this is set only if a Tui_token_childByString is found eg. color.x
             int setIndex = -1;
-            tui::ref enclosingSetRef = nullptr;
+            tui::table enclosingSetRef = nullptr;
             tui::ref subTypeRef = nullptr; //this is set only if a Tui_token_childByString is found eg. color.x or foo.table
             
             TuiDebugInfoPush(callingDebugInfo, debugInfoLine->fileName, debugInfoLine->lineNumber);

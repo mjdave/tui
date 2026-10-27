@@ -11,7 +11,7 @@ tui::boolean TUI_TRUE = tui::create<TuiBool>(true);
 tui::boolean TUI_FALSE = tui::create<TuiBool>(false);
 
 
-tui::ref TuiRef::loadString(const std::string& inputString, const std::string& debugName, tui::table parent) {
+tui::ref TuiRef::loadString(const std::string& inputString, const std::string& debugName, const tui::table& parent) {
     TuiDebugInfo debugInfo;
     TuiDebugInfoPush(&debugInfo, debugName, 1);
     const char* cString = inputString.c_str();
@@ -20,7 +20,7 @@ tui::ref TuiRef::loadString(const std::string& inputString, const std::string& d
     return TuiRef::load(cString, &endPtr, parent, &debugInfo);
 }
 
-tui::ref TuiRef::loadString(const std::string& inputString, tui::table parent, TuiDebugInfo* callingDebugInfo)
+tui::ref TuiRef::loadString(const std::string& inputString, const tui::table& parent, TuiDebugInfo* callingDebugInfo)
 {
     TuiDebugInfo debugInfo;
     TuiDebugInfoCopy(callingDebugInfo, &debugInfo);
@@ -30,7 +30,7 @@ tui::ref TuiRef::loadString(const std::string& inputString, tui::table parent, T
     return TuiRef::load(cString, &endPtr, parent, &debugInfo);
 }
 
-tui::ref TuiRef::runScriptFile(const std::string& path, tui::table parent, TuiDebugInfo* callingDebugInfo, tui::ref resultRef)
+tui::ref TuiRef::runScriptFile(const std::string& path, const tui::table& parent, TuiDebugInfo* callingDebugInfo, tui::ref resultRef)
 {
     // Get absolute path from path
     std::string absolutePath = tui::getAbsolutePath(path);
@@ -61,7 +61,7 @@ tui::ref TuiRef::runScriptFile(const std::string& path, tui::table parent, TuiDe
     return nullptr;
 }
 
-tui::ref TuiRef::require(const std::string& path, tui::table rootTable)
+tui::ref TuiRef::require(const std::string& path, const tui::table& rootTable)
 {
     tui::function requireFunction = rootTable->getFunction("require");
     tui::string arg = tui::create<TuiString>(path);
@@ -69,7 +69,7 @@ tui::ref TuiRef::require(const std::string& path, tui::table rootTable)
     return result;
 }
 
-tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, tui::table parent)
+tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, const tui::table& parent)
 {
     uint8_t type = inputString[(*currentOffset)++];
     switch (type) {
@@ -292,13 +292,13 @@ tui::ref TuiRef::loadBinaryString(const char* inputString, int* currentOffset, t
     return nullptr;
 }
 
-tui::ref TuiRef::loadBinaryString(const std::string& inputString, tui::table parent)
+tui::ref TuiRef::loadBinaryString(const std::string& inputString, const tui::table& parent)
 {
     int currentOffset = 0;
     return loadBinaryString(inputString.c_str(), &currentOffset);
 }
 
-tui::ref TuiRef::loadBinary(const std::string& path, tui::table parent)
+tui::ref TuiRef::loadBinary(const std::string& path, const tui::table& parent)
 {
     std::ifstream in(path.c_str(), std::ios::in | std::ios::binary);
     if(in)
@@ -320,7 +320,7 @@ tui::ref TuiRef::loadBinary(const std::string& path, tui::table parent)
 }
 
 
-tui::ref TuiRef::load(const char* str, char** endptr, tui::table parent, TuiDebugInfo* debugInfo, tui::ref* resultRef) {
+tui::ref TuiRef::load(const char* str, char** endptr, const tui::table& parent, TuiDebugInfo* debugInfo, tui::ref* resultRef) {
     
     tui::table table = tui::create<TuiTable>(parent);
     
@@ -1599,7 +1599,7 @@ tui::ref TuiRef::loadExpression(const char* str,
                         }
                         else
                         {
-                            result = tui::create<TuiString>(leftValue->getStringValue() + (tui::cast<TuiString>(rightValue)->value));
+                            result = tui::newString(leftValue->stringValue() + rightValue->stringValue());
                         }
                     }
                         break;
@@ -1914,19 +1914,19 @@ tui::ref TuiRef::loadExpression(const char* str,
                 {
                     if(secondOperatorChar == '=')
                     {
-                        tui::cast<TuiString>(leftValue)->value += rightValue->getStringValue();
+                        tui::cast<TuiString>(leftValue)->value += rightValue->stringValue();
                         result = TUI_NIL; //return a nil ref, otherwise the key is addded to an array //todo this is a waste of an allocate
                     }
                     else
                     {
                         if(existingValue && existingValue->type() == Tui_ref_type_STRING)
                         {
-                            tui::cast<TuiString>(existingValue)->value = tui::cast<TuiString>(leftValue)->value + rightValue->getStringValue();
+                            tui::cast<TuiString>(existingValue)->value = tui::cast<TuiString>(leftValue)->value + rightValue->stringValue();
                             existingValueWasAssigned = true;
                         }
                         else
                         {
-                            result = tui::create<TuiString>(tui::cast<TuiString>(leftValue)->value + rightValue->getStringValue());
+                            result = tui::create<TuiString>(tui::cast<TuiString>(leftValue)->value + rightValue->stringValue());
                         }
                     }
                 }

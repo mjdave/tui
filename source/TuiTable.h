@@ -41,7 +41,7 @@ public:
     std::set<uint32_t> set32;
     std::set<uint64_t> set64; //note currently all numbers in tui scripts are read as doubles and stored in TuiNumbers, so a very large integer can loose precision
     
-    std::function<void(const tui::ref& table, const std::string& key, const tui::ref& value)> onSet;
+    std::function<void(const tui::table& table, const std::string& key, const tui::ref& value)> onSet;
     
 private:
     
@@ -66,7 +66,7 @@ public://functions
     
     virtual uint8_t type() override { return Tui_ref_type_TABLE; }
     virtual std::string getTypeName() override {return "table";}
-    virtual std::string getStringValue() override {return "table";}
+    virtual std::string stringValue() override {return "table";}
     virtual std::string getDebugStringValue() override {return getDebugString();}
     virtual bool boolValue() override {return true;}
     virtual bool isEqual(const tui::ref& other) override {return other.get() == this;}

@@ -82,7 +82,7 @@ public: //static functions
                                  TuiDebugInfo* debugInfo,
                                  std::string* setKey = nullptr,
                                  int* setIndex = nullptr,
-                                 tui::ref* enclosingSetRef = nullptr,
+                                 tui::table* enclosingSetRef = nullptr,
                                  std::string* subTypeAccessKey = nullptr,
                                  tui::ref* subTypeRef = nullptr);
     
@@ -142,7 +142,7 @@ public: //class functions
     
     virtual uint8_t type() override { return Tui_ref_type_FUNCTION; }
     virtual std::string getTypeName() override {return "function";}
-    virtual std::string getStringValue() override {return "function";}
+    virtual std::string stringValue() override {return "function";}
     virtual bool isEqual(const tui::ref& other) override {return other.get() == this;}
     
     virtual bool boolValue() override {return true;}
