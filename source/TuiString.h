@@ -31,7 +31,7 @@ public://functions
     virtual bool isEqual(const tui::ref& other) override {return other && other->type() == Tui_ref_type_STRING && tui::cast<TuiString>(other)->value == value;}
     
     virtual void printHumanReadableString(std::string& debugString, int indent = 0) override {
-        debugString += "\"" + stringValue() + "\"";
+        debugString += "\"" + tui::stringByReplacingString(value, "\"", "\\\"") + "\"";
     }
     
     TuiString(const std::string& value_) : TuiRef() {value = value_;}
