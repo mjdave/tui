@@ -1,5 +1,46 @@
 #include "TuiTable.h"
 
+void TuiTable::initWithConstructorString(const std::string& tableString)
+{
+    TuiDebugInfo debugInfo;
+    TuiDebugInfoPush(&debugInfo, "table string construct", 1);
+    const char* cString = tableString.c_str();
+    char* endPtr;
+    
+    const char* s = tuiSkipToNextChar(cString, &debugInfo);
+    
+    bool foundOpeningBracket = false;
+    
+    if(*s == '{' || *s == '[')
+    {
+        foundOpeningBracket = true;
+        s++;
+    }
+        
+    while(1)
+    {
+        s = tuiSkipToNextChar(s, &debugInfo);
+        
+        if(*s == '\0')
+        {
+            break;
+        }
+        
+        if(foundOpeningBracket && (*s == '}' || *s == ']'))
+        {
+            s++;
+            endPtr = (char*)s;
+            break;
+        }
+        
+        if(!addHumanReadableKeyValuePair(s, &endPtr, &debugInfo, nullptr))
+        {
+            break;
+        }
+        s = endPtr;
+    }
+}
+
 bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiDebugInfo* debugInfo, tui::ref* resultRef)
 {
     const char* s = tuiSkipToNextChar(str, debugInfo);
@@ -535,52 +576,6 @@ bool TuiTable::addHumanReadableKeyValuePair(const char* str, char** endptr, TuiD
     }
     
     return true;
-}
-
-
-tui::table TuiTable::initWithHumanReadableString(const char* str, char** endptr, const tui::table& parent, TuiDebugInfo* debugInfo, tui::ref* resultRef, const tui::table& inTable)
-{
-    tui::table table = inTable;
-    
-    if(!table)
-    {
-        table = tui::create<TuiTable>(parent);
-    }
-    
-    const char* s = tuiSkipToNextChar(str, debugInfo);
-    
-    bool foundOpeningBracket = false;
-    
-    if(*s == '{' || *s == '[')
-    {
-        foundOpeningBracket = true;
-        s++;
-    }
-        
-    while(1)
-    {
-        s = tuiSkipToNextChar(s, debugInfo);
-        
-        if(*s == '\0')
-        {
-            break;
-        }
-        
-        if(foundOpeningBracket && (*s == '}' || *s == ']'))
-        {
-            s++;
-            *endptr = (char*)s;
-            break;
-        }
-        
-        if(!table->addHumanReadableKeyValuePair(s, endptr, debugInfo, resultRef))
-        {
-            break;
-        }
-        s = *endptr;
-    }
-    
-    return table;
 }
 
 

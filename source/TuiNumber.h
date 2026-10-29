@@ -91,7 +91,7 @@ public://functions
     }
     virtual bool boolValue() override {return true;}
     virtual double numberValue() override {return value;}
-    virtual bool isEqual(const tui::ref& other) override {return other && other->type() == Tui_ref_type_NUMBER && tui::cast<TuiNumber>(other)->value == value;}
+    virtual bool isEqual(const tui::ref& other) override {return other && other->isNumber() && other->numberValue() == value;}
     
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
@@ -130,9 +130,7 @@ public://functions
     }
     virtual bool boolValue() override {return true;}
     virtual double numberValue() override {return value;}
-    virtual bool isEqual(const tui::ref& other) override {return other && (
-      (other->type() == Tui_ref_type_NUMBER_8 && tui::cast<TuiNumber8>(other)->value == value))
-        ;}
+    virtual bool isEqual(const tui::ref& other) override {return other && other->isNumber() && other->numberValue() == value;}
     
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
@@ -168,9 +166,7 @@ public://functions
     }
     virtual bool boolValue() override {return true;}
     virtual double numberValue() override {return value;}
-    virtual bool isEqual(const tui::ref& other) override {return other && (
-      (other->type() == Tui_ref_type_NUMBER_16 && tui::cast<TuiNumber16>(other)->value == value))
-        ;}
+    virtual bool isEqual(const tui::ref& other) override {return other && other->isNumber() && other->numberValue() == value;}
     
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
@@ -207,9 +203,7 @@ public://functions
     }
     virtual bool boolValue() override {return true;}
     virtual double numberValue() override {return value;}
-    virtual bool isEqual(const tui::ref& other) override {return other && (
-      (other->type() == Tui_ref_type_NUMBER_32 && tui::cast<TuiNumber32>(other)->value == value))
-        ;}
+    virtual bool isEqual(const tui::ref& other) override {return other && other->isNumber() && other->numberValue() == value;}
     
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
@@ -245,9 +239,7 @@ public://functions
     }
     virtual bool boolValue() override {return true;}
     virtual double numberValue() override {return value;}
-    virtual bool isEqual(const tui::ref& other) override {return other && (
-      (other->type() == Tui_ref_type_NUMBER_64 && tui::cast<TuiNumber64>(other)->value == value))
-        ;}
+    virtual bool isEqual(const tui::ref& other) override {return other && other->isNumber() && other->numberValue() == value;}
     
     virtual void serializeBinaryToBuffer(std::string& buffer, int* currentOffset) override
     {

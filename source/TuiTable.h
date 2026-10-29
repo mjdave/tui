@@ -14,20 +14,6 @@
 #include "TuiString.h"
 #include "TuiFunction.h"
 
-namespace tui {
-
-    inline tui::table newTable(const std::string& tableString, const tui::table& parentTable_ = nullptr)
-    {
-        return tui::create<TuiTable>(tableString, parentTable_);
-    }
-
-    inline tui::table newTable(const tui::table& parentTable_ = nullptr) //let's call this newTable, beacuse that makes sense, it's empty
-    {
-        return tui::create<TuiTable>(parentTable_);
-    }
-
-}
-
 class TuiTable : public TuiRef {
 public:
     tui::table parentTable = nullptr;
@@ -50,16 +36,8 @@ private:
 public://functions
     
     TuiTable(tui::table parentTable_ = nullptr) : TuiRef() {parentTable = parentTable_;}
-    TuiTable(const std::string& tableString, tui::table parentTable_ = nullptr) : TuiRef() {
-        TuiDebugInfo debugInfo;
-        TuiDebugInfoPush(&debugInfo, "table string construct", 1);
-        const char* cString = tableString.c_str();
-        char* endPtr;
-        
-        TuiTable::initWithHumanReadableString(cString, &endPtr, parentTable_, &debugInfo, nullptr, createFromThis<TuiTable>());
-    }
     
-    static tui::table initWithHumanReadableString(const char* str, char** endptr, const tui::table& parent, TuiDebugInfo* debugInfo, tui::ref* resultRef = nullptr, const tui::table& inTable = nullptr);
+    void initWithConstructorString(const std::string& tableString);
     
     virtual ~TuiTable() {}
 
@@ -903,5 +881,23 @@ private:
     
 private:
 };
+
+
+
+namespace tui {
+
+    inline tui::table newTable(const std::string& tableString, const tui::table& parentTable_ = nullptr)
+    {
+        tui::table table = tui::create<TuiTable>(parentTable_);
+        table->initWithConstructorString(tableString);
+        return table;
+    }
+
+    inline tui::table newTable(const tui::table& parentTable_ = nullptr) //let's call this newTable, beacuse that makes sense, it's empty
+    {
+        return tui::create<TuiTable>(parentTable_);
+    }
+
+}
 
 #endif 
