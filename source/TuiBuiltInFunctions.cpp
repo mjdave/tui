@@ -5,6 +5,7 @@
 #include <random>
 #include <thread>
 #include <chrono>
+#include <ctime>
 #include <cstdio>
 #include <iostream>
 #include <memory>
@@ -22,6 +23,8 @@
 thread_local std::default_random_engine rng = std::default_random_engine { std::random_device{}() };
 thread_local std::default_random_engine seedRng;
 std::uniform_real_distribution<double> randDistribution(0.0, 1.0);
+
+static char stringTimeBuffer[1024];
 
 namespace tui {
 
@@ -739,6 +742,79 @@ void addTimeTable(const tui::table& rootTable)
     timeTable->setFunction("now", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         return tui::create<TuiNumber>(tui::nowTime());
     });
+    
+    //time.toString(stringFormat) returns a string with the current time in the format given by the string stringFormat
+    //time.toString(timeNumberInSecondsSinceEpoch, stringFormat) returns the given time in the format given by the string stringFormat
+    //see docs for strftime for stringFormat https://en.cppreference.com/cpp/chrono/c/strftime
+    timeTable->setFunction("toString", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
+        
+        std::string formatString = "%FT%TZ";
+        std::time_t time;
+        uint64_t seconds = -1;
+        
+        if(args && args->arrayObjects.size() >= 1)
+        {
+            if(args->arrayObjects.size() >= 2 && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
+            {
+                time = args->arrayObjects[0]->numberValue();
+                formatString = args->arrayObjects[1]->stringValue();
+            }
+            else if(args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+            {
+                formatString = args->arrayObjects[0]->stringValue();
+                time = std::time({});
+            }
+        }
+        else
+        {
+            time = std::time({});
+        }
+        
+        int bytesWritten = std::strftime(stringTimeBuffer, 1024,
+                      formatString.c_str(), std::gmtime(&time));
+        
+        std::string stringResult = std::string(stringTimeBuffer, bytesWritten);
+        
+        return tui::newString(stringResult);
+    });
+    
+    //time.fromString(string, stringFormat) returns time in seconds since epoch
+    //see https://en.cppreference.com/cpp/io/manip/get_time for stringFormat options
+    //with thanks to https://berthub.eu/articles/posts/how-to-get-a-unix-epoch-from-a-utc-date-time-string/
+    timeTable->setFunction("fromString", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
+        
+        if(args && args->arrayObjects.size() == 2 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_STRING)
+        {
+            std::string timestr = args->arrayObjects[0]->stringValue();
+            std::string fmtstr = args->arrayObjects[1]->stringValue();
+            
+            std::tm t = {}; // tm_isdst = 0, don't think about it please, this is UTC
+            std::istringstream ss(timestr);
+            ss.imbue(std::locale()); // "LANG=C", but local
+            
+            ss >> std::get_time(&t, fmtstr.c_str());
+            if (ss.fail())
+            {
+                TuiParseWarn(callingDebugInfo, "time.fromString() failed to parse time format string:%s", fmtstr.c_str());
+                return TUI_NIL;
+            }
+            // now fix up the day of week, day of year etc
+            t.tm_isdst = 0; // no thinking!
+            t.tm_wday = -1;
+            if(mktime(&t) == -1 && t.tm_wday == -1) // "real error"
+            {
+                TuiParseWarn(callingDebugInfo, "time.fromString() failed to parse time:%s", args->getDebugStringValue().c_str());
+                return TUI_NIL;
+            }
+            
+            
+            return tui::newNumber(timegm(&t));
+        }
+        
+        TuiParseError(callingDebugInfo, "time.fromString expected 2 strings. got:%s", args->getDebugStringValue().c_str());
+        return TUI_NIL;
+    });
+    
 }
 
 void addTableTable(const tui::table& rootTable)

@@ -177,7 +177,11 @@ debug.getLineNumber()           // returns the line number in the current script
 debug.break()                   // will trigger a breakpoint, but you first need to set it in your IDE in TuiBuiltInFunctions.cpp
 debug.backtrace()               // prints a backtrace
 
-time.now()      // returns the seconds since epoch as a floating point value, with the accuracy in microseconds
+time.now()                  // returns the seconds since epoch as a floating point value, with the accuracy in microseconds
+time.toString(stringFormat) // returns a string with the current time in the format given by the string stringFormat
+time.toString(timeNumberInSecondsSinceEpoch, stringFormat) // returns a string with the given time in the format given by the string stringFormat. see docs for strftime for stringFormat https://en.cppreference.com/cpp/chrono/c/strftime
+time.fromString(string, stringFormat) // returns number in seconds since epoch. see https://en.cppreference.com/cpp/io/manip/get_time for stringFormat options, eg time.fromString("2026-11-22", "%Y-%m-%d")
+    
 
 table.count(table)                  // count of array objects
 table.insert(table, index, value)   // insert into an array, specifying the index. Will be filled with nil objects < index. Objects >= index are shifted
