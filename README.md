@@ -178,8 +178,8 @@ debug.break()                   // will trigger a breakpoint, but you first need
 debug.backtrace()               // prints a backtrace
 
 time.now()                  // returns the seconds since epoch as a floating point value, with the accuracy in microseconds
-time.toString(stringFormat) // returns a string with the current time in the format given by the string stringFormat
-time.toString(timeNumberInSecondsSinceEpoch, stringFormat) // returns a string with the given time in the format given by the string stringFormat. see docs for strftime for stringFormat https://en.cppreference.com/cpp/chrono/c/strftime
+time.toString(stringFormat, localTimezone = false) // returns a string with the current time in the format given by the string stringFormat. 
+time.toString(timeNumberInSecondsSinceEpoch, stringFormat, localTimezone = false) // returns a string with the given time in the format given by the string stringFormat. see docs for strftime for stringFormat https://en.cppreference.com/cpp/chrono/c/strftime
 time.fromString(string, stringFormat) // returns number in seconds since epoch. see https://en.cppreference.com/cpp/io/manip/get_time for stringFormat options, eg time.fromString("2026-11-22", "%Y-%m-%d")
     
 

@@ -743,14 +743,15 @@ void addTimeTable(const tui::table& rootTable)
         return tui::create<TuiNumber>(tui::nowTime());
     });
     
-    //time.toString(stringFormat) returns a string with the current time in the format given by the string stringFormat
-    //time.toString(timeNumberInSecondsSinceEpoch, stringFormat) returns the given time in the format given by the string stringFormat
+    //time.toString(stringFormat, localTimezone = false) returns a string with the current time in the format given by the string stringFormat
+    //time.toString(timeNumberInSecondsSinceEpoch, stringFormat, localTimezone = false) returns the given time in the format given by the string stringFormat
     //see docs for strftime for stringFormat https://en.cppreference.com/cpp/chrono/c/strftime
     timeTable->setFunction("toString", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
         
         std::string formatString = "%FT%TZ";
         std::time_t time;
         uint64_t seconds = -1;
+        bool useLocaltime = false;
         
         if(args && args->arrayObjects.size() >= 1)
         {
@@ -758,16 +759,30 @@ void addTimeTable(const tui::table& rootTable)
             {
                 time = args->arrayObjects[0]->numberValue();
                 formatString = args->arrayObjects[1]->stringValue();
+                if(args->arrayObjects.size() >= 3)
+                {
+                    useLocaltime = args->arrayObjects[2]->boolValue();
+                }
             }
             else if(args->arrayObjects[0]->type() == Tui_ref_type_STRING)
             {
                 formatString = args->arrayObjects[0]->stringValue();
                 time = std::time({});
+                if(args->arrayObjects.size() >= 2)
+                {
+                    useLocaltime = args->arrayObjects[1]->boolValue();
+                }
             }
         }
         else
         {
             time = std::time({});
+        }
+        
+        if(useLocaltime)
+        {
+            struct tm datetime = *localtime(&time);
+            time = timegm(&datetime);
         }
         
         int bytesWritten = std::strftime(stringTimeBuffer, 1024,
