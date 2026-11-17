@@ -743,6 +743,20 @@ void addTimeTable(const tui::table& rootTable)
         return tui::create<TuiNumber>(tui::nowTime());
     });
     
+    
+    //time.local() current local time in seconds since epoch
+    timeTable->setFunction("local", [](const tui::table& args, const tui::ref& existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> tui::ref {
+        
+        std::time_t time = std::time({});
+        struct tm datetime = *localtime(&time);
+        time = timegm(&datetime);
+        
+        double value = time;
+        value += fmod(tui::nowTime(), 1.0); //add fraction of a second
+        
+        return tui::create<TuiNumber>(value);
+    });
+    
     //time.toString(stringFormat, localTimezone = false) returns a string with the current time in the format given by the string stringFormat
     //time.toString(timeNumberInSecondsSinceEpoch, stringFormat, localTimezone = false) returns the given time in the format given by the string stringFormat
     //see docs for strftime for stringFormat https://en.cppreference.com/cpp/chrono/c/strftime
@@ -750,7 +764,6 @@ void addTimeTable(const tui::table& rootTable)
         
         std::string formatString = "%FT%TZ";
         std::time_t time;
-        uint64_t seconds = -1;
         bool useLocaltime = false;
         
         if(args && args->arrayObjects.size() >= 1)
