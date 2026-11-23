@@ -49,17 +49,14 @@ public://functions
     virtual bool boolValue() override {return true;}
     virtual bool isEqual(const tui::ref& other) override {return other.get() == this;}
     
-    virtual tui::ref copy() override //NOTE! This is not a true copy, use trueCopy() below. copy() is called internally when assigning vars, but tables, function, and userdata are treated like pointers
+    virtual tui::ref copy() override //NOTE! This is not a true copy, use clone() below. copy() is called internally when assigning vars, but tables, function, and userdata are treated like pointers
     {
         return createFromThis();
     }
     
-    tui::table trueCopy()
+    tui::table clone()
     {
         tui::table tableCopy = tui::create<TuiTable>(parentTable);
-        tableCopy->arrayObjects = arrayObjects;
-        tableCopy->objectsByStringKey = objectsByStringKey;
-        tableCopy->objectsByNumberKey = objectsByNumberKey;
         tableCopy->set8 = set8;
         tableCopy->set16 = set16;
         tableCopy->set32 = set32;

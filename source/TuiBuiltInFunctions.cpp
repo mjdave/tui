@@ -1164,7 +1164,7 @@ void addTableTable(const tui::table& rootTable)
                 TuiParseError(callingDebugInfo, "table.clone expected table for first argument");
                 return TUI_NIL;
             }
-            return (tui::cast<TuiTable>(tableRef)->trueCopy());
+            return (tui::cast<TuiTable>(tableRef)->clone());
         }
         return TUI_NIL;
     });
